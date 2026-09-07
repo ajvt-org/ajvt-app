@@ -10,6 +10,9 @@ import { teamBuilder as texts } from "@/lib/texts";
 
 const WAITING = { background: "#fef3c7" };
 const SEATED = { background: "var(--mint-50)" };
+const ACCEPT = { background: "var(--mint-600)", color: "white" };
+const HANDOVER = { background: "var(--mint-100)", color: "var(--mint-700)" };
+const DESTRUCTIVE = { background: "#fee2e2", color: "#991b1b" };
 
 function seatNote(kind: MyTeamMember["kind"]): string | null {
   if (kind === "invitation") return texts.waitingOnInvitation;
@@ -24,6 +27,10 @@ export default function MyTeamCard({
   viewerId,
   busy,
   onInvite,
+  onAnswerRequest,
+  onRemove,
+  onHandOver,
+  onDisband,
 }: {
   team: NonNullable<MyTeamView["team"]>;
   candidates: Candidate[];
@@ -31,6 +38,10 @@ export default function MyTeamCard({
   viewerId: string;
   busy: boolean;
   onInvite: (userId: string) => void;
+  onAnswerRequest: (userId: string, accept: boolean) => void;
+  onRemove: (userId: string) => void;
+  onHandOver: (userId: string) => void;
+  onDisband: () => void;
 }) {
   const [pick, setPick] = useState("");
   const captain = team.captainUserId === viewerId;
@@ -103,6 +114,53 @@ export default function MyTeamCard({
                   {note}
                 </span>
               )}
+              <span className="flex items-center gap-1.5 shrink-0 ms-auto">
+                {captain && entry.kind === "request" && (
+                  <button
+                    onClick={() => onAnswerRequest(entry.userId, true)}
+                    disabled={busy}
+                    aria-label={texts.acceptPlayer(entry.fullName)}
+                    className="btn btn-sm btn-icon shrink-0"
+                    style={ACCEPT}
+                  >
+                    <Icon name="check" size={16} />
+                  </button>
+                )}
+                {captain && entry.userId !== viewerId && (
+                  <>
+                    {entry.kind === "member" && (
+                      <button
+                        onClick={() => {
+                          if (confirm(texts.confirmHandover(entry.fullName)))
+                            onHandOver(entry.userId);
+                        }}
+                        disabled={busy}
+                        aria-label={texts.makeCaptain(entry.fullName)}
+                        className="btn btn-sm btn-icon shrink-0"
+                        style={HANDOVER}
+                      >
+                        <Icon name="captain" size={16} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (entry.kind === "request") return onAnswerRequest(entry.userId, false);
+                        if (confirm(texts.confirmRemove(entry.fullName))) onRemove(entry.userId);
+                      }}
+                      disabled={busy}
+                      aria-label={
+                        entry.kind === "request"
+                          ? texts.declinePlayer(entry.fullName)
+                          : texts.removePlayer(entry.fullName)
+                      }
+                      className="btn btn-sm btn-icon shrink-0"
+                      style={DESTRUCTIVE}
+                    >
+                      <Icon name="close" size={16} />
+                    </button>
+                  </>
+                )}
+              </span>
             </li>
           );
         })}
@@ -153,6 +211,19 @@ export default function MyTeamCard({
             </div>
           )}
         </div>
+      )}
+
+      {captain && (
+        <button
+          onClick={() => {
+            if (confirm(texts.confirmDisband)) onDisband();
+          }}
+          disabled={busy}
+          className="text-xs font-bold"
+          style={{ color: "#991b1b" }}
+        >
+          {texts.disband}
+        </button>
       )}
     </div>
   );

@@ -77,8 +77,24 @@ export default function TeamBuilder({
       accept ? texts.accepted : texts.declined,
     );
 
+  const teamId = () => view!.team!.id;
+
   const invite = (userId: string) =>
-    run(() => api.post(`/api/teams/${view!.team!.id}/invites`, { userId }), texts.invited);
+    run(() => api.post(`/api/teams/${teamId()}/invites`, { userId }), texts.invited);
+
+  const answerRequest = (userId: string, accept: boolean) =>
+    run(
+      () => api.patch(`/api/teams/${teamId()}/members`, { userId, accept }),
+      accept ? texts.playerAccepted : texts.playerDeclined,
+    );
+
+  const removePlayer = (userId: string) =>
+    run(() => api.del(`/api/teams/${teamId()}/members`, { userId }), texts.playerRemoved);
+
+  const handOver = (captainUserId: string) =>
+    run(() => api.patch(`/api/teams/${teamId()}`, { captainUserId }), texts.handedOver);
+
+  const disband = () => run(() => api.del(`/api/teams/${teamId()}`), texts.disbanded);
 
   if (!view) return null;
 
@@ -94,6 +110,10 @@ export default function TeamBuilder({
           viewerId={viewerId}
           busy={busy}
           onInvite={invite}
+          onAnswerRequest={answerRequest}
+          onRemove={removePlayer}
+          onHandOver={handOver}
+          onDisband={disband}
         />
       ) : view.request ? (
         <div className="space-y-2">

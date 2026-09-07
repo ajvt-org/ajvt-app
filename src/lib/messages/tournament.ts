@@ -22,6 +22,9 @@ export const tournament = {
   inviteeNotRegistered: "هذا العضو غير مسجل في هذه البطولة",
   alreadyOnThisTeam: "هذا العضو في فريقك بالفعل",
   invitationNotFound: "لا توجد دعوة لك من هذا الفريق",
+  requestNotFound: "لا يوجد طلب انضمام من هذا العضو",
+  captainCannotLeave: "سلّم قيادة الفريق إلى لاعب آخر أو حُلّ الفريق قبل مغادرته",
+  teamHasMatches: "لهذا الفريق مباريات — راجع المشرف",
   oneTeamPerRegistrant: (name: string) =>
     `أنت في فريق «${name}» في هذه البطولة، غادره قبل إنشاء فريق آخر`,
   playerRejected: "لا يمكن إضافة لاعب طلبه مرفوض",

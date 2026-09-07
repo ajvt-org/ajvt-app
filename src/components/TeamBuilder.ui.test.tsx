@@ -44,7 +44,11 @@ function show(state: MyTeamView, teams: { id: string; name: string }[] = []) {
 
 const sent = (fetchMock: ReturnType<typeof vi.fn>, index: number) => {
   const [url, init] = fetchMock.mock.calls[index] as unknown as [string, RequestInit];
-  return { url, body: JSON.parse(init.body as string), method: init.method };
+  return {
+    url,
+    method: init.method,
+    body: init.body ? JSON.parse(init.body as string) : undefined,
+  };
 };
 
 afterEach(() => {
@@ -202,6 +206,107 @@ describe("a captain reading their own team", () => {
   });
 });
 
+describe("a captain acting on their own roster", () => {
+  it("accepts a request on the members route", async () => {
+    const { fetchMock } = show(
+      view({ team: led([person(VIEWER, "محمد"), person("u3", "سالم", "request")]) }),
+    );
+
+    await userEvent.click(await screen.findByLabelText(texts.acceptPlayer("سالم")));
+
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
+    expect(sent(fetchMock, 1)).toMatchObject({
+      url: "/api/teams/t1/members",
+      method: "PATCH",
+      body: { userId: "u3", accept: true },
+    });
+  });
+
+  it("declines a request without asking twice", async () => {
+    const { fetchMock } = show(
+      view({ team: led([person(VIEWER, "محمد"), person("u3", "سالم", "request")]) }),
+    );
+
+    await userEvent.click(await screen.findByLabelText(texts.declinePlayer("سالم")));
+
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
+    expect(sent(fetchMock, 1).body).toEqual({ userId: "u3", accept: false });
+  });
+
+  it("asks before removing a player", async () => {
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => false),
+    );
+    const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
+
+    await userEvent.click(await screen.findByLabelText(texts.removePlayer("سالم")));
+
+    expect(fetchMock.mock.calls.length).toBe(1);
+  });
+
+  it("removes a player once the question is answered", async () => {
+    const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+
+    await userEvent.click(await screen.findByLabelText(texts.removePlayer("سالم")));
+
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
+    expect(sent(fetchMock, 1)).toMatchObject({
+      url: "/api/teams/t1/members",
+      method: "DELETE",
+      body: { userId: "u2" },
+    });
+  });
+
+  it("offers no way to remove themselves", async () => {
+    show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
+
+    await screen.findByText("الصقور");
+    expect(screen.queryByLabelText(texts.removePlayer("محمد"))).toBeNull();
+  });
+
+  it("hands the captaincy to another player", async () => {
+    const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+
+    await userEvent.click(await screen.findByLabelText(texts.makeCaptain("سالم")));
+
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
+    expect(sent(fetchMock, 1)).toMatchObject({
+      url: "/api/teams/t1",
+      method: "PATCH",
+      body: { captainUserId: "u2" },
+    });
+  });
+
+  it("offers the captaincy to nobody who has only been invited", async () => {
+    show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم", "invitation")]) }));
+
+    await screen.findByText("الصقور");
+    expect(screen.queryByLabelText(texts.makeCaptain("سالم"))).toBeNull();
+  });
+
+  it("disbands the team once the question is answered", async () => {
+    const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد")]) }));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: texts.disband }));
+
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
+    expect(sent(fetchMock, 1)).toMatchObject({ url: "/api/teams/t1", method: "DELETE" });
+  });
+});
+
 describe("a player in a team somebody else captains", () => {
   it("is offered no way to invite", async () => {
     show(view({ team: led([person("u9", "سالم"), person(VIEWER, "محمد")], "u9") }));
@@ -209,6 +314,14 @@ describe("a player in a team somebody else captains", () => {
     await screen.findByText("الصقور");
     expect(screen.queryByLabelText(new RegExp(texts.inviteHeading))).toBeNull();
     expect(screen.queryByText(texts.captain)).toBeNull();
+  });
+
+  it("is offered no way to remove anybody and no way to disband", async () => {
+    show(view({ team: led([person("u9", "سالم"), person(VIEWER, "محمد")], "u9") }));
+
+    await screen.findByText("الصقور");
+    expect(screen.queryByLabelText(texts.removePlayer("سالم"))).toBeNull();
+    expect(screen.queryByRole("button", { name: texts.disband })).toBeNull();
   });
 });
 
