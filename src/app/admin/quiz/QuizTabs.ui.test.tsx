@@ -2,13 +2,21 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import QuizTabs, { isQuizTab } from "./QuizTabs";
+import { quizTabs } from "@/lib/texts";
 
 describe("QuizTabs", () => {
-  it("offers the competitions and the bank", () => {
+  it("offers the competitions, the bank and the question settings", () => {
     render(<QuizTabs active="competitions" onSelect={() => {}} />);
 
-    expect(screen.getByRole("tab", { name: /المسابقات/ })).toBeDefined();
-    expect(screen.getByRole("tab", { name: /بنك الأسئلة/ })).toBeDefined();
+    expect(screen.getByRole("tab", { name: new RegExp(quizTabs.competitions) })).toBeDefined();
+    expect(screen.getByRole("tab", { name: new RegExp(quizTabs.bank) })).toBeDefined();
+    expect(screen.getByRole("tab", { name: new RegExp(quizTabs.settings) })).toBeDefined();
+  });
+
+  it("holds the three on one scrolling line", () => {
+    const { container } = render(<QuizTabs active="competitions" onSelect={() => {}} />);
+
+    expect(container.querySelector(".tab-strip")).not.toBeNull();
   });
 
   it("marks the one that is open", () => {
@@ -36,6 +44,7 @@ describe("isQuizTab", () => {
   it("takes the names it knows", () => {
     expect(isQuizTab("competitions")).toBe(true);
     expect(isQuizTab("bank")).toBe(true);
+    expect(isQuizTab("settings")).toBe(true);
   });
 
   it("refuses anything else", () => {

@@ -1,14 +1,15 @@
 export interface SeededPaymentMethod {
   name: string;
   memberFacing: boolean;
+  carriesNumbers: boolean;
   position: number;
 }
 
 export const INITIAL_PAYMENT_METHODS: readonly SeededPaymentMethod[] = [
-  { name: "بنكيلي", memberFacing: true, position: 1 },
-  { name: "السداد", memberFacing: true, position: 2 },
-  { name: "مصرفي", memberFacing: true, position: 3 },
-  { name: "نقداً", memberFacing: false, position: 4 },
+  { name: "بنكيلي", memberFacing: true, carriesNumbers: true, position: 1 },
+  { name: "السداد", memberFacing: true, carriesNumbers: true, position: 2 },
+  { name: "مصرفي", memberFacing: true, carriesNumbers: true, position: 3 },
+  { name: "نقداً", memberFacing: false, carriesNumbers: false, position: 4 },
 ] as const;
 
 export interface SeededPaymentAccount {
@@ -27,6 +28,7 @@ export interface PaymentMethodOption {
   id: string;
   name: string;
   memberFacing: boolean;
+  carriesNumbers: boolean;
   active: boolean;
   position: number;
 }

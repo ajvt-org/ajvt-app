@@ -1,13 +1,8 @@
 export const settingsPage = {
-  settingsTab: "الإعدادات",
+  settingsTab: "الجمعية",
   saved: "تم الحفظ",
   save: "حفظ",
   saving: "جارٍ الحفظ...",
-  exportTitle: "تصدير البيانات",
-  exportTab: "التصدير",
-  exportMembers: "الانتساب",
-  exportDonations: "الدعم",
-  exportAges: "الأعصار",
 } as const;
 
 export const settingsForm = {

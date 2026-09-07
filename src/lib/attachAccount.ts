@@ -10,6 +10,7 @@ import { common, members } from "@/lib/messages";
 export interface AttachedAccount {
   userId: string;
   tempPassword?: string;
+  tempPasswordHours?: number;
 }
 
 export async function attachAccount(
@@ -44,7 +45,7 @@ export async function attachAccount(
         tempPasswordExpiresAt: tempPasswordExpiry(tempPasswordHours),
       },
     });
-    return { userId, tempPassword };
+    return { userId, tempPassword, tempPasswordHours };
   }
 
   await prisma.$transaction(async (tx) => {

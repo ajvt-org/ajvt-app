@@ -78,10 +78,6 @@ export default function SettingsForm({
 }) {
   return (
     <form onSubmit={onSubmit} className="card p-4 space-y-3">
-      <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
-        <IconLabel name="target">{texts.title}</IconLabel>
-      </p>
-
       <label className="flex items-center gap-2 text-xs font-bold">
         <input
           id="quiz-confirm-answers"

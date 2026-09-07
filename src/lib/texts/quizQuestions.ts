@@ -12,7 +12,6 @@ export const quizBankPicker = {
 } as const;
 
 export const quizSettingsForm = {
-  title: "إعدادات الأسئلة",
   confirmAnswers: "زر تأكيد الإجابة",
   defaultsTitle: "ما يظهر جاهزاً عند إضافة سؤال جديد",
   defaultAnswerCount: "عدد الإجابات الافتراضي",

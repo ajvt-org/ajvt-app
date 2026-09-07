@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import IconLabel from "@/components/IconLabel";
 import ScoreRow from "./ScoreRow";
 import { type AttemptDetail } from "./AttemptBreakdown";
 import { hasFullAccess } from "@/lib/adminRoles";
@@ -121,10 +120,6 @@ export default function ScoresPanel({
 
   return (
     <div className="card p-4 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="chart">{quizScores.title}</IconLabel>
-      </p>
-
       <label className="block text-xs font-bold" htmlFor="s-round">
         {quizScores.round}
       </label>

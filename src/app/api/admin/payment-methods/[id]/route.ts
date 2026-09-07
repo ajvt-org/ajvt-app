@@ -4,8 +4,14 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { paymentMethods as messages } from "@/lib/messages";
-import { readName, swappedPositions } from "@/lib/paymentMethodAdmin";
+import {
+  adminAccountRows,
+  numbersHoldPayments,
+  readName,
+  swappedPositions,
+} from "@/lib/paymentMethodAdmin";
 import { allPaymentMethods } from "@/lib/paymentMethodsServer";
+import { accountsOf, accountUsage } from "@/lib/paymentAccountsServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/payment-methods/[id]",
@@ -37,7 +43,12 @@ export const PATCH = withRoute(
       });
     }
 
-    const data: { name?: string; active?: boolean; memberFacing?: boolean } = {};
+    const data: {
+      name?: string;
+      active?: boolean;
+      memberFacing?: boolean;
+      carriesNumbers?: boolean;
+    } = {};
 
     if (body.name !== undefined) {
       const name = readName(body.name);
@@ -54,6 +65,16 @@ export const PATCH = withRoute(
 
     if (typeof body.active === "boolean") data.active = body.active;
     if (typeof body.memberFacing === "boolean") data.memberFacing = body.memberFacing;
+
+    if (typeof body.carriesNumbers === "boolean") {
+      if (!body.carriesNumbers && existing.carriesNumbers) {
+        const rows = adminAccountRows(await accountsOf(id), await accountUsage());
+        if (numbersHoldPayments(rows)) {
+          return NextResponse.json({ error: messages.numbersHoldPayments }, { status: 409 });
+        }
+      }
+      data.carriesNumbers = body.carriesNumbers;
+    }
 
     const method = await prisma.$transaction(async (tx) => {
       const saved = await tx.paymentMethod.update({ where: { id }, data });
@@ -86,8 +107,14 @@ export const PATCH = withRoute(
           name: existing.name,
           active: existing.active,
           memberFacing: existing.memberFacing,
+          carriesNumbers: existing.carriesNumbers,
         },
-        after: { name: method.name, active: method.active, memberFacing: method.memberFacing },
+        after: {
+          name: method.name,
+          active: method.active,
+          memberFacing: method.memberFacing,
+          carriesNumbers: method.carriesNumbers,
+        },
       },
     );
 

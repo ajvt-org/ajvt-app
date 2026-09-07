@@ -13,6 +13,7 @@ const SELECT = {
   id: true,
   name: true,
   memberFacing: true,
+  carriesNumbers: true,
   active: true,
   position: true,
 } as const;

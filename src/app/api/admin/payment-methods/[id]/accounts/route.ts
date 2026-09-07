@@ -34,6 +34,9 @@ export const POST = withRoute(
 
     const method = await prisma.paymentMethod.findUnique({ where: { id } });
     if (!method) return NextResponse.json({ error: methodMessages.notFound }, { status: 404 });
+    if (!method.carriesNumbers) {
+      return NextResponse.json({ error: messages.methodTakesNoNumbers }, { status: 409 });
+    }
 
     const code = readCode(body.code);
     if (!code) return NextResponse.json({ error: messages.codeRequired }, { status: 400 });

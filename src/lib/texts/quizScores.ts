@@ -4,7 +4,6 @@ export const quizScores = {
   roundVoided: "ألغيت نقاط الجولة",
   allRoundsRestored: "أرجعت نقاط كل الجولات",
   allRoundsVoided: "ألغيت نقاط كل الجولات",
-  title: "نقاط المشاركين",
   round: "الجولة",
   nobodyPlayed: "لم يشارك أحد في هذه الجولة",
   notStarted: "لم تبدأ هذه الجولة بعد",

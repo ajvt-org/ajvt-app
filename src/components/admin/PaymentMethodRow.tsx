@@ -72,7 +72,7 @@ export default function PaymentMethodRow({
 
   return (
     <li className="py-2 space-y-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span
           className="font-bold text-sm min-w-0 truncate"
           style={{ color: method.active ? "var(--text-main)" : "var(--text-muted)" }}
@@ -88,6 +88,7 @@ export default function PaymentMethodRow({
         <span className="badge shrink-0">
           {method.memberFacing ? texts.memberFacing : texts.adminOnly}
         </span>
+        {!method.carriesNumbers && <span className="badge shrink-0">{texts.withoutNumbers}</span>}
         {!method.active && <span className="badge shrink-0">{texts.stopped}</span>}
         {reachesNobody(method) && (
           <span className="badge shrink-0">{accountTexts.reachesNobody}</span>
@@ -124,6 +125,15 @@ export default function PaymentMethodRow({
         </button>
         <button
           type="button"
+          disabled={busy}
+          onClick={() => patch({ carriesNumbers: !method.carriesNumbers })}
+          className="btn-icon"
+          aria-label={texts.toggleCarriesNumbers(method.name)}
+        >
+          <Icon name={method.carriesNumbers ? "card" : "banknote"} size={14} />
+        </button>
+        <button
+          type="button"
           onClick={() => {
             setName(method.name);
             setEditing(true);
@@ -147,6 +157,7 @@ export default function PaymentMethodRow({
       <PaymentAccountList
         methodId={method.id}
         accounts={method.accounts}
+        carriesNumbers={method.carriesNumbers}
         busy={busy}
         onRun={onRun}
       />

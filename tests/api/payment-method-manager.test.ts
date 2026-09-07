@@ -168,3 +168,81 @@ describe("deactivating and reordering", () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe("whether a method is received through a number", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("starts on for every method already recorded", async () => {
+    const method = await methodNamed(SEEDED);
+    expect(method.carriesNumbers).toBe(true);
+  });
+
+  it("is turned off on a method whose numbers hold nothing", async () => {
+    const method = await methodNamed(SEEDED);
+    await prisma.paymentAccount.deleteMany({ where: { methodId: method.id } });
+
+    const res = await PATCH(...patching(method.id, { carriesNumbers: false }));
+
+    expect(res.status).toBe(200);
+    expect((await methodNamed(SEEDED)).carriesNumbers).toBe(false);
+  });
+
+  it("is refused on a method whose number holds a payment", async () => {
+    const method = await methodNamed(SEEDED);
+    const account = await prisma.paymentAccount.findFirstOrThrow({
+      where: { methodId: method.id },
+    });
+    await prisma.payment.create({
+      data: { purpose: "DONATION", amount: 100, accountId: account.id },
+    });
+
+    const res = await PATCH(...patching(method.id, { carriesNumbers: false }));
+
+    expect(res.status).toBe(409);
+    expect((await methodNamed(SEEDED)).carriesNumbers).toBe(true);
+  });
+
+  it("is refused on a method whose number holds an expense", async () => {
+    const method = await methodNamed(SEEDED);
+    const account = await prisma.paymentAccount.findFirstOrThrow({
+      where: { methodId: method.id },
+    });
+    await prisma.expense.create({
+      data: { label: "كرات", amount: 100, accountId: account.id, createdBy: "admin" },
+    });
+
+    const res = await PATCH(...patching(method.id, { carriesNumbers: false }));
+
+    expect(res.status).toBe(409);
+  });
+
+  it("is turned back on without asking about the numbers it holds", async () => {
+    const method = await methodNamed(SEEDED);
+    await prisma.paymentMethod.update({
+      where: { id: method.id },
+      data: { carriesNumbers: false },
+    });
+
+    const res = await PATCH(...patching(method.id, { carriesNumbers: true }));
+
+    expect(res.status).toBe(200);
+    expect((await methodNamed(SEEDED)).carriesNumbers).toBe(true);
+  });
+
+  it("records both sides of the change in the log", async () => {
+    const method = await methodNamed(SEEDED);
+    await prisma.paymentAccount.deleteMany({ where: { methodId: method.id } });
+    await PATCH(...patching(method.id, { carriesNumbers: false }));
+
+    const entry = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "UPDATE_PAYMENT_METHOD" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    expect(JSON.stringify(entry.before)).toContain('"carriesNumbers":true');
+    expect(JSON.stringify(entry.after)).toContain('"carriesNumbers":false');
+  });
+});

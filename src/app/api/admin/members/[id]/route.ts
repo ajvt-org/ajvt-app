@@ -55,6 +55,7 @@ export const PATCH = withRoute(
     if (fullName !== undefined) data.fullName = fullName;
 
     let tempPassword: string | undefined;
+    let tempPasswordHours: number | undefined;
     let attachedUserId: string | undefined;
     if (accountPhone !== undefined) {
       const attached = await attachAccount(id, accountPhone, {
@@ -62,6 +63,7 @@ export const PATCH = withRoute(
       });
       attachedUserId = attached.userId;
       tempPassword = attached.tempPassword;
+      tempPasswordHours = attached.tempPasswordHours;
     }
 
     if (village !== undefined) data.village = village;
@@ -132,7 +134,7 @@ export const PATCH = withRoute(
       );
     }
 
-    return NextResponse.json({ member: { id, ...person }, tempPassword });
+    return NextResponse.json({ member: { id, ...person }, tempPassword, tempPasswordHours });
   },
 );
 

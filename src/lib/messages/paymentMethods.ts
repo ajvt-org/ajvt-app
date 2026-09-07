@@ -4,6 +4,7 @@ export const paymentMethods = {
   exists: "طريقة الدفع هذه موجودة بالفعل",
   notFound: "طريقة الدفع غير موجودة",
   lastMemberFacing: "لا يمكن إيقاف آخر طريقة متاحة للأعضاء",
+  numbersHoldPayments: "أرقام هذه الطريقة تحمل دفعات مسجلة",
 } as const;
 
 export const paymentAccounts = {
@@ -15,4 +16,5 @@ export const paymentAccounts = {
   alreadyClosed: "هذا الرقم مغلق بالفعل",
   sameCode: "الرقم الجديد هو نفسه الرقم الحالي",
   codeIsFixed: "الرقم لا يُعدَّل، استبدله برقم جديد",
+  methodTakesNoNumbers: "هذه الطريقة لا تُستلم برقم",
 } as const;
