@@ -350,3 +350,65 @@ describe("the threshold a level plays to", () => {
     expect(targetHalves(CHESS)).toBeNull();
   });
 });
+
+describe("a unit that starts with a credit", () => {
+  const POINT: SeriesRules = {
+    ...BASE,
+    ending: "FIRST_PAST",
+    unitsPerParent: 20,
+    target: 100,
+    bothPastTarget: "PLAY_ON",
+    decision: "SCORE",
+    halvesPerUnit: 1,
+    startingCredit: 26,
+    creditWindow: 2,
+  };
+
+  it("credits both sides before anything is scored", () => {
+    const standing = deriveSeries(POINT, []);
+
+    expect(standing.sideATotal).toBe(26);
+    expect(standing.sideBTotal).toBe(26);
+  });
+
+  it("keeps the credit for a side that scored in the opening units", () => {
+    const standing = deriveSeries(POINT, [scored(1, 10, 0), scored(2, 0, 8)]);
+
+    expect(standing.sideATotal).toBe(36);
+    expect(standing.sideBTotal).toBe(34);
+    expect(standing.sideALostCredit).toBe(false);
+    expect(standing.sideBLostCredit).toBe(false);
+  });
+
+  it("keeps it on a side that scored in the second of them and not the first", () => {
+    const standing = deriveSeries(POINT, [scored(1, 12, 0), scored(2, 0, 9)]);
+
+    expect(standing.sideBTotal).toBe(35);
+    expect(standing.sideBLostCredit).toBe(false);
+  });
+
+  it("takes it back from a side that scored nothing in all of them", () => {
+    const standing = deriveSeries(POINT, [scored(1, 12, 0), scored(2, 15, 0)]);
+
+    expect(standing.sideBTotal).toBe(0);
+    expect(standing.sideBLostCredit).toBe(true);
+    expect(standing.sideALostCredit).toBe(false);
+  });
+
+  it("leaves the credit standing while the window is still open", () => {
+    const standing = deriveSeries(POINT, [scored(1, 12, 0)]);
+
+    expect(standing.sideBTotal).toBe(26);
+    expect(standing.sideBLostCredit).toBe(false);
+  });
+
+  it("takes nothing back where the level declares no credit", () => {
+    const standing = deriveSeries({ ...POINT, startingCredit: 0, creditWindow: 0 }, [
+      scored(1, 12, 0),
+      scored(2, 15, 0),
+    ]);
+
+    expect(standing.sideBTotal).toBe(0);
+    expect(standing.sideBLostCredit).toBe(false);
+  });
+});

@@ -43,6 +43,8 @@ export interface RecordedAdjustment {
 export interface SeriesStanding {
   sideATotal: number;
   sideBTotal: number;
+  sideALostCredit: boolean;
+  sideBLostCredit: boolean;
   scored: boolean;
   perUnit: number;
   unitsRecorded: number;
@@ -59,6 +61,27 @@ export interface SeriesStanding {
 interface Tally {
   a: number;
   b: number;
+}
+
+interface Lost {
+  a: boolean;
+  b: boolean;
+}
+
+const KEPT: Lost = { a: false, b: false };
+
+export function creditLost(rules: SeriesRules, opening: Tally[]): Lost {
+  if (rules.startingCredit <= 0 || rules.creditWindow <= 0) return KEPT;
+  if (opening.length < rules.creditWindow) return KEPT;
+  return {
+    a: !opening.some((gained) => gained.a > 0),
+    b: !opening.some((gained) => gained.b > 0),
+  };
+}
+
+function takeBackCredit(rules: SeriesRules, totals: Tally, lost: Lost): void {
+  if (lost.a) totals.a -= rules.startingCredit;
+  if (lost.b) totals.b -= rules.startingCredit;
 }
 
 export function countsAScore(rules: SeriesRules): boolean {
@@ -130,6 +153,8 @@ function runHalves(
   target: number | null,
 ) {
   const totals: Tally = { a: rules.startingCredit, b: rules.startingCredit };
+  const opening: Tally[] = [];
+  let lost = KEPT;
   let unitsRecorded = 0;
   let unitsScored = 0;
   let winner: SeriesSide | null = null;
@@ -162,16 +187,30 @@ function runHalves(
       const gained = halvesOf(unit, rules);
       totals.a += gained.a;
       totals.b += gained.b;
+      if (opening.length < rules.creditWindow) opening.push(gained);
+      if (unitsRecorded === rules.creditWindow) {
+        lost = creditLost(rules, opening);
+        takeBackCredit(rules, totals, lost);
+      }
       winner = reached();
       if (winner) break;
     }
   }
 
-  return { totals, unitsRecorded, unitsScored, winner, over: winner !== null };
+  return {
+    totals,
+    unitsRecorded,
+    unitsScored,
+    winner,
+    over: winner !== null,
+    lost,
+  };
 }
 
 function runScores(rules: SeriesRules, units: PlayedUnit[], target: number | null) {
   const totals: Tally = { a: rules.startingCredit, b: rules.startingCredit };
+  const opening: Tally[] = [];
+  let lost = KEPT;
   let unitsRecorded = 0;
   let unitsScored = 0;
   let verdict: Verdict = { winner: null, over: false };
@@ -182,11 +221,23 @@ function runScores(rules: SeriesRules, units: PlayedUnit[], target: number | nul
     const gained = scoreOf(unit);
     totals.a += gained.a;
     totals.b += gained.b;
+    if (opening.length < rules.creditWindow) opening.push(gained);
+    if (unitsRecorded === rules.creditWindow) {
+      lost = creditLost(rules, opening);
+      takeBackCredit(rules, totals, lost);
+    }
     verdict = pastTarget(totals, target, rules);
     if (verdict.over) break;
   }
 
-  return { totals, unitsRecorded, unitsScored, winner: verdict.winner, over: verdict.over };
+  return {
+    totals,
+    unitsRecorded,
+    unitsScored,
+    winner: verdict.winner,
+    over: verdict.over,
+    lost,
+  };
 }
 
 export function deriveSeries(
@@ -210,6 +261,8 @@ export function deriveSeries(
     return {
       sideATotal: totals.a,
       sideBTotal: totals.b,
+      sideALostCredit: run.lost.a,
+      sideBLostCredit: run.lost.b,
       scored,
       perUnit: 1,
       unitsRecorded,
@@ -237,6 +290,8 @@ export function deriveSeries(
   return {
     sideATotal: totals.a,
     sideBTotal: totals.b,
+    sideALostCredit: run.lost.a,
+    sideBLostCredit: run.lost.b,
     scored,
     perUnit: rules.halvesPerUnit,
     unitsRecorded,

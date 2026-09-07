@@ -62,6 +62,8 @@ export function standingRow(over: Partial<SeriesStandingRow> = {}): SeriesStandi
   return {
     sideATotal: 0,
     sideBTotal: 0,
+    sideALostCredit: false,
+    sideBLostCredit: false,
     scored: false,
     perUnit: 2,
     unitsRecorded: 0,

@@ -110,6 +110,8 @@ export interface UnitInput {
   outcome?: unknown;
   sideAPoints?: unknown;
   sideBPoints?: unknown;
+  sideALostCredit?: unknown;
+  sideBLostCredit?: unknown;
 }
 
 const OUTCOMES = new Set(["SIDE_A", "SIDE_B", "DRAW"]);
@@ -122,9 +124,15 @@ export function readUnit(
   outcome: "SIDE_A" | "SIDE_B" | "DRAW" | null;
   sideAPoints: number | null;
   sideBPoints: number | null;
+  sideALostCredit: boolean;
+  sideBLostCredit: boolean;
 } {
+  const credit = {
+    sideALostCredit: input.sideALostCredit === true,
+    sideBLostCredit: input.sideBLostCredit === true,
+  };
   if (input.abandoned === true) {
-    return { abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null };
+    return { abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null, ...credit };
   }
   if (level.decision === "OUTCOME") {
     if (typeof input.outcome !== "string" || !OUTCOMES.has(input.outcome)) {
@@ -135,6 +143,7 @@ export function readUnit(
       outcome: input.outcome as "SIDE_A" | "SIDE_B" | "DRAW",
       sideAPoints: null,
       sideBPoints: null,
+      ...credit,
     };
   }
 
@@ -143,7 +152,13 @@ export function readUnit(
   if (!Number.isInteger(a) || !Number.isInteger(b) || (a as number) < 0 || (b as number) < 0) {
     throw new ValidationError(messages.partWantsTwoScores);
   }
-  return { abandoned: false, outcome: null, sideAPoints: a as number, sideBPoints: b as number };
+  return {
+    abandoned: false,
+    outcome: null,
+    sideAPoints: a as number,
+    sideBPoints: b as number,
+    ...credit,
+  };
 }
 
 type LoadedMatch = Awaited<ReturnType<typeof loadSeriesMatch>>;

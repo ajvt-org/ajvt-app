@@ -210,3 +210,58 @@ describe("the next order under a parent", () => {
     expect(nextOrderUnder(rows, "s1")).toBe(3);
   });
 });
+
+describe("losing the starting credit", () => {
+  const CREDITED = CARDS.map((level) =>
+    level.id === "point" ? { ...level, startingCredit: 26, creditWindow: 2 } : level,
+  );
+
+  it("is computed from the rounds when the point has them", () => {
+    const rows = [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1 }),
+      unit({
+        id: "r1",
+        levelId: "round",
+        parentId: "p1",
+        order: 1,
+        sideAPoints: 30,
+        sideBPoints: 0,
+      }),
+      unit({
+        id: "r2",
+        levelId: "round",
+        parentId: "p1",
+        order: 2,
+        sideAPoints: 50,
+        sideBPoints: 0,
+      }),
+    ];
+
+    const { units } = resolveMatch(CREDITED, rows);
+    const point = units[0].children[0];
+
+    expect(point.standing?.sideBLostCredit).toBe(true);
+    expect(point.standing?.sideBTotal).toBe(0);
+    expect(point.standing?.sideATotal).toBe(106);
+  });
+
+  it("is taken from the row when the point was recorded with nothing under it", () => {
+    const rows = [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({
+        id: "p1",
+        levelId: "point",
+        parentId: "s1",
+        order: 1,
+        sideAPoints: 101,
+        sideBPoints: 0,
+        sideBLostCredit: true,
+      }),
+    ];
+
+    const { units } = resolveMatch(CREDITED, rows);
+
+    expect(units[0].children[0].played.sideBLostCredit).toBe(true);
+  });
+});

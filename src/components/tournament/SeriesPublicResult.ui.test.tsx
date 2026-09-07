@@ -64,6 +64,8 @@ const MATCH: DecidedMatch = {
   series: {
     sideATotal: 3,
     sideBTotal: 1,
+    sideALostCredit: false,
+    sideBLostCredit: false,
     scored: false,
     perUnit: 2,
     unitsRecorded: 2,
