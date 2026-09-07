@@ -71,6 +71,7 @@ export default function TournamentSetupFields({
   minTeamSize,
   maxTeamSize,
   organisedByHomeVillage,
+  playersBuildTeams,
   outsidePlayerLimit,
   mvpVoteMinutes,
   fixturesExist = false,
@@ -80,6 +81,7 @@ export default function TournamentSetupFields({
   onMinTeamSize,
   onMaxTeamSize,
   onOrganisedByHomeVillage,
+  onPlayersBuildTeams,
   onOutsidePlayerLimit,
   onMvpVoteMinutes,
 }: {
@@ -88,6 +90,7 @@ export default function TournamentSetupFields({
   minTeamSize: string;
   maxTeamSize: string;
   organisedByHomeVillage: boolean;
+  playersBuildTeams: boolean;
   outsidePlayerLimit: string;
   mvpVoteMinutes?: string;
   fixturesExist?: boolean;
@@ -97,6 +100,7 @@ export default function TournamentSetupFields({
   onMinTeamSize: (value: string) => void;
   onMaxTeamSize: (value: string) => void;
   onOrganisedByHomeVillage: (value: boolean) => void;
+  onPlayersBuildTeams: (value: boolean) => void;
   onOutsidePlayerLimit: (value: string) => void;
   onMvpVoteMinutes?: (value: string) => void;
 }) {
@@ -181,6 +185,7 @@ export default function TournamentSetupFields({
                 onMaxTeamSize(one);
                 if (e.target.checked) {
                   onOrganisedByHomeVillage(false);
+                  onPlayersBuildTeams(false);
                   onOutsidePlayerLimit("");
                 }
               }}
@@ -211,6 +216,16 @@ export default function TournamentSetupFields({
 
       {!singles && (
         <>
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input
+              id="tournament-players-build-teams"
+              type="checkbox"
+              checked={playersBuildTeams}
+              onChange={(e) => onPlayersBuildTeams(e.target.checked)}
+            />
+            <span style={{ color: "var(--text-main)" }}>{texts.playersBuildTeams}</span>
+          </label>
+
           <label className="flex items-center gap-2 text-sm font-bold">
             <input
               id="tournament-organised-by-home-village"

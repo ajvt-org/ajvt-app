@@ -13,7 +13,7 @@ export const DELETE = withRoute(
     const session = await requireMatchAccess(matchId);
 
     const undone = await undoAdjustment(matchId, adjustmentId);
-    await logAction(session.username, "UNDO_MATCH_ADJUSTMENT", String(undone.order));
+    await logAction(session.username, "UNDO_MATCH_ADJUSTMENT", undone.unitId);
 
     return NextResponse.json(seriesStateOf(await loadSeriesMatch(matchId)));
   },

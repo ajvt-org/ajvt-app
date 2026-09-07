@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
+import TeamBuilder from "./TeamBuilder";
 import { STATUS_CLASS, STATUS_LABEL, type Activity, type EligibleMember } from "./activityTypes";
 import { activityRegistration, memberActivities as texts } from "@/lib/texts";
 
@@ -23,10 +24,10 @@ export default function ActivityRegistrations({
   const showToast = useToast();
 
   const registration = member.registrations.find((r) => r.activityId === activity.id) || null;
-  const team = member.teamMemberships.find((tm) => tm.activityId === activity.id) || null;
   const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
   const settled = registration && registration.status !== "REJECTED";
   const hasTeamsToJoin = activity.joinableTeams.length > 0;
+  const mayBuildATeam = activity.isTournament && activity.playersBuildTeams;
 
   async function run(action: () => Promise<unknown>, done: string) {
     setError("");
@@ -40,20 +41,6 @@ export default function ActivityRegistrations({
     } finally {
       setBusy(false);
     }
-  }
-
-  function pickTeam(teamId: string) {
-    return run(
-      () => api.post(`/api/teams/${teamId}/join`, { userId: member.id }),
-      activityRegistration.joinRequested,
-    );
-  }
-
-  function leaveTeam(teamId: string) {
-    return run(
-      () => api.del(`/api/teams/${teamId}/join`, { userId: member.id }),
-      activityRegistration.requestCancelled,
-    );
   }
 
   function register() {
@@ -168,64 +155,13 @@ export default function ActivityRegistrations({
           </p>
         )}
 
-        {registration?.status === "ACTIVE" && activity.isTournament && hasTeamsToJoin && (
-          <div className="mt-1.5">
-            <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-              <Icon name="flag" size={12} className="icon-inline" />{" "}
-              {team?.status === "ACTIVE"
-                ? `${activityRegistration.yourTeam}:`
-                : `${activityRegistration.pickTeam}:`}
-            </p>
-            {team?.status === "ACTIVE" ? (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="badge badge-active">
-                  <IconLabel name="check" size={11}>
-                    {team.teamName}
-                  </IconLabel>
-                </span>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {activityRegistration.teamLocked}
-                </span>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {activity.joinableTeams.map((t) => {
-                  const mine = team?.teamId === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => pickTeam(t.id)}
-                      disabled={busy || mine}
-                      className="text-xs px-2.5 py-1 rounded-lg font-bold"
-                      style={{
-                        background: mine ? "var(--mint-600)" : "white",
-                        color: mine ? "white" : "var(--mint-700)",
-                        border: "1px solid var(--mint-200)",
-                      }}
-                    >
-                      {mine && <Icon name="clock" size={11} className="icon-inline" />}
-                      {t.name}
-                    </button>
-                  );
-                })}
-                {team && (
-                  <>
-                    <span className="badge badge-pending" style={{ fontSize: "10px" }}>
-                      <IconLabel name="clock">{activityRegistration.awaitingApproval}</IconLabel>
-                    </span>
-                    <button
-                      onClick={() => leaveTeam(team.teamId)}
-                      disabled={busy}
-                      className="text-xs font-bold"
-                      style={{ color: "#991b1b" }}
-                    >
-                      {activityRegistration.cancelRequest}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+        {registration?.status === "ACTIVE" && mayBuildATeam && (
+          <TeamBuilder
+            activityId={activity.id}
+            viewerId={member.id}
+            teams={activity.joinableTeams}
+            onChanged={onReload}
+          />
         )}
       </div>
       {error && (

@@ -30,6 +30,7 @@ function player(id: string, name: string, status: "ACTIVE" | "PENDING" = "ACTIVE
     members: [
       {
         status,
+        invitedByCaptain: false,
         member: {
           id,
           fullName: name,

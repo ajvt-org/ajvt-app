@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/re
 import ResultForm from "./ResultForm";
 import type { DecidedMatch, Team } from "./types";
 import { matchAdmin as texts, seriesResult as seriesTexts } from "@/lib/texts";
-import type { SeriesConfig } from "./seriesConfig";
+import { CHESS_CONFIG } from "@tests/ui/ladders";
 
 const patchMock = vi.fn();
 
@@ -11,14 +11,14 @@ vi.mock("@/lib/api", () => ({
   api: {
     patch: (...args: unknown[]) => patchMock(...args),
     get: async () => ({
-      parts: [],
+      units: [],
       standing: {
-        sideAHalves: 0,
-        sideBHalves: 0,
-        partsRecorded: 0,
-        partsScored: 0,
-        partsLeft: 2,
-        partsAllowed: 2,
+        sideATotal: 0,
+        sideBTotal: 0,
+        unitsRecorded: 0,
+        unitsScored: 0,
+        unitsLeft: 2,
+        unitsAllowed: 2,
         target: null,
         over: false,
         level: true,
@@ -30,18 +30,7 @@ vi.mock("@/lib/api", () => ({
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-const SERIES: SeriesConfig = {
-  partsPerMatch: 2,
-  matchEnding: "PLAY_ALL",
-  partsToWin: null,
-  partDecision: "OUTCOME",
-  partTarget: null,
-  partWord: "لعبة",
-  partsWord: "ألعاب",
-  hasColours: false,
-  firstColourWord: null,
-  secondColourWord: null,
-};
+const SERIES = CHESS_CONFIG;
 
 const MATCH: DecidedMatch = {
   id: "m1",
@@ -63,7 +52,7 @@ const MATCH: DecidedMatch = {
   goals: [],
   penaltyKicks: [],
   bookings: [],
-  parts: [],
+  units: [],
   adjustments: [],
   series: null,
   mvpVote: null,
@@ -81,6 +70,7 @@ function team(id: string, name: string, members: [string, string][]): Team {
     group: null,
     members: members.map(([mid, fullName]) => ({
       status: "ACTIVE",
+      invitedByCaptain: false,
       member: {
         id: mid,
         fullName,

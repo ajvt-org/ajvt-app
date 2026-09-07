@@ -24,6 +24,7 @@ export interface Activity {
   unplayedMatches?: number;
   awaitingStage?: TournamentStage | null;
   joinableTeams: Team[];
+  playersBuildTeams: boolean;
 }
 
 export interface MemberRegistration {

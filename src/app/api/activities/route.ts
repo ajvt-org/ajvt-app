@@ -5,6 +5,7 @@ import { formatActivityDates } from "@/lib/activityDates";
 import { sortActivities } from "@/lib/activityOrder";
 import { STANDING_MATCH_SELECT, matchStanding } from "@/lib/activityMatches";
 import { joinableTeams } from "@/lib/registrationTeamServer";
+import { playersMayBuildTeams } from "@/lib/teamBuilding";
 
 export const GET = withRoute("GET /api/activities", async () => {
   const activities = await prisma.activity.findMany({
@@ -27,6 +28,7 @@ export const GET = withRoute("GET /api/activities", async () => {
       whatsappLink: true,
       minTeamSize: true,
       maxTeamSize: true,
+      playersBuildTeams: true,
       _count: {
         select: {
           registrations: { where: { status: { not: "REJECTED" } } },
@@ -57,6 +59,7 @@ export const GET = withRoute("GET /api/activities", async () => {
       unplayedMatches: a.unplayedMatches,
       awaitingStage: a.awaitingStage,
       joinableTeams: joinableTeams(a, a.teams),
+      playersBuildTeams: playersMayBuildTeams(a),
     })),
   });
 });

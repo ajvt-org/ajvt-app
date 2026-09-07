@@ -1,12 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SeriesResultForm from "./SeriesResultForm";
+import {
+  CHESS_CONFIG,
+  SCORED_CONFIG,
+  ladderConfig,
+  standingRow,
+  unitNode,
+} from "@tests/ui/ladders";
 import type { SeriesConfig } from "./seriesConfig";
 import type {
   AdjustmentRuleRow,
-  PartRow,
   RecordedAdjustmentRow,
   SeriesStandingRow,
+  UnitRow,
 } from "./seriesTypes";
 
 const getMock = vi.fn();
@@ -24,74 +31,51 @@ vi.mock("@/lib/api", () => ({
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-const CHESS: SeriesConfig = {
-  partsPerMatch: 2,
-  matchEnding: "PLAY_ALL",
-  partsToWin: null,
-  partDecision: "OUTCOME",
-  partTarget: null,
-  partWord: "لعبة",
-  partsWord: "ألعاب",
-  hasColours: true,
-  firstColourWord: "أبيض",
-  secondColourWord: "أسود",
-};
+const CHESS = CHESS_CONFIG;
+const SCORED = SCORED_CONFIG;
 
-const MARYASS: SeriesConfig = {
-  partsPerMatch: 3,
-  matchEnding: "FIRST_TO",
-  partsToWin: 2,
-  partDecision: "POINTS",
-  partTarget: 100,
-  partWord: "جولة",
-  partsWord: "جولات",
-  hasColours: false,
-  firstColourWord: null,
-  secondColourWord: null,
-};
+const DEEP = ladderConfig(
+  { unitsPerParent: 3, ending: "FIRST_TO", unitsToWin: 2 },
+  { singular: "شوط", plural: "أشواط", decision: "SCORE" },
+);
+const DEEP_LADDER = [
+  ...DEEP.ladder,
+  {
+    ...DEEP.unit,
+    id: "point",
+    order: 2,
+    singular: "نقطة",
+    plural: "نقاط",
+    decision: "SCORE" as const,
+  },
+];
 
 function standing(over: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
-  return {
-    sideAHalves: 0,
-    sideBHalves: 0,
-    partsRecorded: 0,
-    partsScored: 0,
-    partsLeft: 2,
-    partsAllowed: 2,
-    target: null,
-    over: false,
-    level: true,
-    extending: false,
-    winner: null,
-    ...over,
-  };
+  return standingRow(over);
 }
 
-function part(id: string, order: number, extra: Partial<PartRow> = {}): PartRow {
-  return {
-    id,
-    order,
-    abandoned: false,
-    outcome: null,
-    sideAPoints: null,
-    sideBPoints: null,
-    sideAColour: null,
-    ...extra,
-  };
+function unit(id: string, order: number, extra: Partial<UnitRow> = {}): UnitRow {
+  return unitNode({ id, order, ...extra }) as UnitRow;
 }
 
 const SIDES = ["أحمد", "محمد"];
 
 function mockSeries(state: {
-  parts: PartRow[];
+  units: UnitRow[];
   standing: SeriesStandingRow;
+  levels?: SeriesConfig["ladder"];
   adjustments?: RecordedAdjustmentRow[];
   rules?: AdjustmentRuleRow[];
 }) {
   getMock.mockImplementation(async (url: string) =>
     String(url).includes("adjustment-rules")
       ? { rules: state.rules ?? [] }
-      : { parts: state.parts, adjustments: state.adjustments ?? [], standing: state.standing },
+      : {
+          units: state.units,
+          adjustments: state.adjustments ?? [],
+          levels: state.levels ?? CHESS.ladder,
+          standing: state.standing,
+        },
   );
 }
 
@@ -112,184 +96,230 @@ beforeEach(() => {
   postMock.mockReset();
   patchMock.mockReset();
   delMock.mockReset();
-  getMock.mockImplementation(async (url: string) =>
-    String(url).includes("adjustment-rules")
-      ? { rules: [] }
-      : { parts: [], adjustments: [], standing: standing() },
-  );
+  mockSeries({ units: [], standing: standing() });
 });
 
-describe("the series result form", () => {
-  it("says nothing has been recorded yet", async () => {
+describe("recording the top level of a match", () => {
+  it("names the level in the heading and in the empty line", async () => {
     show();
 
-    expect(await screen.findByText("لم تُسجَّل ألعاب بعد")).toBeDefined();
+    expect(await screen.findByText("ألعاب المباراة")).toBeDefined();
+    expect(screen.getByText("لم تُسجَّل ألعاب بعد")).toBeDefined();
   });
 
-  it("says what would end the match while it is still open", async () => {
+  it("asks for an outcome where the level is decided by one", async () => {
     show();
 
-    expect(await screen.findByText("تنتهي المباراة بلعب كل الجولات")).toBeDefined();
+    expect(await screen.findByLabelText("نتيجة لعبة")).toBeDefined();
   });
 
-  it("says the number that ends a match played to a target", async () => {
-    mockSeries({ parts: [], standing: standing({ partsLeft: 3 }) });
-    show(MARYASS);
+  it("asks for two scores where the level is played to a target", async () => {
+    mockSeries({ units: [], standing: standing(), levels: SCORED.ladder });
+    show(SCORED);
 
-    expect(await screen.findByText(/تنتهي المباراة عند/)).toBeDefined();
+    expect(await screen.findByLabelText("نقاط أحمد")).toBeDefined();
+    expect(screen.getByLabelText("نقاط محمد")).toBeDefined();
   });
 
-  it("shows the parts already recorded and who took each", async () => {
-    mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "DRAW" })],
-      standing: standing({ sideAHalves: 3, sideBHalves: 1, over: true, winner: "SIDE_A" }),
+  it("records the top level in one step without asking for anything under it", async () => {
+    show();
+    fireEvent.change(await screen.findByLabelText("نتيجة لعبة"), {
+      target: { value: "SIDE_A" },
     });
-    show();
-
-    expect(await screen.findByText("فوز أحمد")).toBeDefined();
-    expect(screen.getByText("تعادل")).toBeDefined();
-    expect(screen.getByText("لعبة 1")).toBeDefined();
-  });
-
-  it("renders a half as a half rather than a decimal", async () => {
-    mockSeries({
-      parts: [part("p1", 1, { outcome: "DRAW" })],
-      standing: standing({ sideAHalves: 1, sideBHalves: 1 }),
-    });
-    const { container } = show();
-
-    await screen.findAllByText("تعادل");
-    expect(container.textContent).toContain("½");
-    expect(container.textContent).not.toContain("0.5");
-  });
-
-  it("shows a side that owes parts as a negative", async () => {
-    mockSeries({
-      parts: [],
-      standing: standing({ sideAHalves: 4, sideBHalves: -4 }),
-    });
-    const { container } = show();
-
-    await screen.findByText("لم تُسجَّل ألعاب بعد");
-    expect(container.textContent).toContain("−2");
-    expect(container.textContent).toContain("2");
-  });
-
-  it("asks for an outcome where the parts are decided by one", async () => {
-    show();
-
-    expect(await screen.findByLabelText("نتيجة الجولة")).toBeDefined();
-    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
-  });
-
-  it("asks for two scores where the parts are played to a target", async () => {
-    show(MARYASS);
-
-    await waitFor(() => expect(screen.queryAllByRole("spinbutton")).toHaveLength(2));
-    expect(screen.queryByLabelText("نتيجة الجولة")).toBeNull();
-  });
-
-  it("sends the outcome it was given", async () => {
-    postMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
-    show();
-
-    fireEvent.change(await screen.findByLabelText("نتيجة الجولة"), {
-      target: { value: "SIDE_B" },
-    });
-    fireEvent.click(screen.getByText("إضافة"));
+    fireEvent.click(screen.getByRole("button", { name: "إضافة لعبة" }));
 
     await waitFor(() => expect(postMock).toHaveBeenCalled());
-    expect(postMock.mock.calls[0][1]).toEqual({ outcome: "SIDE_B" });
+    expect(postMock.mock.calls[0][1]).toEqual({ outcome: "SIDE_A", parentId: null });
   });
 
-  it("will not add a part until it has been given one", async () => {
-    show();
-
-    const add = await screen.findByRole("button", { name: /إضافة/ });
-    expect(add.hasAttribute("disabled")).toBe(true);
-  });
-
-  it("says which side had which colour", async () => {
+  it("shows the units already recorded and who took each", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A", sideAColour: "FIRST" })],
-      standing: standing({ sideAHalves: 2 }),
+      units: [unit("u1", 1, { outcome: "SIDE_A" }), unit("u2", 2, { outcome: "DRAW" })],
+      standing: standing({ sideATotal: 3, sideBTotal: 1, unitsRecorded: 2 }),
     });
     show();
 
-    expect(await screen.findByText("أحمد أبيض")).toBeDefined();
+    expect(await screen.findByText("لعبة 1")).toBeDefined();
+    expect(screen.getAllByText("فوز أحمد").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("تعادل").length).toBeGreaterThan(0);
+  });
+});
+
+describe("opening a unit onto the level under it", () => {
+  const SETS = [unit("s1", 1, { levelId: "unit", children: [], sideAPoints: 12, sideBPoints: 9 })];
+
+  it("offers nothing to open where the ladder stops at this level", async () => {
+    mockSeries({ units: [unit("u1", 1, { outcome: "SIDE_A" })], standing: standing() });
+    show();
+
+    await screen.findByText("لعبة 1");
+    expect(screen.queryByLabelText("فتح لعبة 1")).toBeNull();
   });
 
-  it("says a knockout match is being extended rather than finished", async () => {
-    mockSeries({
-      parts: [part("p1", 1, { outcome: "DRAW" }), part("p2", 2, { outcome: "DRAW" })],
-      standing: standing({
-        sideAHalves: 2,
-        sideBHalves: 2,
-        partsRecorded: 2,
-        partsAllowed: 4,
-        partsLeft: 2,
-        extending: true,
+  it("offers to open a unit where a level sits under it", async () => {
+    mockSeries({ units: SETS, standing: standing(), levels: DEEP_LADDER });
+    show(DEEP);
+
+    expect(await screen.findByLabelText("فتح شوط 1")).toBeDefined();
+  });
+
+  it("says what opening a unit with a typed score will do before it does it", async () => {
+    mockSeries({ units: SETS, standing: standing(), levels: DEEP_LADDER });
+    show(DEEP);
+    fireEvent.click(await screen.findByLabelText("فتح شوط 1"));
+
+    expect(screen.getByText("تسجيل نقاط داخل هذه الوحدة يلغي نتيجتها المكتوبة")).toBeDefined();
+    expect(screen.getAllByLabelText("نقاط أحمد")).toHaveLength(1);
+  });
+
+  it("opens it once the admin says to carry on", async () => {
+    mockSeries({ units: SETS, standing: standing(), levels: DEEP_LADDER });
+    show(DEEP);
+    fireEvent.click(await screen.findByLabelText("فتح شوط 1"));
+    fireEvent.click(screen.getByText("متابعة"));
+
+    expect(screen.getAllByLabelText("نقاط أحمد")).toHaveLength(2);
+  });
+
+  it("opens a unit with something under it without a warning", async () => {
+    const withChild = [
+      unit("s1", 1, {
+        children: [unit("p1", 1, { levelId: "point", sideAPoints: 101, sideBPoints: 20 })],
+        standing: standing({ sideATotal: 1, over: false }),
       }),
-    });
-    show();
+    ];
+    mockSeries({ units: withChild, standing: standing(), levels: DEEP_LADDER });
+    show(DEEP);
+    fireEvent.click(await screen.findByLabelText("فتح شوط 1"));
 
-    expect(await screen.findByText("تعادلت، وتُمدَّد بجولتين")).toBeDefined();
+    expect(screen.getByText("نقطة 1")).toBeDefined();
   });
 
-  it("offers no entry once the match is over", async () => {
+  it("records a unit under the one it was opened from", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "SIDE_A" })],
-      standing: standing({
-        sideAHalves: 4,
-        over: true,
-        level: false,
-        winner: "SIDE_A",
-        partsLeft: 0,
+      units: [unit("s1", 1, { children: [], standing: null })],
+      standing: standing(),
+      levels: DEEP_LADDER,
+    });
+    show(DEEP);
+    fireEvent.click(await screen.findByLabelText("فتح شوط 1"));
+    fireEvent.change(screen.getAllByLabelText("نقاط أحمد")[0], { target: { value: "101" } });
+    fireEvent.change(screen.getAllByLabelText("نقاط محمد")[0], { target: { value: "20" } });
+    fireEvent.click(screen.getByRole("button", { name: "إضافة نقطة" }));
+
+    await waitFor(() => expect(postMock).toHaveBeenCalled());
+    expect(postMock.mock.calls[0][1]).toEqual({
+      sideAPoints: 101,
+      sideBPoints: 20,
+      parentId: "s1",
+    });
+  });
+
+  it("shows a computed score and offers no pencil on a unit with children", async () => {
+    const withChild = [
+      unit("s1", 1, {
+        children: [unit("p1", 1, { levelId: "point", sideAPoints: 101, sideBPoints: 20 })],
+        standing: standing({ sideATotal: 1, sideBTotal: 0 }),
       }),
-    });
-    show();
+    ];
+    mockSeries({ units: withChild, standing: standing(), levels: DEEP_LADDER });
+    show(DEEP);
 
-    await screen.findByText("فازت أحمد");
-    expect(screen.queryByLabelText("نتيجة الجولة")).toBeNull();
-    expect(screen.queryByText("إضافة")).toBeNull();
+    await screen.findByText("شوط 1");
+    expect(screen.queryByLabelText("تعديل شوط 1")).toBeNull();
   });
+});
 
-  it("corrects a part while the match is unfinished", async () => {
+describe("a unit a rule ended", () => {
+  it("reads as ended by that rule rather than as a score", async () => {
+    const rule: AdjustmentRuleRow = {
+      id: "r1",
+      name: "تيس",
+      unitsToSelf: 2,
+      unitsFromOther: 2,
+      levelId: "unit",
+      endsUnit: true,
+    };
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" })],
-      standing: standing({ sideAHalves: 2, partsLeft: 1 }),
+      units: [unit("u1", 1, { outcome: "SIDE_A", endedBy: rule })],
+      standing: standing(),
     });
-    patchMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
     show();
 
+    expect(await screen.findByText("أنهتها تيس")).toBeDefined();
+  });
+});
+
+describe("a unit worth more than one", () => {
+  it("says what it counted", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A", worth: 2 })],
+      standing: standing(),
+    });
+    show();
+
+    expect(await screen.findByText("تُحتسب 2")).toBeDefined();
+  });
+});
+
+describe("correcting and removing", () => {
+  it("corrects a unit while the match is unfinished", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A" })],
+      standing: standing(),
+    });
+    show();
     fireEvent.click(await screen.findByLabelText("تعديل لعبة 1"));
-    fireEvent.change(screen.getByLabelText("نتيجة الجولة"), { target: { value: "DRAW" } });
-    fireEvent.click(screen.getByText("حفظ"));
+    fireEvent.change(screen.getByLabelText("نتيجة لعبة"), { target: { value: "SIDE_B" } });
+    fireEvent.click(screen.getByRole("button", { name: "حفظ" }));
 
     await waitFor(() => expect(patchMock).toHaveBeenCalled());
-    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/parts/p1");
+    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/units/u1");
   });
 
-  it("removes a part", async () => {
+  it("removes a unit", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" })],
-      standing: standing({ sideAHalves: 2, partsLeft: 1 }),
+      units: [unit("u1", 1, { outcome: "SIDE_A" })],
+      standing: standing(),
     });
-    delMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
     show();
-
     fireEvent.click(await screen.findByLabelText("حذف لعبة 1"));
 
     await waitFor(() => expect(delMock).toHaveBeenCalled());
+    expect(delMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/units/u1");
   });
 
-  it("says an abandoned part scored nothing", async () => {
+  it("stops offering an editor once the match is over", async () => {
     mockSeries({
-      parts: [part("p1", 1, { abandoned: true })],
-      standing: standing({ partsRecorded: 1, partsLeft: 1 }),
+      units: [unit("u1", 1, { outcome: "SIDE_A" }), unit("u2", 2, { outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
     });
     show();
 
-    expect(await screen.findByText("متوقفة")).toBeDefined();
+    await screen.findByText("لعبة 1");
+    expect(screen.queryByLabelText("نتيجة لعبة")).toBeNull();
+  });
+});
+
+describe("the moves of a level", () => {
+  const teysse: AdjustmentRuleRow = {
+    id: "r1",
+    name: "تيس",
+    unitsToSelf: 2,
+    unitsFromOther: 2,
+    levelId: "unit",
+    endsUnit: false,
+  };
+
+  it("offers only the rules declared for that level", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A" })],
+      standing: standing(),
+      rules: [teysse, { ...teysse, id: "r2", name: "أخرى", levelId: "elsewhere" }],
+    });
+    show();
+
+    const picker = (await screen.findByLabelText("تسجيل حركة")) as HTMLSelectElement;
+    expect(picker.options).toHaveLength(2);
   });
 });

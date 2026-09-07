@@ -23,6 +23,7 @@ export const GET = withRoute(
           select: {
             id: true,
             status: true,
+            invitedByCaptain: true,
             userId: true,
             user: {
               select: {
