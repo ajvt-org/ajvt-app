@@ -8,7 +8,7 @@ import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
 import { saveMembershipYear } from "@/lib/membershipRecord";
-import { currentMembership } from "@/lib/currentMembershipServer";
+import { currentMembershipPaid } from "@/lib/currentMembershipServer";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { memberPaymentSchema } from "./schema";
@@ -31,7 +31,7 @@ export const PUT = withRoute(
       select: { fullName: true },
     });
     if (!account) throw new NotFoundError(messages.notFound);
-    const current = await currentMembership(prisma, id);
+    const current = await currentMembershipPaid(prisma, id);
     if (!current) throw new NotFoundError(messages.notFound);
 
     if (amountTransferred !== undefined && amountTransferred !== null) {
