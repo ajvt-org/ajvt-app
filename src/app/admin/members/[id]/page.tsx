@@ -2,28 +2,27 @@
 
 import { Suspense, use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
+import { loginPathWithNext } from "@/lib/utils";
 import { adminBackLink } from "@/lib/adminBackLink";
 import { auditActionLabel } from "@/lib/auditLabels";
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import AdminBackLink from "@/components/admin/AdminBackLink";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
 import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
+import MemberHeader from "./MemberHeader";
 import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
 import MemberPhotoCard from "./MemberPhotoCard";
 import MembershipEndingCard from "./MembershipEndingCard";
 import MembershipSummary from "./MembershipSummary";
+import ProfileGroup from "./ProfileGroup";
+import ProfileList from "./ProfileList";
 import SupportPrivacyCard from "./SupportPrivacyCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
-import { memberStatusLabels } from "@/lib/messages";
 import { memberPage as texts, registrationStatusLabels } from "@/lib/texts";
 import Money from "@/components/Money";
-
-const MEMBER_STATUS: Record<string, string> = memberStatusLabels;
 
 function day(value: string | Date | null | undefined): string {
   if (!value) return "—";
@@ -84,46 +83,20 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
   const { member, supportPrivacy, history, currentYear } = data;
 
   return (
-    <div className="admin-page space-y-4">
+    <div className="admin-page space-y-5">
       <AdminBackLink href={back.href}>{back.label}</AdminBackLink>
 
-      <div className="card p-4 flex items-center gap-3">
-        {member.photo ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={toThumbUrl(`/api/files/${member.photo}`)}
-            alt={member.fullName}
-            className="w-14 h-14 rounded-full object-cover shrink-0"
-          />
-        ) : (
-          <span
-            className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: "var(--mint-100)" }}
-          >
-            <Icon name="user" size={24} />
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="font-black text-base" style={{ color: "var(--text-main)" }}>
-            {member.fullName}
-          </p>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            <span dir="ltr">{member.user?.phone || "—"}</span> · {member.village}
-            {member.age ? ` · ${member.age}` : ""}
-            {member.memberNumber ? ` · ${member.memberNumber}` : ""}
-          </p>
-        </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <span className="text-xs font-bold">{MEMBER_STATUS[member.status]}</span>
-          <button
-            onClick={() => setEditing((v) => !v)}
-            className="text-xs font-bold px-3 py-1.5 rounded-lg"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            {editing ? texts.cancel : <IconLabel name="pencil">{texts.edit}</IconLabel>}
-          </button>
-        </div>
-      </div>
+      <MemberHeader
+        fullName={member.fullName}
+        photo={member.photo}
+        phone={member.user?.phone ?? null}
+        village={member.village}
+        age={member.age}
+        memberNumber={member.memberNumber}
+        status={member.status}
+        editing={editing}
+        onToggleEdit={() => setEditing((v) => !v)}
+      />
 
       <SamePersonWarning memberId={member.id} />
 
@@ -138,132 +111,120 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
         />
       )}
 
-      {member.user && (
-        <ProfileSection icon="user" title={texts.account}>
-          <div className="text-sm">
-            <AccountPhoneForm memberId={member.id} phone={member.user.phone} onChanged={load} />
-          </div>
-        </ProfileSection>
-      )}
+      <ProfileGroup title={texts.groupPerson}>
+        {member.user && (
+          <ProfileSection icon="user" title={texts.account}>
+            <div className="text-sm">
+              <AccountPhoneForm memberId={member.id} phone={member.user.phone} onChanged={load} />
+            </div>
+          </ProfileSection>
+        )}
 
-      <MemberPhotoCard
-        memberId={member.id}
-        photo={member.photo}
-        locked={member.photoLocked}
-        onChanged={load}
-      />
-
-      <MembershipEndingCard
-        memberId={member.id}
-        status={member.status}
-        membershipYear={member.membershipYear}
-        endedAt={member.endedAt}
-        endedReason={member.endedReason}
-        endedBy={member.endedBy}
-        onChanged={load}
-      />
-
-      {supportPrivacy && (
-        <SupportPrivacyCard
+        <MemberPhotoCard
           memberId={member.id}
-          confidential={supportPrivacy.confidential}
-          namedEntries={supportPrivacy.namedEntries}
+          photo={member.photo}
+          locked={member.photoLocked}
           onChanged={load}
         />
-      )}
+      </ProfileGroup>
 
-      <MembershipSummary
-        userId={member.id}
-        membershipYear={member.membershipYear}
-        status={member.status as "PENDING" | "ACTIVE" | "REJECTED"}
-        endedAt={member.endedAt}
-        currentYear={currentYear}
-      />
+      <ProfileGroup title={texts.groupMembership}>
+        <MembershipSummary
+          userId={member.id}
+          membershipYear={member.membershipYear}
+          status={member.status as "PENDING" | "ACTIVE" | "REJECTED"}
+          endedAt={member.endedAt}
+          currentYear={currentYear}
+        />
 
-      <ProfileSection icon="trophy" title={texts.activities(member.registrations.length)}>
-        {member.registrations.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {texts.noActivities}
-          </p>
-        ) : (
-          <ul className="space-y-1.5">
-            {member.registrations.map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="min-w-0 truncate">{r.activity.title}</span>
-                <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {registrationStatusLabels[r.status] ?? r.status} ·{" "}
-                  <span dir="ltr">{day(r.createdAt)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+        <MembershipEndingCard
+          memberId={member.id}
+          status={member.status}
+          membershipYear={member.membershipYear}
+          endedAt={member.endedAt}
+          endedReason={member.endedReason}
+          endedBy={member.endedBy}
+          onChanged={load}
+        />
+
+        <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
+
+        <ProfileList
+          icon="heart"
+          title={texts.donations(member.donations.length)}
+          empty={texts.noDonations}
+          rows={member.donations.map((d) => ({
+            key: d.id,
+            main: (
+              <span className="font-bold">
+                {d.amount === null ? "—" : <Money value={d.amount} />}
+              </span>
+            ),
+            aside: (
+              <>
+                {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
+              </>
+            ),
+          }))}
+        />
+      </ProfileGroup>
+
+      <ProfileGroup title={texts.groupParticipation}>
+        <ProfileList
+          icon="trophy"
+          title={texts.activities(member.registrations.length)}
+          empty={texts.noActivities}
+          rows={member.registrations.map((r) => ({
+            key: r.id,
+            main: r.activity.title,
+            aside: (
+              <>
+                {registrationStatusLabels[r.status] ?? r.status} ·{" "}
+                <span dir="ltr">{day(r.createdAt)}</span>
+              </>
+            ),
+          }))}
+        />
+
+        <ProfileList
+          icon="users"
+          title={texts.teams(member.teamMemberships.length)}
+          empty={texts.noTeams}
+          rows={member.teamMemberships.map((t) => ({
+            key: t.team.id,
+            main: t.team.name,
+            aside: t.team.activity.title,
+          }))}
+        />
+      </ProfileGroup>
+
+      <ProfileGroup title={texts.groupRecord}>
+        {supportPrivacy && (
+          <SupportPrivacyCard
+            memberId={member.id}
+            confidential={supportPrivacy.confidential}
+            namedEntries={supportPrivacy.namedEntries}
+            onChanged={load}
+          />
         )}
-      </ProfileSection>
 
-      <ProfileSection icon="users" title={texts.teams(member.teamMemberships.length)}>
-        {member.teamMemberships.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {texts.noTeams}
-          </p>
-        ) : (
-          <ul className="space-y-1.5">
-            {member.teamMemberships.map((t) => (
-              <li key={t.team.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="min-w-0 truncate">{t.team.name}</span>
-                <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {t.team.activity.title}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </ProfileSection>
+        <ProfileList
+          icon="list"
+          title={texts.history(history.length)}
+          empty={texts.noHistory}
+          rows={history.map((h) => ({
+            key: h.id,
+            main: <IconLabel name="pencil">{auditActionLabel(h.action)}</IconLabel>,
+            aside: (
+              <>
+                {h.adminUsername} · <span dir="ltr">{day(h.createdAt)}</span>
+              </>
+            ),
+          }))}
+        />
 
-      <ProfileSection icon="heart" title={texts.donations(member.donations.length)}>
-        {member.donations.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {texts.noDonations}
-          </p>
-        ) : (
-          <ul className="space-y-1.5">
-            {member.donations.map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-bold">
-                  {d.amount === null ? "—" : <Money value={d.amount} />}
-                </span>
-                <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </ProfileSection>
-
-      <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
-
-      <ProfileSection icon="list" title={texts.history(history.length)}>
-        {history.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {texts.noHistory}
-          </p>
-        ) : (
-          <ul className="space-y-1.5">
-            {history.map((h) => (
-              <li key={h.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="min-w-0 truncate">
-                  <IconLabel name="pencil">{auditActionLabel(h.action)}</IconLabel>
-                </span>
-                <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {h.adminUsername} · <span dir="ltr">{day(h.createdAt)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </ProfileSection>
-
-      <DeleteMemberCard userId={member.user?.id ?? null} fullName={member.fullName} />
+        <DeleteMemberCard userId={member.user?.id ?? null} fullName={member.fullName} />
+      </ProfileGroup>
     </div>
   );
 }
