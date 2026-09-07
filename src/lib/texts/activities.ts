@@ -66,7 +66,9 @@ export const activityRow = {
     current: "جارية وقادمة",
     finished: "منتهية",
     heading: "تصفية",
-    chip: (label: string, n: number) => `${label} ${n}`,
+    sheetTitle: "تصفية القائمة",
+    clear: "إزالة التصفية",
+    done: "تم",
     pick: (axis: string, label: string) => `${axis}: ${label}`,
   },
   regions: {
