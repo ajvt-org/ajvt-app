@@ -11,6 +11,8 @@ import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { saveMembershipYear } from "@/lib/membershipRecord";
 import { currentMembershipPaid } from "@/lib/currentMembershipServer";
+import { asMembershipState } from "@/lib/currentMembership";
+import { membershipState } from "@/lib/membershipState";
 import { methodsWithAccounts } from "@/lib/paymentMethodsServer";
 import { accountIsOpenOn, methodNames, payableMethods } from "@/lib/paymentMethods";
 import { readBankReference } from "@/lib/bankReference";
@@ -57,6 +59,9 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     const current = await currentMembershipPaid(prisma, session.userId);
     if (!current) {
       throw new NotFoundError(members.notFound);
+    }
+    if (membershipState(asMembershipState(current), membershipYear) === "ENDED") {
+      throw new ConflictError(members.membershipEnded);
     }
     if (current.status === "ACTIVE") {
       throw new ConflictError(members.alreadyAccepted);

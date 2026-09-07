@@ -27,6 +27,7 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       year: true,
       status: true,
       rejectionReason: true,
+      endedAt: true,
       createdAt: true,
       updatedAt: true,
       user: {

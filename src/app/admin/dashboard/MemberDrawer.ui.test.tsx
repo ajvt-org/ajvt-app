@@ -28,6 +28,7 @@ function member(over: Partial<Member> = {}): Member {
     supportAmount: 400,
     status: "PENDING",
     rejectionReason: null,
+    endedAt: null,
     membershipYear: 2025,
     referenceCode: null,
     memberNumber: "AJVT-2025-0026",

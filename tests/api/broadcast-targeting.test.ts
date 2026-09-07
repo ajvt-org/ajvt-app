@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { endMembership } from "@/lib/membershipEndingServer";
+import { getAppSettings } from "@/lib/settingsServer";
+import { MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
 import { resetDb, post, createAdmin, signInAsAdmin, makeMember } from "./helpers";
 
 const sendPushToUsers = vi.hoisted(() =>
@@ -130,5 +133,20 @@ describe("POST /api/admin/notifications/broadcast", () => {
 
     expect(sendPushIgnoringPreferences.mock.calls[0][0]).toEqual([one.userId]);
     expect(sendPushToUsers).not.toHaveBeenCalled();
+  });
+
+  it("leaves a membership an admin ended out of the audience", async () => {
+    const { membershipYear } = await getAppSettings();
+    const kept = await member("محمد");
+    const dropped = await member("أحمد");
+    await endMembership(prisma, dropped.userId, membershipYear, {
+      reason: MEMBERSHIP_ENDING_REASONS[0],
+      by: "admin",
+      at: new Date(),
+    });
+
+    await broadcast({ target: "ALL" });
+
+    expect(reached()).toEqual([kept.userId]);
   });
 });

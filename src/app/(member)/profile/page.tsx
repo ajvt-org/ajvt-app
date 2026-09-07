@@ -63,6 +63,7 @@ export default function ProfilePage() {
           <ProfileSection title={texts.groups.details}>
             {member && (
               <MemberInfoCard
+                currentYear={currentYear}
                 member={member}
                 onCard={Boolean(active && member.memberNumber)}
                 onEdit={active ? undefined : () => router.push(`/membership?id=${member.id}`)}
