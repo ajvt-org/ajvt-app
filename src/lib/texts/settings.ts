@@ -1,8 +1,10 @@
 export const settingsPage = {
+  settingsTab: "الإعدادات",
   saved: "تم الحفظ",
   save: "حفظ",
   saving: "جارٍ الحفظ...",
   exportTitle: "تصدير البيانات",
+  exportTab: "التصدير",
   exportMembers: "الانتساب",
   exportDonations: "الدعم",
   exportAges: "الأعصار",
