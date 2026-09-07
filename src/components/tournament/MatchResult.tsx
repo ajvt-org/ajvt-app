@@ -16,6 +16,7 @@ import type { DecidedMatch, PublicMatch } from "./publicTypes";
 import type { EntrantKind } from "@/lib/entrant";
 import { matchDisplay } from "@/lib/texts";
 import SeriesScoreline from "@/components/admin/tournament/SeriesScoreline";
+import MatchUnits from "./MatchUnits";
 import { halvesText } from "@/lib/halfPoints";
 import { countedUnits, ladderOf, type LevelRow } from "@/lib/matchLevels";
 
@@ -98,14 +99,21 @@ export default function MatchResult({
       />
 
       {match.series && (
-        <div className="flex justify-center">
-          <SeriesScoreline
+        <>
+          <div className="flex justify-center">
+            <SeriesScoreline
+              units={match.units}
+              standing={match.series}
+              unitWord={unitLevel?.singular ?? ""}
+              extensionUnits={unitLevel ? countedUnits(ladder[0].extensionUnits, unitLevel) : ""}
+            />
+          </div>
+          <MatchUnits
             units={match.units}
-            standing={match.series}
-            unitWord={unitLevel?.singular ?? ""}
-            extensionUnits={unitLevel ? countedUnits(ladder[0].extensionUnits, unitLevel) : ""}
+            levels={ladder}
+            sides={[match.firstTeam.name, match.secondTeam.name]}
           />
-        </div>
+        </>
       )}
 
       {match.forfeitWinnerTeamId && (
