@@ -32,7 +32,7 @@ describe("IconLabel", () => {
       </IconLabel>,
     );
 
-    expect(container.querySelector("svg")?.getAttribute("class")).toBe("icon-label-numeral");
+    expect(container.querySelector("svg")?.getAttribute("class")).toBe("icon-label-optical");
   });
 
   it("centers the icon on its label instead of nudging it off the baseline", () => {

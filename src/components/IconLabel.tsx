@@ -21,7 +21,7 @@ export default function IconLabel({
       size={size}
       filled={filled}
       color={color}
-      className={after ? "icon-label-numeral" : undefined}
+      className={after ? "icon-label-optical" : undefined}
     />
   );
   return (
