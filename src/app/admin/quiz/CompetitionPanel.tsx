@@ -121,9 +121,11 @@ export default function CompetitionPanel({
 
   return (
     <div className="card p-4 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="gear">{competitionId ? "إعدادات المسابقة" : "مسابقة جديدة"}</IconLabel>
-      </p>
+      {!competitionId && (
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          <IconLabel name="gear">مسابقة جديدة</IconLabel>
+        </p>
+      )}
 
       {locked && (
         <p

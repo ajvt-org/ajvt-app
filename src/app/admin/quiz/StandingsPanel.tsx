@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import IconLabel from "@/components/IconLabel";
 import { blockLabel } from "@/lib/quizRanking";
 import { quizStandings as texts } from "@/lib/texts";
 
@@ -78,10 +77,6 @@ export default function StandingsPanel({ competitionId }: { competitionId: strin
 
   return (
     <div className="card p-4 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="trophy">{texts.title}</IconLabel>
-      </p>
-
       <div className="flex flex-wrap gap-2">
         {boards.map((board) => (
           <button

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CompetitionsSection from "./CompetitionsSection";
+import { quizScores } from "@/lib/texts";
 
 const get = vi.fn();
 
@@ -156,7 +157,7 @@ describe("CompetitionsSection", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /النقاط/ }));
 
-    await waitFor(() => expect(screen.getByText(/نقاط المشاركين/)).toBeDefined());
+    await waitFor(() => expect(screen.getByLabelText(quizScores.round)).toBeDefined());
   });
 
   it("reaches the participants of a private competition", async () => {
