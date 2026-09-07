@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { GET as ME } from "@/app/api/user/me/route";
-import { resetDb, get, makeMember, createUser, signInAs } from "./helpers";
+import { resetDb, get, makeMember, createUser, signInAs, mirrorMembershipYear } from "./helpers";
 import { runningYear } from "@/lib/membershipYear";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 
 const YEAR = runningYear();
 
@@ -14,6 +15,7 @@ async function member(over: Record<string, unknown> = {}) {
     age: "البدريين",
     paymentMethod: "بنكيلي",
     paymentProof: "proof.webp",
+    paidAmount: MEMBERSHIP_FEE,
     status: "ACTIVE",
     membershipYear: YEAR,
     ...over,
@@ -46,6 +48,7 @@ describe("what a member reads about their own membership", () => {
     await prisma.membership.create({
       data: { userId: account.id, year: YEAR, status: "ACTIVE", paymentMethod: "مصرفي" },
     });
+    await mirrorMembershipYear(account.id, YEAR);
 
     expect(await mine()).toMatchObject({
       status: "ACTIVE",
