@@ -261,15 +261,36 @@ describe("recording a support payment by hand", () => {
     expect(await screen.findByText(members.notFound)).toBeTruthy();
   });
 
-  it("refuses a name that is only spaces", async () => {
-    mockPost();
+  it("records a donation whose giver is not known, with no name at all", async () => {
+    const fetchMock = mockPost();
+    show();
+    await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).donorName).toBeNull();
+  });
+
+  it("takes a name that is only spaces as no name at all", async () => {
+    const fetchMock = mockPost();
     show();
     await userEvent.type(screen.getByLabelText(/اسم المتبرع/), "   ");
     await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
 
     await userEvent.click(screen.getByText(manualDonation.submit));
 
-    expect(screen.getByText(money.nameRequired)).toBeTruthy();
+    expect(bodyOf(fetchMock).donorName).toBeNull();
+  });
+
+  it("refuses the display constant typed in as a name", async () => {
+    mockPost();
+    show();
+    await userEvent.type(screen.getByLabelText(/اسم المتبرع/), money.anonymousDonor);
+    await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(screen.getByText(money.nameIsThePlaceholder)).toBeTruthy();
   });
 
   it("hands back the proof named the way the server named it", async () => {

@@ -15,7 +15,7 @@ const INVALID = common.invalidBody;
 
 export function donationCreateSchema(accepted: readonly string[]) {
   return z.object({
-    donorName,
+    donorName: donorName.nullish(),
     donorPhone: donorPhone.nullish(),
     amount,
     proof: optionalText,

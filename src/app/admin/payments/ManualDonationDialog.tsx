@@ -59,14 +59,14 @@ export default function ManualDonationDialog({
 
   async function submit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    const invalid = donationFormError({ ...form, donorName }, true);
+    const invalid = donationFormError({ ...form, donorName: form.donorName.trim() || undefined });
     setError(invalid);
     if (invalid) return;
 
     setSaving(true);
     try {
       const { donation } = await api.post<DonationResponse>("/api/admin/donations", {
-        donorName: donorName.trim(),
+        donorName: donorName.trim() || null,
         donorPhone: form.donorPhone.trim() || null,
         donorPhoto: form.donorPhoto || null,
         amount: Number(form.amount),
@@ -119,7 +119,7 @@ export default function ManualDonationDialog({
             style={{ color: "var(--text-main)" }}
             htmlFor="manual-donor-name"
           >
-            {manualDonation.donorName} <span style={{ color: "var(--copper-500)" }}>*</span>
+            {manualDonation.donorName}
           </label>
           <input
             id="manual-donor-name"
@@ -128,7 +128,6 @@ export default function ManualDonationDialog({
             onChange={(e) => set({ donorName: e.target.value })}
             readOnly={adopted !== null}
             maxLength={50}
-            required
             className="input"
           />
           {adopted !== null && (
