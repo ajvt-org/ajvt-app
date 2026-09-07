@@ -9,6 +9,7 @@ import { feeOnly, paidForYear } from "@/lib/paidBreakdown";
 import { seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
 import { latestMembership } from "@/lib/currentMembership";
+import { paymentOfYear } from "@/lib/membershipPaymentFields";
 import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 import { getAppSettings } from "@/lib/settingsServer";
 
@@ -28,11 +29,6 @@ export const GET = withRoute(
             year: true,
             status: true,
             rejectionReason: true,
-            paymentMethod: true,
-            accountId: true,
-            account: { select: { id: true, code: true, label: true } },
-            paymentProof: true,
-            referenceCode: true,
             endedAt: true,
             endedReason: true,
             endedBy: true,
@@ -62,7 +58,16 @@ export const GET = withRoute(
         },
         payments: {
           where: { purpose: "MEMBERSHIP" },
-          select: { amount: true, feeApplied: true, year: true },
+          select: {
+            amount: true,
+            feeApplied: true,
+            year: true,
+            method: true,
+            accountId: true,
+            account: { select: { id: true, code: true, label: true } },
+            proof: true,
+            referenceCode: true,
+          },
         },
         donations: {
           orderBy: { createdAt: "desc" },
@@ -109,6 +114,7 @@ export const GET = withRoute(
     });
     const banked = paidForYear(payments, year);
     const paid = named ? banked : feeOnly(banked);
+    const payment = paymentOfYear(payments, year);
 
     const supportPrivacy = isOwner(session.role)
       ? {
@@ -121,6 +127,11 @@ export const GET = withRoute(
       member: {
         ...personOf(person),
         ...membership,
+        paymentMethod: payment?.method ?? null,
+        accountId: payment?.accountId ?? null,
+        account: payment?.account ?? null,
+        paymentProof: payment?.proof ?? null,
+        referenceCode: payment?.referenceCode ?? null,
         id,
         user: { id: person.id, phone: person.phone, createdAt: person.createdAt },
         membershipYear: year,
