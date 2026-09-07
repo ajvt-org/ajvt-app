@@ -115,6 +115,33 @@ describe("the routes moved onto withRoute", () => {
     expect(await res.json()).toEqual({ error: uploads.tooLarge });
   });
 
+  it("refuses a declared body past the limit without reading it", async () => {
+    await signInAs(await createUser());
+    const req = upload() as unknown as Request;
+    let read = false;
+    Object.defineProperty(req, "formData", {
+      value: () => {
+        read = true;
+        return Promise.resolve(new FormData());
+      },
+    });
+    req.headers.set("content-length", String(11 * 1024 * 1024));
+
+    const res = await UPLOAD(req as never);
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: uploads.tooLarge });
+    expect(read).toBe(false);
+  });
+
+  it("still takes an ordinary upload that declares its length", async () => {
+    await signInAs(await createUser());
+    const req = upload() as unknown as Request;
+    req.headers.set("content-length", "2048");
+
+    expect((await UPLOAD(req as never)).status).toBe(200);
+  });
+
   it("accepts an image from a signed-in member and fingerprints it", async () => {
     await signInAs(await createUser());
 
