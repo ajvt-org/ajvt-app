@@ -4,9 +4,10 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { answerRequestSchema, removeMemberSchema } from "./schema";
 import { clearOtherSeats, requireCaptainOf } from "@/lib/teamBuildingServer";
+import { refuseWhenCaptainElsewhere } from "@/lib/teamMoveServer";
 import { entrantWording, tournament } from "@/lib/messages";
 import { entrantOf } from "@/lib/entrantServer";
-import { activeCount, isMember, isRequest } from "@/lib/teamInvites";
+import { activeCount, isRequest } from "@/lib/teamInvites";
 import { squadOf, teamIsFull } from "@/lib/squadSize";
 
 export const PATCH = withRoute(
@@ -30,13 +31,7 @@ export const PATCH = withRoute(
     }
 
     const words = entrantWording(entrantOf(activity));
-    const elsewhere = await prisma.teamMember.findFirst({
-      where: { userId, teamId: { not: teamId }, team: { activityId: activity.id } },
-      select: { status: true, invitedByCaptain: true },
-    });
-    if (elsewhere && isMember(elsewhere)) {
-      return NextResponse.json({ error: words.entrantChoiceLocked }, { status: 403 });
-    }
+    await refuseWhenCaptainElsewhere(activity.id, userId, teamId);
 
     const roster = await prisma.teamMember.findMany({
       where: { teamId },

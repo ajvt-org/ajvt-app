@@ -25,26 +25,31 @@ export default function MyTeamCard({
   candidates,
   squad,
   viewerId,
+  locked,
   busy,
   onInvite,
   onAnswerRequest,
   onRemove,
   onHandOver,
   onDisband,
+  onLeave,
 }: {
   team: NonNullable<MyTeamView["team"]>;
   candidates: Candidate[];
   squad: SquadSize;
   viewerId: string;
+  locked: boolean;
   busy: boolean;
   onInvite: (userId: string) => void;
   onAnswerRequest: (userId: string, accept: boolean) => void;
   onRemove: (userId: string) => void;
   onHandOver: (userId: string) => void;
   onDisband: () => void;
+  onLeave: () => void;
 }) {
   const [pick, setPick] = useState("");
-  const captain = team.captainUserId === viewerId;
+  const leads = team.captainUserId === viewerId;
+  const captain = leads && !locked;
   const seated = team.members.filter((m) => m.kind === "member");
   const label = squadLabel(squad);
   const short = rosterFault(seated.length, squad) === "short";
@@ -61,7 +66,7 @@ export default function MyTeamCard({
             {team.name}
           </IconLabel>
         </span>
-        {captain && (
+        {leads && (
           <span className="badge badge-pending">
             <IconLabel name="captain" size={11}>
               {texts.captain}
@@ -167,7 +172,7 @@ export default function MyTeamCard({
       </ul>
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.teamLocked}
+        {locked ? texts.lockedAtStart : texts.freeUntilStart}
       </p>
 
       {captain && !full && (
@@ -223,6 +228,19 @@ export default function MyTeamCard({
           style={{ color: "#991b1b" }}
         >
           {texts.disband}
+        </button>
+      )}
+
+      {!leads && !locked && (
+        <button
+          onClick={() => {
+            if (confirm(texts.confirmLeave)) onLeave();
+          }}
+          disabled={busy}
+          className="text-xs font-bold"
+          style={{ color: "#991b1b" }}
+        >
+          {texts.leave}
         </button>
       )}
     </div>

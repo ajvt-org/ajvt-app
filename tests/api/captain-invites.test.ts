@@ -221,15 +221,18 @@ describe("the invited player answering", () => {
     expect(await seat(first.team.id, guest.userId)).toBeNull();
   });
 
-  it("refuses a player already accepted onto another team, which the lock issue lifts", async () => {
+  it("refuses a player who would be walking away from a team they lead", async () => {
     const activity = await aTournament();
-    const settled = await captainWithTeam(activity.id, "سالم", "النسور");
+    const leading = await captainWithTeam(activity.id, "سالم", "النسور");
     const { team } = await captainWithTeam(activity.id, "محمد", "الصقور");
-    await invite(team.id, settled.member.userId);
-    await signInAsUser(settled.member.userId);
+    await invite(team.id, leading.member.userId);
+    await signInAsUser(leading.member.userId);
 
-    expect((await answer(team.id, true)).status).toBe(403);
-    expect(await seat(team.id, settled.member.userId)).toMatchObject({ status: "PENDING" });
+    const res = await answer(team.id, true);
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: messages.captainCannotLeave });
+    expect(await seat(team.id, leading.member.userId)).toMatchObject({ status: "PENDING" });
   });
 
   it("answers nothing when there is no invitation, only a request", async () => {

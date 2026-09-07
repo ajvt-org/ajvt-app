@@ -15,6 +15,7 @@ const person = (
 ): MyTeamMember => ({ userId, fullName, photo: null, kind });
 
 const view = (over: Partial<MyTeamView> = {}): MyTeamView => ({
+  locked: false,
   team: null,
   request: null,
   invitations: [],
@@ -331,5 +332,83 @@ describe("a registrant waiting on a team to answer", () => {
 
     expect(await screen.findByText(texts.awaitingApproval)).toBeDefined();
     expect(screen.getByRole("button", { name: texts.cancelRequest })).toBeDefined();
+  });
+});
+
+describe("once the tournament has started", () => {
+  const started = (over: Partial<MyTeamView> = {}) => view({ locked: true, ...over });
+
+  it("tells a player their team is settled and offers no way out", async () => {
+    show(started({ team: led([person("u9", "سالم"), person(VIEWER, "محمد")], "u9") }));
+
+    expect(await screen.findByText(texts.lockedAtStart)).toBeDefined();
+    expect(screen.queryByRole("button", { name: texts.leave })).toBeNull();
+  });
+
+  it("takes every control off the captain and leaves the roster readable", async () => {
+    show(
+      started({
+        team: led([person(VIEWER, "محمد"), person("u2", "سالم"), person("u3", "بابا", "request")]),
+        candidates: [{ userId: "u5", fullName: "الشيخ" }],
+      }),
+    );
+
+    expect(await screen.findByText("الصقور")).toBeDefined();
+    expect(screen.getByText(texts.captain)).toBeDefined();
+    expect(screen.queryByLabelText(new RegExp(texts.inviteHeading))).toBeNull();
+    expect(screen.queryByLabelText(texts.acceptPlayer("بابا"))).toBeNull();
+    expect(screen.queryByLabelText(texts.removePlayer("سالم"))).toBeNull();
+    expect(screen.queryByRole("button", { name: texts.disband })).toBeNull();
+  });
+
+  it("offers no way to build a team to somebody who never joined one", async () => {
+    show(started());
+
+    expect(await screen.findByText(texts.lockedAtStart)).toBeDefined();
+    expect(screen.queryByLabelText(new RegExp(texts.createHeading))).toBeNull();
+  });
+
+  it("hides an invitation nobody answered in time", async () => {
+    show(started({ invitations: [{ id: "t7", name: "النسور" }] }));
+
+    await screen.findByText(texts.lockedAtStart);
+    expect(screen.queryByText(texts.invitedBy("النسور"))).toBeNull();
+  });
+});
+
+describe("while the tournament has not started", () => {
+  it("says a player is free to change team, and offers the way out", async () => {
+    show(view({ team: led([person("u9", "سالم"), person(VIEWER, "محمد")], "u9") }));
+
+    expect(await screen.findByText(texts.freeUntilStart)).toBeDefined();
+    expect(screen.getByRole("button", { name: texts.leave })).toBeDefined();
+  });
+
+  it("offers the captain no way out but the handover and the disband", async () => {
+    show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
+
+    await screen.findByText("الصقور");
+    expect(screen.queryByRole("button", { name: texts.leave })).toBeNull();
+    expect(screen.getByRole("button", { name: texts.disband })).toBeDefined();
+    expect(screen.getByLabelText(texts.makeCaptain("سالم"))).toBeDefined();
+  });
+
+  it("leaves on the join route", async () => {
+    const { fetchMock } = show(
+      view({ team: led([person("u9", "سالم"), person(VIEWER, "محمد")], "u9") }),
+    );
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: texts.leave }));
+
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
+    expect(sent(fetchMock, 1)).toMatchObject({
+      url: "/api/teams/t1/join",
+      method: "DELETE",
+      body: { userId: VIEWER },
+    });
   });
 });

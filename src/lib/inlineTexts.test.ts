@@ -262,6 +262,8 @@ const KEPT_CLEAN = [
   "src/components/team/NoTeamYet.tsx",
   "src/components/team/TeamInvitations.tsx",
   "src/lib/teamInvites.ts",
+  "src/lib/teamLock.ts",
+  "src/lib/teamMoveServer.ts",
   "src/app/api/teams/[teamId]/invites",
   "src/app/api/teams/[teamId]/members",
   "src/app/api/teams/[teamId]/route.ts",

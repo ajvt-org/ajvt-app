@@ -96,11 +96,16 @@ export default function TeamBuilder({
 
   const disband = () => run(() => api.del(`/api/teams/${teamId()}`), texts.disbanded);
 
+  const leave = () =>
+    run(() => api.del(`/api/teams/${teamId()}/join`, { userId: viewerId }), texts.left);
+
   if (!view) return null;
 
   return (
     <div className="mt-1.5 space-y-2.5">
-      <TeamInvitations invitations={view.invitations} busy={busy} onAnswer={answerInvitation} />
+      {!view.locked && (
+        <TeamInvitations invitations={view.invitations} busy={busy} onAnswer={answerInvitation} />
+      )}
 
       {view.team ? (
         <MyTeamCard
@@ -108,13 +113,19 @@ export default function TeamBuilder({
           candidates={view.candidates}
           squad={view.squad}
           viewerId={viewerId}
+          locked={view.locked}
           busy={busy}
           onInvite={invite}
           onAnswerRequest={answerRequest}
           onRemove={removePlayer}
           onHandOver={handOver}
           onDisband={disband}
+          onLeave={leave}
         />
+      ) : view.locked ? (
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {texts.lockedAtStart}
+        </p>
       ) : view.request ? (
         <div className="space-y-2">
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>

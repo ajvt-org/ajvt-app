@@ -153,6 +153,7 @@ describe("what a registrant is told about their team", () => {
     const body = await (await mine(activity.id)).json();
 
     expect(body).toEqual({
+      locked: false,
       team: null,
       request: null,
       invitations: [],
