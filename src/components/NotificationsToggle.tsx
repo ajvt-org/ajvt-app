@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Icon from "./Icon";
 import Toggle from "./Toggle";
 import NotificationCategories from "./NotificationCategories";
+import { notificationsToggle } from "@/lib/texts/notifications";
 
 type Status = "unsupported" | "off" | "busy" | "on" | "denied" | "error";
 
@@ -103,28 +104,28 @@ export default function NotificationsToggle({
   const on = status === "on";
   const hint =
     status === "denied"
-      ? "الإشعارات محظورة — فعّلها من إعدادات المتصفح"
+      ? notificationsToggle.blocked
       : status === "error"
-        ? "تعذّر تغيير الإعداد، حاول مرة أخرى"
-        : on
-          ? "ستصلك أخبار الأنشطة وقرارات الطلبات"
-          : awaitingDecision
-            ? "لتصلك رسالة فور قبول أو رفض طلبك"
-            : "لتصلك تذكيرات المباريات وأخبار الأنشطة أولاً بأول";
+        ? notificationsToggle.failed
+        : !on && awaitingDecision
+          ? notificationsToggle.awaitingDecision
+          : null;
 
   return (
     <>
       <div className="card p-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            <Icon name="bell" size={15} className="icon-inline" /> الإشعارات
+            <Icon name="bell" size={15} className="icon-inline" /> {notificationsToggle.label}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {hint}
-          </p>
+          {hint && (
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+              {hint}
+            </p>
+          )}
         </div>
         <Toggle
-          label="الإشعارات"
+          label={notificationsToggle.label}
           checked={on}
           disabled={status === "denied" || status === "busy"}
           onChange={(next) => (next ? enable() : disable())}

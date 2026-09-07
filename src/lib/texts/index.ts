@@ -70,6 +70,7 @@ export { memberMatches } from "./memberMatches";
 export { myActivities } from "./myActivities";
 export { mvpVote } from "./mvpVote";
 export { navigation } from "./navigation";
+export { notificationsToggle } from "./notifications";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { waitingRequests, samePerson } from "./waitingRequests";
 export { memberPage } from "./memberPage";
