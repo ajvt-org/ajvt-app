@@ -13,7 +13,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import DestinationSelect from "@/components/admin/DestinationSelect";
-import MemberIdentity from "./MemberIdentity";
+import DonationShownAs from "./DonationShownAs";
 import { proofFromDonation } from "./donationProof";
 import { DANGER_BOX, FIELD, PRIMARY, QUIET } from "./donationTones";
 import { destinationOf, destinationValue, type DestinationOption } from "@/lib/moneyDestination";
@@ -96,135 +96,137 @@ export default function DonationEditForm({
 
   return (
     <div
-      className="mt-2 p-2.5 rounded-lg space-y-2"
+      className="p-2.5 rounded-lg space-y-2"
       style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
     >
-      <div className="rounded-lg p-2 space-y-1.5" style={FIELD}>
-        <p className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
-          {donationEdit.shownAs}
-        </p>
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          {shownAs}
-        </p>
-        {linkedMember && <MemberIdentity member={linkedMember} size={26} />}
-        <button
-          onClick={onRelink}
-          className="text-[11px] px-2 py-1 rounded-lg font-bold"
-          style={QUIET}
-        >
-          <IconLabel name="link" size={11}>
-            {linked ? donationEdit.changeLink : donationEdit.link}
-          </IconLabel>
-        </button>
+      <div className="grid gap-2 lg:grid-cols-3 items-start">
+        <DonationShownAs
+          name={shownAs}
+          linked={linked}
+          linkedMember={linkedMember}
+          onRelink={onRelink}
+        />
+
+        <PhotoUpload
+          photo={form.proof}
+          variant="cover"
+          label={donationEdit.proof}
+          placeholderIcon="receipt"
+          onUpload={(filename) => set({ proof: filename })}
+        />
+
+        <PhotoUpload
+          photo={form.donorPhoto}
+          imageUrlPrefix="/api/files/donation"
+          variant="avatar"
+          label={donationEdit.donorPhoto}
+          placeholderIcon="user"
+          onUpload={(filename) => set({ donorPhoto: filename })}
+        />
       </div>
 
-      <PhotoUpload
-        photo={form.proof}
-        variant="cover"
-        label={donationEdit.proof}
-        placeholderIcon="receipt"
-        onUpload={(filename) => set({ proof: filename })}
-      />
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 items-start">
+        <div className="space-y-1">
+          <label
+            className="block text-[11px] font-bold"
+            style={{ color: "var(--text-muted)" }}
+            htmlFor={`donor-name-${proof.id}`}
+          >
+            {donationEdit.donorName}
+          </label>
+          <input
+            id={`donor-name-${proof.id}`}
+            type="text"
+            aria-label={donationEdit.donorName}
+            placeholder={donationEdit.donorName}
+            value={form.donorName}
+            onChange={(e) => set({ donorName: e.target.value })}
+            maxLength={50}
+            className="input text-xs"
+            style={FIELD}
+          />
+        </div>
 
-      <PhotoUpload
-        photo={form.donorPhoto}
-        imageUrlPrefix="/api/files/donation"
-        variant="avatar"
-        label={donationEdit.donorPhoto}
-        placeholderIcon="user"
-        onUpload={(filename) => set({ donorPhoto: filename })}
-      />
-
-      <label className="block text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
-        {donationEdit.donorName}
-      </label>
-      <input
-        type="text"
-        aria-label={donationEdit.donorName}
-        placeholder={donationEdit.donorName}
-        value={form.donorName}
-        onChange={(e) => set({ donorName: e.target.value })}
-        maxLength={50}
-        className="input text-xs"
-        style={FIELD}
-      />
-
-      <label className="flex items-center gap-2 text-xs font-semibold">
         <input
-          type="checkbox"
-          checked={form.anonymous}
-          onChange={(e) => set({ anonymous: e.target.checked })}
+          type="tel"
+          dir="ltr"
+          aria-label={donationEdit.phone}
+          placeholder={donationEdit.phone}
+          value={form.donorPhone}
+          onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+          maxLength={8}
+          className="input text-xs self-end"
+          style={FIELD}
         />
-        {donationEdit.anonymous}
-      </label>
 
-      <input
-        type="tel"
-        dir="ltr"
-        aria-label={donationEdit.phone}
-        placeholder={donationEdit.phone}
-        value={form.donorPhone}
-        onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-        maxLength={8}
-        className="input text-xs"
-        style={FIELD}
-      />
-      <input
-        type="number"
-        dir="ltr"
-        aria-label={donationEdit.amount}
-        placeholder={donationEdit.amount}
-        value={form.amount}
-        onChange={(e) => set({ amount: e.target.value })}
-        className="input text-xs"
-        style={FIELD}
-      />
-      <select
-        aria-label={donationEdit.methodUnset}
-        value={form.paymentMethod}
-        onChange={(e) => set({ paymentMethod: e.target.value, accountId: "" })}
-        className="input text-xs"
-        style={FIELD}
-      >
-        <option value="">{donationEdit.methodUnset}</option>
-        {methods.map((m) => (
-          <option key={m.name} value={m.name}>
-            {m.name}
-          </option>
-        ))}
-      </select>
+        <input
+          type="number"
+          dir="ltr"
+          aria-label={donationEdit.amount}
+          placeholder={donationEdit.amount}
+          value={form.amount}
+          onChange={(e) => set({ amount: e.target.value })}
+          className="input text-xs self-end"
+          style={FIELD}
+        />
 
-      <PaymentAccountPicker
-        accounts={accounts}
-        value={form.accountId}
-        held={proof.account ?? null}
-        onPick={(accountId) => set({ accountId })}
-        style={FIELD}
-      />
+        <select
+          aria-label={donationEdit.methodUnset}
+          value={form.paymentMethod}
+          onChange={(e) => set({ paymentMethod: e.target.value, accountId: "" })}
+          className="input text-xs"
+          style={FIELD}
+        >
+          <option value="">{donationEdit.methodUnset}</option>
+          {methods.map((m) => (
+            <option key={m.name} value={m.name}>
+              {m.name}
+            </option>
+          ))}
+        </select>
 
-      <input
-        aria-label={bankReferenceTexts.label}
-        placeholder={bankReferenceTexts.label}
-        value={form.bankReference}
-        onChange={(e) => set({ bankReference: e.target.value })}
-        maxLength={40}
-        dir="ltr"
-        className="input text-xs"
-        style={FIELD}
-      />
+        <PaymentAccountPicker
+          accounts={accounts}
+          value={form.accountId}
+          held={proof.account ?? null}
+          onPick={(accountId) => set({ accountId })}
+          style={FIELD}
+        />
 
-      {proof.repeatedReference && (
-        <p className="text-xs font-semibold" style={{ color: "var(--copper-500)" }}>
-          {bankReferenceTexts.repeated}
-        </p>
-      )}
+        <div className="space-y-1">
+          <input
+            aria-label={bankReferenceTexts.label}
+            placeholder={bankReferenceTexts.label}
+            value={form.bankReference}
+            onChange={(e) => set({ bankReference: e.target.value })}
+            maxLength={40}
+            dir="ltr"
+            className="input text-xs"
+            style={FIELD}
+          />
+          {proof.repeatedReference && (
+            <p className="text-xs font-semibold" style={{ color: "var(--copper-500)" }}>
+              {bankReferenceTexts.repeated}
+            </p>
+          )}
+        </div>
 
-      <DestinationSelect
-        destinations={destinations}
-        value={form.destinationId}
-        onChange={(destinationId) => set({ destinationId })}
-        style={FIELD}
-      />
+        <DestinationSelect
+          destinations={destinations}
+          value={form.destinationId}
+          onChange={(destinationId) => set({ destinationId })}
+          style={FIELD}
+        />
+
+        <label className="flex items-center gap-2 text-xs font-semibold self-center">
+          <input
+            type="checkbox"
+            checked={form.anonymous}
+            onChange={(e) => set({ anonymous: e.target.checked })}
+          />
+          {donationEdit.anonymous}
+        </label>
+      </div>
 
       {error && (
         <div className="p-2 rounded-lg text-xs font-semibold" style={DANGER_BOX}>
@@ -232,20 +234,11 @@ export default function DonationEditForm({
         </div>
       )}
 
-      <div className="flex gap-2">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold"
-          style={PRIMARY}
-        >
+      <div className="flex flex-wrap gap-2">
+        <button onClick={save} disabled={saving} className="btn btn-sm font-bold" style={PRIMARY}>
           {saving ? "..." : <IconLabel name="save">{donationEdit.save}</IconLabel>}
         </button>
-        <button
-          onClick={onCancel}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold"
-          style={{ background: "white", color: "var(--text-muted)" }}
-        >
+        <button onClick={onCancel} className="btn btn-sm font-bold" style={QUIET}>
           {donationEdit.cancel}
         </button>
       </div>
