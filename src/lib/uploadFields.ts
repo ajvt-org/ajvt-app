@@ -26,6 +26,7 @@ export type Serving =
 export interface UploadField {
   id: string;
   names(): Promise<(string | null)[]>;
+  holds(filename: string): PrismaPromise<number>;
   rename(from: string, to: string): PrismaPromise<unknown>;
   serve: Serving;
 }
@@ -41,6 +42,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "user.photo",
     names: async () =>
       (await prisma.user.findMany({ select: { photo: true } })).map((r) => r.photo),
+    holds: (filename) => prisma.user.count({ where: { photo: filename } }),
     rename: (from, to) => prisma.user.updateMany({ where: { photo: from }, data: { photo: to } }),
     serve: {
       via: "authenticated",
@@ -59,6 +61,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
       (await prisma.activityRegistration.findMany({ select: { paymentProof: true } })).map(
         (r) => r.paymentProof,
       ),
+    holds: (filename) => prisma.activityRegistration.count({ where: { paymentProof: filename } }),
     rename: (from, to) =>
       prisma.activityRegistration.updateMany({
         where: { paymentProof: from },
@@ -79,6 +82,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "donation.proof",
     names: async () =>
       (await prisma.donation.findMany({ select: { proof: true } })).map((r) => r.proof),
+    holds: (filename) => prisma.donation.count({ where: { proof: filename } }),
     rename: (from, to) =>
       prisma.donation.updateMany({ where: { proof: from }, data: { proof: to } }),
     serve: {
@@ -98,6 +102,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "payment.proof",
     names: async () =>
       (await prisma.payment.findMany({ select: { proof: true } })).map((r) => r.proof),
+    holds: (filename) => prisma.payment.count({ where: { proof: filename } }),
     rename: (from, to) =>
       prisma.payment.updateMany({ where: { proof: from }, data: { proof: to } }),
     serve: {
@@ -126,6 +131,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "expense.proof",
     names: async () =>
       (await prisma.expense.findMany({ select: { proof: true } })).map((r) => r.proof),
+    holds: (filename) => prisma.expense.count({ where: { proof: filename } }),
     rename: (from, to) =>
       prisma.expense.updateMany({ where: { proof: from }, data: { proof: to } }),
     serve: {
@@ -143,6 +149,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "expenseProof.filename",
     names: async () =>
       (await prisma.expenseProof.findMany({ select: { filename: true } })).map((r) => r.filename),
+    holds: (filename) => prisma.expenseProof.count({ where: { filename } }),
     rename: (from, to) =>
       prisma.expenseProof.updateMany({ where: { filename: from }, data: { filename: to } }),
     serve: {
@@ -160,6 +167,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "activity.photo",
     names: async () =>
       (await prisma.activity.findMany({ select: { photo: true } })).map((r) => r.photo),
+    holds: (filename) => prisma.activity.count({ where: { photo: filename } }),
     rename: (from, to) =>
       prisma.activity.updateMany({ where: { photo: from }, data: { photo: to } }),
     serve: { via: "public-route", route: "/api/files/activity" },
@@ -167,6 +175,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
   {
     id: "team.logo",
     names: async () => (await prisma.team.findMany({ select: { logo: true } })).map((r) => r.logo),
+    holds: (filename) => prisma.team.count({ where: { logo: filename } }),
     rename: (from, to) => prisma.team.updateMany({ where: { logo: from }, data: { logo: to } }),
     serve: { via: "public-route", route: "/api/files/team" },
   },
@@ -174,6 +183,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "donation.donorPhoto",
     names: async () =>
       (await prisma.donation.findMany({ select: { donorPhoto: true } })).map((r) => r.donorPhoto),
+    holds: (filename) => prisma.donation.count({ where: { donorPhoto: filename } }),
     rename: (from, to) =>
       prisma.donation.updateMany({ where: { donorPhoto: from }, data: { donorPhoto: to } }),
     serve: { via: "public-route", route: "/api/files/donation" },
@@ -182,11 +192,17 @@ export const UPLOAD_FIELDS: UploadField[] = [
     id: "payment.donorPhoto",
     names: async () =>
       (await prisma.payment.findMany({ select: { donorPhoto: true } })).map((r) => r.donorPhoto),
+    holds: (filename) => prisma.payment.count({ where: { donorPhoto: filename } }),
     rename: (from, to) =>
       prisma.payment.updateMany({ where: { donorPhoto: from }, data: { donorPhoto: to } }),
     serve: { via: "public-route", route: "/api/files/donation" },
   },
 ];
+
+export async function countUploadReferrers(filename: string): Promise<number> {
+  const counts = await prisma.$transaction(UPLOAD_FIELDS.map((field) => field.holds(filename)));
+  return counts.reduce((total, one) => total + one, 0);
+}
 
 export async function locateUpload(base: string): Promise<OwnedMatch | null> {
   const found = await Promise.all(
