@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { formatDate, formatTime } from "@/lib/utils";
 import { paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "@/lib/texts";
@@ -17,6 +17,7 @@ import DonationActions from "./DonationActions";
 import DonationEditForm from "./DonationEditForm";
 import LinkMemberPanel from "./LinkMemberPanel";
 import MemberIdentity from "./MemberIdentity";
+import MembershipActions from "./MembershipActions";
 import ProofThumb from "./ProofThumb";
 import { HISTORY_TARGET, REUSE_KIND } from "./proofKinds";
 import type { DestinationOption } from "@/lib/moneyDestination";
@@ -59,6 +60,7 @@ function ReceiptLine({ receipt }: { receipt: NonNullable<Proof["receipt"]> }) {
 
 export default function ProofCard({
   proof,
+  focused,
   members,
   destinations,
   financeTags,
@@ -67,8 +69,10 @@ export default function ProofCard({
   onDelete,
   onLink,
   onPatch,
+  onMembershipChanged,
 }: {
   proof: Proof;
+  focused?: boolean;
   members: MemberOption[];
   destinations: DestinationOption[];
   financeTags: FinanceTag[];
@@ -77,17 +81,28 @@ export default function ProofCard({
   onDelete: () => void;
   onLink: (userId: string | null) => void;
   onPatch: (changes: Partial<Proof>) => void;
+  onMembershipChanged: () => void;
 }) {
+  const card = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [linking, setLinking] = useState(false);
   const isDonation = proof.kind === "DONATION";
+  const isMembership = proof.kind === "MEMBERSHIP";
   const linkedMember = linkedAccount(members, proof.userId);
   const reuseKind = REUSE_KIND[proof.kind];
   const names = donorNamesShown(proof);
 
+  useEffect(() => {
+    if (focused) card.current?.scrollIntoView({ block: "center" });
+  }, [focused]);
+
   return (
-    <div className="card p-3">
+    <div
+      ref={card}
+      className="card p-3"
+      style={focused ? { outline: "2px solid var(--mint-600)", outlineOffset: "2px" } : undefined}
+    >
       <div className="flex items-start gap-3">
         <ProofThumb proof={proof.proof} alt={proof.memberName} />
 
@@ -199,6 +214,16 @@ export default function ProofCard({
                 />
               )}
             </>
+          )}
+
+          {isMembership && proof.userId && (
+            <MembershipActions
+              userId={proof.userId}
+              memberName={proof.memberName}
+              proof={proof.proof}
+              status={proof.status}
+              onChanged={onMembershipChanged}
+            />
           )}
 
           <button

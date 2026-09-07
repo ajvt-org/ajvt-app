@@ -8,6 +8,7 @@ import type { MemberOption, Proof } from "./paymentTypes";
 
 export default function PaymentsList({
   proofs,
+  focusId,
   members,
   destinations,
   financeTags,
@@ -16,9 +17,11 @@ export default function PaymentsList({
   onDelete,
   onLink,
   onPatch,
+  onMembershipChanged,
   pagination,
 }: {
   proofs: Proof[];
+  focusId?: string;
   members: MemberOption[];
   destinations: DestinationOption[];
   financeTags: FinanceTag[];
@@ -27,6 +30,7 @@ export default function PaymentsList({
   onDelete: (proof: Proof) => void;
   onLink: (proof: Proof, userId: string | null) => void;
   onPatch: (proof: Proof, changes: Partial<Proof>) => void;
+  onMembershipChanged: () => void;
   pagination?: AdminListPagination;
 }) {
   return (
@@ -36,6 +40,7 @@ export default function PaymentsList({
       renderRow={(proof) => (
         <ProofCard
           proof={proof}
+          focused={proof.id === focusId}
           members={members}
           destinations={destinations}
           financeTags={financeTags}
@@ -44,6 +49,7 @@ export default function PaymentsList({
           onDelete={() => onDelete(proof)}
           onLink={(userId) => onLink(proof, userId)}
           onPatch={(changes) => onPatch(proof, changes)}
+          onMembershipChanged={onMembershipChanged}
         />
       )}
       emptyMessage="لا توجد نتائج"

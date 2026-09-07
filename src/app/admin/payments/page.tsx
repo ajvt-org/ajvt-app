@@ -17,6 +17,7 @@ import {
   matchesAccount,
   readPaymentsFilters,
   NO_ACCOUNT,
+  pageHolding,
   writePaymentsFilters,
   type PaymentsFilters,
 } from "./paymentsFilters";
@@ -35,7 +36,7 @@ function match(proof: Proof, filters: PaymentsFilters) {
 }
 
 function AdminPaymentsPageInner() {
-  const { proofs, members, destinations, tags, loading, setProofs } = usePaymentsData();
+  const { proofs, members, destinations, tags, loading, setProofs, reload } = usePaymentsData();
   const { filters, page, go, goToPage } = useAdminListUrlState("/admin/payments", {
     keys: PAYMENTS_FILTER_KEYS,
     readFilters: readPaymentsFilters,
@@ -57,8 +58,13 @@ function AdminPaymentsPageInner() {
   const accountOptions = accountOptionsOf(proofs);
   const filtered = proofs.filter((p) => match(p, filters));
   const totalPages = pageCount(filtered.length, PAGE_SIZE);
-  const current = Math.min(page, totalPages);
-  const shown = paginate(filtered, page, PAGE_SIZE);
+  const holding = pageHolding(
+    filtered.map((p) => p.id),
+    filters.focus,
+    PAGE_SIZE,
+  );
+  const current = Math.min(page === 1 && holding ? holding : page, totalPages);
+  const shown = paginate(filtered, current, PAGE_SIZE);
 
   return (
     <div className="admin-page space-y-3">
@@ -75,13 +81,16 @@ function AdminPaymentsPageInner() {
         </button>
       </div>
 
-      <KindTabs active={filters.kind} onPick={(next) => go({ ...filters, kind: next })} />
+      <KindTabs
+        active={filters.kind}
+        onPick={(next) => go({ ...filters, focus: "", kind: next })}
+      />
 
       <input
         type="text"
         placeholder={texts.search}
         value={filters.q}
-        onChange={(e) => go({ ...filters, q: e.target.value })}
+        onChange={(e) => go({ ...filters, focus: "", q: e.target.value })}
         className="input text-sm"
       />
 
@@ -89,7 +98,7 @@ function AdminPaymentsPageInner() {
         <select
           aria-label={texts.accountFilter}
           value={filters.account}
-          onChange={(e) => go({ ...filters, account: e.target.value })}
+          onChange={(e) => go({ ...filters, focus: "", account: e.target.value })}
           className="input text-sm"
         >
           <option value="">{texts.allAccounts}</option>
@@ -104,6 +113,7 @@ function AdminPaymentsPageInner() {
 
       <PaymentsList
         proofs={shown}
+        focusId={filters.focus}
         members={members}
         destinations={destinations}
         financeTags={tags}
@@ -118,6 +128,7 @@ function AdminPaymentsPageInner() {
             ),
           )
         }
+        onMembershipChanged={reload}
         pagination={{ page: current, totalPages, onGo: goToPage }}
       />
 

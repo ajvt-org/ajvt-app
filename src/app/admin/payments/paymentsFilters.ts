@@ -1,6 +1,6 @@
 import type { KindFilter } from "./KindTabs";
 
-export const PAYMENTS_FILTER_KEYS = ["kind", "q", "account"];
+export const PAYMENTS_FILTER_KEYS = ["kind", "q", "account", "focus"];
 
 export const NO_ACCOUNT = "UNKNOWN";
 
@@ -8,6 +8,7 @@ export interface PaymentsFilters {
   kind: KindFilter;
   q: string;
   account: string;
+  focus: string;
 }
 
 export function readPaymentsFilters(params: URLSearchParams): PaymentsFilters {
@@ -16,6 +17,7 @@ export function readPaymentsFilters(params: URLSearchParams): PaymentsFilters {
     kind: kind === "MEMBERSHIP" || kind === "ACTIVITY" || kind === "DONATION" ? kind : "ALL",
     q: params.get("q") || "",
     account: params.get("account") || "",
+    focus: params.get("focus") || "",
   };
 }
 
@@ -24,7 +26,14 @@ export function writePaymentsFilters(filters: PaymentsFilters): URLSearchParams 
   if (filters.kind !== "ALL") params.set("kind", filters.kind);
   if (filters.q.trim()) params.set("q", filters.q.trim());
   if (filters.account) params.set("account", filters.account);
+  if (filters.focus) params.set("focus", filters.focus);
   return params;
+}
+
+export function pageHolding(ids: string[], focus: string, pageSize: number): number | null {
+  if (!focus) return null;
+  const index = ids.indexOf(focus);
+  return index === -1 ? null : Math.floor(index / pageSize) + 1;
 }
 
 export interface AccountHolder {
