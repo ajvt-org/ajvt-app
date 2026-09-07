@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { nameOf } from "./person";
 import { squadOf } from "./squadSize";
 import { isInvitation, isMember, isRequest, type SeatKind } from "./teamInvites";
+import { membershipIsLocked } from "./teamLock";
 import type { BuildableTournament } from "./teamBuildingServer";
 
 const ROSTER = {
@@ -35,6 +36,7 @@ export interface Candidate {
 }
 
 export interface MyTeamView {
+  locked: boolean;
   team: (TeamHandle & { captainUserId: string | null; members: MyTeamMember[] }) | null;
   request: TeamHandle | null;
   invitations: TeamHandle[];
@@ -85,6 +87,7 @@ export async function myTeamView(
   const captain = team !== null && team.captainUserId === userId;
 
   return {
+    locked: membershipIsLocked(activity, new Date()),
     squad: squadOf(activity),
     request: asked ? asked.team : null,
     invitations: seats.filter(isInvitation).map((seat) => seat.team),

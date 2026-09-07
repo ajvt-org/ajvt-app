@@ -3,7 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { answerSchema, inviteSchema } from "./schema";
-import { clearOtherSeats, requireCaptainOf, requireTeamBuilder } from "@/lib/teamBuildingServer";
+import {
+  clearOtherSeats,
+  refuseWhenLocked,
+  requireCaptainOf,
+  requireTeamBuilder,
+} from "@/lib/teamBuildingServer";
+import { refuseWhenCaptainElsewhere } from "@/lib/teamMoveServer";
 import { entrantWording, tournament } from "@/lib/messages";
 import { entrantOf } from "@/lib/entrantServer";
 import { activeCount, isInvitation, isMember } from "@/lib/teamInvites";
@@ -71,6 +77,7 @@ export const PATCH = withRoute(
     }
 
     const { userId, activity } = await requireTeamBuilder(team.activityId);
+    refuseWhenLocked(activity);
 
     const seat = await prisma.teamMember.findUnique({
       where: { teamId_userId: { teamId, userId } },
@@ -86,13 +93,7 @@ export const PATCH = withRoute(
     }
 
     const words = entrantWording(entrantOf(activity));
-    const elsewhere = await prisma.teamMember.findFirst({
-      where: { userId, teamId: { not: teamId }, team: { activityId: activity.id } },
-      select: { status: true, invitedByCaptain: true },
-    });
-    if (elsewhere && isMember(elsewhere)) {
-      return NextResponse.json({ error: words.entrantChoiceLocked }, { status: 403 });
-    }
+    await refuseWhenCaptainElsewhere(activity.id, userId, teamId);
 
     const squad = squadOf(activity);
     if (teamIsFull(activeCount(await rosterOf(teamId)), squad)) {

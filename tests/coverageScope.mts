@@ -34,6 +34,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/matchSeriesServer.ts",
   "src/lib/myTeamServer.ts",
   "src/lib/teamBuildingServer.ts",
+  "src/lib/teamMoveServer.ts",
   "src/lib/mvpVoteServer.ts",
   "src/lib/prisma.ts",
   "src/lib/proofReuse.ts",

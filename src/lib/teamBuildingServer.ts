@@ -7,8 +7,10 @@ import { currentMembership } from "./currentMembershipServer";
 import { asMembershipState } from "./currentMembership";
 import { membershipState } from "./membershipState";
 import { playersMayBuildTeams } from "./teamBuilding";
+import { membershipIsLocked } from "./teamLock";
 import { isMember, isRequest } from "./teamInvites";
-import { members, tournament } from "./messages";
+import { entrantWording, members, tournament } from "./messages";
+import { entrantOf } from "./entrantServer";
 
 const TOURNAMENT = {
   id: true,
@@ -83,6 +85,12 @@ export async function clearOtherSeats(
   });
 }
 
+export function refuseWhenLocked(activity: BuildableTournament, now = new Date()) {
+  if (membershipIsLocked(activity, now)) {
+    throw new ForbiddenError(entrantWording(entrantOf(activity)).entrantChoiceLocked);
+  }
+}
+
 export async function requireCaptainOf(teamId: string) {
   const team = await prisma.team.findUnique({
     where: { id: teamId },
@@ -92,6 +100,7 @@ export async function requireCaptainOf(teamId: string) {
 
   const { userId, activity } = await requireTeamBuilder(team.activityId);
   if (team.captainUserId !== userId) throw new ForbiddenError(tournament.captainOnly);
+  refuseWhenLocked(activity);
 
   return { userId, activity, team };
 }
