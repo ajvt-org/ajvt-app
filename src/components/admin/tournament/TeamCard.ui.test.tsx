@@ -4,7 +4,7 @@ import TeamCard from "./TeamCard";
 import type { Team, TeamMemberEntry } from "./types";
 import type { SquadBreach } from "@/lib/squadRules";
 import { teamsTab } from "@/lib/texts";
-import { CREST, ONTO_FIRST_LINE } from "./TeamIdentityEditor";
+import { CLEAR_OF_THE_CREST, CREST, ONTO_FIRST_LINE } from "./TeamIdentityEditor";
 
 function entry(
   id: string,
@@ -405,6 +405,52 @@ describe("a squad the admin should look at", () => {
 
     expect(screen.getByLabelText(teamsTab.squadOfRange(16, 16, 22))).toBeDefined();
     expect(screen.getByLabelText(teamsTab.outsideOfLimit(5, 4))).toBeDefined();
+  });
+
+  it("starts and ends both bars together, on a row of their own below the crest", () => {
+    withBreaches(
+      [{ kind: "tooManyOutside", count: 5, limit: 4, overPlayerIds: ["p1"] }],
+      squad(16, 5),
+    );
+
+    const bars = [...document.querySelectorAll<HTMLElement>('summary [role="img"]')];
+    const below = bars[0].parentElement as HTMLElement;
+
+    expect(bars).toHaveLength(2);
+    expect(bars[1].parentElement).toBe(below);
+    expect(bars[1].style.paddingInline).toBe(bars[0].style.paddingInline);
+    expect(bars[0].style.paddingInline).not.toBe("");
+    expect(below.contains(screen.getByLabelText(teamsTab.changeTeamLogo))).toBe(false);
+    expect(below.style.marginBlockStart).toBe(`${CLEAR_OF_THE_CREST}px`);
+  });
+
+  it("gives a team counted by a badge the room the bars get", () => {
+    const members = [...squad(2), entry("pz", "سالم", "PENDING")];
+    cleanup();
+    render(
+      <TeamCard
+        team={team(members)}
+        shownName="فريق النجم"
+        settings={{
+          squad: { min: 16, max: null },
+          organisedByHomeVillage: false,
+          outsidePlayerLimit: null,
+        }}
+        breaches={[]}
+        members={members}
+        open
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    const badge = screen.getByText(teamsTab.rosterCount(members.length));
+    const below = badge.closest("div")?.parentElement as HTMLElement;
+
+    expect(below.style.marginBlockStart).toBe(`${CLEAR_OF_THE_CREST}px`);
+    expect(below.textContent).toContain(teamsTab.awaitingCount(1));
   });
 
   it("says nothing about the outside share on a team the limit does not reach", () => {
