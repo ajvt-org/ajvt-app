@@ -18,6 +18,7 @@ function method(over: Partial<PaymentMethodOption> & { name: string }): PaymentM
   return {
     id: over.name,
     memberFacing: true,
+    carriesNumbers: true,
     active: true,
     position: 0,
     ...over,
@@ -180,6 +181,7 @@ describe("an account a member says they paid into", () => {
     id: "m1",
     name: "بنكيلي",
     memberFacing: true,
+    carriesNumbers: true,
     active: true,
     position: 1,
     accounts: [open, anAccount({ id: "closed", code: "2", closedAt: new Date() })],

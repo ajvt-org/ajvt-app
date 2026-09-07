@@ -601,14 +601,15 @@ model FinanceTag {
 }
 
 model PaymentMethod {
-  id           String           @id @default(cuid())
-  name         String           @unique
-  memberFacing Boolean          @default(false)
-  active       Boolean          @default(true)
-  position     Int
-  accounts     PaymentAccount[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  name           String           @unique
+  memberFacing   Boolean          @default(false)
+  carriesNumbers Boolean          @default(true)
+  active         Boolean          @default(true)
+  position       Int
+  accounts       PaymentAccount[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   @@index([active, position])
 }

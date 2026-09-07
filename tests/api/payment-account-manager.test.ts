@@ -6,6 +6,7 @@ import { resetDb, post, get, patch, createAdmin, signInAsAdmin } from "./helpers
 
 const METHOD = "بنكيلي";
 const CASH = "نقداً";
+const OTHER = "السداد";
 const NEW_CODE = "999999";
 
 async function methodNamed(name: string) {
@@ -85,10 +86,10 @@ describe("the numbers an admin keeps under a method", () => {
     const existing = await prisma.paymentAccount.findFirstOrThrow({
       where: { methodId: method.id },
     });
-    const cash = await methodNamed(CASH);
+    const other = await methodNamed(OTHER);
     const res = await POST(
-      post(`/api/admin/payment-methods/${cash.id}/accounts`, { code: existing.code }),
-      on(cash.id),
+      post(`/api/admin/payment-methods/${other.id}/accounts`, { code: existing.code }),
+      on(other.id),
     );
     expect(res.status).toBe(201);
   });
@@ -309,5 +310,38 @@ describe("changing a number an admin already added", () => {
     const rows = await listed(method.id);
 
     expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
+  });
+});
+
+describe("adding a number to a method received in person", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("is refused rather than taken from a form that should not be there", async () => {
+    const cash = await methodNamed(CASH);
+    const res = await POST(
+      post(`/api/admin/payment-methods/${cash.id}/accounts`, { code: NEW_CODE }),
+      on(cash.id),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await prisma.paymentAccount.count({ where: { methodId: cash.id } })).toBe(0);
+  });
+
+  it("is taken again once the method is put back on numbers", async () => {
+    const cash = await methodNamed(CASH);
+    await prisma.paymentMethod.update({
+      where: { id: cash.id },
+      data: { carriesNumbers: true },
+    });
+
+    const res = await POST(
+      post(`/api/admin/payment-methods/${cash.id}/accounts`, { code: NEW_CODE }),
+      on(cash.id),
+    );
+
+    expect(res.status).toBe(201);
   });
 });
