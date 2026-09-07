@@ -1,35 +1,10 @@
 "use client";
 
-import IconLabel from "@/components/IconLabel";
+import VerbButton from "@/components/admin/VerbButton";
+import { GRAVE, LEAD, RISKY, SAFE } from "@/components/admin/verbTones";
 import { donationActions, donationEdit } from "@/lib/texts";
 import PaymentActions from "./PaymentActions";
-import { DANGER, DANGER_OUTLINE, QUIET } from "./donationTones";
 import type { Proof } from "./paymentTypes";
-
-function Action({
-  busy,
-  tone,
-  primary,
-  onClick,
-  children,
-}: {
-  busy: boolean;
-  tone?: React.CSSProperties;
-  primary?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={busy}
-      className={`btn btn-sm font-bold${primary ? " btn-primary" : ""}`}
-      style={tone}
-    >
-      {busy ? "..." : children}
-    </button>
-  );
-}
 
 export default function DonationActions({
   proof,
@@ -55,48 +30,82 @@ export default function DonationActions({
       danger={
         <>
           {proof.status === "ACTIVE" && (
-            <Action busy={busy} tone={DANGER} onClick={() => onReview("REJECTED")}>
-              <IconLabel name="ban">{donationActions.revoke}</IconLabel>
-            </Action>
+            <VerbButton
+              icon="ban"
+              label={donationActions.revoke}
+              tone={RISKY}
+              disabled={busy}
+              onClick={() => onReview("REJECTED")}
+            />
           )}
-          <Action busy={busy} tone={DANGER_OUTLINE} onClick={onDelete}>
-            <IconLabel name="trash">{donationActions.remove}</IconLabel>
-          </Action>
+          {proof.userId && (
+            <VerbButton
+              icon="unlink"
+              label={donationEdit.unlink}
+              tone={RISKY}
+              disabled={busy}
+              onClick={onUnlink}
+            />
+          )}
+          <VerbButton
+            icon="trash"
+            label={donationActions.remove}
+            tone={GRAVE}
+            disabled={busy}
+            onClick={onDelete}
+          />
         </>
       }
     >
       {proof.status === "PENDING" && (
         <>
-          <Action busy={busy} primary onClick={() => onReview("ACTIVE")}>
-            <IconLabel name="check">{donationActions.accept}</IconLabel>
-          </Action>
-          <Action busy={busy} tone={DANGER} onClick={() => onReview("REJECTED")}>
-            <IconLabel name="close">{donationActions.refuse}</IconLabel>
-          </Action>
+          <VerbButton
+            icon="check"
+            label={donationActions.accept}
+            tone={LEAD}
+            disabled={busy}
+            onClick={() => onReview("ACTIVE")}
+          />
+          <VerbButton
+            icon="close"
+            label={donationActions.refuse}
+            tone={RISKY}
+            disabled={busy}
+            onClick={() => onReview("REJECTED")}
+          />
         </>
       )}
       {proof.status === "REJECTED" && (
-        <Action busy={busy} primary onClick={() => onReview("ACTIVE")}>
-          <IconLabel name="refresh">{donationActions.restore}</IconLabel>
-        </Action>
+        <VerbButton
+          icon="refresh"
+          label={donationActions.restore}
+          tone={LEAD}
+          disabled={busy}
+          onClick={() => onReview("ACTIVE")}
+        />
       )}
 
-      <Action busy={busy} tone={QUIET} onClick={onEdit}>
-        <IconLabel name="pencil">{donationActions.edit}</IconLabel>
-      </Action>
-      <Action busy={busy} tone={QUIET} onClick={onTag}>
-        <IconLabel name="list">{donationActions.classify}</IconLabel>
-      </Action>
-      <Action busy={busy} tone={QUIET} onClick={onLink}>
-        <IconLabel name="link">
-          {proof.userId ? donationEdit.changeLink : donationEdit.link}
-        </IconLabel>
-      </Action>
-      {proof.userId && (
-        <Action busy={busy} tone={QUIET} onClick={onUnlink}>
-          {donationEdit.unlink}
-        </Action>
-      )}
+      <VerbButton
+        icon="pencil"
+        label={donationActions.edit}
+        tone={SAFE}
+        disabled={busy}
+        onClick={onEdit}
+      />
+      <VerbButton
+        icon="tag"
+        label={donationActions.classify}
+        tone={SAFE}
+        disabled={busy}
+        onClick={onTag}
+      />
+      <VerbButton
+        icon="link"
+        label={proof.userId ? donationEdit.changeLink : donationEdit.link}
+        tone={SAFE}
+        disabled={busy}
+        onClick={onLink}
+      />
     </PaymentActions>
   );
 }

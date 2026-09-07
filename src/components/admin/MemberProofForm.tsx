@@ -4,6 +4,8 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ProofUpload from "@/components/ProofUpload";
+import VerbButton from "@/components/admin/VerbButton";
+import { SAFE } from "@/components/admin/verbTones";
 import { api, errorMessage } from "@/lib/api";
 import { memberProof as texts } from "@/lib/texts";
 
@@ -11,10 +13,14 @@ export default function MemberProofForm({
   memberId,
   proof,
   onSaved,
+  compact,
+  onOpenChange,
 }: {
   memberId: string;
   proof: string | null;
   onSaved: () => void;
+  compact?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
@@ -22,8 +28,13 @@ export default function MemberProofForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  function show(next: boolean) {
+    setOpen(next);
+    onOpenChange?.(next);
+  }
+
   function close() {
-    setOpen(false);
+    show(false);
     setPicked(null);
     setError("");
   }
@@ -44,14 +55,11 @@ export default function MemberProofForm({
   }
 
   if (!open) {
+    const label = proof ? texts.replace : texts.add;
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="btn btn-sm font-bold"
-        style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-      >
-        <IconLabel name="camera">{proof ? texts.replace : texts.add}</IconLabel>
-      </button>
+      <VerbButton icon="camera" label={label} tone={SAFE} onClick={() => show(true)}>
+        {compact ? undefined : label}
+      </VerbButton>
     );
   }
 
