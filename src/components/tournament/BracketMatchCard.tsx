@@ -36,8 +36,14 @@ export default function BracketMatchCard({
 
   return (
     <div
-      className="absolute inset-x-0 rounded-xl overflow-hidden"
-      style={{ top, height: CARD_HEIGHT, border: "1px solid var(--mint-200)" }}
+      className="bracket-card rounded-xl overflow-hidden"
+      style={
+        {
+          "--bracket-top": `${top}px`,
+          height: CARD_HEIGHT,
+          border: "1px solid var(--mint-200)",
+        } as React.CSSProperties
+      }
       dir="rtl"
     >
       <BracketSide

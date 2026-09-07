@@ -527,6 +527,63 @@ button:disabled {
   flex-shrink: 0;
 }
 
+/* A knockout bracket is a tree of fixed width columns, which no phone is wide
+   enough for. Below the breakpoint the rounds stack down the page and each card
+   takes the full width, so the final is reached by the scroll a phone already
+   does. The tree returns where there is room for it. The geometry lives in
+   custom properties rather than inline positions so both shapes are one set of
+   cards, one heading per round, and one crest per side, rather than two copies
+   of the bracket with only one of them shown. */
+.bracket-round + .bracket-round {
+  margin-top: 1rem;
+}
+.bracket-card + .bracket-card {
+  margin-top: 0.5rem;
+}
+.bracket-connectors {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .bracket-scroller {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  .bracket-rounds {
+    display: flex;
+    gap: var(--bracket-gap);
+    width: fit-content;
+    margin-inline: auto;
+  }
+  .bracket-round {
+    flex-shrink: 0;
+    width: var(--bracket-column);
+  }
+  .bracket-round + .bracket-round {
+    margin-top: 0;
+  }
+  .bracket-round-name {
+    text-align: center;
+  }
+  .bracket-slots {
+    position: relative;
+    height: var(--bracket-height);
+  }
+  .bracket-card {
+    position: absolute;
+    inset-inline: 0;
+    top: var(--bracket-top);
+  }
+  .bracket-card + .bracket-card {
+    margin-top: 0;
+  }
+  .bracket-connectors {
+    display: block;
+    position: absolute;
+    top: 0;
+  }
+}
+
 /* Arabic carries most of its mass above the baseline, so centring an icon's
    box against the line box leaves it sitting below the text it labels. The
    nudge lifts the icon onto the text's optical centre, whichever side of the
