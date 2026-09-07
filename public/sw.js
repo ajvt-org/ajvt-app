@@ -1,7 +1,13 @@
-const OFFLINE_CACHE = "ajvt-offline-v3";
+const OFFLINE_CACHE = "ajvt-offline-v4";
 const OFFLINE_URL = "/offline.html";
 const DEPLOYING_URL = "/deploying.html";
-const OFFLINE_ASSETS = [OFFLINE_URL, DEPLOYING_URL, "/logo-mark.svg"];
+const FONTS = [
+  "/fonts/tajawal-400.woff2",
+  "/fonts/tajawal-700.woff2",
+  "/fonts/tajawal-800.woff2",
+  "/fonts/tajawal-900.woff2",
+];
+const OFFLINE_ASSETS = [OFFLINE_URL, DEPLOYING_URL, "/logo-mark.svg", ...FONTS];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(OFFLINE_CACHE).then((cache) => cache.addAll(OFFLINE_ASSETS)));

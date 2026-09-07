@@ -18,7 +18,6 @@ export interface BarMark {
 export interface BarGeometry {
   fill: number;
   over: Segment | null;
-  countAt: number;
   marks: BarMark[];
 }
 
@@ -44,7 +43,6 @@ function against(cap: number, count: number, marks: number[]): BarGeometry {
   return {
     fill: at(Math.min(count, cap)),
     over: count > cap ? { start: at(cap), width: at(count) - at(cap) } : null,
-    countAt: at(count),
     marks: marks.map((value) => ({ value, at: at(value) })),
   };
 }

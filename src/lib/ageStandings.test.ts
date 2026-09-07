@@ -27,6 +27,7 @@ describe("rankAgeGroups", () => {
     const counts = new Map([
       ["البدريين", 15],
       ["أشبال", 12],
+      ["الفتيان", 3],
     ]);
 
     expect(rankAgeGroups(groups, counts).map((s) => s.name)).toEqual([
@@ -40,20 +41,46 @@ describe("rankAgeGroups", () => {
     const counts = new Map([
       ["البدريين", 15],
       ["أشبال", 12],
+      ["الفتيان", 3],
     ]);
 
-    expect(rankAgeGroups(groups, counts, new Map(), "members").map((s) => s.name)).toEqual([
+    expect(rankAgeGroups(groups, counts, new Map(), { key: "members" }).map((s) => s.name)).toEqual(
+      ["البدريين", "أشبال", "الفتيان"],
+    );
+  });
+
+  it("drops a group holding neither a member nor an account", () => {
+    expect(rankAgeGroups(groups, new Map([["البدريين", 3]])).map((s) => s.name)).toEqual([
       "البدريين",
-      "أشبال",
-      "الفتيان",
     ]);
   });
 
-  it("gives a group with no members a rank and a zero rate", () => {
-    const last = rankAgeGroups(groups, new Map([["البدريين", 3]])).at(-1)!;
+  it("keeps a group with no members when accounts on the app carry its name", () => {
+    const standings = rankAgeGroups(groups, new Map([["البدريين", 3]]), new Map([["الفتيان", 4]]));
 
-    expect(last.members).toBe(0);
-    expect(last.rate).toBe(0);
+    expect(standings.map((s) => s.name)).toEqual(["البدريين", "الفتيان"]);
+    expect(standings.at(-1)).toMatchObject({ members: 0, rate: 0, users: 4 });
+  });
+
+  it("closes the ranks up, so the list runs from one with no gaps", () => {
+    const standings = rankAgeGroups(
+      groups,
+      new Map([
+        ["البدريين", 3],
+        ["أشبال", 8],
+      ]),
+    );
+
+    expect(standings.map((s) => s.rank)).toEqual([1, 2]);
+  });
+
+  it("keeps every group for the record when asked to", () => {
+    const standings = rankAgeGroups(groups, new Map([["البدريين", 3]]), new Map(), {
+      keepEmpty: true,
+    });
+
+    expect(standings.map((s) => s.name)).toEqual(["البدريين", "أشبال", "الفتيان"]);
+    expect(standings.at(-1)).toMatchObject({ members: 0, rate: 0 });
   });
 
   it("carries the declared headcount through", () => {
@@ -63,18 +90,17 @@ describe("rankAgeGroups", () => {
   });
 
   it("counts accounts apart from memberships", () => {
-    const [top] = rankAgeGroups(
-      groups,
-      new Map([["أشبال", 10]]),
-      new Map([["أشبال", 14]]),
-      "users",
-    );
+    const [top] = rankAgeGroups(groups, new Map([["أشبال", 10]]), new Map([["أشبال", 14]]), {
+      key: "users",
+    });
 
     expect(top).toMatchObject({ name: "أشبال", members: 10, users: 14, userRate: 70 });
   });
 
   it("lets accounts outnumber members, since pending and refused ones have accounts too", () => {
-    const [top] = rankAgeGroups(groups, new Map([["أشبال", 5]]), new Map([["أشبال", 18]]), "users");
+    const [top] = rankAgeGroups(groups, new Map([["أشبال", 5]]), new Map([["أشبال", 18]]), {
+      key: "users",
+    });
 
     expect(top.users).toBeGreaterThan(top.members);
   });

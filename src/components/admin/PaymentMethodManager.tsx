@@ -56,17 +56,13 @@ export default function PaymentMethodManager() {
         <IconLabel name="card">{texts.title}</IconLabel>
       </p>
 
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.hint}
-      </p>
-
       <form onSubmit={create} className="flex items-center gap-2">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
           placeholder={texts.newPlaceholder}
-          className="input flex-1 min-w-0"
+          className="input input-sm flex-1 min-w-0"
           aria-label={texts.newLabel}
         />
         <button type="submit" disabled={busy || !name.trim()} className="btn btn-sm btn-ghost">

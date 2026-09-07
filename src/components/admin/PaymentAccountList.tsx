@@ -31,7 +31,7 @@ export default function PaymentAccountList({
 
   return (
     <div
-      className="mt-1.5 ps-3 rounded-e-xl"
+      className="mt-1.5 ps-3 pe-2 pb-2 rounded-e-xl"
       style={{ borderInlineStart: "3px solid var(--mint-200)", background: "var(--mint-50)" }}
     >
       {accounts.length === 0 ? (
@@ -61,7 +61,7 @@ export default function PaymentAccountList({
           onChange={(e) => setCode(e.target.value)}
           maxLength={30}
           placeholder={texts.newPlaceholder}
-          className="input flex-1 min-w-0"
+          className="input input-sm flex-1 min-w-0"
           dir="ltr"
           aria-label={texts.newLabel}
         />

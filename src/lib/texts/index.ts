@@ -23,7 +23,7 @@ export { activityReport } from "./activityReport";
 export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
 export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
-export { pendingAgeGroups } from "./ageGroups";
+export { ageStandings, pendingAgeGroups } from "./ageGroups";
 export { adminAccounts, activityPicker } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";

@@ -42,7 +42,7 @@ export default function PaymentMethodRow({
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
-          className="input flex-1 min-w-0"
+          className="input input-sm flex-1 min-w-0"
           aria-label={texts.renameLabel}
         />
         <button

@@ -17,7 +17,6 @@ export const paymentMethodManager = {
   edit: (name: string) => `تعديل ${name}`,
   toggleActive: (name: string) => `إيقاف أو تفعيل ${name}`,
   toggleMemberFacing: (name: string) => `إتاحة ${name} للأعضاء`,
-  hint: "طريقة الدفع لا تُحذف، تُوقف فقط، حتى تبقى السجلات القديمة سليمة.",
 } as const;
 
 export const paymentAccountManager = {
@@ -52,7 +51,7 @@ export const renewForm = {
 } as const;
 
 export const paymentsPage = {
-  title: (count: number) => `كل إثباتات الدفع (${count})`,
+  title: (count: number) => `كل الدفعات (${count})`,
   addDonation: "تسجيل تبرع يدوياً",
   search: "بحث بالاسم أو النشاط...",
   allAccounts: "كل الأرقام",
