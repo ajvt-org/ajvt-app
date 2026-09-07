@@ -5,14 +5,14 @@ import { SETTINGS_FIELDS, SETTINGS_GROUPS, cleanValue, groupedFields } from "./s
 const fieldFor = (key: string) => SETTINGS_FIELDS.find((field) => field.key === key);
 
 describe("the hints the association settings carry", () => {
-  it("says nothing under a label that already says it", () => {
-    expect(fieldFor("membershipYear")?.hint).toBeUndefined();
-    expect(fieldFor("tempPasswordHours")?.hint).toBeUndefined();
+  it("says nothing under a label an admin already filled in", () => {
+    for (const key of ["membershipFee", "membershipYear", "tempPasswordHours", "supportWhatsapp"]) {
+      expect(fieldFor(key)?.hint).toBeUndefined();
+    }
   });
 
-  it("keeps the hints that carry what a label cannot", () => {
-    expect(fieldFor("membershipFee")?.hint).toBe(settingsForm.membershipFeeHint);
-    expect(fieldFor("supportWhatsapp")?.hint).toBe(settingsForm.supportWhatsappHint);
+  it("keeps the one line that is about another document", () => {
+    expect(fieldFor("treasurerName")?.hint).toBe(settingsForm.officerHint);
   });
 
   it("prints the officer line once for the two names it covers", () => {
