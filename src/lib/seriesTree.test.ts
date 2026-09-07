@@ -265,3 +265,117 @@ describe("losing the starting credit", () => {
     expect(units[0].children[0].played.sideBLostCredit).toBe(true);
   });
 });
+
+describe("what a won unit is worth", () => {
+  const DOUBLING = CARDS.map((level) =>
+    level.id === "point"
+      ? {
+          ...level,
+          startingCredit: 26,
+          creditWindow: 2,
+          doubledWorth: 2,
+          doublesOnBlankOpponent: true,
+          doublesOnRecoveredCredit: true,
+        }
+      : level,
+  );
+
+  function point(rounds: [number, number][]) {
+    return [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1 }),
+      ...rounds.map(([a, b], index) =>
+        unit({
+          id: `r${index + 1}`,
+          levelId: "round",
+          parentId: "p1",
+          order: index + 1,
+          sideAPoints: a,
+          sideBPoints: b,
+        }),
+      ),
+    ];
+  }
+
+  it("counts two against a side that was blank when the last round began", () => {
+    const rows = point([
+      [40, 0],
+      [30, 0],
+      [20, 0],
+      [11, 15],
+    ]);
+
+    const { units } = resolveMatch(DOUBLING, rows);
+
+    expect(units[0].children[0].played.worth).toBe(2);
+  });
+
+  it("counts one where the losing side had already scored before the last round", () => {
+    const rows = point([
+      [40, 10],
+      [30, 5],
+      [40, 5],
+    ]);
+
+    const { units } = resolveMatch(DOUBLING, rows);
+
+    expect(units[0].children[0].played.worth).toBe(1);
+  });
+
+  it("counts two for a side that lost its credit and won anyway", () => {
+    const rows = point([
+      [0, 30],
+      [0, 20],
+      [101, 5],
+    ]);
+
+    const { units } = resolveMatch(DOUBLING, rows);
+
+    expect(units[0].children[0].standing?.sideALostCredit).toBe(true);
+    expect(units[0].children[0].played.worth).toBe(2);
+  });
+
+  it("counts one where the level doubles on neither condition", () => {
+    const rows = point([
+      [40, 0],
+      [30, 0],
+      [40, 0],
+    ]);
+
+    const { units } = resolveMatch(CARDS, rows);
+
+    expect(units[0].children[0].played.worth).toBe(1);
+  });
+
+  it("carries a doubled point through to the score of the set", () => {
+    const rows = point([
+      [40, 0],
+      [30, 0],
+      [20, 0],
+      [11, 15],
+    ]);
+
+    const { units } = resolveMatch(DOUBLING, rows);
+
+    expect(units[0].standing?.sideATotal).toBe(2);
+  });
+
+  it("takes the worth from the row when the point has nothing under it", () => {
+    const rows = [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({
+        id: "p1",
+        levelId: "point",
+        parentId: "s1",
+        order: 1,
+        sideAPoints: 101,
+        sideBPoints: 0,
+        worth: 2,
+      }),
+    ];
+
+    const { units } = resolveMatch(DOUBLING, rows);
+
+    expect(units[0].standing?.sideATotal).toBe(2);
+  });
+});
