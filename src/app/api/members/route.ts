@@ -10,7 +10,7 @@ import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { saveMembershipYear } from "@/lib/membershipRecord";
-import { currentMembership } from "@/lib/currentMembershipServer";
+import { currentMembershipPaid } from "@/lib/currentMembershipServer";
 import { methodsWithAccounts } from "@/lib/paymentMethodsServer";
 import { accountIsOpenOn, methodNames, payableMethods } from "@/lib/paymentMethods";
 import { readBankReference } from "@/lib/bankReference";
@@ -54,7 +54,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     if (id !== session.userId) {
       throw new NotFoundError(members.notFound);
     }
-    const current = await currentMembership(prisma, session.userId);
+    const current = await currentMembershipPaid(prisma, session.userId);
     if (!current) {
       throw new NotFoundError(members.notFound);
     }
@@ -118,7 +118,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         throw new ConflictError(members.alreadyHasRequest);
       }
       if (!code || attempt >= CODE_ATTEMPTS) {
-        throw new ConflictError("رمز الطلب مستخدم بالفعل، يرجى إعادة المحاولة");
+        throw new ConflictError(members.referenceCodeTaken);
       }
       code = generateReferenceCode();
     }

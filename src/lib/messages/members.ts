@@ -21,6 +21,7 @@ export const members = {
   rejectionReasonInvalid: "سبب رفض الإثبات غير صالح",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
   alreadyAccepted: "هذا العضو مقبول بالفعل",
+  referenceCodeTaken: "رمز الطلب مستخدم بالفعل، يرجى إعادة المحاولة",
   invalidMember: "عضو غير صالح",
   alreadyHasAccount: "لهذا العضو حساب مسبقاً",
   accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",
