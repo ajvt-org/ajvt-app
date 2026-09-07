@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import { memberImportRun } from "@/lib/messages";
 import type { ImportedRow } from "@/lib/memberImportRun";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
 
 const AGE = "البدريين";
@@ -122,11 +123,15 @@ describe("POST /api/admin/people/import", () => {
 
   it("records a surplus above the fee under the person's name", async () => {
     await run([paid({ phone: "36000123", paidAmount: "500" })]);
+    const { getLeaderboardData } = await import("@/lib/donationsServer");
 
     const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
     expect(payment.amount).toBe(500);
     expect(payment.anonymous).toBe(false);
-    expect(payment.donorName).toBe("محمد ولد أحمد");
+    expect(payment.userId).not.toBeNull();
+
+    const { leaderboard } = await getLeaderboardData({ role: SUPER_ROLE });
+    expect(leaderboard.map((e) => e.name)).toContain("محمد ولد أحمد");
   });
 
   it("stores the fee when a paid row names no amount", async () => {

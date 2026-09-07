@@ -49,31 +49,53 @@ function changeVisibility(userId: string, anonymous: boolean) {
 
 const ADMIN = { role: SUPER_ROLE };
 
+async function boardNames() {
+  const { getLeaderboardData } = await import("@/lib/donationsServer");
+  const { leaderboard } = await getLeaderboardData(ADMIN);
+  return leaderboard.map((e) => e.name);
+}
+
+function nameOnRecord(userId: string) {
+  return prisma.payment.findFirstOrThrow({
+    where: { userId, purpose: "MEMBERSHIP" },
+    select: { donorName: true },
+  });
+}
+
 describe("who the membership surplus is credited to", () => {
   beforeEach(async () => {
     await resetDb();
   });
 
-  it("carries the member name when they agreed to be named", async () => {
+  it("names the member on the board when they agreed to be named", async () => {
     const member = await joinAndApprove({ surplusAnonymous: false });
 
     const donation = await surplusOf(member.userId);
     expect(donation.amount).toBe(400);
-    expect(donation.donorName).toBe("محمد ولد أحمد");
+    expect(donation.anonymous).toBe(false);
+    expect(await boardNames()).toContain("محمد ولد أحمد");
   });
 
-  it("stays unnamed when the member asked to remain anonymous", async () => {
+  it("stores no name of its own, since the account already carries one", async () => {
+    const member = await joinAndApprove({ surplusAnonymous: false });
+
+    expect((await nameOnRecord(member.userId)).donorName).toBeNull();
+  });
+
+  it("keeps the member off the board by name when they asked to be anonymous", async () => {
     const member = await joinAndApprove({ surplusAnonymous: true });
 
     const donation = await surplusOf(member.userId);
     expect(donation.amount).toBe(400);
-    expect(donation.donorName).toBeNull();
+    expect(donation.anonymous).toBe(true);
+    expect(await boardNames()).not.toContain("محمد ولد أحمد");
   });
 
   it("defaults to naming them when the form said nothing", async () => {
     const member = await joinAndApprove();
 
-    expect((await surplusOf(member.userId)).donorName).toBe("محمد ولد أحمد");
+    expect((await surplusOf(member.userId)).anonymous).toBe(false);
+    expect(await boardNames()).toContain("محمد ولد أحمد");
   });
 
   it("keeps an anonymous surplus off the honour board by name", async () => {
@@ -87,7 +109,7 @@ describe("who the membership surplus is credited to", () => {
     void member;
   });
 
-  it("does not rename an anonymous surplus when the amount is corrected later", async () => {
+  it("does not publish an anonymous surplus when the amount is corrected later", async () => {
     const member = await joinAndApprove({ surplusAnonymous: true });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
 
@@ -95,7 +117,8 @@ describe("who the membership surplus is credited to", () => {
 
     const donation = await surplusOf(member.userId);
     expect(donation.amount).toBe(800);
-    expect(donation.donorName).toBeNull();
+    expect(donation.anonymous).toBe(true);
+    expect(await boardNames()).not.toContain("محمد ولد أحمد");
   });
 
   it("lets the member take their own name off a surplus already published", async () => {
@@ -110,10 +133,26 @@ describe("who the membership surplus is credited to", () => {
     const res = await changeVisibility(member.userId, true);
 
     expect(res.status).toBe(200);
-    expect((await surplusOf(member.userId)).donorName).toBeNull();
-    const mirrored = await mirrorOf(member.userId);
-    expect(mirrored.anonymous).toBe(true);
-    expect(mirrored.donorName).toBeNull();
+    expect(await boardNames()).not.toContain("محمد ولد أحمد");
+    expect((await mirrorOf(member.userId)).anonymous).toBe(true);
+  });
+
+  it("leaves a name already on the record alone when the member hides themselves", async () => {
+    const user = await createUser();
+    await signInAs(user);
+    await REGISTER(post("/api/members", { ...submission, surplusAnonymous: false }));
+    const member = await prisma.membership.findFirstOrThrow();
+    await signInAsAdmin(await createAdmin());
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
+    await prisma.payment.updateMany({
+      where: { userId: member.userId, purpose: "MEMBERSHIP" },
+      data: { donorName: "اسم على الورقة" },
+    });
+    await signInAs(user);
+
+    await changeVisibility(member.userId, true);
+
+    expect((await nameOnRecord(member.userId)).donorName).toBe("اسم على الورقة");
   });
 
   it("puts the name back when the member changes their mind again", async () => {
@@ -127,7 +166,7 @@ describe("who the membership surplus is credited to", () => {
 
     await changeVisibility(member.userId, false);
 
-    expect((await surplusOf(member.userId)).donorName).toBe("محمد ولد أحمد");
+    expect(await boardNames()).toContain("محمد ولد أحمد");
     expect((await mirrorOf(member.userId)).anonymous).toBe(false);
   });
 
@@ -141,18 +180,18 @@ describe("who the membership surplus is credited to", () => {
     const res = await changeVisibility(member.userId, true);
 
     expect(res.status).toBe(404);
-    expect((await surplusOf(member.userId)).donorName).toBe("محمد ولد أحمد");
+    expect((await surplusOf(member.userId)).anonymous).toBe(false);
   });
 
-  it("does not rename a named surplus either, once it is published", async () => {
+  it("follows the account when the member is renamed, since the name lives there", async () => {
     const member = await joinAndApprove({ surplusAnonymous: false });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
 
     await prisma.user.update({ where: { id: member.userId }, data: { fullName: "اسم آخر" } });
     await recordMembershipPayment(prisma, member.userId, 700, 100);
 
-    const donation = await surplusOf(member.userId);
-    expect(donation.amount).toBe(600);
-    expect(donation.donorName).toBe("محمد ولد أحمد");
+    expect((await surplusOf(member.userId)).amount).toBe(600);
+    expect(await boardNames()).toContain("اسم آخر");
+    expect(await boardNames()).not.toContain("محمد ولد أحمد");
   });
 });
