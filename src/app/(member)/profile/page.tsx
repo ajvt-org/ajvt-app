@@ -2,17 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import ArrowLabel from "@/components/ArrowLabel";
 import ChangePassword from "@/components/ChangePassword";
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import MemberInfoCard from "@/components/MemberInfoCard";
 import MemberProfile from "@/components/MemberProfile";
 import NotificationsToggle from "@/components/NotificationsToggle";
-import PaymentReceipts from "@/components/PaymentReceipts";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
+import PaymentReceipts from "@/components/PaymentReceipts";
+import ProfileSection from "@/components/ProfileSection";
 import SurplusVisibility from "@/components/SurplusVisibility";
-import { withFrom } from "@/lib/backLink";
+import { myProfile as texts } from "@/lib/texts";
 import { useMember } from "@/lib/useMember";
 import { useNameBehindHeader } from "@/lib/useNameBehindHeader";
 
@@ -26,60 +26,51 @@ export default function ProfilePage() {
   const { bind, behind } = useNameBehindHeader(headings);
 
   const whatsappLink = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://chat.whatsapp.com/XXXXX";
+  const active = member?.status === "ACTIVE";
 
   return (
     <div className="app-shell">
-      <PageHeader title={behind ?? "حسابي"} />
+      <PageHeader title={behind ?? texts.title} />
 
       {loading ? (
         <PageLoading />
       ) : (
         <div className="flex-1 px-5 py-6 space-y-6">
-          {member ? (
-            <MemberProfile
-              member={member}
-              currentYear={currentYear}
-              whatsappLink={whatsappLink}
-              delayIndex={0}
-              onPhotoUpdated={(photo) => setMember((prev) => (prev ? { ...prev, photo } : prev))}
-              onReload={reload}
-              nameRef={bind(member.id)}
-            />
-          ) : (
-            <div className="card p-6 text-center fade-up">
-              <div className="mb-3 flex justify-center">
-                <Icon name="list" size={40} />
-              </div>
-              <h2 className="text-lg font-black mb-2" style={{ color: "var(--text-main)" }}>
-                لم تقدم طلب انضمام بعد
-              </h2>
-              <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
-                أكمل استمارة الانضمام للانضمام إلى رابطة شباب قرية التاكلالت
-              </p>
-              <button
-                onClick={() => router.push(withFrom("/membership", "/profile"))}
-                className="btn btn-primary"
-              >
-                <ArrowLabel>تعبئة استمارة الانضمام</ArrowLabel>
-              </button>
-            </div>
-          )}
+          <MemberProfile
+            member={member}
+            currentYear={currentYear}
+            whatsappLink={whatsappLink}
+            onPhotoUpdated={(photo) => setMember((prev) => (prev ? { ...prev, photo } : prev))}
+            onReload={reload}
+            nameRef={member ? bind(member.id) : undefined}
+          />
 
-          {member && (
-            <SurplusVisibility
-              memberId={member.id}
-              memberName={member.fullName}
-              supportAmount={member.supportAmount}
-              anonymous={member.surplusAnonymous}
-              onChanged={(anonymous) =>
-                setMember((prev) => (prev ? { ...prev, surplusAnonymous: anonymous } : prev))
-              }
-            />
-          )}
+          <ProfileSection title={texts.groups.payments}>
+            {member && (
+              <SurplusVisibility
+                memberId={member.id}
+                memberName={member.fullName}
+                supportAmount={member.supportAmount}
+                anonymous={member.surplusAnonymous}
+                onChanged={(anonymous) =>
+                  setMember((prev) => (prev ? { ...prev, surplusAnonymous: anonymous } : prev))
+                }
+              />
+            )}
+            {member && <PaymentReceipts />}
+          </ProfileSection>
 
-          {member && <PaymentReceipts />}
+          <ProfileSection title={texts.groups.details}>
+            {member && (
+              <MemberInfoCard
+                member={member}
+                onCard={Boolean(active && member.memberNumber)}
+                onEdit={active ? undefined : () => router.push(`/membership?id=${member.id}`)}
+              />
+            )}
+          </ProfileSection>
 
-          <div className="space-y-3 pt-2">
+          <ProfileSection title={texts.groups.settings}>
             <NotificationsToggle awaitingDecision={member?.status === "PENDING"} />
             <ChangePassword />
             <button
@@ -87,9 +78,9 @@ export default function ProfilePage() {
               className="btn"
               style={{ background: "transparent", color: "var(--text-muted)" }}
             >
-              <IconLabel name="logout">تسجيل الخروج</IconLabel>
+              <IconLabel name="logout">{texts.logout}</IconLabel>
             </button>
-          </div>
+          </ProfileSection>
         </div>
       )}
     </div>

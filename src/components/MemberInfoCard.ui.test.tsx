@@ -29,12 +29,6 @@ function member(overrides: Partial<MemberData> = {}): MemberData {
 const waiting = () => member({ status: "PENDING", memberNumber: null });
 
 describe("MemberInfoCard", () => {
-  it("is headed as the member's own record rather than as an application", () => {
-    render(<MemberInfoCard member={member()} onCard />);
-
-    expect(screen.getByText(texts.title)).toBeDefined();
-  });
-
   it("never prints the minute a request was sent", () => {
     const { container, unmount } = render(<MemberInfoCard member={waiting()} />);
     expect(container.textContent).not.toMatch(/\d{2}:\d{2}/);
