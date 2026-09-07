@@ -1,10 +1,10 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
-import { localDatabase } from "./tests/localDatabase.mjs";
+import { API_TEST_WORKERS, localDatabase } from "./tests/localDatabase.mjs";
 
-const DATABASE_URL = process.env.TEST_DATABASE_URL ?? localDatabase("ajvt_test");
+const BASE_DATABASE_URL = process.env.TEST_DATABASE_URL ?? localDatabase("ajvt_test");
 
-process.env.DATABASE_URL = DATABASE_URL;
+process.env.TEST_DATABASE_BASE_URL = BASE_DATABASE_URL;
 
 export default defineConfig({
   resolve: {
@@ -18,9 +18,9 @@ export default defineConfig({
     include: ["tests/api/**/*.test.ts"],
     setupFiles: ["tests/api/setup.ts"],
     globalSetup: ["tests/api/globalSetup.ts"],
-    fileParallelism: false,
+    maxWorkers: API_TEST_WORKERS,
     env: {
-      DATABASE_URL,
+      TEST_DATABASE_BASE_URL: BASE_DATABASE_URL,
       JWT_SECRET: "test-secret",
       NODE_ENV: "test",
     },
