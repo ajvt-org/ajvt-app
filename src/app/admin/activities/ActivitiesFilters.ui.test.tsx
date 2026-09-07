@@ -118,12 +118,47 @@ describe("the one bar the activities are filtered from", () => {
     expect(screen.getByLabelText("النوع: حملات")).toHaveProperty("disabled", false);
   });
 
-  it("gives no row to an axis that cannot change the list", () => {
+  it("keeps a row that cannot change the list where it is, and does not offer it", () => {
     show([activity({ id: "t1", isTournament: true }), activity({ id: "t2", isTournament: true })]);
 
-    expect(screen.queryByLabelText(/^النوع/)).toBeNull();
-    expect(screen.queryByLabelText(/^التسجيل/)).toBeNull();
-    expect(screen.queryByLabelText(/^المرحلة/)).toBeNull();
+    expect(screen.getByLabelText("النوع: بطولات")).toHaveProperty("disabled", true);
+    expect(screen.getByLabelText("التسجيل: مفتوح")).toHaveProperty("disabled", true);
+    expect(screen.getByLabelText("المرحلة: منتهية")).toHaveProperty("disabled", true);
+  });
+
+  it("holds the same rows before and after a chip is pressed", async () => {
+    const rows = mixed();
+    const { unmount } = render(
+      <ActivitiesFilters
+        activities={rows}
+        filters={view()}
+        selecting={false}
+        onChange={onChange}
+        onSelectingChange={onSelectingChange}
+      />,
+    );
+    const before = screen.getAllByRole("group").map((g) => g.getAttribute("aria-label"));
+    unmount();
+
+    show(rows, view({ type: "tournament" }));
+
+    expect(screen.getAllByRole("group").map((g) => g.getAttribute("aria-label"))).toEqual(before);
+  });
+
+  it("holds its rows while the search box empties the list under them", () => {
+    show(mixed(), view({ q: "لا شيء" }));
+
+    expect(screen.getAllByRole("group").map((g) => g.getAttribute("aria-label"))).toEqual([
+      "النوع",
+      "التسجيل",
+      "المرحلة",
+    ]);
+  });
+
+  it("offers no filter at all before there is a single activity", () => {
+    show([]);
+
+    expect(screen.queryAllByRole("group")).toEqual([]);
     expect(screen.getByPlaceholderText("بحث باسم النشاط...")).toBeTruthy();
   });
 

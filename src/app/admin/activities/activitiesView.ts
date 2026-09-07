@@ -33,6 +33,7 @@ export interface AxisView {
   label: string;
   value: string;
   anyValue: string;
+  usable: boolean;
   options: AxisOption[];
 }
 
@@ -155,20 +156,27 @@ function axisView(
     const count = counts.get(option.value) ?? 0;
     return { ...option, count, usable: count > 0 || option.value === chosen };
   });
-  return { key: axis.key, label: axis.label, value: chosen, anyValue: axis.anyValue, options };
+  return {
+    key: axis.key,
+    label: axis.label,
+    value: chosen,
+    anyValue: axis.anyValue,
+    usable: canNarrow(options, chosen, axis.anyValue),
+    options,
+  };
 }
 
-function isWorthOffering(axis: AxisView): boolean {
-  const whole = axis.options.find((option) => option.value === axis.anyValue)?.count ?? 0;
-  const chosen = axis.options.find((option) => option.value === axis.value);
-  if (axis.value !== axis.anyValue && chosen?.count !== whole) return true;
-  return axis.options.some((option) => option.count > 0 && option.count < whole);
+function canNarrow(options: AxisOption[], value: string, anyValue: string): boolean {
+  const whole = options.find((option) => option.value === anyValue)?.count ?? 0;
+  const chosen = options.find((option) => option.value === value);
+  if (value !== anyValue && chosen?.count !== whole) return true;
+  return options.some((option) => option.count > 0 && option.count < whole);
 }
 
-export function offeredAxes(
+export function axisViews(
   activities: Activity[],
   view: ActivitiesView,
   now = new Date(),
 ): AxisView[] {
-  return FILTER_AXES.map((axis) => axisView(activities, view, axis, now)).filter(isWorthOffering);
+  return FILTER_AXES.map((axis) => axisView(activities, view, axis, now));
 }

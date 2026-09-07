@@ -2,7 +2,7 @@
 
 import IconLabel from "@/components/IconLabel";
 import FilterAxisRow from "./FilterAxisRow";
-import { offeredAxes, type ActivitiesView } from "./activitiesView";
+import { axisViews, type ActivitiesView } from "./activitiesView";
 import { activityRow as texts } from "@/lib/texts";
 import type { Activity } from "./activityTypes";
 
@@ -44,13 +44,14 @@ export default function ActivitiesFilters({
           <IconLabel name="check">{texts.selectMode}</IconLabel>
         </button>
       </div>
-      {offeredAxes(activities, filters).map((axis) => (
-        <FilterAxisRow
-          key={axis.key}
-          axis={axis}
-          onPick={(value) => onChange({ ...filters, [axis.key]: value })}
-        />
-      ))}
+      {activities.length > 0 &&
+        axisViews(activities, filters).map((axis) => (
+          <FilterAxisRow
+            key={axis.key}
+            axis={axis}
+            onPick={(value) => onChange({ ...filters, [axis.key]: value })}
+          />
+        ))}
     </div>
   );
 }
