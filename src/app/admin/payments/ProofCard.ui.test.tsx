@@ -331,12 +331,13 @@ describe("a membership payment carries its own controls", () => {
     expect(screen.getByRole("button", { name: new RegExp(deleteMember.payment) })).toBeTruthy();
   });
 
-  it("drops the accept once the payment is accepted", () => {
+  it("turns the verdict into undoing it once the payment is accepted", () => {
     mockFetch([]);
     show({ ...membership, status: "ACTIVE" });
 
-    expect(screen.queryByRole("button", { name: new RegExp(memberDecision.accept) })).toBeNull();
-    expect(screen.getByRole("button", { name: new RegExp(memberDecision.refuse) })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: memberDecision.accept })).toBeNull();
+    expect(screen.queryByRole("button", { name: memberDecision.refuse })).toBeNull();
+    expect(screen.getByRole("button", { name: memberDecision.revoke })).toBeTruthy();
   });
 
   it("offers none of it on a donation", () => {

@@ -24,8 +24,8 @@ function draw(status = "PENDING") {
   );
 }
 
-function bar() {
-  return screen.getByRole("button", { name: /قبول الدفع/ }).parentElement!.parentElement!;
+function group(name: RegExp) {
+  return screen.getByRole("button", { name }).parentElement!;
 }
 
 describe("the actions under a membership payment", () => {
@@ -34,7 +34,8 @@ describe("the actions under a membership payment", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /إضافة إثبات الدفع/ }));
 
-    expect(bar().contains(screen.getByTestId("upload"))).toBe(false);
+    const bar = group(/^قبول الدفع$/).parentElement!;
+    expect(bar.contains(screen.getByTestId("upload"))).toBe(false);
   });
 
   it("keeps the bar on one line while the proof panel is open", async () => {
@@ -42,7 +43,7 @@ describe("the actions under a membership payment", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /إضافة إثبات الدفع/ }));
 
-    expect(bar().className).not.toContain("flex-wrap");
+    expect(group(/^قبول الدفع$/).parentElement!.className).not.toContain("flex-wrap");
   });
 
   it("leaves every verdict reachable while a proof is being attached", async () => {
@@ -54,11 +55,46 @@ describe("the actions under a membership payment", () => {
     expect(screen.getByRole("button", { name: /حذف الدفع نهائياً/ })).toBeTruthy();
   });
 
+  it("keeps refusing a pending proof beside accepting it", () => {
+    draw();
+
+    const routine = group(/^قبول الدفع$/);
+    expect(routine.contains(screen.getByRole("button", { name: /رفض إثبات الدفع/ }))).toBe(true);
+    expect(routine.contains(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }))).toBe(false);
+  });
+
+  it("offers no refusal once a payment has been accepted", () => {
+    draw("ACTIVE");
+
+    expect(screen.queryByRole("button", { name: /رفض إثبات الدفع/ })).toBeNull();
+  });
+
+  it("puts undoing an acceptance at the destructive end", () => {
+    draw("ACTIVE");
+
+    const destructive = group(/إبطال قبول الدفع/);
+    expect(destructive.contains(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }))).toBe(
+      true,
+    );
+    expect(
+      destructive.contains(screen.getByRole("button", { name: /استبدال الإثبات|إضافة إثبات/ })),
+    ).toBe(false);
+  });
+
+  it("asks why before it undoes an acceptance", async () => {
+    draw("ACTIVE");
+
+    await userEvent.click(screen.getByRole("button", { name: /إبطال قبول الدفع/ }));
+
+    expect(screen.getByText(/سبب إبطال قبول الدفع/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /تأكيد الإبطال/ })).toBeTruthy();
+  });
+
   it("replaces the whole bar while a refusal is being decided", async () => {
     draw();
 
     await userEvent.click(screen.getByRole("button", { name: /رفض إثبات الدفع/ }));
 
-    expect(screen.queryByRole("button", { name: /قبول الدفع/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^قبول الدفع$/ })).toBeNull();
   });
 });
