@@ -51,7 +51,7 @@ async function showFollowable(captainId: string | null = null) {
 }
 
 describe("a star that belongs to the entrant it follows", () => {
-  it("sits beside the name rather than at the edge of the cell", async () => {
+  it("follows the name rather than sitting anywhere else in the row", async () => {
     const { container } = await showFollowable();
 
     const row = container.querySelector("li") as HTMLElement;
@@ -59,10 +59,22 @@ describe("a star that belongs to the entrant it follows", () => {
     expect(name.nextElementSibling?.querySelector("button")).not.toBeNull();
   });
 
-  it("pushes nothing to the far edge of a cell", async () => {
+  it("lands in the same place on every row, because the name takes the slack", async () => {
     const { container } = await showFollowable();
 
+    const names = [...container.querySelectorAll("li")].map(
+      (row) => row.querySelector("span.text-sm")!.className,
+    );
+    expect(names.every((className) => className.includes("flex-1"))).toBe(true);
     expect(container.querySelector(".ms-auto")).toBeNull();
+  });
+
+  it("gets a list one entrant wide, so no two stars share a line", async () => {
+    const { container } = await showFollowable();
+
+    const list = container.querySelector("ul") as HTMLElement;
+    expect(list.className).toContain("grid");
+    expect(list.className).not.toContain("auto-fill");
   });
 
   it("reads the way the captain mark beside the same name reads", async () => {
@@ -89,6 +101,13 @@ describe("SquadList", () => {
     const list = container.querySelector("ul") as HTMLElement;
     expect(list.className).toContain("grid");
     expect(list.className).toContain("[grid-template-columns:repeat(auto-fill,minmax(10rem,1fr))]");
+  });
+
+  it("leaves the name as it was on a list with no star to line up", () => {
+    const { container } = show(squad(4));
+
+    const name = container.querySelector("span.text-sm") as HTMLElement;
+    expect(name.className).not.toContain("flex-1");
   });
 
   it("gives a short squad the same track width as a long one", () => {
