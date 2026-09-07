@@ -81,7 +81,9 @@ describe("a donation being reviewed", () => {
     mockFetch();
     show();
 
-    expect(await screen.findByText(new RegExp(proofReuse.title))).toBeTruthy();
+    const warning = await screen.findByText(new RegExp(proofReuse.title));
+    await userEvent.click(warning.closest("button")!);
+
     expect(screen.getByText("أحمد")).toBeTruthy();
   });
 
@@ -89,11 +91,11 @@ describe("a donation being reviewed", () => {
     mockFetch();
     show();
 
-    const summary = await screen.findByText(new RegExp(proofReuse.title));
-    const block = summary.closest("details");
-    expect(block).not.toBeNull();
-    expect(block!.open).toBe(false);
-    expect(block!.contains(screen.getByText("أحمد"))).toBe(true);
+    const warning = await screen.findByText(new RegExp(proofReuse.title));
+    const control = warning.closest("button")!;
+
+    expect(control.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("أحمد")).toBeNull();
   });
 
   it("asks about the donation itself, so it is left out of its own answer", async () => {
