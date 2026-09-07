@@ -1,11 +1,10 @@
 export const myProfile = {
   details: {
-    title: "بيانات الطلب",
+    title: "بياناتي",
     phone: "رقم الهاتف",
     age: "العصر",
     paymentMethod: "طريقة الدفع",
     requestedOn: "تاريخ الطلب",
-    requestedAt: "وقت الطلب",
     acceptedOn: "تاريخ القبول",
     edit: "تعديل الدفع",
   },
