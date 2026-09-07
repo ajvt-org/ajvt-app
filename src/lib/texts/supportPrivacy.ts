@@ -1,5 +1,4 @@
 export const supportPrivacy = {
-  hint: "لا يراه إلا المالك، والمبلغ يُحسب كاملاً كما هو.",
   checkbox: "اكتم اسمه في الدعم",
   saving: "...",
   save: "حفظ",

@@ -54,9 +54,6 @@ export default function SupportPrivacyCard({
         />
         <IconLabel name="ban">{texts.checkbox}</IconLabel>
       </label>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.hint}
-      </p>
       {shown !== null && (
         <Notice tone="success">
           {shown > 0 ? texts.existingEntries(shown) : texts.noExistingEntries}
