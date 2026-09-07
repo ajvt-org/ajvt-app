@@ -15,6 +15,7 @@ import { ageForVillage, isKnownVillage, requiresAgeGroup } from "@/lib/villages"
 import { villageNames } from "@/lib/villagesServer";
 import { attachAccount } from "@/lib/attachAccount";
 import { nameOf } from "@/lib/person";
+import { requireOwnUpload } from "@/lib/uploadOwnerServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/members/[id]",
@@ -75,7 +76,10 @@ export const PATCH = withRoute(
       }
       data.age = nextAge;
     }
-    if (photo !== undefined) data.photo = photo;
+    if (photo !== undefined) {
+      await requireOwnUpload(photo, { userId: null, adminId: session.adminId });
+      data.photo = photo;
+    }
     if (photoLocked !== undefined) {
       data.photoLocked = photoLocked;
       if (photoLocked) data.photo = null;

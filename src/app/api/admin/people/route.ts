@@ -11,6 +11,7 @@ import { accounts, villages as villageMessages } from "@/lib/messages";
 import { ageForVillage, isKnownVillage } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { adminPersonCreateSchema } from "./schema";
+import { requireOwnUpload } from "@/lib/uploadOwnerServer";
 
 export const POST = withRoute("POST /api/admin/people", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -22,6 +23,8 @@ export const POST = withRoute("POST /api/admin/people", async (req: NextRequest)
   if (!isKnownVillage(village, await villageNames())) {
     return NextResponse.json({ error: villageMessages.unknownVillage }, { status: 400 });
   }
+
+  await requireOwnUpload(photo, { userId: null, adminId: session.adminId });
 
   const phone = phoneUnknown ? null : accountPhone!.trim();
   if (phone && (await prisma.user.count({ where: { phone } }))) {

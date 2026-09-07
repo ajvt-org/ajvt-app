@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { uploads, tournament, common } from "@/lib/messages";
-import { resetDb, post, createUser, signInAs } from "./helpers";
+import { resetDb, post, createAdmin, createUser, signInAs, signInAsAdmin } from "./helpers";
 
 import { POST as USER_LOGOUT } from "@/app/api/auth/logout/route";
 import { POST as ADMIN_LOGOUT } from "@/app/api/admin/logout/route";
@@ -115,6 +115,33 @@ describe("the routes moved onto withRoute", () => {
     expect(await res.json()).toEqual({ error: uploads.tooLarge });
   });
 
+  it("refuses a declared body past the limit without reading it", async () => {
+    await signInAs(await createUser());
+    const req = upload() as unknown as Request;
+    let read = false;
+    Object.defineProperty(req, "formData", {
+      value: () => {
+        read = true;
+        return Promise.resolve(new FormData());
+      },
+    });
+    req.headers.set("content-length", String(11 * 1024 * 1024));
+
+    const res = await UPLOAD(req as never);
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: uploads.tooLarge });
+    expect(read).toBe(false);
+  });
+
+  it("still takes an ordinary upload that declares its length", async () => {
+    await signInAs(await createUser());
+    const req = upload() as unknown as Request;
+    req.headers.set("content-length", "2048");
+
+    expect((await UPLOAD(req as never)).status).toBe(200);
+  });
+
   it("accepts an image from a signed-in member and fingerprints it", async () => {
     await signInAs(await createUser());
 
@@ -124,5 +151,31 @@ describe("the routes moved onto withRoute", () => {
     expect(res.status).toBe(200);
     expect(body.filename).toMatch(/\.webp$/);
     expect(await prisma.proofImage.count()).toBe(1);
+  });
+
+  it("names the member who made the upload", async () => {
+    const user = await createUser();
+    await signInAs(user);
+
+    const res = await UPLOAD(upload());
+    const { filename } = await res.json();
+
+    expect(await prisma.proofImage.findUnique({ where: { filename } })).toMatchObject({
+      uploadedByUserId: user.id,
+      uploadedByAdminId: null,
+    });
+  });
+
+  it("names the admin who made the upload", async () => {
+    const admin = await createAdmin();
+    await signInAsAdmin(admin);
+
+    const res = await UPLOAD(upload());
+    const { filename } = await res.json();
+
+    expect(await prisma.proofImage.findUnique({ where: { filename } })).toMatchObject({
+      uploadedByUserId: null,
+      uploadedByAdminId: admin.id,
+    });
   });
 });

@@ -9,7 +9,13 @@ import { auth } from "@/lib/messages";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 import { changePassword as texts } from "@/lib/texts";
 
-export default function ChangePasswordForm({ locked }: { locked: boolean }) {
+export default function ChangePasswordForm({
+  locked,
+  expired = false,
+}: {
+  locked: boolean;
+  expired?: boolean;
+}) {
   const router = useRouter();
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -43,6 +49,26 @@ export default function ChangePasswordForm({ locked }: { locked: boolean }) {
     await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/");
     router.refresh();
+  }
+
+  if (expired) {
+    return (
+      <div className="flex-1 px-5 py-8">
+        <div className="card p-5 fade-up">
+          <p className="text-sm font-semibold" style={{ color: "#dc2626" }}>
+            <Icon name="warning" size={13} className="icon-inline" /> {auth.tempPasswordExpired}
+          </p>
+        </div>
+
+        <button
+          onClick={logout}
+          className="btn mt-4"
+          style={{ background: "transparent", color: "var(--text-muted)" }}
+        >
+          <IconLabel name="logout">{texts.logout}</IconLabel>
+        </button>
+      </div>
+    );
   }
 
   return (

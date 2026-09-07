@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
+import { getUploadDir } from "../../src/lib/uploadDir";
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
+const UPLOAD_DIR = getUploadDir();
 const PALETTE = ["#265c49", "#357a62", "#4a9c7e", "#c47c5a", "#b0643e", "#70b89c"];
 
 const written: string[] = [];

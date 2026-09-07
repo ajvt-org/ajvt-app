@@ -56,6 +56,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/tournamentSetupServer.ts",
   "src/lib/tournamentResetServer.ts",
   "src/lib/uploadFields.ts",
+  "src/lib/uploadOwnerServer.ts",
   "src/lib/verifyEnrollmentsServer.ts",
   "src/lib/viewerAge.ts",
   "src/lib/villagesServer.ts",

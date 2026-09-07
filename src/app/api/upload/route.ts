@@ -8,6 +8,8 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { proofHash } from "@/lib/proofHash";
 import { getUploadDir } from "@/lib/uploadDir";
+import { uploadOwnerOf } from "@/lib/uploadOwner";
+import { declaredBodyTooLarge } from "@/lib/uploadRequestSize";
 import { uploads } from "@/lib/messages";
 import { withRoute } from "@/lib/route";
 import { HttpError, UnauthorizedError, ValidationError } from "@/lib/errors";
@@ -16,6 +18,9 @@ export const POST = withRoute("POST /api/upload", async (req: NextRequest) => {
   try {
     const [admin, user] = await Promise.all([getAdminSession(), getUserSession()]);
     if (!admin && !user) throw new UnauthorizedError();
+
+    if (declaredBodyTooLarge(req.headers.get("content-length")))
+      throw new ValidationError(uploads.tooLarge);
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -46,9 +51,15 @@ export const POST = withRoute("POST /api/upload", async (req: NextRequest) => {
       ),
     ]);
 
+    const owner = uploadOwnerOf(admin, user);
     try {
       await prisma.proofImage.create({
-        data: { filename, sha256: proofHash(processed.full) },
+        data: {
+          filename,
+          sha256: proofHash(processed.full),
+          uploadedByUserId: owner.userId,
+          uploadedByAdminId: owner.adminId,
+        },
       });
     } catch (err) {
       logger.error("upload.fingerprint.error", err);

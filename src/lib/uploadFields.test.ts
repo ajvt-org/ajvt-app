@@ -9,6 +9,7 @@ interface Call {
 const state = vi.hoisted(() => ({
   calls: [] as Call[],
   row: null as unknown,
+  rows: {} as Record<string, unknown>,
 }));
 
 vi.mock("./prisma", () => ({
@@ -27,7 +28,8 @@ vi.mock("./prisma", () => ({
           {
             get: (_t, op: string) => (args: Record<string, unknown>) => {
               state.calls.push({ model, op, args });
-              return Promise.resolve(op === "findMany" ? [] : state.row);
+              if (op === "findMany") return Promise.resolve([]);
+              return Promise.resolve(model in state.rows ? state.rows[model] : state.row);
             },
           },
         );
@@ -54,6 +56,7 @@ const lastCall = () => state.calls[state.calls.length - 1];
 beforeEach(() => {
   state.calls = [];
   state.row = null;
+  state.rows = {};
 });
 
 describe("every registry entry", () => {
@@ -107,13 +110,41 @@ describe("locateUpload", () => {
     expect(await locateUpload("nobody.webp")).toBeNull();
   });
 
-  it("takes the first match, so a member photo wins over a later column", async () => {
-    state.row = { id: "u1", userId: "u1", purpose: "DONATION" };
+  it("answers the one column that holds the name", async () => {
+    state.rows = { user: { id: "u1" } };
 
-    expect(await locateUpload("shared.webp")).toEqual({
+    expect(await locateUpload("mine.webp")).toEqual({
       kind: "photo",
       ownerId: "u1",
       confidential: false,
+    });
+  });
+
+  it("takes the tighter column when more than one holds the name", async () => {
+    state.rows = { user: { id: "u1" }, payment: { purpose: "DONATION", userId: "u2" } };
+
+    expect(await locateUpload("shared.webp")).toEqual({
+      kind: "donations",
+      ownerId: "u2",
+      confidential: false,
+    });
+  });
+
+  it("does not let a member photo open a proof of confidential support", async () => {
+    state.rows = {
+      user: { id: "u1" },
+      payment: {
+        purpose: "DONATION",
+        amount: 5000,
+        userId: "u2",
+        user: { supportNameConfidential: true },
+      },
+    };
+
+    expect(await locateUpload("shared.webp")).toEqual({
+      kind: "donations",
+      ownerId: "u2",
+      confidential: true,
     });
   });
 

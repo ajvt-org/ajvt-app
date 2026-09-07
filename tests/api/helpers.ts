@@ -145,6 +145,18 @@ export async function signInAsAdmin(admin: { id: string; username: string; token
 // The second argument Next hands a route handler. Every test built its own copy
 // of this, in two shapes, which is one more place for a request to be built by
 // hand and miss what the helpers above put on it.
+export async function uploadedBy(filename: string, owner: { userId?: string; adminId?: string }) {
+  await prisma.proofImage.create({
+    data: {
+      filename,
+      sha256: filename,
+      uploadedByUserId: owner.userId ?? null,
+      uploadedByAdminId: owner.adminId ?? null,
+    },
+  });
+  return filename;
+}
+
 export function withParams<T extends Record<string, string>>(params: T) {
   return { params: Promise.resolve(params) };
 }

@@ -6,6 +6,7 @@ import { isTokenOf } from "./tokenType";
 import { auth } from "./messages";
 import { hasFullAccess, isOwner } from "./adminRoles";
 import { canOpen } from "./adminNav";
+import { isTempPasswordActive, isTempPasswordExpired } from "./tempPassword";
 
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -92,16 +93,26 @@ async function loadUserSession() {
   return { payload, userId, tokenVersion: user.tokenVersion, user };
 }
 
+export async function tempPasswordRanOut(): Promise<boolean> {
+  const loaded = await loadUserSession();
+  return !!loaded && isTempPasswordExpired(loaded.user.tempPasswordExpiresAt);
+}
+
 export async function getUserSession() {
   const loaded = await loadUserSession();
-  return loaded ? loaded.payload : null;
+  if (!loaded || isTempPasswordExpired(loaded.user.tempPasswordExpiresAt)) return null;
+  return loaded.payload;
 }
 
 export async function requireUser(options: { allowTempPassword?: boolean } = {}) {
   const loaded = await loadUserSession();
   if (!loaded) throw new UnauthorizedError();
 
-  const onTempPassword = loaded.user.tempPasswordExpiresAt !== null;
+  if (isTempPasswordExpired(loaded.user.tempPasswordExpiresAt)) {
+    throw new UnauthorizedError(auth.tempPasswordExpired);
+  }
+
+  const onTempPassword = isTempPasswordActive(loaded.user.tempPasswordExpiresAt);
   if (onTempPassword && !options.allowTempPassword) {
     throw new HttpError("PASSWORD_CHANGE_REQUIRED", 403, auth.mustChangePassword);
   }

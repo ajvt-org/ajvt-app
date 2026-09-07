@@ -1,5 +1,6 @@
 import type { PrismaPromise } from "@prisma/client";
 import { prisma } from "./prisma";
+import { mostRestrictive, type OwnedMatch, type ProofKind } from "./uploadMatch";
 import {
   CONFIDENTIAL_SELECT,
   PUBLIC_VIEWER,
@@ -24,13 +25,7 @@ async function membershipCarriesConfidentialSupport(
   return payment ? !seesPaymentIdentity(PUBLIC_VIEWER, payment) : false;
 }
 
-export type ProofKind = "photo" | "membership" | "activity" | "donations" | "expense";
-
-export interface OwnedMatch {
-  kind: ProofKind;
-  ownerId: string | null;
-  confidential: boolean;
-}
+export type { OwnedMatch, ProofKind };
 
 export const PUBLIC_FILE_ROUTES = [
   "/api/files/activity",
@@ -238,7 +233,7 @@ export async function locateUpload(base: string): Promise<OwnedMatch | null> {
   const found = await Promise.all(
     UPLOAD_FIELDS.map((f) => (f.serve.via === "authenticated" ? f.serve.locate(base) : null)),
   );
-  return found.find((match) => match !== null) ?? null;
+  return mostRestrictive(found);
 }
 
 export async function renameUpload(from: string, to: string, sha256: string): Promise<void> {
