@@ -75,6 +75,8 @@ export const tournament = {
   },
   partsFootballOnly: "الجولات لا تكون إلا في بطولة تُحتسب مبارياتها بجولاتها",
   levelNotInTournament: "هذا المستوى ليس من مستويات هذه البطولة",
+  unitLevelMissing: "لا مستوى تحت هذه الوحدة، فلا شيء يُسجَّل داخلها",
+  unitTakesItsScoreFromBelow: "هذه الوحدة تأخذ نتيجتها مما تحتها، فلا تقبل نتيجة مكتوبة",
   levelsFootballOnly: "المستويات لا تكون إلا في بطولة تُحتسب مبارياتها بجولاتها",
   levelsLocked: "لا يمكن تغيير مستويات البطولة بعد أن لُعبت مباراة",
   seriesNotConfigured: "أكمل إعداد جولات البطولة قبل تسجيل نتيجة",
@@ -82,6 +84,7 @@ export const tournament = {
   partNotFound: "الجولة غير موجودة",
   adjustmentRuleNotFound: "هذه الحركة غير معرّفة في البطولة",
   adjustmentNotFound: "الحركة المسجّلة غير موجودة",
+  adjustmentWantsAUnit: "حدد الوحدة التي وقعت فيها الحركة",
   adjustmentRule: {
     name: "اسم الحركة مطلوب باسمها في اللعبة",
     units: "عدد الوحدات يجب أن يكون عدداً صحيحاً غير سالب",
