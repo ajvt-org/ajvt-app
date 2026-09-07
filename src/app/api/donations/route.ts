@@ -85,7 +85,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       return NextResponse.json({ error: choiceError ?? money.nameChoiceRequired }, { status: 400 });
     }
     anonymous = choice;
-    donorName = donorNameFor(choice, typed);
+    donorName = donorNameFor(typed);
   }
 
   const n = Number(amountRaw);
