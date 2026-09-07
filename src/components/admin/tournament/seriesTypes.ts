@@ -21,6 +21,8 @@ export interface UnitRow {
 export interface SeriesStandingRow {
   sideATotal: number;
   sideBTotal: number;
+  sideALostCredit: boolean;
+  sideBLostCredit: boolean;
   scored: boolean;
   perUnit: number;
   unitsRecorded: number;

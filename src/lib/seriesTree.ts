@@ -84,8 +84,8 @@ function computedPlay(row: UnitRow, standing: SeriesStanding): PlayedUnit {
     sideAPoints: standing.sideATotal,
     sideBPoints: standing.sideBTotal,
     worth: row.worth,
-    sideALostCredit: row.sideALostCredit,
-    sideBLostCredit: row.sideBLostCredit,
+    sideALostCredit: standing.sideALostCredit,
+    sideBLostCredit: standing.sideBLostCredit,
   };
 }
 

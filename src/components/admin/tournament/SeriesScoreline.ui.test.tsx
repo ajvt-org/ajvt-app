@@ -26,6 +26,8 @@ function standing(extra: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
   return {
     sideATotal: 0,
     sideBTotal: 0,
+    sideALostCredit: false,
+    sideBLostCredit: false,
     scored: false,
     perUnit: 2,
     unitsRecorded: 0,
