@@ -7,6 +7,11 @@ import { logger } from "@/lib/logger";
 import { byReviewOrder, latestByAccount } from "@/lib/currentMembership";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 import { feeOnly, paidForYear } from "@/lib/paidBreakdown";
+import {
+  MEMBERSHIP_PAYMENT_SELECT,
+  mirroredColumns,
+  paymentOfYear,
+} from "@/lib/membershipPaymentFields";
 import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
 
@@ -22,9 +27,6 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       year: true,
       status: true,
       rejectionReason: true,
-      paymentMethod: true,
-      paymentProof: true,
-      referenceCode: true,
       createdAt: true,
       updatedAt: true,
       user: {
@@ -36,7 +38,7 @@ export const GET = withRoute("GET /api/admin/members", async () => {
           },
           payments: {
             where: { purpose: "MEMBERSHIP" },
-            select: { amount: true, feeApplied: true, year: true },
+            select: MEMBERSHIP_PAYMENT_SELECT,
           },
         },
       },
@@ -52,8 +54,16 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
       const banked = paidForYear(payments, year);
       const paid = named ? banked : feeOnly(banked);
+      const mirrored = mirroredColumns(paymentOfYear(payments, year));
       return {
-        ...withPerson({ ...rest, id: userId, userId, membershipYear: year, user: account }),
+        ...withPerson({
+          ...rest,
+          ...mirrored,
+          id: userId,
+          userId,
+          membershipYear: year,
+          user: account,
+        }),
         registrations,
         paidAmount: paid?.fee ?? null,
         supportAmount: paid?.support ?? 0,
