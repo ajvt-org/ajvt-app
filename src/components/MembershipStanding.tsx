@@ -14,6 +14,7 @@ const TONES: Record<Tone, { icon: IconName; bg: string; border: string; ink: str
   AWAITING_REVIEW: { icon: "clock", bg: "#fef9ee", border: "#fcd34d", ink: "#b45309" },
   REFUSED: { icon: "close", bg: "#fff5f5", border: "#fca5a5", ink: "#b91c1c" },
   BEHIND: { icon: "hourglass", bg: "#fef9ee", border: "#fcd34d", ink: "#b45309" },
+  ENDED: { icon: "ban", bg: "#fff5f5", border: "#fca5a5", ink: "#b91c1c" },
 };
 
 export default function MembershipStanding({
@@ -73,6 +74,7 @@ function title(state: Tone, member: MemberData | null, currentYear: number): str
   if (state === "NO_PAYMENT") return texts.noPayment.title;
   if (state === "AWAITING_REVIEW") return texts.awaitingReview.title;
   if (state === "REFUSED") return texts.refused.title;
+  if (state === "ENDED") return texts.ended.title;
   return texts.behind.title(member?.membershipYear ?? currentYear);
 }
 
@@ -80,6 +82,7 @@ function body(state: Tone, member: MemberData | null, currentYear: number): stri
   if (state === "NO_PAYMENT") return texts.noPayment.body;
   if (state === "AWAITING_REVIEW") return texts.awaitingReview.body;
   if (state === "REFUSED") return texts.refused.body;
+  if (state === "ENDED") return texts.ended.body;
   if (member?.memberNumber) return texts.behind.body(currentYear);
   return `${texts.behind.body(currentYear)} ${texts.behind.viaAdmin}`;
 }
