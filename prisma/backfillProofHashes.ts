@@ -2,17 +2,8 @@ import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { prisma } from "../src/lib/prisma";
+import { getUploadDir } from "../src/lib/uploadDir";
 import { proofHash } from "../src/lib/proofHash";
-
-// Fingerprints the proofs already on disk. Without this the check would only
-// ever see uploads made after it shipped, which is the half that matters
-// least — the reuse worth catching is against what is already there.
-//
-// Safe to run again: a filename already fingerprinted is skipped, and a file
-// that has gone missing is reported rather than fatal.
-function uploadDir(): string {
-  return process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
-}
 
 async function main() {
   const [memberships, donations, expenses, known] = await Promise.all([
@@ -41,7 +32,7 @@ async function main() {
   const missing: string[] = [];
   for (const filename of todo) {
     try {
-      const bytes = await readFile(join(uploadDir(), filename));
+      const bytes = await readFile(join(getUploadDir(), filename));
       await prisma.proofImage.create({ data: { filename, sha256: proofHash(bytes) } });
       done++;
     } catch {
