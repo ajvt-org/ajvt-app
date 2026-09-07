@@ -12,6 +12,7 @@ import PageLoading from "@/components/PageLoading";
 import PaymentReceipts from "@/components/PaymentReceipts";
 import ProfileSection from "@/components/ProfileSection";
 import SurplusVisibility from "@/components/SurplusVisibility";
+import WhatsappGroupButton from "@/components/WhatsappGroupButton";
 import { myProfile as texts } from "@/lib/texts";
 import { useMember } from "@/lib/useMember";
 import { useNameBehindHeader } from "@/lib/useNameBehindHeader";
@@ -39,7 +40,6 @@ export default function ProfilePage() {
           <MemberProfile
             member={member}
             currentYear={currentYear}
-            whatsappLink={whatsappLink}
             onPhotoUpdated={(photo) => setMember((prev) => (prev ? { ...prev, photo } : prev))}
             onReload={reload}
             nameRef={member ? bind(member.id) : undefined}
@@ -71,6 +71,7 @@ export default function ProfilePage() {
           </ProfileSection>
 
           <ProfileSection title={texts.groups.settings}>
+            {active && <WhatsappGroupButton href={whatsappLink} />}
             <NotificationsToggle awaitingDecision={member?.status === "PENDING"} />
             <ChangePassword />
             <button

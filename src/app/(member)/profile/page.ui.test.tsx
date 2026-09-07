@@ -100,6 +100,20 @@ describe("the member's own page under headings", () => {
     expect(shown(groups.details)).toBe(false);
   });
 
+  it("keeps the WhatsApp group with the things a member does, not in the run of facts", () => {
+    const { container } = show(member());
+
+    const button = screen.getByText(myProfile.whatsappGroup).closest("a")!;
+    expect(button.closest("section")).toBe(screen.getByText(groups.settings).closest("section"));
+    expect(container.querySelector("section")!.textContent).not.toContain(myProfile.whatsappGroup);
+  });
+
+  it("offers the WhatsApp group only to an accepted member", () => {
+    show(member({ status: "PENDING", memberNumber: null, verifyToken: null }));
+
+    expect(screen.queryByText(myProfile.whatsappGroup)).toBeNull();
+  });
+
   it("drops the money group for a member with no support and no receipt", async () => {
     show(member({ status: "REJECTED", memberNumber: null, verifyToken: null, supportAmount: 0 }));
 
