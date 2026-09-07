@@ -77,6 +77,22 @@ describe("the association settings page", () => {
     expect(screen.getByText(settingsPage.save)).toBeDefined();
   });
 
+  it("leaves the fee and the support number to their own labels", async () => {
+    const container = await shown();
+
+    for (const key of ["membershipFee", "supportWhatsapp"]) {
+      const input = container.querySelector(`#settings-${key}`) as HTMLElement;
+      expect(input.parentElement?.querySelector("p")).toBeNull();
+    }
+  });
+
+  it("keeps the line that says where an officer name is printed", async () => {
+    const container = await shown();
+
+    const input = container.querySelector("#settings-treasurerName") as HTMLElement;
+    expect(input.parentElement?.querySelector("p")?.textContent).toBe(settingsForm.officerHint);
+  });
+
   it("says nothing above the first card that the tab has not already said", async () => {
     const container = await shown();
 

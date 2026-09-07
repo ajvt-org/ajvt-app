@@ -30,7 +30,6 @@ export const SETTINGS_FIELDS: SettingsField[] = [
     label: settingsForm.membershipFeeLabel,
     kind: "number",
     min: 1,
-    hint: settingsForm.membershipFeeHint,
   },
   {
     key: "membershipYear",
@@ -53,7 +52,6 @@ export const SETTINGS_FIELDS: SettingsField[] = [
     group: "channels",
     label: settingsForm.supportWhatsappLabel,
     kind: "phone",
-    hint: settingsForm.supportWhatsappHint,
   },
   {
     key: "whatsappGroup",
