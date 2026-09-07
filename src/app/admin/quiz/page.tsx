@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Icon from "@/components/Icon";
 import CompetitionsSection from "./CompetitionsSection";
 import QuestionsSection from "./QuestionsSection";
+import SettingsForm from "./SettingsForm";
 import QuizTabs, { isQuizTab, type QuizTab } from "./QuizTabs";
 import { useQuizQuestions } from "./useQuizQuestions";
 
@@ -35,7 +36,21 @@ function AdminQuizPageInner() {
     <div className="admin-page space-y-5">
       <QuizTabs active={tab} onSelect={go} />
 
-      {tab === "competitions" ? <CompetitionsSection /> : <QuestionsSection state={state} />}
+      {tab === "competitions" && <CompetitionsSection />}
+
+      {tab === "bank" && <QuestionsSection state={state} />}
+
+      {tab === "settings" && (
+        <SettingsForm
+          values={state.settingsForm}
+          confirmAnswers={state.settings?.confirmAnswers ?? true}
+          error={state.settingsError}
+          saving={state.savingSettings}
+          onChange={(key, value) => state.setSettingsForm((p) => ({ ...p, [key]: value }))}
+          onToggleConfirm={state.toggleConfirm}
+          onSubmit={state.saveSettings}
+        />
+      )}
     </div>
   );
 }

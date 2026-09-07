@@ -69,10 +69,14 @@ describe("QuestionsSection", () => {
 
     const banks = screen.getByText("بنوك الأسئلة");
     const questions = screen.getByText(quizQuestionList.heading(1));
-    const settings = screen.getByText(quizSettingsForm.title);
 
     expect(follows(banks, questions)).toBe(true);
-    expect(follows(questions, settings)).toBe(true);
+  });
+
+  it("leaves the question settings to their own tab", () => {
+    render(<QuestionsSection state={state()} />);
+
+    expect(screen.queryByText(quizSettingsForm.confirmAnswers)).toBeNull();
   });
 
   it("keeps adding a question on the questions rather than on the bank", () => {
