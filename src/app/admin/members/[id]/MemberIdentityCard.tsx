@@ -4,7 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import VerbButton from "@/components/admin/VerbButton";
 import { GRAVE, LEAD, RISKY, SAFE } from "@/components/admin/verbTones";
-import TempPasswordBox from "@/app/admin/dashboard/TempPasswordBox";
+import TempPasswordBox from "@/components/admin/TempPasswordBox";
 import { api, errorMessage } from "@/lib/api";
 import { DETAIL_SEPARATOR, personDetails } from "@/lib/personDetails";
 import { toThumbUrl } from "@/lib/utils";
