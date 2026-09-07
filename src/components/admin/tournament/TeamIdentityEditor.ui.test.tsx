@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import TeamIdentityEditor, { CREST } from "./TeamIdentityEditor";
+import TeamIdentityEditor, { CLEAR_OF_THE_CREST, CREST } from "./TeamIdentityEditor";
 import { teamsTab } from "@/lib/texts";
 
 afterEach(cleanup);
@@ -112,6 +112,18 @@ describe("renaming a team from its name", () => {
     fireEvent.click(screen.getByLabelText(teamsTab.renameTeam));
 
     expect(screen.queryByTestId("controls")).toBeNull();
+  });
+
+  it("hangs what follows the name under the crest rather than in the column beside it", () => {
+    const { container } = show();
+
+    const readout = screen.getByText("لاعبان");
+    const identity = container.querySelector(".flex.items-start") as HTMLElement;
+    const below = readout.parentElement as HTMLElement;
+
+    expect(identity.contains(readout)).toBe(false);
+    expect(below.previousElementSibling).toBe(identity);
+    expect(below.style.marginBlockStart).toBe(`${CLEAR_OF_THE_CREST}px`);
   });
 
   it("keeps the readout under the name whether or not it is being renamed", () => {
