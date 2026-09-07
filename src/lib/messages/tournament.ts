@@ -13,6 +13,7 @@ export const tournament = {
   teamNotInMatch: "الفريق لا ينتمي إلى هذه المباراة",
   playerNotInTeam: "اللاعب لا ينتمي إلى هذا الفريق",
   joinNeedsMembership: "يجب أن تكون العضوية مقبولة أولاً",
+  joinMembershipEnded: "عضويتك منتهية، راجع إدارة الرابطة قبل الانضمام إلى فريق",
   joinNeedsRegistration: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً",
   playerRejected: "لا يمكن إضافة لاعب طلبه مرفوض",
   playerNotRegistered: "هذا العضو غير مسجل في هذه البطولة",

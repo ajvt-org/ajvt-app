@@ -2,14 +2,14 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { MEMBERSHIP_FEE } from "./donations";
 import { nameOf } from "./person";
-import { latestByAccount } from "./currentMembership";
+import { asMembershipState, latestByAccount } from "./currentMembership";
 import { currentMembership } from "./currentMembershipServer";
+import { holdsMembership, membershipState } from "./membershipState";
+import { getAppSettings } from "./settingsServer";
 import type { ScoreCurve } from "./competitionConfig";
 
 const SETTINGS_ID = "singleton";
 
-// Paid up means an approved membership payment that covered the fee. The
-// payment is where the money is, so that is what answers it.
 const COVERS_THE_FEE = {
   status: "ACTIVE",
   purpose: "MEMBERSHIP",
@@ -17,8 +17,11 @@ const COVERS_THE_FEE = {
 } satisfies Prisma.PaymentWhereInput;
 
 export async function isQuizEligible(userId: string): Promise<boolean> {
-  const current = await currentMembership(prisma, userId);
-  if (current?.status !== "ACTIVE") return false;
+  const [current, { membershipYear }] = await Promise.all([
+    currentMembership(prisma, userId),
+    getAppSettings(),
+  ]);
+  if (!holdsMembership(membershipState(asMembershipState(current), membershipYear))) return false;
 
   const paid = await prisma.payment.findFirst({
     where: { userId, ...COVERS_THE_FEE },
@@ -28,13 +31,22 @@ export async function isQuizEligible(userId: string): Promise<boolean> {
 }
 
 export async function eligibleMembers() {
-  const rows = await prisma.membership.findMany({
-    where: { user: { payments: { some: COVERS_THE_FEE } } },
-    select: { userId: true, year: true, status: true, user: { select: { fullName: true } } },
-    orderBy: { user: { fullName: "asc" } },
-  });
+  const [rows, { membershipYear }] = await Promise.all([
+    prisma.membership.findMany({
+      where: { user: { payments: { some: COVERS_THE_FEE } } },
+      select: {
+        userId: true,
+        year: true,
+        status: true,
+        endedAt: true,
+        user: { select: { fullName: true } },
+      },
+      orderBy: { user: { fullName: "asc" } },
+    }),
+    getAppSettings(),
+  ]);
   return [...latestByAccount(rows).values()]
-    .filter((row) => row.status === "ACTIVE")
+    .filter((row) => holdsMembership(membershipState(asMembershipState(row), membershipYear)))
     .map((row) => ({ userId: row.userId, fullName: nameOf(row.user) }));
 }
 

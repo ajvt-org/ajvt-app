@@ -2,9 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { loadVerifiedMember } from "@/lib/verifyEnrollmentsServer";
 import { MAX_ENROLLMENTS } from "@/lib/verifyEnrollments";
+import { endMembership } from "@/lib/membershipEndingServer";
+import { MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
+import { runningYear } from "@/lib/membershipYear";
 import { resetDb, makeMember } from "./helpers";
 
 const TOKEN = "a".repeat(32);
+const YEAR = runningYear();
 
 async function activeMember(verifyToken = TOKEN) {
   return makeMember({
@@ -148,5 +152,30 @@ describe("the enrollments behind a verify token", () => {
     const loaded = await loadVerifiedMember(TOKEN);
 
     expect(loaded?.enrollments.map((e) => e.label)).toEqual(["نشاط مبرمج", "نشاط غير مبرمج"]);
+  });
+
+  it("stops verifying the card of a membership an admin has ended", async () => {
+    const member = await activeMember();
+    await endMembership(prisma, member.userId, YEAR, {
+      reason: MEMBERSHIP_ENDING_REASONS[0],
+      by: "members-admin",
+      at: new Date(),
+    });
+
+    expect(await loadVerifiedMember(TOKEN)).toBeNull();
+  });
+
+  it("keeps verifying the card of a member who is only a year behind", async () => {
+    await makeMember({
+      fullName: "محمد ولد أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      membershipYear: YEAR - 1,
+      memberNumber: "AJVT-0002",
+      verifyToken: TOKEN,
+    });
+
+    expect((await loadVerifiedMember(TOKEN))?.memberNumber).toBe("AJVT-0002");
   });
 });
