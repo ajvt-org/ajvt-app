@@ -2,18 +2,18 @@
 
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
-import type { SeriesConfig } from "./seriesConfig";
+import type { LevelRow } from "@/lib/matchLevels";
 import type { UnitRow } from "./seriesTypes";
 
-export interface PartDraft {
+export interface UnitDraft {
   outcome: "SIDE_A" | "SIDE_B" | "DRAW" | "";
   sideAPoints: string;
   sideBPoints: string;
 }
 
-export const EMPTY_DRAFT: PartDraft = { outcome: "", sideAPoints: "", sideBPoints: "" };
+export const EMPTY_DRAFT: UnitDraft = { outcome: "", sideAPoints: "", sideBPoints: "" };
 
-export function draftOf(unit: UnitRow): PartDraft {
+export function draftOf(unit: UnitRow): UnitDraft {
   return {
     outcome: unit.outcome ?? "",
     sideAPoints: unit.sideAPoints === null ? "" : String(unit.sideAPoints),
@@ -21,13 +21,13 @@ export function draftOf(unit: UnitRow): PartDraft {
   };
 }
 
-export function bodyOf(draft: PartDraft, config: SeriesConfig): Record<string, unknown> {
-  if (config.unit.decision === "OUTCOME") return { outcome: draft.outcome };
+export function bodyOf(draft: UnitDraft, level: LevelRow): Record<string, unknown> {
+  if (level.decision === "OUTCOME") return { outcome: draft.outcome };
   return { sideAPoints: Number(draft.sideAPoints), sideBPoints: Number(draft.sideBPoints) };
 }
 
-export function draftIsReady(draft: PartDraft, config: SeriesConfig): boolean {
-  if (config.unit.decision === "OUTCOME") return draft.outcome !== "";
+export function draftIsReady(draft: UnitDraft, level: LevelRow): boolean {
+  if (level.decision === "OUTCOME") return draft.outcome !== "";
   return (
     Number.isInteger(Number(draft.sideAPoints)) &&
     Number.isInteger(Number(draft.sideBPoints)) &&
@@ -36,9 +36,9 @@ export function draftIsReady(draft: PartDraft, config: SeriesConfig): boolean {
   );
 }
 
-export default function PartEditor({
+export default function UnitEditor({
   draft,
-  config,
+  level,
   sides,
   busy,
   editing,
@@ -46,23 +46,23 @@ export default function PartEditor({
   onSubmit,
   onCancel,
 }: {
-  draft: PartDraft;
-  config: SeriesConfig;
+  draft: UnitDraft;
+  level: LevelRow;
   sides: string[];
   busy: boolean;
   editing: boolean;
-  onChange: (draft: PartDraft) => void;
+  onChange: (draft: UnitDraft) => void;
   onSubmit: () => void;
   onCancel: () => void;
 }) {
   return (
     <div className="space-y-2">
-      {config.unit.decision === "OUTCOME" ? (
+      {level.decision === "OUTCOME" ? (
         <select
-          aria-label={texts.outcomeLabel}
+          aria-label={texts.outcomeOf(level.singular)}
           value={draft.outcome}
           disabled={busy}
-          onChange={(e) => onChange({ ...draft, outcome: e.target.value as PartDraft["outcome"] })}
+          onChange={(e) => onChange({ ...draft, outcome: e.target.value as UnitDraft["outcome"] })}
           className="input text-sm"
         >
           <option value="">{texts.pickOutcome}</option>
@@ -102,10 +102,12 @@ export default function PartEditor({
       <div className="flex gap-2">
         <button
           onClick={onSubmit}
-          disabled={busy || !draftIsReady(draft, config)}
+          disabled={busy || !draftIsReady(draft, level)}
           className="btn btn-primary btn-sm"
         >
-          <IconLabel name={editing ? "save" : "plus"}>{editing ? texts.save : texts.add}</IconLabel>
+          <IconLabel name={editing ? "save" : "plus"}>
+            {editing ? texts.save : texts.addOne(level.singular)}
+          </IconLabel>
         </button>
         {editing && (
           <button onClick={onCancel} disabled={busy} className="btn btn-sm">

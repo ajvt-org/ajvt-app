@@ -3,7 +3,7 @@
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
-import type { SeriesConfig } from "./seriesConfig";
+import type { LevelRow } from "@/lib/matchLevels";
 import type { UnitRow as Unit } from "./seriesTypes";
 
 export function scoreText(unit: Unit, sides: string[]): string {
@@ -21,34 +21,44 @@ export function scoreText(unit: Unit, sides: string[]): string {
   return `${unit.sideAPoints} — ${unit.sideBPoints}`;
 }
 
-export function colourText(unit: Unit, config: SeriesConfig, sides: string[]): string | null {
-  if (!config.hasColours || unit.sideAColour === null) return null;
+export function colourText(
+  unit: Unit,
+  colours: { hasColours: boolean; firstColourWord: string | null },
+  sides: string[],
+): string | null {
+  if (!colours.hasColours || unit.sideAColour === null) return null;
   const opener = unit.sideAColour === "FIRST" ? sides[0] : sides[1];
-  return config.firstColourWord ? texts.colourOf(opener, config.firstColourWord) : null;
+  return colours.firstColourWord ? texts.colourOf(opener, colours.firstColourWord) : null;
 }
 
 export default function UnitLine({
   unit,
-  config,
+  level,
   sides,
   busy,
   editable,
+  openable = false,
+  opened = false,
+  onToggle,
   onEdit,
   onRemove,
 }: {
   unit: Unit;
-  config: SeriesConfig;
+  level: LevelRow;
   sides: string[];
   busy: boolean;
   editable: boolean;
+  openable?: boolean;
+  opened?: boolean;
+  onToggle?: () => void;
   onEdit: () => void;
   onRemove: () => void;
 }) {
-  const colour = colourText(unit, config, sides);
-  const name = texts.unitNumber(config.unit.singular, unit.order);
+  const name = texts.unitNumber(level.singular, unit.order);
+  const doubled = (unit.worth ?? 1) > 1;
   return (
     <div
-      className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
+      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
       style={{ background: "var(--surface-2)", opacity: unit.abandoned ? 0.65 : 1 }}
     >
       <span className="text-xs font-bold shrink-0" style={{ color: "var(--mint-700)" }}>
@@ -56,18 +66,33 @@ export default function UnitLine({
       </span>
       <span className="min-w-0 flex-1 text-xs" style={{ color: "var(--text-main)" }}>
         <bdi>{scoreText(unit, sides)}</bdi>
-        {colour && (
+        {doubled && (
+          <span className="ms-2" style={{ color: "var(--copper-600)" }}>
+            {texts.countedTwice(String(unit.worth))}
+          </span>
+        )}
+        {unit.decider && (
           <span className="ms-2" style={{ color: "var(--text-muted)" }}>
-            <bdi>{colour}</bdi>
+            {texts.decidingUnit}
           </span>
         )}
       </span>
+      {openable && onToggle && (
+        <button
+          aria-label={opened ? texts.closeOne(name) : texts.openOne(name)}
+          onClick={onToggle}
+          disabled={busy}
+          className="btn btn-icon btn-sm"
+        >
+          <Icon name={opened ? "chevronUp" : "chevronDown"} size={13} />
+        </button>
+      )}
       {editable && (
         <>
           <button
             aria-label={`${texts.edit} ${name}`}
             onClick={onEdit}
-            disabled={busy || unit.children.length > 0}
+            disabled={busy}
             className="btn btn-icon btn-sm"
           >
             <Icon name="pencil" size={13} />
@@ -87,10 +112,10 @@ export default function UnitLine({
   );
 }
 
-export function UnitsEmpty({ config }: { config: SeriesConfig }) {
+export function UnitsEmpty({ level }: { level: LevelRow }) {
   return (
     <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-      <IconLabel name="list">{texts.none(config.unit.plural)}</IconLabel>
+      <IconLabel name="list">{texts.none(level.plural)}</IconLabel>
     </p>
   );
 }
