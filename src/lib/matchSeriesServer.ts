@@ -224,8 +224,18 @@ export async function addUnit(matchId: string, input: UnitInput) {
       ? colourOfPart(match.sideAOpensAs, order)
       : null;
 
-  return prisma.matchUnit.create({
-    data: { matchId, parentId, levelId: level.id, order, sideAColour, ...result },
+  const first = parentId !== null && !match.units.some((row) => row.parentId === parentId);
+
+  return prisma.$transaction(async (tx) => {
+    if (first) {
+      await tx.matchUnit.update({
+        where: { id: parentId },
+        data: { outcome: null, sideAPoints: null, sideBPoints: null },
+      });
+    }
+    return tx.matchUnit.create({
+      data: { matchId, parentId, levelId: level.id, order, sideAColour, ...result },
+    });
   });
 }
 

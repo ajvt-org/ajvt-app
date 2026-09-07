@@ -460,3 +460,46 @@ describe("a unit recorded under another", () => {
     expect(body.units).toEqual([]);
   });
 });
+
+describe("opening a unit that already carries a score", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  const NESTED: LevelFixture[] = [
+    { ...MATCH_LEVEL, ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },
+    {
+      singular: "شوط",
+      plural: "أشواط",
+      decision: "SCORE",
+      ending: "FIRST_TO",
+      unitsPerParent: 12,
+      unitsToWin: 2,
+      halvesPerUnit: 1,
+    },
+    { singular: "نقطة", plural: "نقاط", decision: "SCORE" },
+  ];
+
+  it("lets go of the typed score when the first unit is recorded under it", async () => {
+    const { match } = await matchOf(NESTED);
+    const answer = await (await add(match.id, { sideAPoints: 9, sideBPoints: 4 })).json();
+
+    const body = await (
+      await add(match.id, { parentId: answer.unit.id, sideAPoints: 101, sideBPoints: 20 })
+    ).json();
+
+    expect(body.units[0].sideAPoints).toBeNull();
+    expect(body.units[0].standing.sideATotal).toBe(1);
+  });
+
+  it("keeps the typed score of a unit nothing was recorded under", async () => {
+    const { match } = await matchOf(NESTED);
+    const answer = await (await add(match.id, { sideAPoints: 9, sideBPoints: 4 })).json();
+
+    const body = await (await add(match.id, { sideAPoints: 3, sideBPoints: 9 })).json();
+
+    expect(body.units[0].id).toBe(answer.unit.id);
+    expect(body.units[0].sideAPoints).toBe(9);
+  });
+});
