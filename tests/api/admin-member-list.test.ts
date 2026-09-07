@@ -10,7 +10,7 @@ import {
   signInAsAdmin,
   createUser,
   makeMember,
-  mirrorMembershipYear,
+  payMembershipYear,
   withParams,
 } from "./helpers";
 import { runningYear } from "@/lib/membershipYear";
@@ -149,7 +149,7 @@ describe("the proofs waiting for an admin", () => {
 
   it("shows the newest proof a member sent, once", async () => {
     const user = await member("مجدد", { membershipYear: YEAR - 1, paymentProof: "old.webp" });
-    await mirrorMembershipYear(user.id, YEAR - 1);
+    await payMembershipYear(user.id, YEAR - 1);
     await prisma.membership.create({
       data: {
         userId: user.id,
@@ -159,7 +159,7 @@ describe("the proofs waiting for an admin", () => {
         paymentProof: "new.webp",
       },
     });
-    await mirrorMembershipYear(user.id, YEAR);
+    await payMembershipYear(user.id, YEAR);
 
     const { proofs } = await (await PROOFS(get("/api/admin/payment-proofs"))).json();
     const membership = proofs.filter((p: { kind: string }) => p.kind === "MEMBERSHIP");
@@ -170,11 +170,11 @@ describe("the proofs waiting for an admin", () => {
 
   it("keeps the last proof a member sent when a later year carries none", async () => {
     const user = await member("توقف", { membershipYear: YEAR - 1, paymentProof: "old.webp" });
-    await mirrorMembershipYear(user.id, YEAR - 1);
+    await payMembershipYear(user.id, YEAR - 1);
     await prisma.membership.create({
       data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "بنكيلي" },
     });
-    await mirrorMembershipYear(user.id, YEAR);
+    await payMembershipYear(user.id, YEAR);
 
     const { proofs } = await (await PROOFS(get("/api/admin/payment-proofs"))).json();
 

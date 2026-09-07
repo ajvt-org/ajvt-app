@@ -78,13 +78,15 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         status: "PENDING",
         rejectionReason: null,
       });
-      await recordMembershipPayment(
-        tx,
-        session.userId,
-        Number(paidAmount),
-        membershipFee,
-        surplusAnonymous,
-      );
+      await recordMembershipPayment(tx, session.userId, Number(paidAmount), membershipFee, {
+        method: paymentMethod,
+        accountId,
+        bankReference,
+        proof: paymentProof,
+        ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
+        status: "PENDING",
+        anonymous: surplusAnonymous,
+      });
     });
     return NextResponse.json({ id }, { status: 200 });
   }
@@ -108,13 +110,15 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           referenceCode: code,
           status: "PENDING",
         });
-        await recordMembershipPayment(
-          tx,
-          session.userId,
-          Number(paidAmount),
-          membershipFee,
-          surplusAnonymous,
-        );
+        await recordMembershipPayment(tx, session.userId, Number(paidAmount), membershipFee, {
+          method: paymentMethod,
+          accountId,
+          bankReference,
+          proof: paymentProof,
+          referenceCode: code,
+          status: "PENDING",
+          anonymous: surplusAnonymous,
+        });
       });
       return NextResponse.json({ id: session.userId, referenceCode: code }, { status: 201 });
     } catch (err) {

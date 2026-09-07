@@ -10,7 +10,6 @@ import {
   donationMirrorOf,
   isPaidAmount,
   mirrorDonation,
-  mirrorMembershipPayment,
   mirrorMembershipStatus,
   removeMirroredDonation,
   stampRecordedBy,
@@ -203,79 +202,7 @@ describe("writing the mirrored payment", () => {
 
 const REVIEWED_ON = new Date("2026-02-03T10:00:00.000Z");
 
-const MEMBERSHIP = {
-  userId: "u1",
-  year: 2026,
-  amount: 3000,
-  feeApplied: 1000,
-  method: "بنكيلي",
-  accountId: null,
-  bankReference: null,
-  proof: null,
-  referenceCode: "AJ-1234",
-  status: "ACTIVE" as const,
-  reviewedBy: "boss",
-  reviewedAt: REVIEWED_ON,
-  anonymous: false,
-  donorName: null,
-};
-
-describe("the payment a membership is mirrored into", () => {
-  it("makes one when the member has paid something", async () => {
-    const { db, calls } = fakeDb();
-
-    await mirrorMembershipPayment(db, MEMBERSHIP);
-
-    expect(only(calls, "create")[0].args.data).toMatchObject({
-      purpose: "MEMBERSHIP",
-      userId: "u1",
-      year: 2026,
-      amount: 3000,
-    });
-  });
-
-  it("updates the one already standing", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
-
-    await mirrorMembershipPayment(db, MEMBERSHIP);
-
-    expect(only(calls, "create")).toHaveLength(0);
-    expect(only(calls, "update")[0].args.data).toMatchObject({ amount: 3000 });
-  });
-
-  it("takes it away when the amount is gone or is nothing", async () => {
-    for (const amount of [null, 0, -1]) {
-      const { db, calls } = fakeDb({ id: "p1" });
-      await mirrorMembershipPayment(db, { ...MEMBERSHIP, amount });
-      expect(only(calls, "delete")).toHaveLength(1);
-      expect(withdrawReceiptsBeforeDelete).toHaveBeenCalledWith(db, { id: "p1" });
-    }
-  });
-
-  it("carries the reference code and the reviewer when it makes one", async () => {
-    const { db, calls } = fakeDb();
-
-    await mirrorMembershipPayment(db, MEMBERSHIP);
-
-    expect(only(calls, "create")[0].args.data).toMatchObject({
-      referenceCode: "AJ-1234",
-      reviewedBy: "boss",
-      reviewedAt: REVIEWED_ON,
-    });
-  });
-
-  it("carries them onto the one already standing too", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
-
-    await mirrorMembershipPayment(db, MEMBERSHIP);
-
-    expect(only(calls, "update")[0].args.data).toMatchObject({
-      referenceCode: "AJ-1234",
-      reviewedBy: "boss",
-      reviewedAt: REVIEWED_ON,
-    });
-  });
-
+describe("the verdict a membership payment carries", () => {
   it("moves the status of the year's membership payment", async () => {
     const { db, calls } = fakeDb();
 

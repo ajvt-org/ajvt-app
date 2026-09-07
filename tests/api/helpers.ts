@@ -11,7 +11,7 @@ import {
   TUTORIAL_BANK_NAME,
 } from "@/lib/questionBankServer";
 import type { ReviewStatus } from "@prisma/client";
-import { mirrorMembershipPayment } from "@/lib/paymentMirror";
+import { writeMembershipFee } from "@/lib/membershipPaymentServer";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
 import { forgetRateLimits } from "@/lib/rateLimit";
@@ -266,19 +266,11 @@ export async function adminAddsMember(body: Record<string, unknown>) {
   );
 }
 
-export async function mirrorMembershipYear(userId: string, year: number, amount?: number) {
+export async function payMembershipYear(userId: string, year: number, amount?: number) {
   const membership = await prisma.membership.findUniqueOrThrow({
     where: { userId_year: { userId, year } },
   });
-  const account = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { fullName: true },
-  });
-  await mirrorMembershipPayment(prisma, {
-    userId,
-    year,
-    amount: amount ?? MEMBERSHIP_FEE,
-    feeApplied: MEMBERSHIP_FEE,
+  await writeMembershipFee(prisma, userId, year, amount ?? MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
     method: membership.paymentMethod,
     accountId: membership.accountId,
     bankReference: membership.bankReference,
@@ -287,9 +279,8 @@ export async function mirrorMembershipYear(userId: string, year: number, amount?
     status: membership.status,
     reviewedBy: membership.reviewedBy,
     reviewedAt: membership.reviewedAt,
-    anonymous: false,
-    donorName: account.fullName,
     recordedBy: membership.recordedBy,
+    anonymous: false,
   });
 }
 

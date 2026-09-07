@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { GET as ME } from "@/app/api/user/me/route";
-import { resetDb, get, makeMember, createUser, signInAs, mirrorMembershipYear } from "./helpers";
+import { resetDb, get, makeMember, createUser, signInAs, payMembershipYear } from "./helpers";
 import { runningYear } from "@/lib/membershipYear";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 
@@ -48,7 +48,7 @@ describe("what a member reads about their own membership", () => {
     await prisma.membership.create({
       data: { userId: account.id, year: YEAR, status: "ACTIVE", paymentMethod: "مصرفي" },
     });
-    await mirrorMembershipYear(account.id, YEAR);
+    await payMembershipYear(account.id, YEAR);
 
     expect(await mine()).toMatchObject({
       status: "ACTIVE",

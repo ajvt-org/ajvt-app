@@ -42,7 +42,14 @@ describe("addMembership", () => {
       accountId: null,
       paymentProof: null,
     });
-    expect(recordMembershipPayment).toHaveBeenCalledWith(db, "u1", 100, 100, false);
+    expect(recordMembershipPayment).toHaveBeenCalledWith(db, "u1", 100, 100, {
+      method: "بنكيلي",
+      accountId: null,
+      proof: null,
+      status: "PENDING",
+      recordedBy: "admin",
+      anonymous: false,
+    });
   });
 
   it("saves the year a membership waiting on review belongs to", async () => {
