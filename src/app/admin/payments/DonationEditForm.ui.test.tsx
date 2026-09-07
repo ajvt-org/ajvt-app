@@ -2,7 +2,13 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DonationEditForm from "./DonationEditForm";
-import { bankReference, donationEdit, memberPicker, paymentAccountPicker } from "@/lib/texts";
+import {
+  bankReference,
+  donationEdit,
+  manualDonation,
+  memberPicker,
+  paymentAccountPicker,
+} from "@/lib/texts";
 import { money } from "@/lib/messages";
 import type { MemberOption, Proof } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
@@ -260,12 +266,42 @@ describe("editing a support payment", () => {
   });
 });
 
+describe("what the fields of the donation form are called", () => {
+  it("names every one of them, filled or empty", async () => {
+    mockPatch();
+    show({ userId: null, paymentMethod: "بنكيلي" }, undefined);
+
+    await screen.findByLabelText(paymentAccountPicker.label);
+    for (const label of [
+      donationEdit.donorName,
+      donationEdit.phone,
+      donationEdit.amount,
+      donationEdit.paymentMethod,
+      paymentAccountPicker.label,
+      bankReference.label,
+      donationEdit.destination,
+      donationEdit.anonymous,
+    ]) {
+      expect(screen.getByLabelText(label)).toBeDefined();
+    }
+  });
+
+  it("calls a field the same thing the create dialog calls it", () => {
+    expect(donationEdit.donorName).toBe(manualDonation.donorName);
+    expect(donationEdit.phone).toBe(manualDonation.phone);
+    expect(donationEdit.amount).toBe(manualDonation.amount);
+    expect(donationEdit.paymentMethod).toBe(manualDonation.paymentMethod);
+    expect(donationEdit.destination).toBe(manualDonation.destination);
+    expect(donationEdit.anonymous).toBe(manualDonation.anonymous);
+  });
+});
+
 describe("a method that is no longer offered", () => {
   it("stays on the record an admin is editing", async () => {
     mockPatch();
     show({ paymentMethod: RETIRED });
 
-    const select = await screen.findByLabelText(donationEdit.methodUnset);
+    const select = await screen.findByLabelText(donationEdit.paymentMethod);
     expect(within(select).getByText(RETIRED)).toBeDefined();
     expect((select as HTMLSelectElement).value).toBe(RETIRED);
   });
@@ -284,7 +320,7 @@ describe("the number a payment landed in", () => {
     mockPatch();
     show({ paymentMethod: "نقداً" });
 
-    await screen.findByLabelText(donationEdit.methodUnset);
+    await screen.findByLabelText(donationEdit.paymentMethod);
     expect(screen.queryByLabelText(paymentAccountPicker.label)).toBeNull();
   });
 
@@ -338,7 +374,7 @@ describe("the number a payment landed in", () => {
     fireEvent.change(picker, { target: { value: "a1" } });
     expect(picker.value).toBe("a1");
 
-    fireEvent.change(screen.getByLabelText(donationEdit.methodUnset), {
+    fireEvent.change(screen.getByLabelText(donationEdit.paymentMethod), {
       target: { value: "مصرفي" },
     });
 

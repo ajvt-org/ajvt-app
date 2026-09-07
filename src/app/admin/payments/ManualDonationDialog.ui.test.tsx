@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ManualDonationDialog from "./ManualDonationDialog";
-import { manualDonation, memberPicker } from "@/lib/texts";
+import { bankReference, manualDonation, memberPicker, paymentAccountPicker } from "@/lib/texts";
 import { members, money } from "@/lib/messages";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { MemberOption } from "./paymentTypes";
@@ -302,6 +302,70 @@ describe("recording a support payment by hand", () => {
     await userEvent.click(screen.getByText(manualDonation.submit));
 
     expect(screen.getByText(money.nameIsThePlaceholder)).toBeTruthy();
+  });
+
+  it("records the operation number an admin typed", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.type(screen.getByLabelText(bankReference.label), "TR10000000001");
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).bankReference).toBe("TR10000000001");
+  });
+
+  it("sends no operation number when none was typed", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).bankReference).toBeNull();
+  });
+
+  it("records a giver the admin knows but does not publish", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByLabelText(manualDonation.anonymous));
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).anonymous).toBe(true);
+    expect(bodyOf(fetchMock).donorName).toBe("ابو");
+  });
+
+  it("publishes the giver unless the admin says otherwise", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).anonymous).toBe(false);
+  });
+
+  it("names every field it draws", async () => {
+    mockPost();
+    show([ACCOUNT], DESTINATIONS);
+
+    await screen.findByRole("option", { name: "بنكيلي" });
+    await userEvent.selectOptions(screen.getByLabelText(manualDonation.paymentMethod), "بنكيلي");
+
+    for (const label of [
+      manualDonation.donorName,
+      manualDonation.phone,
+      manualDonation.amount,
+      manualDonation.paymentMethod,
+      paymentAccountPicker.label,
+      bankReference.label,
+      manualDonation.destination,
+      manualDonation.anonymous,
+    ]) {
+      expect(screen.getByLabelText(label)).toBeDefined();
+    }
   });
 
   it("hands back the proof named the way the server named it", async () => {

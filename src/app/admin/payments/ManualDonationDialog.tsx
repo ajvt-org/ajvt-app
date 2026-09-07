@@ -7,13 +7,18 @@ import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
 import { accountsOfMethod } from "@/lib/paymentMethodChoices";
 import { donationFormError } from "@/lib/donationFields";
 import { linkedAccount } from "@/lib/linkedAccount";
-import { manualDonation, paymentAccountPicker } from "@/lib/texts";
+import {
+  bankReference as bankReferenceTexts,
+  manualDonation,
+  paymentAccountPicker,
+} from "@/lib/texts";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import Sheet from "@/components/Sheet";
 import DestinationSelect from "@/components/admin/DestinationSelect";
+import FormField from "@/components/admin/FormField";
 import LinkMemberPanel from "./LinkMemberPanel";
 import MemberIdentity from "./MemberIdentity";
 import { proofFromDonation } from "./donationProof";
@@ -28,8 +33,10 @@ const EMPTY = {
   donorPhoto: "",
   paymentMethod: "",
   accountId: "",
+  bankReference: "",
   destinationId: "",
   proof: "",
+  anonymous: false,
 };
 
 export default function ManualDonationDialog({
@@ -68,8 +75,10 @@ export default function ManualDonationDialog({
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
         accountId: form.accountId || null,
+        bankReference: form.bankReference.trim() || null,
         ...destinationOf(destinations, form.destinationId),
         proof: form.proof || null,
+        anonymous: form.anonymous,
         userId: account?.userId ?? null,
       });
       onCreated(proofFromDonation(donation, destinations));
@@ -108,26 +117,6 @@ export default function ManualDonationDialog({
           placeholderIcon="receipt"
           onUpload={(filename) => set({ proof: filename })}
         />
-
-        {!account && (
-          <div>
-            <label
-              className="block text-sm font-bold mb-1.5"
-              style={{ color: "var(--text-main)" }}
-              htmlFor="manual-donor-name"
-            >
-              {manualDonation.donorName}
-            </label>
-            <input
-              id="manual-donor-name"
-              type="text"
-              value={form.donorName}
-              onChange={(e) => set({ donorName: e.target.value })}
-              maxLength={50}
-              className="input"
-            />
-          </div>
-        )}
 
         <div>
           <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
@@ -175,35 +164,34 @@ export default function ManualDonationDialog({
         </div>
 
         {!account && (
-          <div>
-            <label
-              className="block text-sm font-bold mb-1.5"
-              style={{ color: "var(--text-main)" }}
-              htmlFor="manual-donor-phone"
-            >
-              {manualDonation.phone}
-            </label>
-            <input
-              id="manual-donor-phone"
-              type="tel"
-              dir="ltr"
-              value={form.donorPhone}
-              onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-              placeholder="2XXXXXXX"
-              maxLength={8}
-              className="input"
-            />
-          </div>
+          <>
+            <FormField id="manual-donor-name" label={manualDonation.donorName}>
+              <input
+                id="manual-donor-name"
+                type="text"
+                value={form.donorName}
+                onChange={(e) => set({ donorName: e.target.value })}
+                maxLength={50}
+                className="input"
+              />
+            </FormField>
+
+            <FormField id="manual-donor-phone" label={manualDonation.phone}>
+              <input
+                id="manual-donor-phone"
+                type="tel"
+                dir="ltr"
+                value={form.donorPhone}
+                onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+                placeholder="2XXXXXXX"
+                maxLength={8}
+                className="input"
+              />
+            </FormField>
+          </>
         )}
 
-        <div>
-          <label
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-            htmlFor="manual-amount"
-          >
-            {manualDonation.amount} <span style={{ color: "var(--copper-500)" }}>*</span>
-          </label>
+        <FormField id="manual-amount" label={manualDonation.amount}>
           <input
             id="manual-amount"
             type="number"
@@ -214,16 +202,9 @@ export default function ManualDonationDialog({
             required
             className="input"
           />
-        </div>
+        </FormField>
 
-        <div>
-          <label
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-            htmlFor="manual-payment-method"
-          >
-            {manualDonation.paymentMethod}
-          </label>
+        <FormField id="manual-payment-method" label={manualDonation.paymentMethod}>
           <select
             id="manual-payment-method"
             value={form.paymentMethod}
@@ -237,42 +218,48 @@ export default function ManualDonationDialog({
               </option>
             ))}
           </select>
-        </div>
+        </FormField>
 
         {accounts.length > 0 && (
-          <div>
-            <label
-              className="block text-sm font-bold mb-1.5"
-              style={{ color: "var(--text-main)" }}
-              htmlFor="manual-payment-account"
-            >
-              {paymentAccountPicker.label}
-            </label>
+          <FormField id="manual-payment-account" label={paymentAccountPicker.label}>
             <PaymentAccountPicker
               id="manual-payment-account"
               accounts={accounts}
               value={form.accountId}
               onPick={(accountId) => set({ accountId })}
             />
-          </div>
+          </FormField>
         )}
 
-        <div>
-          <label
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-            htmlFor="manual-activity"
-          >
-            {manualDonation.destination}
-          </label>
+        <FormField id="manual-bank-reference" label={bankReferenceTexts.label}>
+          <input
+            id="manual-bank-reference"
+            value={form.bankReference}
+            onChange={(e) => set({ bankReference: e.target.value })}
+            maxLength={40}
+            dir="ltr"
+            className="input"
+          />
+        </FormField>
+
+        <FormField id="manual-destination" label={manualDonation.destination}>
           <DestinationSelect
-            id="manual-activity"
+            id="manual-destination"
             destinations={destinations}
             value={form.destinationId}
             onChange={(destinationId) => set({ destinationId })}
             className="input"
           />
-        </div>
+        </FormField>
+
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={form.anonymous}
+            onChange={(e) => set({ anonymous: e.target.checked })}
+          />
+          {manualDonation.anonymous}
+        </label>
 
         {error && (
           <div className="p-3 rounded-xl text-sm font-semibold" style={DANGER}>

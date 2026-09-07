@@ -49,6 +49,29 @@ describe("recording money whose giver the association cannot identify", () => {
     expect((await prisma.donation.findFirstOrThrow()).donorName).toBe("خالد الأمين");
   });
 
+  it("records the operation number and the anonymity the dialog now sends", async () => {
+    await record({
+      amount: 500,
+      paymentMethod: "بنكيلي",
+      donorName: "خالد الأمين",
+      bankReference: "TR10000000001",
+      anonymous: true,
+    });
+
+    const donation = await prisma.donation.findFirstOrThrow();
+    expect(donation.bankReference).toBe("TR10000000001");
+    expect(donation.anonymous).toBe(true);
+    expect(donation.donorName).toBe("خالد الأمين");
+  });
+
+  it("publishes a new donation unless the dialog says otherwise", async () => {
+    await record({ amount: 500, paymentMethod: "بنكيلي", donorName: "خالد الأمين" });
+
+    const donation = await prisma.donation.findFirstOrThrow();
+    expect(donation.anonymous).toBe(false);
+    expect(donation.bankReference).toBeNull();
+  });
+
   it("mirrors an unnamed donation onto the payment beside it", async () => {
     await record({ amount: 500, paymentMethod: "بنكيلي" });
 

@@ -1,18 +1,12 @@
+import { donationForm } from "./donationForm";
+
 export const donationEdit = {
-  proof: "إثبات الدفع",
-  donorPhoto: "صورة المتبرع",
-  donorPhotoOptional: "صورة المتبرع (اختياري)",
-  donorName: "اسم المتبرع",
-  contactFromAccount: "الاسم ورقم الهاتف مأخوذان من حساب العضو المرتبط",
+  ...donationForm,
   shownAs: "يظهر باسم",
   linkedTo: "مرتبط بحساب",
   link: "ربط بعضو مسجل",
   changeLink: "تغيير الربط",
   unlink: "إلغاء الربط",
-  anonymous: "إظهاره باسم فاعل خير",
-  phone: "رقم الهاتف (اختياري)",
-  amount: "المبلغ",
-  methodUnset: "طريقة الدفع — غير محددة",
   save: "حفظ",
   cancel: "إلغاء",
 } as const;
