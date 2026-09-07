@@ -13,7 +13,11 @@ function Empty({ nothingYet, onAdd }: { nothingYet: boolean; onAdd: () => void }
         {nothingYet ? texts.emptyList : texts.emptySearch}
       </p>
       {nothingYet && (
-        <button onClick={onAdd} className="btn btn-sm btn-primary mx-auto">
+        <button
+          onClick={onAdd}
+          className="btn btn-sm btn-primary mx-auto"
+          style={{ width: "fit-content" }}
+        >
           <IconLabel name="plus">{texts.addFirst}</IconLabel>
         </button>
       )}

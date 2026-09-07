@@ -43,7 +43,7 @@ export default function WorkspaceTabs({
   return (
     <div className="space-y-1.5">
       {sections.length > 1 && (
-        <div className="tab-strip py-1.5">
+        <div className="tab-strip">
           {sections.map((section) => {
             const on = section.key === current.key;
             return (
@@ -65,7 +65,7 @@ export default function WorkspaceTabs({
         </div>
       )}
 
-      <div className="tab-strip py-1.5">
+      <div className="tab-strip">
         {current.tabs.map((tab) => {
           const on = tab.key === active;
           return (

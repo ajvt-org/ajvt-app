@@ -1,11 +1,8 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
-import KeyHint from "@/components/admin/KeyHint";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { reviewQueue as texts } from "@/lib/texts";
-import { useFinePointer } from "@/lib/useFinePointer";
-import { REVIEW_KEYS } from "./useReviewShortcuts";
 import type { Member } from "./types";
 
 function RejectPicker({
@@ -90,21 +87,13 @@ export default function MemberDecision({
   onReject: () => void;
 }) {
   const decidable = member.status === "PENDING" || member.status === "ACTIVE";
-  const keyed = useFinePointer();
 
   return (
     <>
       {member.status === "PENDING" && !showRejectPicker && (
         <div className="grid grid-cols-2 gap-3">
           <button onClick={onApprove} disabled={loading} className="btn btn-primary text-sm">
-            {loading ? (
-              texts.busy
-            ) : (
-              <>
-                <IconLabel name="check">{texts.accept}</IconLabel>
-                {keyed && <KeyHint>{REVIEW_KEYS.accept.toUpperCase()}</KeyHint>}
-              </>
-            )}
+            {loading ? texts.busy : <IconLabel name="check">{texts.accept}</IconLabel>}
           </button>
           <button
             onClick={onOpenRejectPicker}
@@ -113,7 +102,6 @@ export default function MemberDecision({
             style={{ background: "#dc2626", color: "white" }}
           >
             <IconLabel name="close">{texts.reject}</IconLabel>
-            {keyed && <KeyHint>{REVIEW_KEYS.reject.toUpperCase()}</KeyHint>}
           </button>
         </div>
       )}
