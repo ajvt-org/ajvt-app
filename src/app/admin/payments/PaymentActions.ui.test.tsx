@@ -38,6 +38,28 @@ describe("the actions under a payment", () => {
     expect(danger.parentElement!.className).not.toContain("flex-wrap");
   });
 
+  it("stops the two groups drifting apart on a card that is wider than a phone", () => {
+    render(
+      <PaymentActions danger={<button>حذف</button>}>
+        <button>قبول</button>
+      </PaymentActions>,
+    );
+
+    expect(screen.getByText("قبول").parentElement!.parentElement!.className).toContain("max-w-2xl");
+  });
+
+  it("runs the divider across the whole card rather than only above the verbs", () => {
+    render(
+      <PaymentActions danger={<button>حذف</button>}>
+        <button>قبول</button>
+      </PaymentActions>,
+    );
+
+    const bar = screen.getByText("قبول").parentElement!.parentElement!;
+    expect(bar.parentElement!.style.borderTop).toBeTruthy();
+    expect(bar.parentElement!.className).not.toContain("max-w");
+  });
+
   it("draws no destructive group when a payment has nothing to destroy", () => {
     render(
       <PaymentActions>
