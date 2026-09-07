@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { resetDb, put, createAdmin, signInAsAdmin, withId } from "./helpers";
 import { tournament as messages } from "@/lib/messages";
 import { sideIdData } from "@/lib/matchSides";
-import { CHESS_LEVELS, SCORED_LEVELS } from "./ladders";
+import { CHESS_LEVELS, DEEP_LEVELS, SCORED_LEVELS } from "./ladders";
 
 import { PUT as SAVE, GET as READ } from "@/app/api/admin/activities/[id]/levels/route";
 
@@ -18,11 +18,14 @@ const save = (id: string, levels: object[]) =>
 
 const read = (id: string) => READ(new Request(`http://x/a/${id}/levels`) as never, withId(id));
 
-async function playedMatch(activityId: string) {
+async function playedMatch(activityId: string, levelId: string) {
   const one = await prisma.team.create({ data: { activityId, name: "أ" } });
   const two = await prisma.team.create({ data: { activityId, name: "ب" } });
-  await prisma.match.create({
+  const match = await prisma.match.create({
     data: { activityId, ...sideIdData("SERIES", one.id, two.id), status: "PLAYED" },
+  });
+  await prisma.matchUnit.create({
+    data: { matchId: match.id, levelId, order: 1, outcome: "SIDE_A" },
   });
 }
 
@@ -115,15 +118,62 @@ describe("declaring the levels of a series tournament", () => {
     expect((await res.json()).error).toBe(messages.levelsFootballOnly);
   });
 
-  it("refuses a change once a match has been played", async () => {
+  it("refuses removing a level that has units recorded in it", async () => {
     const activity = await seriesTournament();
-    await save(activity.id, CHESS_LEVELS);
-    await playedMatch(activity.id);
+    await save(activity.id, DEEP_LEVELS);
+    const levels = (await (await read(activity.id)).json()).levels as { id: string }[];
+    await playedMatch(activity.id, levels[2].id);
 
-    const res = await save(activity.id, SCORED_LEVELS);
+    const res = await save(activity.id, [
+      { ...CHESS_LEVELS[0], id: levels[0].id },
+      { ...CHESS_LEVELS[1], id: levels[1].id },
+    ]);
 
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toBe(messages.levelsLocked);
+    expect((await res.json()).error).toBe(messages.levelPlayedCannotGo);
+  });
+
+  it("refuses changing the rules of a level that has units recorded in it", async () => {
+    const activity = await seriesTournament();
+    await save(activity.id, CHESS_LEVELS);
+    const levels = (await (await read(activity.id)).json()).levels as { id: string }[];
+    await playedMatch(activity.id, levels[1].id);
+
+    const res = await save(activity.id, [
+      { ...CHESS_LEVELS[0], id: levels[0].id },
+      { ...CHESS_LEVELS[1], id: levels[1].id, decision: "SCORE" },
+    ]);
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(messages.levelPlayedCannotChange);
+  });
+
+  it("takes a new word for a level that has units recorded in it", async () => {
+    const activity = await seriesTournament();
+    await save(activity.id, CHESS_LEVELS);
+    const levels = (await (await read(activity.id)).json()).levels as { id: string }[];
+    await playedMatch(activity.id, levels[1].id);
+
+    const res = await save(activity.id, [
+      { ...CHESS_LEVELS[0], id: levels[0].id },
+      { ...CHESS_LEVELS[1], id: levels[1].id, singular: "دور", plural: "أدوار" },
+    ]);
+
+    expect(res.status).toBe(200);
+  });
+
+  it("keeps the id of a level it was given back", async () => {
+    const activity = await seriesTournament();
+    await save(activity.id, CHESS_LEVELS);
+    const levels = (await (await read(activity.id)).json()).levels as { id: string }[];
+
+    await save(activity.id, [
+      { ...CHESS_LEVELS[0], id: levels[0].id },
+      { ...CHESS_LEVELS[1], id: levels[1].id, singular: "دور" },
+    ]);
+
+    const after = (await (await read(activity.id)).json()).levels as { id: string }[];
+    expect(after.map((level) => level.id)).toEqual(levels.map((level) => level.id));
   });
 
   it("takes the levels away with the tournament", async () => {

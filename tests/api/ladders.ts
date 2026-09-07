@@ -25,6 +25,20 @@ export const SCORED_LEVELS: LevelFixture[] = [
   { singular: "جولة", plural: "جولات", decision: "SCORE" },
 ];
 
+export const DEEP_LEVELS: LevelFixture[] = [
+  { ...MATCH_LEVEL, ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },
+  {
+    singular: "شوط",
+    plural: "أشواط",
+    decision: "SCORE",
+    ending: "FIRST_TO",
+    unitsPerParent: 12,
+    unitsToWin: 3,
+    halvesPerUnit: 1,
+  },
+  { singular: "نقطة", plural: "نقاط", decision: "SCORE" },
+];
+
 export function ladderData(levels: LevelFixture[]) {
   return { create: levels.map((level, order) => ({ ...level, order })) };
 }
