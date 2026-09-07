@@ -1,6 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import SquadList, { type SquadPlayer } from "./SquadList";
+import { publicTournament as texts } from "@/lib/texts";
+
+vi.mock("@/components/Toast", () => ({ useToast: () => () => {} }));
+
+afterEach(() => vi.unstubAllGlobals());
 
 function squad(size: number): SquadPlayer[] {
   return Array.from({ length: size }, (_, i) => ({
@@ -30,6 +35,52 @@ function names(container: HTMLElement): string[] {
     (row.querySelector("span.text-sm")?.textContent ?? "").trim(),
   );
 }
+
+async function showFollowable(captainId: string | null = null) {
+  cleanup();
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ loggedIn: true, following: false }) }),
+  );
+  const players = squad(4).map((player) => ({ ...player, teamId: `t${player.id}` }));
+  const view = render(<SquadList players={players} captainId={captainId} follow />);
+  await waitFor(() => expect(screen.getAllByRole("button")).toHaveLength(players.length));
+  return view;
+}
+
+describe("a star that belongs to the entrant it follows", () => {
+  it("sits beside the name rather than at the edge of the cell", async () => {
+    const { container } = await showFollowable();
+
+    const row = container.querySelector("li") as HTMLElement;
+    const name = row.querySelector("span.text-sm") as HTMLElement;
+    expect(name.nextElementSibling?.querySelector("button")).not.toBeNull();
+  });
+
+  it("pushes nothing to the far edge of a cell", async () => {
+    const { container } = await showFollowable();
+
+    expect(container.querySelector(".ms-auto")).toBeNull();
+  });
+
+  it("reads the way the captain mark beside the same name reads", async () => {
+    const { container } = await showFollowable("p0");
+
+    const lead = container.querySelector("li") as HTMLElement;
+    const name = lead.querySelector("span.text-sm") as HTMLElement;
+    const mark = screen.getByRole("img", { name: texts.captain });
+    expect(name.nextElementSibling).toBe(mark);
+    expect(mark.nextElementSibling?.querySelector("button")).not.toBeNull();
+  });
+
+  it("shows no star on a roster that is not followed", () => {
+    const { container } = show(squad(4));
+
+    expect(container.querySelector("button")).toBeNull();
+  });
+});
 
 describe("SquadList", () => {
   it("lays the players out in tracks that fill the width", () => {
