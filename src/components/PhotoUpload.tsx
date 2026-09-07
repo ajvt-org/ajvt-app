@@ -14,6 +14,7 @@ interface PhotoUploadProps {
   label?: string;
   placeholderIcon?: IconName;
   variant?: "avatar" | "tile" | "cover" | "hero";
+  size?: number;
   bare?: boolean;
 }
 
@@ -33,6 +34,7 @@ export default function PhotoUpload({
   label = texts.defaultLabel,
   placeholderIcon = "user",
   variant = "avatar",
+  size,
   bare = false,
 }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,6 +77,7 @@ export default function PhotoUpload({
     uploading,
     locked,
     placeholderIcon,
+    size,
     onPick: () => inputRef.current?.click(),
   };
 
