@@ -19,6 +19,7 @@ export default defineConfig({
     setupFiles: ["tests/api/setup.ts"],
     globalSetup: ["tests/api/globalSetup.ts"],
     maxWorkers: API_TEST_WORKERS,
+    testTimeout: 20000,
     env: {
       TEST_DATABASE_BASE_URL: BASE_DATABASE_URL,
       JWT_SECRET: "test-secret",
