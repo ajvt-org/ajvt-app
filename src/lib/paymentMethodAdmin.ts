@@ -121,3 +121,7 @@ export function openAccountRows<T extends { active: boolean; closedAt: Date | nu
 export function reachesNobody(method: AdminMethodRow): boolean {
   return method.memberFacing && method.active && openAccountRows(method.accounts).length === 0;
 }
+
+export function numbersHoldPayments(accounts: { used: number }[]): boolean {
+  return accounts.some((account) => account.used > 0);
+}

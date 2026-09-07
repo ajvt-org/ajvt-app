@@ -8,6 +8,7 @@ import {
   swappedAccountPositions,
   adminMethodRows,
   nextPosition,
+  numbersHoldPayments,
   readName,
   swappedPositions,
   usageByName,
@@ -16,7 +17,15 @@ import { payableMethods, methodNames, type MethodWithAccounts } from "./paymentM
 import type { AdminMethodRow } from "./paymentMethodAdmin";
 
 function method(over: Partial<MethodWithAccounts> & { name: string }): MethodWithAccounts {
-  return { id: over.name, memberFacing: true, active: true, position: 0, accounts: [], ...over };
+  return {
+    id: over.name,
+    memberFacing: true,
+    carriesNumbers: true,
+    active: true,
+    position: 0,
+    accounts: [],
+    ...over,
+  };
 }
 
 const FIRST = method({ name: "first", position: 1 });
@@ -209,6 +218,7 @@ describe("a method that reaches nobody", () => {
       id: "m1",
       name: "بنكيلي",
       memberFacing: true,
+      carriesNumbers: true,
       active: true,
       position: 1,
       used: 0,
@@ -243,5 +253,19 @@ describe("a method that reaches nobody", () => {
   it("counts only the numbers still open", () => {
     const closed = { ...open, id: "a2", code: "222222", closedAt: new Date(), active: false };
     expect(openAccountRows([open, closed]).map((row) => row.id)).toEqual([open.id]);
+  });
+});
+
+describe("turning the numbers off on a method", () => {
+  it("is blocked while a number holds a record", () => {
+    expect(numbersHoldPayments([{ used: 0 }, { used: 3 }])).toBe(true);
+  });
+
+  it("is free once no number holds one", () => {
+    expect(numbersHoldPayments([{ used: 0 }, { used: 0 }])).toBe(false);
+  });
+
+  it("is free on a method that never had a number", () => {
+    expect(numbersHoldPayments([])).toBe(false);
   });
 });
