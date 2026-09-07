@@ -17,6 +17,7 @@ import { DONOR_ACCOUNT_SELECT, donorNameOnRecord, nameAdoptedOnLink } from "@/li
 import { viewerOf } from "@/lib/supportViewer";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
+import { donationLogSnapshot, donationWasChanged } from "@/lib/donationChangeLog";
 import type { SupportViewer } from "@/lib/supportPrivacy";
 import { money as amountText } from "@/lib/money";
 import { releaseUploads } from "@/lib/uploadRelease";
@@ -194,13 +195,17 @@ export const PATCH = withRoute(
       );
     }
     if (
-      anonymous !== undefined ||
-      donorName !== undefined ||
-      donorPhone !== undefined ||
-      donorPhoto !== undefined ||
-      amount !== undefined ||
-      paymentMethod !== undefined ||
-      proof !== undefined
+      donationWasChanged({
+        anonymous,
+        donorName,
+        donorPhone,
+        donorPhoto,
+        amount,
+        paymentMethod,
+        accountId,
+        bankReference,
+        proof,
+      })
     ) {
       await logAction(
         session.username,
@@ -209,14 +214,7 @@ export const PATCH = withRoute(
         {
           ...target,
           before: logSnapshotFor(donation, existing),
-          after: logSnapshotFor(donation, {
-            donorName: donation.donorName,
-            donorPhone: donation.donorPhone,
-            donorPhoto: donation.donorPhoto,
-            amount: donation.amount,
-            paymentMethod: donation.paymentMethod,
-            proof: donation.proof,
-          }),
+          after: logSnapshotFor(donation, donationLogSnapshot(donation)),
         },
       );
     }
