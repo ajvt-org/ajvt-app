@@ -11,20 +11,20 @@ const member = (over: Partial<StatefulMembership> = {}): StatefulMembership => (
 });
 
 describe("membershipState", () => {
-  it("calls an account with no payment behind it exactly that", () => {
-    expect(membershipState(null, YEAR)).toBe("NO_PAYMENT");
-    expect(membershipState(undefined, YEAR)).toBe("NO_PAYMENT");
+  it("calls an account with nothing behind it not a member", () => {
+    expect(membershipState(null, YEAR)).toBe("NOT_A_MEMBER");
+    expect(membershipState(undefined, YEAR)).toBe("NOT_A_MEMBER");
   });
 
-  it("waits while a payment is under review, whatever year it is for", () => {
-    expect(membershipState(member({ status: "PENDING" }), YEAR)).toBe("AWAITING_REVIEW");
+  it("holds an application under review, whatever year it is for", () => {
+    expect(membershipState(member({ status: "PENDING" }), YEAR)).toBe("APPLIED");
     expect(membershipState(member({ status: "PENDING", membershipYear: 2020 }), YEAR)).toBe(
-      "AWAITING_REVIEW",
+      "APPLIED",
     );
   });
 
-  it("keeps a refusal its own state, not a kind of unpaid", () => {
-    expect(membershipState(member({ status: "REJECTED" }), YEAR)).toBe("REFUSED");
+  it("keeps a refused application its own state, not a kind of never applied", () => {
+    expect(membershipState(member({ status: "REJECTED" }), YEAR)).toBe("APPLICATION_REFUSED");
   });
 
   it("is up to date on the year being collected", () => {
@@ -55,16 +55,22 @@ describe("membershipState", () => {
 
   it("leaves the verdict on the proof ahead of the ending", () => {
     expect(membershipState(member({ status: "PENDING", endedAt: new Date() }), YEAR)).toBe(
-      "AWAITING_REVIEW",
+      "APPLIED",
     );
     expect(membershipState(member({ status: "REJECTED", endedAt: new Date() }), YEAR)).toBe(
-      "REFUSED",
+      "APPLICATION_REFUSED",
     );
   });
 
   it("has something to say in every state but the paid-up one", () => {
     expect(needsAttention("UP_TO_DATE")).toBe(false);
-    for (const state of ["NO_PAYMENT", "AWAITING_REVIEW", "REFUSED", "BEHIND", "ENDED"] as const) {
+    for (const state of [
+      "NOT_A_MEMBER",
+      "APPLIED",
+      "APPLICATION_REFUSED",
+      "BEHIND",
+      "ENDED",
+    ] as const) {
       expect(needsAttention(state)).toBe(true);
     }
   });

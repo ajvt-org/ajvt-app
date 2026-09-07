@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { membershipStanding, needsHandling, netMoney } from "./adminHome";
+import type { StatefulMembership } from "./membershipState";
 
-const member = (over: Partial<Parameters<typeof membershipStanding>[0][number]> = {}) => ({
+const member = (over: Partial<StatefulMembership> = {}): StatefulMembership => ({
   status: "ACTIVE",
   membershipYear: 2026,
+  endedAt: null,
   ...over,
 });
 
 describe("membershipStanding", () => {
-  it("counts an active member on the running year as current", () => {
+  it("counts a member on the running year as current", () => {
     expect(membershipStanding([member()], 2026)).toEqual({ current: 1, active: 1, former: 0 });
   });
 
@@ -20,8 +22,22 @@ describe("membershipStanding", () => {
     });
   });
 
-  it("leaves a pending or rejected member out of both figures", () => {
+  it("counts a year paid in advance as current, the way the state model reads it", () => {
+    expect(membershipStanding([member({ membershipYear: 2027 })], 2026)).toEqual({
+      current: 1,
+      active: 1,
+      former: 0,
+    });
+  });
+
+  it("leaves an applicant and a refused application out of both figures", () => {
     const rows = [member({ status: "PENDING" }), member({ status: "REJECTED" }), member()];
+
+    expect(membershipStanding(rows, 2026)).toEqual({ current: 1, active: 1, former: 0 });
+  });
+
+  it("stops counting a membership an admin ended", () => {
+    const rows = [member({ endedAt: new Date("2026-06-01") }), member()];
 
     expect(membershipStanding(rows, 2026)).toEqual({ current: 1, active: 1, former: 0 });
   });
