@@ -7,6 +7,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { mirrorMembershipStatus, type MembershipVerdict } from "@/lib/paymentMirror";
 import { recordMembershipYear, setMembershipStatus } from "@/lib/membershipRecord";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { membershipPaymentOf } from "@/lib/membershipPaymentRead";
 import { getAppSettings } from "@/lib/settingsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
@@ -37,6 +38,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     select: { memberNumber: true },
   });
   const existing = account ? await currentMembership(prisma, id) : null;
+  const paid = existing ? await membershipPaymentOf(prisma, id, existing.year) : null;
   const needsNumber = action === "ACTIVE" && !account?.memberNumber;
 
   const updated = await prisma.$transaction(async (tx) => {
@@ -52,8 +54,8 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     if (issued) await tx.user.update({ where: { id }, data: issued });
     if (action === "ACTIVE") {
       await recordMembershipYear(tx, id, existing.year, membershipFee, {
-        paymentMethod: existing.paymentMethod,
-        paymentProof: existing.paymentProof,
+        paymentMethod: paid?.paymentMethod ?? null,
+        paymentProof: paid?.paymentProof ?? null,
         recordedBy: session.username,
       });
     }
