@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Notice from "@/components/Notice";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
-import MemberProofForm from "@/components/admin/MemberProofForm";
+import MemberProofButton from "@/components/admin/MemberProofButton";
+import MemberProofPanel from "@/components/admin/MemberProofPanel";
 import VerbButton from "@/components/admin/VerbButton";
 import { GRAVE, LEAD, RISKY } from "@/components/admin/verbTones";
 import { api, errorMessage } from "@/lib/api";
@@ -26,7 +27,7 @@ export default function MembershipActions({
   onChanged: () => void;
 }) {
   const [picking, setPicking] = useState(false);
-  const [replacing, setReplacing] = useState(false);
+  const [editingProof, setEditingProof] = useState(false);
   const [reason, setReason] = useState<string>(REJECTION_REASONS[0]);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -92,44 +93,48 @@ export default function MembershipActions({
           </div>
         </div>
       ) : (
-        <PaymentActions
-          stacked={replacing}
-          danger={
-            <VerbButton
-              icon="trash"
-              label={deleteMember.payment}
-              tone={GRAVE}
-              disabled={busy}
-              onClick={() => setConfirming(true)}
-            />
-          }
-        >
-          {status !== "ACTIVE" && (
-            <VerbButton
-              icon="check"
-              label={texts.accept}
-              tone={LEAD}
-              disabled={busy}
-              onClick={() => decide("ACTIVE")}
+        <>
+          <PaymentActions
+            danger={
+              <VerbButton
+                icon="trash"
+                label={deleteMember.payment}
+                tone={GRAVE}
+                disabled={busy}
+                onClick={() => setConfirming(true)}
+              />
+            }
+          >
+            {status !== "ACTIVE" && (
+              <VerbButton
+                icon="check"
+                label={texts.accept}
+                tone={LEAD}
+                disabled={busy}
+                onClick={() => decide("ACTIVE")}
+              />
+            )}
+            {status !== "REJECTED" && (
+              <VerbButton
+                icon="close"
+                label={texts.refuse}
+                tone={RISKY}
+                disabled={busy}
+                onClick={() => setPicking(true)}
+              />
+            )}
+            <MemberProofButton proof={proof} onClick={() => setEditingProof(true)} />
+          </PaymentActions>
+
+          {editingProof && (
+            <MemberProofPanel
+              memberId={userId}
+              proof={proof}
+              onSaved={onChanged}
+              onClose={() => setEditingProof(false)}
             />
           )}
-          {status !== "REJECTED" && (
-            <VerbButton
-              icon="close"
-              label={texts.refuse}
-              tone={RISKY}
-              disabled={busy}
-              onClick={() => setPicking(true)}
-            />
-          )}
-          <MemberProofForm
-            memberId={userId}
-            proof={proof}
-            onSaved={onChanged}
-            onOpenChange={setReplacing}
-            compact
-          />
-        </PaymentActions>
+        </>
       )}
 
       {error && <Notice tone="error">{error}</Notice>}
