@@ -19,14 +19,11 @@ export default function MemberInfoCard({
 
   return (
     <div className="card p-5">
-      <div
-        className="flex items-center justify-between gap-3 mb-3 pb-2"
-        style={{ borderBottom: "1px solid var(--mint-100)" }}
-      >
-        <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
-          {texts.title}
-        </h3>
-        {onEdit && (
+      {onEdit && (
+        <div
+          className="flex items-center justify-end mb-3 pb-2"
+          style={{ borderBottom: "1px solid var(--mint-100)" }}
+        >
           <button
             onClick={onEdit}
             className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
@@ -34,8 +31,8 @@ export default function MemberInfoCard({
           >
             <IconLabel name="pencil">{texts.edit}</IconLabel>
           </button>
-        )}
-      </div>
+        </div>
+      )}
       <div className="space-y-2.5">
         <InfoRow label={texts.phone} value={member.user?.phone ?? "—"} dir="ltr" />
         {!onCard && <InfoRow label={villageField.label} value={member.village} />}
