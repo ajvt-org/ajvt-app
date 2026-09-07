@@ -6,6 +6,7 @@ import {
   placeholderTeamName,
   rosterFault,
   squadLabel,
+  squadIsBarred,
   isSinglesSquad,
   OPEN_SQUAD,
 } from "@/lib/squadSize";
@@ -123,6 +124,17 @@ describe("reading a squad size", () => {
 
   it("has no label for an open squad", () => {
     expect(squadLabel(OPEN_SQUAD)).toBeNull();
+  });
+
+  it("draws a bar for a range with a maximum", () => {
+    expect(squadIsBarred({ min: 16, max: 22 })).toBe(true);
+    expect(squadIsBarred({ min: null, max: 22 })).toBe(true);
+  });
+
+  it("draws no bar for a fixed squad, an open end or no size at all", () => {
+    expect(squadIsBarred(exactly(11))).toBe(false);
+    expect(squadIsBarred({ min: 16, max: null })).toBe(false);
+    expect(squadIsBarred(OPEN_SQUAD)).toBe(false);
   });
 });
 

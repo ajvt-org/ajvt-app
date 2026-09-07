@@ -37,28 +37,19 @@ describe("SettingsForm", () => {
     expect(screen.queryByLabelText(/أقل نسبة للنقاط/)).toBeNull();
   });
 
-  it("says where those settings live instead", () => {
+  it("leaves the toggle and the defaults heading to speak for themselves", () => {
     setup();
 
-    expect(screen.getByText(/يضبط داخل المسابقة نفسها/)).toBeDefined();
+    expect(screen.getByText(texts.confirmAnswers)).toBeDefined();
+    expect(screen.getByText(texts.defaultsTitle)).toBeDefined();
+    expect(screen.queryByText(/يضبط داخل المسابقة نفسها/)).toBeNull();
+    expect(screen.queryByText(/يسري التغيير من الجولة القادمة/)).toBeNull();
   });
 
-  it("heads the defaults, so the lead cannot read as more about the toggle", () => {
+  it("keeps the line naming where the tutorial questions live", () => {
     setup();
 
-    const heading = screen.getByText(texts.defaultsTitle).closest("p");
-    const hint = screen.getByText(texts.confirmAnswersKeeps).closest("p");
-
-    expect(heading?.className).toContain("font-bold");
-    expect(hint?.className).not.toContain("font-bold");
-    expect(heading?.compareDocumentPosition(hint!)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
-  });
-
-  it("keeps only what the toggle label cannot say", () => {
-    setup();
-
-    expect(screen.getByText(texts.confirmAnswersKeeps)).toBeDefined();
-    expect(texts.confirmAnswersKeeps).not.toContain("دون تأكيد");
+    expect(screen.getByText(texts.tutorialBankLead)).toBeDefined();
   });
 
   it("keeps the points within the range a difficulty is read from", () => {

@@ -1,10 +1,20 @@
+export const quizBankPicker = {
+  title: "بنوك الأسئلة",
+  create: "بنك جديد",
+  name: "اسم البنك",
+  save: "حفظ",
+  cancel: "إلغاء",
+  rename: (name: string) => `تعديل ${name}`,
+  remove: (name: string) => `حذف ${name}`,
+  deleteTitle: "حذف البنك",
+  deleteMessage: (name: string) => `سيتم حذف ${name}. هذا ممكن فقط إذا كان فارغاً.`,
+  deleteConfirm: "حذف",
+} as const;
+
 export const quizSettingsForm = {
   title: "إعدادات الأسئلة",
   confirmAnswers: "زر تأكيد الإجابة",
-  confirmAnswersKeeps:
-    "يسري التغيير من الجولة القادمة، والأسئلة متعددة الإجابات تحتفظ بالزر دائماً.",
   defaultsTitle: "ما يظهر جاهزاً عند إضافة سؤال جديد",
-  defaultsLead: "كل ما يخص سير المسابقة يضبط داخل المسابقة نفسها.",
   defaultAnswerCount: "عدد الإجابات الافتراضي",
   defaultCorrectCount: "عدد الإجابات الصحيحة الافتراضي",
   defaultPoints: "النقاط الافتراضية للسؤال",
@@ -30,6 +40,9 @@ export const quizQuestionList = {
   enable: "تفعيل",
   remove: "حذف",
   outOf: "من",
+  answerShape: (correct: number, total: number) => `${correct} من ${total}`,
+  answersMark: "شكل الإجابات",
+  noCorrect: "لا إجابة صحيحة محددة",
   play: (sent: number, answered: number, correct: number) =>
     `أُرسلت لـ ${sent} · أُجيبت ${answered} · صحيحة ${correct}`,
   moveUp: "تقديم السؤال",

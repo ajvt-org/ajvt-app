@@ -5,7 +5,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useState } from "react";
 import type { RosterMember, Team } from "./types";
-import { displayTeamName, squadLabel } from "@/lib/squadSize";
+import { displayTeamName, squadIsBarred, squadLabel } from "@/lib/squadSize";
 import { squadBreaches, type SquadSettings } from "@/lib/squadRules";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
@@ -40,7 +40,7 @@ export default function TeamsTab({
   const [error, setError] = useState("");
 
   const unassigned = roster.filter((m) => !m.team);
-  const squadText = squadLabel(settings.squad);
+  const squadText = squadIsBarred(settings.squad) ? null : squadLabel(settings.squad);
   const from = useAdminOrigin();
 
   function shownName(team: Team): string {

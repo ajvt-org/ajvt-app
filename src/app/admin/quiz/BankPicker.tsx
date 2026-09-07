@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ConfirmAction from "./ConfirmAction";
 import { countedNoun, QUESTIONS } from "@/lib/arabicPlural";
+import { quizBankPicker as texts } from "@/lib/texts";
 
 export interface BankRow {
   id: string;
@@ -52,7 +53,7 @@ export default function BankPicker({
     <div className="card p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="list">بنوك الأسئلة</IconLabel>
+          <IconLabel name="list">{texts.title}</IconLabel>
         </p>
         <button
           onClick={() => {
@@ -62,23 +63,23 @@ export default function BankPicker({
           }}
           className="btn btn-primary btn-sm"
         >
-          <IconLabel name="plus">بنك جديد</IconLabel>
+          <IconLabel name="plus">{texts.create}</IconLabel>
         </button>
       </div>
 
       {adding && (
         <div className="flex gap-2">
           <input
-            aria-label="اسم البنك"
+            aria-label={texts.name}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="input input-sm"
           />
           <button onClick={submitNew} disabled={busy} className="btn btn-primary btn-sm">
-            حفظ
+            {texts.save}
           </button>
           <button onClick={() => setAdding(false)} className="btn btn-sm">
-            إلغاء
+            {texts.cancel}
           </button>
         </div>
       )}
@@ -96,7 +97,7 @@ export default function BankPicker({
             return (
               <div key={bank.id} className="flex gap-2">
                 <input
-                  aria-label="اسم البنك"
+                  aria-label={texts.name}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="input input-sm"
@@ -106,10 +107,10 @@ export default function BankPicker({
                   disabled={busy}
                   className="btn btn-primary btn-sm"
                 >
-                  حفظ
+                  {texts.save}
                 </button>
                 <button onClick={() => setRenaming(null)} className="btn btn-sm">
-                  إلغاء
+                  {texts.cancel}
                 </button>
               </div>
             );
@@ -124,15 +125,15 @@ export default function BankPicker({
               }}
             >
               <button onClick={() => onOpen(bank.id)} className="flex-1 text-start text-xs">
-                <span className="font-bold" style={{ color: "var(--text-main)" }}>
+                <bdi className="font-bold" style={{ color: "var(--text-main)" }}>
                   {bank.name}
-                </span>
+                </bdi>
                 <span className="ms-2" style={{ color: "var(--text-muted)" }}>
                   {countedNoun(bank._count.questions, QUESTIONS)}
                 </span>
               </button>
               <button
-                aria-label={`تعديل ${bank.name}`}
+                aria-label={texts.rename(bank.name)}
                 onClick={() => {
                   setRenaming(bank.id);
                   setAdding(false);
@@ -143,7 +144,7 @@ export default function BankPicker({
                 <Icon name="pencil" size={13} />
               </button>
               <button
-                aria-label={`حذف ${bank.name}`}
+                aria-label={texts.remove(bank.name)}
                 onClick={() => setConfirming(bank)}
                 className="btn btn-icon btn-sm"
                 style={{ color: "#991b1b" }}
@@ -157,9 +158,9 @@ export default function BankPicker({
 
       {confirming && (
         <ConfirmAction
-          title="حذف البنك"
-          message={`سيتم حذف ${confirming.name}. هذا ممكن فقط إذا كان فارغاً.`}
-          confirmLabel="حذف"
+          title={texts.deleteTitle}
+          message={texts.deleteMessage(confirming.name)}
+          confirmLabel={texts.deleteConfirm}
           danger
           loading={busy}
           onConfirm={() => {

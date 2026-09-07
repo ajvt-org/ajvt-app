@@ -54,7 +54,7 @@ export const activityRow = {
   joinRequestChip: (n: number) => `${n} طلب انضمام`,
   filters: {
     any: "الكل",
-    anyStage: "مع المنتهية",
+    anyStage: "كل المراحل",
     typeAxis: "النوع",
     stateAxis: "التسجيل",
     stageAxis: "المرحلة",
@@ -66,7 +66,9 @@ export const activityRow = {
     current: "جارية وقادمة",
     finished: "منتهية",
     heading: "تصفية",
-    chip: (label: string, n: number) => `${label} ${n}`,
+    sheetTitle: "تصفية القائمة",
+    clear: "إزالة التصفية",
+    done: "تم",
     pick: (axis: string, label: string) => `${axis}: ${label}`,
   },
   regions: {
@@ -105,9 +107,7 @@ export const activityRow = {
     `سيُحذف ${n} نشاطاً نهائياً، ومعها تسجيلات الأعضاء وفرقها ومبارياتها.`,
   bulkDeleteConfirm: "حذف نهائي",
   arrangeLink: "ترتيب الظهور",
-  arrangeTitle: "ترتيب ظهور الأنشطة",
-  arrangeNote:
-    "المرحلة تُقرَّر أولاً: الجاري ثم القادم ثم المنتهي. الأسهم ترتّب النشاط داخل مرحلته فقط.",
+  arrangeNote: "الأسهم ترتّب النشاط داخل مرحلته فقط.",
   arrangeBack: "الأنشطة",
   arrangeEmpty: "لا توجد أنشطة لترتيبها",
   stages: {

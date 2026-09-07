@@ -62,7 +62,7 @@ export default function SquadList({
               </span>
             )}
             {follow && player.teamId && (
-              <span className="ms-auto shrink-0">
+              <span className="shrink-0">
                 <FollowTeamButton teamId={player.teamId} entrant="player" />
               </span>
             )}

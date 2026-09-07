@@ -1,97 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api, errorMessage } from "@/lib/api";
-import { defaultSettings, type AppSettingsValues } from "@/lib/settings";
-import PageLoading from "@/components/PageLoading";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import DataExport from "./DataExport";
 import PaymentMethodManager from "@/components/admin/PaymentMethodManager";
-import SettingsFieldInput from "./SettingsFieldInput";
-import { groupedFields } from "./settingsFields";
-import { settingsPage } from "@/lib/texts";
+import SettingsForm from "./SettingsForm";
+import WorkspaceTabs, { type WorkspaceSection } from "@/components/admin/WorkspaceTabs";
+import { paymentMethodManager, settingsPage } from "@/lib/texts";
 
-export default function AdminSettingsPage() {
-  const [values, setValues] = useState<AppSettingsValues>(defaultSettings());
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
+const SECTIONS: WorkspaceSection[] = [
+  {
+    key: "settings",
+    label: settingsPage.settingsTab,
+    tabs: [
+      { key: "settings", label: settingsPage.settingsTab, icon: "gear" },
+      { key: "methods", label: paymentMethodManager.title, icon: "card" },
+      { key: "export", label: settingsPage.exportTab, icon: "download" },
+    ],
+  },
+];
 
-  useEffect(() => {
-    api
-      .get<{ settings: AppSettingsValues }>("/api/admin/settings")
-      .then((d) => setValues(d.settings))
-      .catch((e) => setError(errorMessage(e)))
-      .finally(() => setLoading(false));
-  }, []);
+const TABS = SECTIONS[0].tabs;
 
-  async function save(e: React.SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setSaving(true);
-    setError("");
-    setSaved(false);
-    try {
-      const d = await api.patch<{ settings: AppSettingsValues }>("/api/admin/settings", {
-        ...values,
-        whatsappGroup: values.whatsappGroup ?? "",
-      });
-      setValues(d.settings);
-      setSaved(true);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
+function AdminSettingsPageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const requested = searchParams.get("tab") || TABS[0].key;
+  const tab = TABS.some((t) => t.key === requested) ? requested : TABS[0].key;
+
+  function pickTab(key: string) {
+    router.replace(`/admin/settings?tab=${key}`, { scroll: false });
   }
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="admin-page space-y-5">
-      <form onSubmit={save} className="card p-5 space-y-5">
-        {groupedFields().map((group, at) => (
-          <div
-            key={group.key}
-            className="space-y-4"
-            style={
-              at === 0
-                ? undefined
-                : { borderTop: "1px solid var(--mint-100)", paddingTop: "1.25rem" }
-            }
-          >
-            <p className="text-sm font-black" style={{ color: "var(--mint-700)" }}>
-              {group.title}
-            </p>
-            {group.fields.map((field) => (
-              <SettingsFieldInput
-                key={field.key}
-                field={field}
-                value={values[field.key]}
-                onChange={(value) => setValues((p) => ({ ...p, [field.key]: value }))}
-              />
-            ))}
-          </div>
-        ))}
+    <div className="admin-page space-y-4">
+      <WorkspaceTabs sections={SECTIONS} active={tab} onPick={pickTab} />
 
-        {error && (
-          <p className="text-sm font-bold" style={{ color: "#991b1b" }}>
-            {error}
-          </p>
-        )}
-        {saved && !error && (
-          <p className="text-sm font-bold" style={{ color: "var(--mint-700)" }}>
-            {settingsPage.saved}
-          </p>
-        )}
-
-        <button type="submit" disabled={saving} className="btn btn-primary">
-          {saving ? settingsPage.saving : settingsPage.save}
-        </button>
-      </form>
-
-      <PaymentMethodManager />
-
-      <DataExport />
+      {tab === "settings" && <SettingsForm />}
+      {tab === "methods" && <PaymentMethodManager />}
+      {tab === "export" && <DataExport />}
     </div>
+  );
+}
+
+export default function AdminSettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminSettingsPageInner />
+    </Suspense>
   );
 }

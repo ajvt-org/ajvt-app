@@ -112,26 +112,40 @@ describe("CompetitionsSection", () => {
     expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).value).toBe("");
   });
 
-  it("opens a competition that has not started on its rounds", async () => {
+  it("opens a competition that has not started on its settings", async () => {
     serve(competition);
     render(<CompetitionsSection />);
-
-    await waitFor(() => expect(screen.getByText(/جولات المسابقة/)).toBeDefined());
-    expect(screen.queryByLabelText("اسم المسابقة")).toBeNull();
-  });
-
-  it("puts the settings a tab away rather than at the top of the page", async () => {
-    serve(competition);
-    render(<CompetitionsSection />);
-    await waitFor(() => screen.getByText(/جولات المسابقة/));
-
-    await userEvent.click(screen.getByRole("button", { name: /الإعدادات/ }));
 
     await waitFor(() =>
       expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).value).toBe(
         "مسابقة الصيف",
       ),
     );
+  });
+
+  it("says under the settings how far the bank goes", async () => {
+    serve(competition);
+    render(<CompetitionsSection />);
+
+    await waitFor(() => expect(screen.getByText(/تغطية بنك الأسئلة/)).toBeDefined());
+    expect(screen.getByText(/تُسحب أسئلة كل جولة من البنك عند الانطلاق/)).toBeDefined();
+  });
+
+  it("leaves a public competition that has not started with no tabs at all", async () => {
+    serve(competition);
+    const { container } = render(<CompetitionsSection />);
+    await waitFor(() => screen.getByLabelText("اسم المسابقة"));
+
+    expect(container.querySelector(".tab-strip")).toBeNull();
+  });
+
+  it("puts every tab of a running competition on one strip", async () => {
+    serve({ ...competition, visibility: "PRIVATE", startedAt: "2026-08-21T08:00:00.000Z" });
+    const { container } = render(<CompetitionsSection />);
+    await waitFor(() => screen.getByText(/1 · يوسف/));
+
+    expect(container.querySelectorAll(".tab-strip")).toHaveLength(1);
+    expect(container.querySelectorAll(".tab-strip button")).toHaveLength(4);
   });
 
   it("opens a running competition on its standings and keeps the scores a tab away", async () => {
@@ -148,7 +162,7 @@ describe("CompetitionsSection", () => {
   it("reaches the participants of a private competition", async () => {
     serve({ ...competition, visibility: "PRIVATE" });
     render(<CompetitionsSection />);
-    await waitFor(() => screen.getByText(/جولات المسابقة/));
+    await waitFor(() => screen.getByLabelText("اسم المسابقة"));
 
     await userEvent.click(screen.getByRole("button", { name: /المشاركون/ }));
 
@@ -165,7 +179,6 @@ describe("CompetitionsSection", () => {
     render(<CompetitionsSection />);
     await waitFor(() => screen.getByText(/1 · يوسف/));
 
-    await userEvent.click(screen.getByRole("button", { name: "الإعداد" }));
     await userEvent.click(screen.getByRole("button", { name: /المشاركون/ }));
 
     await waitFor(() => expect(screen.getByLabelText("يوسف")).toBeDefined());

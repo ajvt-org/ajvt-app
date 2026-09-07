@@ -3,6 +3,7 @@ import {
   roundWindows,
   windowAt,
   currentRound,
+  roundInPlay,
   nextWindow,
   roundsBegun,
   roundState,
@@ -93,6 +94,30 @@ describe("currentRound", () => {
 
   it("counts a daily run in days", () => {
     expect(currentRound(daily, at("2026-08-27T12:00:00Z"))?.index).toBe(7);
+  });
+});
+
+describe("roundInPlay", () => {
+  it("is the first round before the run starts", () => {
+    expect(roundInPlay(hourly, at("2026-08-20T07:00:00Z"))).toBe(0);
+  });
+
+  it("is the open round while one is open", () => {
+    expect(roundInPlay(hourly, at("2026-08-20T11:30:00Z"))).toBe(3);
+  });
+
+  it("is the round the clock is in between two windows", () => {
+    expect(roundInPlay(daily, at("2026-08-20T23:00:00Z"))).toBe(0);
+    expect(roundInPlay(daily, at("2026-08-21T07:00:00Z"))).toBe(0);
+  });
+
+  it("is the last round once the run is over", () => {
+    expect(roundInPlay(hourly, at("2026-08-21T10:00:00Z"))).toBe(19);
+    expect(roundInPlay(daily, at("2026-12-01T00:00:00Z"))).toBe(29);
+  });
+
+  it("is the first round for a run of one", () => {
+    expect(roundInPlay({ ...hourly, roundCount: 1 }, at("2026-08-25T00:00:00Z"))).toBe(0);
   });
 });
 

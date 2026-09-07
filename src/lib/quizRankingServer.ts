@@ -6,7 +6,7 @@ import {
   endsAt,
   groupOf,
   nextWindow,
-  roundIndexAt,
+  roundInPlay,
   roundState,
   type RoundState,
 } from "./quizRound";
@@ -155,8 +155,7 @@ export async function getStandings(
   };
   if (!competition?.startedAt) return empty;
 
-  const at =
-    currentRound(shapeOf(competition), now)?.index ?? roundIndexAt(shapeOf(competition), now);
+  const at = roundInPlay(shapeOf(competition), now);
 
   const shared = await sharedResult(
     `standings:${competition.id}:${at}:${limit}`,
@@ -206,8 +205,7 @@ export async function boardBlock(
   const board = competition.boards.find((b) => b.id === boardId);
   if (!board) throw new NotFoundError(NO_BOARD);
 
-  const current =
-    currentRound(shapeOf(competition), now)?.index ?? roundIndexAt(shapeOf(competition), now);
+  const current = roundInPlay(shapeOf(competition), now);
   const rows = await rankBoard(competition.id, board, blockAnchor(board, block, current));
   return {
     rows: await named(rows, limit),

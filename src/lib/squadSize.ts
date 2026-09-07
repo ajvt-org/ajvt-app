@@ -27,6 +27,10 @@ export function isSinglesSquad(squad: SquadSize): boolean {
   return fixedSquad(squad) === 1;
 }
 
+export function squadIsBarred(squad: SquadSize): boolean {
+  return squad.max !== null && fixedSquad(squad) === null;
+}
+
 export function squadIsSet(squad: SquadSize): boolean {
   return squad.min !== null || squad.max !== null;
 }

@@ -6,6 +6,11 @@ import Icon from "@/components/Icon";
 import { publicTournament as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
 
+const DISC = 32;
+const STAR = 22;
+const FOLLOWED = { background: "var(--mint-600)", color: "white" };
+const NOT_FOLLOWED = { background: "transparent", color: "var(--mint-600)" };
+
 export default function FollowTeamButton({
   teamId,
   entrant = "team",
@@ -61,9 +66,14 @@ export default function FollowTeamButton({
       aria-label={following ? words.following : words.follow}
       aria-pressed={following}
       className="btn btn-icon"
-      style={{ background: "transparent", color: "var(--mint-600)" }}
+      style={{ background: "transparent" }}
     >
-      <Icon name="star" size={22} filled={following} />
+      <span
+        className="flex items-center justify-center rounded-full"
+        style={{ width: DISC, height: DISC, ...(following ? FOLLOWED : NOT_FOLLOWED) }}
+      >
+        <Icon name="star" size={STAR} filled={following} />
+      </span>
     </button>
   );
 }

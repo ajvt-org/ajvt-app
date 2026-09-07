@@ -11,14 +11,13 @@ describe("competition tabs", () => {
   });
 
   it("leaves the participants out of a public competition", () => {
-    expect(keysOf({ visibility: "PUBLIC", startedAt: null })).toEqual(["settings", "rounds"]);
+    expect(keysOf({ visibility: "PUBLIC", startedAt: null })).toEqual(["settings"]);
   });
 
   it("names the participants on a private competition", () => {
     expect(keysOf({ visibility: "PRIVATE", startedAt: null })).toEqual([
       "settings",
       "participants",
-      "rounds",
     ]);
   });
 
@@ -26,25 +25,34 @@ describe("competition tabs", () => {
     expect(keysOf({ visibility: "PUBLIC", startedAt: null })).not.toContain("standings");
     expect(keysOf({ visibility: "PUBLIC", startedAt: "2026-08-20T08:00:00.000Z" })).toEqual([
       "settings",
-      "rounds",
       "standings",
       "scores",
     ]);
   });
 
-  it("opens on the rounds before the start and on the standings after it", () => {
-    expect(openingTab({ visibility: "PUBLIC", startedAt: null })).toBe("rounds");
+  it("leaves a public competition that has not started with nothing to tab between", () => {
+    expect(keysOf({ visibility: "PUBLIC", startedAt: null })).toHaveLength(1);
+  });
+
+  it("opens on the settings before the start and on the standings after it", () => {
+    expect(openingTab({ visibility: "PUBLIC", startedAt: null })).toBe("settings");
     expect(openingTab({ visibility: "PUBLIC", startedAt: "2026-08-20T08:00:00.000Z" })).toBe(
       "standings",
     );
   });
 
-  it("splits the setup from what is watched once it runs", () => {
+  it("holds every tab of a started competition in one row", () => {
     const sections = competitionTabSections({
       visibility: "PRIVATE",
       startedAt: "2026-08-20T08:00:00.000Z",
     });
 
-    expect(sections.map((section) => section.key)).toEqual(["setup", "run"]);
+    expect(sections).toHaveLength(1);
+    expect(sections[0].tabs.map((tab) => tab.key)).toEqual([
+      "settings",
+      "participants",
+      "standings",
+      "scores",
+    ]);
   });
 });

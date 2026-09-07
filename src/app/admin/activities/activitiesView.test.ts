@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   ACTIVITIES_VIEW_KEYS,
   DEFAULT_STAGE,
-  offeredAxes,
+  activeFilterCount,
+  axisViews,
+  clearedActivitiesView,
   matchesActivitiesView,
   readActivitiesView,
   writeActivitiesView,
@@ -155,7 +157,7 @@ describe("what a chip says it would show", () => {
   ];
 
   const axis = (activities: Activity[], filters: ActivitiesView, key: string) =>
-    offeredAxes(activities, filters).find((a) => a.key === key);
+    axisViews(activities, filters).find((a) => a.key === key);
 
   const countOf = (activities: Activity[], filters: ActivitiesView, key: string, value: string) =>
     axis(activities, filters, key)?.options.find((o) => o.value === value)?.count;
@@ -179,7 +181,7 @@ describe("what a chip says it would show", () => {
   });
 });
 
-describe("which filters are worth offering", () => {
+describe("which filters can narrow the list", () => {
   const view = (over: Partial<ActivitiesView> = {}): ActivitiesView => ({
     q: "",
     type: "",
@@ -190,33 +192,55 @@ describe("which filters are worth offering", () => {
   });
 
   const keys = (activities: Activity[], filters = view()) =>
-    offeredAxes(activities, filters).map((a) => a.key);
+    axisViews(activities, filters).map((a) => a.key);
+
+  const usableAxes = (activities: Activity[], filters = view()) =>
+    axisViews(activities, filters)
+      .filter((a) => a.usable)
+      .map((a) => a.key);
+
+  const axisOf = (activities: Activity[], filters: ActivitiesView, key: string) =>
+    axisViews(activities, filters).find((a) => a.key === key);
 
   const optionOf = (activities: Activity[], filters: ActivitiesView, key: string, value: string) =>
-    offeredAxes(activities, filters)
-      .find((a) => a.key === key)
-      ?.options.find((o) => o.value === value);
+    axisOf(activities, filters, key)?.options.find((o) => o.value === value);
 
-  it("drops an axis whose every option gives the list it already shows", () => {
+  it("keeps every row on the card whatever is chosen, so nothing moves under a thumb", () => {
     const allOpenTournaments = [
       activity({ id: "t1", isTournament: true }),
       activity({ id: "t2", isTournament: true }),
     ];
-
-    expect(keys(allOpenTournaments)).toEqual([]);
-  });
-
-  it("keeps an axis that can actually narrow the list", () => {
     const mixed = [
       activity({ id: "t1", isTournament: true }),
       activity({ id: "p1" }),
       activity({ id: "c1", isOpen: false }),
     ];
 
-    expect(keys(mixed)).toEqual(["type", "state"]);
+    expect(keys(allOpenTournaments)).toEqual(["type", "state", "stage"]);
+    expect(keys(mixed)).toEqual(["type", "state", "stage"]);
+    expect(keys(mixed, view({ type: "tournament" }))).toEqual(["type", "state", "stage"]);
   });
 
-  it("keeps the stage axis only when something has finished", () => {
+  it("does not offer an axis whose every option gives the list it already shows", () => {
+    const allOpenTournaments = [
+      activity({ id: "t1", isTournament: true }),
+      activity({ id: "t2", isTournament: true }),
+    ];
+
+    expect(usableAxes(allOpenTournaments)).toEqual([]);
+  });
+
+  it("offers an axis that can actually narrow the list", () => {
+    const mixed = [
+      activity({ id: "t1", isTournament: true }),
+      activity({ id: "p1" }),
+      activity({ id: "c1", isOpen: false }),
+    ];
+
+    expect(usableAxes(mixed)).toEqual(["type", "state"]);
+  });
+
+  it("offers the stage axis only when something has finished", () => {
     const running = [activity({ id: "a1" })];
     const withFinished = [
       activity({ id: "a1" }),
@@ -227,14 +251,33 @@ describe("which filters are worth offering", () => {
       }),
     ];
 
-    expect(keys(running, view({ stage: "current" }))).not.toContain("stage");
-    expect(keys(withFinished, view({ stage: "current" }))).toContain("stage");
+    expect(usableAxes(running, view({ stage: "current" }))).not.toContain("stage");
+    expect(usableAxes(withFinished, view({ stage: "current" }))).toContain("stage");
   });
 
-  it("never takes away the row a reader has already pressed", () => {
+  it("never stops offering the row a reader has already pressed", () => {
     const rowsWithNoCampaign = [activity({ id: "t1", isTournament: true })];
 
-    expect(keys(rowsWithNoCampaign, view({ type: "volunteer" }))).toContain("type");
+    expect(axisOf(rowsWithNoCampaign, view({ type: "volunteer" }), "type")?.usable).toBe(true);
+  });
+
+  it("keeps offering a filter a reader has set for as long as releasing it would change the list", () => {
+    const rowsWithNoCampaign = [activity({ id: "t1", isTournament: true })];
+    const allTournaments = [
+      activity({ id: "t1", isTournament: true }),
+      activity({ id: "t2", isTournament: true }),
+    ];
+
+    expect(axisOf(rowsWithNoCampaign, view({ type: "tournament" }), "type")?.usable).toBe(false);
+    expect(axisOf(allTournaments, view({ type: "volunteer" }), "type")?.usable).toBe(true);
+  });
+
+  it("offers nothing on a list nothing is left of, and still shows every row", () => {
+    const mixed = [activity({ id: "t1", isTournament: true }), activity({ id: "p1" })];
+    const nothingMatches = view({ q: "لا شيء" });
+
+    expect(keys(mixed, nothingMatches)).toEqual(["type", "state", "stage"]);
+    expect(usableAxes(mixed, nothingMatches)).toEqual([]);
   });
 
   it("leaves the way out pressable when the chosen filter empties the list", () => {
@@ -250,5 +293,43 @@ describe("which filters are worth offering", () => {
 
     expect(optionOf(mixed, view(), "type", "volunteer")?.usable).toBe(false);
     expect(optionOf(mixed, view(), "type", "tournament")?.usable).toBe(true);
+  });
+});
+
+describe("how many filters the address is carrying", () => {
+  const view = (over: Partial<ActivitiesView> = {}): ActivitiesView => ({
+    q: "",
+    type: "",
+    state: "",
+    stage: DEFAULT_STAGE,
+    waiting: "",
+    ...over,
+  });
+
+  it("counts nothing on the view a bare address gives", () => {
+    expect(activeFilterCount(view())).toBe(0);
+  });
+
+  it("counts each axis a reader has moved off what it starts on", () => {
+    expect(activeFilterCount(view({ type: "tournament" }))).toBe(1);
+    expect(activeFilterCount(view({ type: "tournament", stage: "finished" }))).toBe(2);
+    expect(activeFilterCount(view({ type: "tournament", state: "open", stage: "all" }))).toBe(3);
+  });
+
+  it("leaves the search out of the count, since it has its own box", () => {
+    expect(activeFilterCount(view({ q: "دوري" }))).toBe(0);
+  });
+
+  it("gives back the view a bare address would give, and keeps the search", () => {
+    expect(clearedActivitiesView(view({ q: "دوري", type: "tournament", stage: "all" }))).toEqual(
+      view({ q: "دوري" }),
+    );
+  });
+
+  it("clears to something the address writes as nothing", () => {
+    const cleared = clearedActivitiesView(view({ type: "tournament", state: "open" }));
+
+    expect(writeActivitiesView(cleared).toString()).toBe("");
+    expect(activeFilterCount(cleared)).toBe(0);
   });
 });

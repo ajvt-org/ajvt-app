@@ -529,14 +529,15 @@ button:disabled {
 
 /* Arabic carries most of its mass above the baseline, so centring an icon's
    box against the line box leaves it sitting below the text it labels. The
-   nudge lifts the icon onto the text's optical centre.
-   Preflight lays every svg out as a block, which inside a paragraph puts the
-   icon on a line of its own and leaves the label stranded underneath, so the
-   display is restored here as well. */
-.icon-label-numeral {
-  transform: translateY(-0.21em);
+   nudge lifts the icon onto the text's optical centre, whichever side of the
+   label the icon is on. Measured from rendered pixels at 360px. */
+.icon-label-optical {
+  transform: translateY(-0.08em);
 }
 
+/* Preflight lays every svg out as a block, which inside a paragraph puts the
+   icon on a line of its own and leaves the label stranded underneath, so the
+   display is restored here. */
 .icon-inline {
   display: inline-block;
   vertical-align: middle;
@@ -914,10 +915,6 @@ body {
 
 details[open] > .disclosure-summary .disclosure-chevron {
   transform: rotate(180deg);
-}
-
-details[open] > .disclosure-summary .summary-logo {
-  display: none;
 }
 
 /* One result in a team's recent run. */

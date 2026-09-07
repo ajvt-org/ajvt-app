@@ -30,6 +30,7 @@ async function open(following = false) {
 }
 
 const star = () => screen.getByRole("button");
+const disc = () => star().querySelector("span") as HTMLElement;
 
 beforeEach(() => {
   showToast.mockReset();
@@ -89,6 +90,36 @@ describe("the follow star", () => {
     await waitFor(() => expect(star().getAttribute("aria-pressed")).toBe("false"));
     expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: "DELETE" });
     pending?.({ ok: true });
+  });
+
+  it("carries the pressed state on a filled disc rather than on the glyph", async () => {
+    await open(true);
+
+    expect(disc().style.background).toContain("--mint-600");
+    expect(disc().className).toContain("rounded-full");
+  });
+
+  it("leaves the disc empty while nothing is followed", async () => {
+    await open(false);
+
+    expect(disc().style.background).toBe("transparent");
+    expect(disc().className).toContain("rounded-full");
+  });
+
+  it("draws the same disc and the same glyph in both states", async () => {
+    const fetchMock = await open(false);
+    const empty = {
+      disc: disc().style.width,
+      glyph: star().querySelector("svg")?.getAttribute("width"),
+    };
+
+    fetchMock.mockResolvedValueOnce({ ok: true });
+    fireEvent.click(star());
+    await waitFor(() => expect(star().getAttribute("aria-pressed")).toBe("true"));
+
+    expect(disc().style.width).toBe(empty.disc);
+    expect(disc().style.height).toBe(empty.disc);
+    expect(star().querySelector("svg")?.getAttribute("width")).toBe(empty.glyph);
   });
 
   it("takes no second tap while the first is in the air", async () => {

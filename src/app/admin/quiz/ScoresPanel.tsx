@@ -15,11 +15,13 @@ const REOPENED = quizScores.reopened;
 export default function ScoresPanel({
   competitionId,
   roundCount,
+  startRound,
 }: {
   competitionId: string;
   roundCount: number;
+  startRound: number;
 }) {
-  const [round, setRound] = useState(0);
+  const [round, setRound] = useState(startRound);
   const [rows, setRows] = useState<AttemptRow[]>([]);
   const [opened, setOpened] = useState(true);
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
