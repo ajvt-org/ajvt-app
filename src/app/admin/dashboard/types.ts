@@ -26,6 +26,7 @@ export interface Member {
   supportAmount: number;
   status: Status;
   rejectionReason: string | null;
+  endedAt: string | null;
   membershipYear: number;
   referenceCode: string | null;
   memberNumber: string | null;

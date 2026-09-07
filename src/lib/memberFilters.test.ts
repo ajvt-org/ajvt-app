@@ -17,6 +17,7 @@ const MEMBERSHIP = { fee: FEE, year: 2026 };
 function member(over: Partial<FilterableMember> = {}): FilterableMember {
   return {
     status: "ACTIVE",
+    endedAt: null,
     fullName: "محمد ولد أحمد",
     referenceCode: "AJVT-12",
     age: "البدريين",
@@ -222,6 +223,16 @@ describe("membership standing", () => {
   it("counts against the active members, since the others are not members yet", () => {
     const members = [thisYear, lastYear, partial, member({ status: "PENDING", paidAmount: 100 })];
     expect(upToDate(members, MEMBERSHIP)).toEqual({ current: 2, active: 3 });
+  });
+
+  it("leaves a membership an admin ended out of both counts", () => {
+    const ended = member({ membershipYear: 2026, endedAt: "2026-06-01T00:00:00.000Z" });
+    const endedLastYear = member({ membershipYear: 2025, endedAt: "2025-06-01T00:00:00.000Z" });
+
+    expect(upToDate([thisYear, lastYear, ended, endedLastYear], MEMBERSHIP)).toEqual({
+      current: 1,
+      active: 2,
+    });
   });
 });
 

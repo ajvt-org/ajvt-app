@@ -13,8 +13,11 @@ import { logger } from "@/lib/logger";
 import { ValidationError } from "@/lib/errors";
 import { common, members, money, uploads } from "@/lib/messages";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { asMembershipState } from "@/lib/currentMembership";
+import { holdsMembership, membershipState } from "@/lib/membershipState";
 import { validateDonorChoice, donorNameFor } from "@/lib/donorChoice";
 import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
+import { getAppSettings } from "@/lib/settingsServer";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -61,7 +64,9 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     const account = membership
       ? await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true } })
       : null;
-    if (!membership || membership.status !== "ACTIVE") {
+    const { membershipYear } = await getAppSettings();
+    const standing = membershipState(asMembershipState(membership), membershipYear);
+    if (!membership || !holdsMembership(standing)) {
       return NextResponse.json({ error: members.invalidMember }, { status: 403 });
     }
     selfUserId = userId;

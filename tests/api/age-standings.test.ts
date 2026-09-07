@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/ages/standings/route";
 import { prisma } from "@/lib/prisma";
+import { endMembership } from "@/lib/membershipEndingServer";
+import { getAppSettings } from "@/lib/settingsServer";
+import { MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
 import { resetDb, makeMember } from "./helpers";
 
 async function group(name: string, totalCount: number) {
@@ -69,5 +72,18 @@ describe("GET /api/ages/standings", () => {
     await member("الفتيان", "ACTIVE");
 
     expect((await standings())[0].total).toBe(30);
+  });
+  it("stops counting a membership an admin ended as standing", async () => {
+    const { membershipYear } = await getAppSettings();
+    await group("البدريين", 10);
+    await member("البدريين", "ACTIVE");
+    const ended = await member("البدريين", "ACTIVE");
+    await endMembership(prisma, ended.userId, membershipYear, {
+      reason: MEMBERSHIP_ENDING_REASONS[0],
+      by: "members-admin",
+      at: new Date(),
+    });
+
+    expect(await standings()).toMatchObject([{ name: "البدريين", members: 1, rate: 10 }]);
   });
 });
