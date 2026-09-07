@@ -11,6 +11,7 @@ import ConvertCampaignCard from "./ConvertCampaignCard";
 import DeleteActivityButton from "./DeleteActivityButton";
 import ResetTournamentButton from "./ResetTournamentButton";
 import { isFootball } from "@/lib/matchShape";
+import MatchLevelsCard from "@/components/admin/tournament/MatchLevelsCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { activityForm as texts } from "@/lib/texts";
 
@@ -179,6 +180,9 @@ export default function DetailsTab({
       </div>
 
       {!activity.isVolunteer && <ConvertTournamentCard activity={activity} onChanged={onSaved} />}
+      {activity.isTournament && !isFootball(activity.matchShape) && (
+        <MatchLevelsCard activityId={activity.id} />
+      )}
       {!activity.isTournament && <ConvertCampaignCard activity={activity} onChanged={onSaved} />}
 
       <div className="flex flex-wrap gap-2">
