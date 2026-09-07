@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ArrowLabel from "@/components/ArrowLabel";
+import IconLabel from "@/components/IconLabel";
 import ProfileSection from "@/components/admin/ProfileSection";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
 import { membershipSummary as texts } from "@/lib/texts";
@@ -47,7 +47,7 @@ export default function MembershipSummary({
         className="btn btn-sm font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        <ArrowLabel>{texts.toPayment}</ArrowLabel>
+        <IconLabel name="card">{texts.toPayment}</IconLabel>
       </button>
 
       {opening && (
