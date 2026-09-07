@@ -10,17 +10,30 @@ import type { QuizQuestionsState } from "./useQuizQuestions";
 
 export default function QuestionsSection({ state }: { state: QuizQuestionsState }) {
   return (
-    <div className="space-y-5">
-      <BankPicker
-        banks={state.banks}
-        openId={state.bankId}
-        busy={state.bankBusy}
-        error={state.bankError}
-        onOpen={state.openBank}
-        onCreate={state.createBank}
-        onRename={state.renameBank}
-        onDelete={state.deleteBank}
-      />
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <BankPicker
+          banks={state.banks}
+          openId={state.bankId}
+          busy={state.bankBusy}
+          error={state.bankError}
+          onOpen={state.openBank}
+          onCreate={state.createBank}
+          onRename={state.renameBank}
+          onDelete={state.deleteBank}
+        />
+
+        <QuestionList
+          questions={state.questions}
+          busyId={state.busyId}
+          onCreate={state.openCreate}
+          onImport={() => state.setShowImport(true)}
+          onEdit={state.openEdit}
+          onToggle={state.toggleActive}
+          onDelete={state.deleteQuestion}
+          onMove={state.moveQuestion}
+        />
+      </div>
 
       <SettingsForm
         values={state.settingsForm}
@@ -30,17 +43,6 @@ export default function QuestionsSection({ state }: { state: QuizQuestionsState 
         onChange={(key, value) => state.setSettingsForm((p) => ({ ...p, [key]: value }))}
         onToggleConfirm={state.toggleConfirm}
         onSubmit={state.saveSettings}
-      />
-
-      <QuestionList
-        questions={state.questions}
-        busyId={state.busyId}
-        onCreate={state.openCreate}
-        onImport={() => state.setShowImport(true)}
-        onEdit={state.openEdit}
-        onToggle={state.toggleActive}
-        onDelete={state.deleteQuestion}
-        onMove={state.moveQuestion}
       />
 
       {state.showImport && (
