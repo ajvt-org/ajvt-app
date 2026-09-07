@@ -7,8 +7,6 @@ export const memberPage = {
   back: "رجوع",
   cancel: "إلغاء",
   edit: "تعديل",
-  account: "الحساب",
-  groupPerson: "الشخص",
   groupMembership: "الاشتراك",
   groupParticipation: "المشاركة",
   groupRecord: "السجل",

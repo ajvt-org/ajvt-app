@@ -1,5 +1,4 @@
 export const memberPhoto = {
-  title: "الصورة الشخصية",
   lockedBadge: "ممنوع على العضو",
   lock: "منع تغيير الصورة",
   unlock: "السماح بتغيير الصورة",
@@ -8,5 +7,4 @@ export const memberPhoto = {
   remove: "حذف الصورة",
   confirmRemove: "تُحذف الصورة من الحساب، ويبقى بإمكان العضو وضع واحدة جديدة.",
   confirmLock: "تُحذف الصورة الحالية، ويبقى بإمكانك أنت وضع صورة له.",
-  none: "لا توجد صورة على هذا الحساب",
 } as const;

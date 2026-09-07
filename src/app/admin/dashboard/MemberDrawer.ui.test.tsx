@@ -116,7 +116,7 @@ describe("what the drawer leaves to the member page", () => {
   it("offers nothing about the account behind the person", () => {
     show(member());
 
-    expect(screen.queryByText(memberAccount.password)).toBeNull();
+    expect(screen.queryByText(memberAccount.reset)).toBeNull();
     expect(screen.queryByText(memberAccount.none)).toBeNull();
   });
 });
