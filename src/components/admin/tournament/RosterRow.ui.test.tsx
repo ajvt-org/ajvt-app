@@ -8,6 +8,7 @@ const LONG_NAME = "الحسن احمدو يحي البناني";
 function entry(name: string, status: "ACTIVE" | "PENDING" = "ACTIVE"): TeamMemberEntry {
   return {
     status,
+    invitedByCaptain: false,
     member: {
       id: "p1",
       fullName: name,

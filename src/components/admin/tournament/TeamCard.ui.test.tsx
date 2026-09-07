@@ -14,6 +14,7 @@ function entry(
 ): TeamMemberEntry {
   return {
     status,
+    invitedByCaptain: false,
     member: {
       id,
       fullName: name,

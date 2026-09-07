@@ -29,6 +29,14 @@ async function joinRequest(activityId: string, name: string, teamName = "الش�
   });
 }
 
+async function captainInvitation(activityId: string, name: string, teamName = "النسور") {
+  const team = await prisma.team.create({ data: { activityId, name: teamName } });
+  const member = await aMember(name);
+  return prisma.teamMember.create({
+    data: { teamId: team.id, userId: member.userId, status: "PENDING", invitedByCaptain: true },
+  });
+}
+
 async function registrationRequest(activityId: string, name: string) {
   const member = await aMember(name);
   return prisma.activityRegistration.create({
@@ -65,6 +73,13 @@ describe("what is waiting across the activities", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin());
+  });
+
+  it("leaves out an invitation a captain sent, which nobody is asking the admin to settle", async () => {
+    const activity = await anActivity();
+    await captainInvitation(activity.id, "أحمد ولد سالم");
+
+    expect(await waiting()).toEqual([]);
   });
 
   it("gathers a join request, a registration and a proposed suspension", async () => {

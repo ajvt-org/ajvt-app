@@ -18,6 +18,10 @@ export const tournament = {
   teamsArrangedByAdmin: "فرق هذه البطولة يرتّبها المشرف، لا يمكنك الانضمام بنفسك",
   teamNameRequired: "اسم الفريق مطلوب",
   teamNameTooLong: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)",
+  captainOnly: "قائد الفريق وحده يفعل هذا",
+  inviteeNotRegistered: "هذا العضو غير مسجل في هذه البطولة",
+  alreadyOnThisTeam: "هذا العضو في فريقك بالفعل",
+  invitationNotFound: "لا توجد دعوة لك من هذا الفريق",
   oneTeamPerRegistrant: (name: string) =>
     `أنت في فريق «${name}» في هذه البطولة، غادره قبل إنشاء فريق آخر`,
   playerRejected: "لا يمكن إضافة لاعب طلبه مرفوض",

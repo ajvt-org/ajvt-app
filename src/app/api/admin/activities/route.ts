@@ -39,7 +39,11 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
         orderBy: { createdAt: "asc" },
       },
       teams: {
-        select: { _count: { select: { members: { where: { status: "PENDING" } } } } },
+        select: {
+          _count: {
+            select: { members: { where: { status: "PENDING", invitedByCaptain: false } } },
+          },
+        },
       },
       matches: { select: STANDING_MATCH_SELECT },
     },

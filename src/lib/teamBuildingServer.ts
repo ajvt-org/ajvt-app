@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { requireUser } from "./auth";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
@@ -6,6 +7,7 @@ import { currentMembership } from "./currentMembershipServer";
 import { asMembershipState } from "./currentMembership";
 import { membershipState } from "./membershipState";
 import { playersMayBuildTeams } from "./teamBuilding";
+import { isMember, isRequest } from "./teamInvites";
 import { members, tournament } from "./messages";
 
 const TOURNAMENT = {
@@ -62,9 +64,34 @@ export async function requireTeamBuilder(activityId: string): Promise<TeamBuilde
 }
 
 export async function refuseSecondTeam(activityId: string, userId: string) {
-  const seat = await prisma.teamMember.findFirst({
+  const seats = await prisma.teamMember.findMany({
     where: { userId, team: { activityId } },
-    select: { team: { select: { name: true } } },
+    select: { status: true, invitedByCaptain: true, team: { select: { name: true } } },
   });
-  if (seat) throw new ConflictError(tournament.oneTeamPerRegistrant(seat.team.name));
+  const taken = seats.find((seat) => isMember(seat) || isRequest(seat));
+  if (taken) throw new ConflictError(tournament.oneTeamPerRegistrant(taken.team.name));
+}
+
+export async function clearOtherSeats(
+  tx: Prisma.TransactionClient,
+  activityId: string,
+  userId: string,
+  keepTeamId: string,
+) {
+  await tx.teamMember.deleteMany({
+    where: { userId, teamId: { not: keepTeamId }, team: { activityId } },
+  });
+}
+
+export async function requireCaptainOf(teamId: string) {
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    select: { id: true, name: true, activityId: true, captainUserId: true },
+  });
+  if (!team) throw new NotFoundError(tournament.teamNotFound);
+
+  const { userId, activity } = await requireTeamBuilder(team.activityId);
+  if (team.captainUserId !== userId) throw new ForbiddenError(tournament.captainOnly);
+
+  return { userId, activity, team };
 }

@@ -98,15 +98,31 @@ describe("the nudge for a player with no team", () => {
     expect(sendPushToUser).not.toHaveBeenCalled();
   });
 
-  it("stops when a team is only waiting on an admin", async () => {
+  it("keeps nudging somebody an invitation is still waiting on", async () => {
     const { member, team } = await tournamentWithMember("22000204");
+    await prisma.teamMember.create({
+      data: {
+        teamId: team.id,
+        userId: member.userId,
+        status: "PENDING",
+        invitedByCaptain: true,
+      },
+    });
+
+    await sendTeamChoiceReminders();
+
+    expect(sendPushToUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps nudging somebody whose own request has not been answered", async () => {
+    const { member, team } = await tournamentWithMember("22000209");
     await prisma.teamMember.create({
       data: { teamId: team.id, userId: member.userId, status: "PENDING" },
     });
 
     await sendTeamChoiceReminders();
 
-    expect(sendPushToUser).not.toHaveBeenCalled();
+    expect(sendPushToUser).toHaveBeenCalledTimes(1);
   });
 
   it("stops when registration closes", async () => {

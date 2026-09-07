@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { nameOf } from "./person";
 import { squadOf } from "./squadSize";
+import { isInvitation, isMember, isRequest, type SeatKind } from "./teamInvites";
 import type { BuildableTournament } from "./teamBuildingServer";
 
 const ROSTER = {
@@ -10,39 +11,68 @@ const ROSTER = {
   user: { select: { fullName: true, photo: true } },
 } as const;
 
+const SEAT = {
+  status: true,
+  invitedByCaptain: true,
+  team: { select: { id: true, name: true } },
+} as const;
+
 export interface MyTeamMember {
   userId: string;
   fullName: string;
   photo: string | null;
-  status: "PENDING" | "ACTIVE";
-  invitedByCaptain: boolean;
+  kind: SeatKind;
+}
+
+export interface TeamHandle {
+  id: string;
+  name: string;
+}
+
+export interface Candidate {
+  userId: string;
+  fullName: string;
 }
 
 export interface MyTeamView {
-  team: {
-    id: string;
-    name: string;
-    captainUserId: string | null;
-    members: MyTeamMember[];
-  } | null;
+  team: (TeamHandle & { captainUserId: string | null; members: MyTeamMember[] }) | null;
+  request: TeamHandle | null;
+  invitations: TeamHandle[];
+  candidates: Candidate[];
   squad: { min: number | null; max: number | null };
+}
+
+async function candidatesFor(activityId: string): Promise<Candidate[]> {
+  const free = await prisma.activityRegistration.findMany({
+    where: {
+      activityId,
+      status: "ACTIVE",
+      user: { teamMemberships: { none: { team: { activityId } } } },
+    },
+    select: { user: { select: { id: true, fullName: true } } },
+    orderBy: { user: { fullName: "asc" } },
+  });
+  return free
+    .filter((row) => row.user.id !== null)
+    .map((row) => ({ userId: row.user.id, fullName: nameOf(row.user) }));
 }
 
 export async function myTeamView(
   activity: BuildableTournament,
   userId: string,
-  teamId?: string,
 ): Promise<MyTeamView> {
-  const seat = teamId
-    ? { teamId }
-    : await prisma.teamMember.findFirst({
-        where: { userId, team: { activityId: activity.id } },
-        select: { teamId: true },
-      });
+  const seats = await prisma.teamMember.findMany({
+    where: { userId, team: { activityId: activity.id } },
+    select: SEAT,
+    orderBy: { createdAt: "asc" },
+  });
 
-  const team = seat
+  const seated = seats.find(isMember) ?? null;
+  const asked = seats.find(isRequest) ?? null;
+
+  const team = seated
     ? await prisma.team.findUnique({
-        where: { id: seat.teamId },
+        where: { id: seated.team.id },
         select: {
           id: true,
           name: true,
@@ -52,8 +82,13 @@ export async function myTeamView(
       })
     : null;
 
+  const captain = team !== null && team.captainUserId === userId;
+
   return {
     squad: squadOf(activity),
+    request: asked ? asked.team : null,
+    invitations: seats.filter(isInvitation).map((seat) => seat.team),
+    candidates: captain ? await candidatesFor(activity.id) : [],
     team: team
       ? {
           id: team.id,
@@ -63,8 +98,7 @@ export async function myTeamView(
             userId: m.userId,
             fullName: nameOf(m.user),
             photo: m.user.photo,
-            status: m.status,
-            invitedByCaptain: m.invitedByCaptain,
+            kind: isMember(m) ? "member" : isInvitation(m) ? "invitation" : "request",
           })),
         }
       : null,

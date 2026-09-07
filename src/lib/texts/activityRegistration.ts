@@ -10,12 +10,7 @@ export const activityRegistration = {
   closed: "التسجيل مغلق",
   full: "اكتمل العدد",
   lastRejection: (reason: string) => `سبب الرفض السابق: ${reason}`,
-  yourTeam: "فريقك",
-  pickTeam: "اختر فريقك (اختياري)",
-  teamLocked: "تم التأكيد — لا يمكن تغييره",
   chooseTeamAtRegistration: "اختر فريقك",
   noTeamYet: "بلا فريق بعد",
   chosenTeamPending: (teamName: string) => `اخترت ${teamName} — تنضم إليه عند قبول تسجيلك`,
-  awaitingApproval: "بانتظار الموافقة",
-  cancelRequest: "إلغاء الطلب",
 } as const;

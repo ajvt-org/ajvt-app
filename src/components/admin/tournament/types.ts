@@ -19,6 +19,7 @@ export interface Group {
 
 export interface TeamMemberEntry {
   status: "PENDING" | "ACTIVE";
+  invitedByCaptain: boolean;
   member: {
     id: string;
     fullName: string;

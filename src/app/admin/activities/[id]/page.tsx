@@ -8,6 +8,7 @@ import ActivityFinance from "./ActivityFinance";
 import ActivityHeaderPhoto from "./ActivityHeaderPhoto";
 import WorkspaceTabs from "@/components/admin/WorkspaceTabs";
 import { activityTabSections } from "./activityTabs";
+import { isRequest } from "@/lib/teamInvites";
 import DetailsTab from "./DetailsTab";
 import RegistrationsTab from "./RegistrationsTab";
 import LogTab from "./LogTab";
@@ -58,7 +59,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
   const tournament = useTournamentData(id, isTournament);
   const pendingProposals = tournament.suspensions.filter((s) => s.status === "PROPOSED").length;
   const pendingJoinRequests = tournament.teams.reduce(
-    (sum, team) => sum + team.members.filter((m) => m.status === "PENDING").length,
+    (sum, team) => sum + team.members.filter(isRequest).length,
     0,
   );
 

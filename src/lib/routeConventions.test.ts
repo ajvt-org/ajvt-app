@@ -134,6 +134,7 @@ describe("every route reaches a guard", () => {
       "requireGroupAccess",
       "requireBookingAccess",
       "requireTeamBuilder",
+      "requireCaptainOf",
     ]);
   });
 

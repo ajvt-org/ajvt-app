@@ -152,7 +152,13 @@ describe("what a registrant is told about their team", () => {
 
     const body = await (await mine(activity.id)).json();
 
-    expect(body).toEqual({ team: null, squad: { min: 2, max: 3 } });
+    expect(body).toEqual({
+      team: null,
+      request: null,
+      invitations: [],
+      candidates: [],
+      squad: { min: 2, max: 3 },
+    });
   });
 
   it("carries the team and its roster once it is built", async () => {
@@ -164,13 +170,7 @@ describe("what a registrant is told about their team", () => {
 
     expect(body.team).toMatchObject({ name: "الصقور", captainUserId: member.userId });
     expect(body.team.members).toEqual([
-      {
-        userId: member.userId,
-        fullName: "محمد ولد أحمد",
-        photo: null,
-        status: "ACTIVE",
-        invitedByCaptain: false,
-      },
+      { userId: member.userId, fullName: "محمد ولد أحمد", photo: null, kind: "member" },
     ]);
   });
 });

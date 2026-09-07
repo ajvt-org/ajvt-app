@@ -116,7 +116,13 @@ describe("ActivityRegistrations", () => {
   });
 
   it("hands an approved registrant the team block once the switch is on", async () => {
-    mockFetch({ team: null, squad: { min: 2, max: 3 } });
+    mockFetch({
+      team: null,
+      request: null,
+      invitations: [],
+      candidates: [],
+      squad: { min: 2, max: 3 },
+    });
     setup({
       activity: {
         isTournament: true,
