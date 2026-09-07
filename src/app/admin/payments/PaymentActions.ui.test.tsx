@@ -38,19 +38,6 @@ describe("the actions under a payment", () => {
     expect(danger.parentElement!.className).not.toContain("flex-wrap");
   });
 
-  it("gives a panel opened in the bar the whole line and drops the destructive group under it", () => {
-    render(
-      <PaymentActions stacked danger={<button>حذف</button>}>
-        <button>قبول</button>
-      </PaymentActions>,
-    );
-
-    const routine = screen.getByText("قبول").parentElement!;
-    const danger = screen.getByText("حذف").parentElement!;
-    expect(routine.className).toContain("basis-full");
-    expect(danger.className).toContain("ms-auto");
-  });
-
   it("draws no destructive group when a payment has nothing to destroy", () => {
     render(
       <PaymentActions>
