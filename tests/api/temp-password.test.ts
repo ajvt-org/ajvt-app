@@ -5,6 +5,7 @@ import { POST as CHANGE } from "@/app/api/user/password/route";
 import { GET as ME } from "@/app/api/user/me/route";
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "@/lib/auth";
+import { auth } from "@/lib/messages";
 import { resetDb, post, createUser, signInAs } from "./helpers";
 
 const HOUR = 60 * 60 * 1000;
@@ -98,6 +99,39 @@ describe("temporary passwords", () => {
     expect((await CHANGE(post("/api/user/password", { newPassword: "12345678" }))).status).toBe(
       400,
     );
+  });
+
+  it("refuses the change once the temporary password has run out", async () => {
+    const user = await withTempPassword("12345678", new Date(Date.now() - HOUR));
+    await signInAs(user);
+
+    const res = await CHANGE(post("/api/user/password", { newPassword: "chosenwell" }));
+
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe(auth.tempPasswordExpired);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(await bcrypt.compare("12345678", after.password as string)).toBe(true);
+  });
+
+  it("does not let the expired session reach the rest of the app either", async () => {
+    const user = await withTempPassword("12345678", new Date(Date.now() - HOUR));
+    await signInAs(user);
+
+    expect((await ME()).status).toBe(401);
+  });
+
+  it("stops reading as signed in once the temporary password has run out", async () => {
+    const user = await withTempPassword("12345678", new Date(Date.now() - HOUR));
+    await signInAs(user);
+
+    expect(await getUserSession()).toBeNull();
+  });
+
+  it("still reads as signed in while the temporary password is live", async () => {
+    const user = await withTempPassword("12345678", new Date(Date.now() + HOUR));
+    await signInAs(user);
+
+    expect(await getUserSession()).not.toBeNull();
   });
 
   it("still demands the current password when nothing is temporary", async () => {
