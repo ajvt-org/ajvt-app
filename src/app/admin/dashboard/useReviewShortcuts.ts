@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
+import { nextAwaitingReview } from "@/lib/reviewQueue";
 import type { Member } from "./types";
 
 export const REVIEW_KEYS = { accept: "a", reject: "r" } as const;
@@ -31,11 +32,9 @@ export function useReviewShortcuts({
   onStep: (next: Member) => void;
 }) {
   useEffect(() => {
-    function step(delta: number) {
+    function step(delta: 1 | -1) {
       if (!selected) return;
-      const idx = paginated.findIndex((m) => m.id === selected.id);
-      if (idx === -1 || idx + delta < 0) return;
-      const next = paginated[idx + delta];
+      const next = nextAwaitingReview(paginated, selected.id, delta);
       if (next) onStep(next);
     }
 

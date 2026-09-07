@@ -3,7 +3,8 @@ import { render, screen, cleanup } from "@testing-library/react";
 import MemberDrawer from "./MemberDrawer";
 import { HOME_VILLAGE } from "@/lib/villages";
 import type { Member } from "./types";
-import { memberDrawer as texts } from "@/lib/texts";
+import { memberAccount, memberDrawer as texts } from "@/lib/texts";
+import { STATUS_LABEL } from "./constants";
 
 vi.mock("@/lib/api", () => ({
   api: { get: () => Promise.reject(new Error("offline")) },
@@ -25,7 +26,7 @@ function member(over: Partial<Member> = {}): Member {
     photo: null,
     paidAmount: 100,
     supportAmount: 400,
-    status: "ACTIVE",
+    status: "PENDING",
     rejectionReason: null,
     membershipYear: 2025,
     referenceCode: null,
@@ -43,21 +44,11 @@ function show(m: Member) {
     <MemberDrawer
       member={m}
       actionLoading={false}
-      settingsYear={2026}
-      resetLoading={false}
-      tempPassword={null}
-      tempPasswordHours={1}
-      accountPhone=""
-      attachLoading={false}
-      attachError=""
       showRejectPicker={false}
       rejectReason=""
       onClose={() => {}}
       onZoomProof={() => {}}
       onProofSaved={() => {}}
-      onResetPassword={() => {}}
-      onAccountPhone={() => {}}
-      onAttachAccount={() => {}}
       onRejectReason={() => {}}
       onOpenRejectPicker={() => {}}
       onCloseRejectPicker={() => {}}
@@ -91,25 +82,41 @@ describe("MemberDrawer facts", () => {
   it("names the membership year the amounts belong to", () => {
     show(member());
 
-    expect(screen.getByText("سنة العضوية")).toBeDefined();
+    expect(screen.getByText(texts.membershipYear)).toBeDefined();
     expect(screen.getByText("2025")).toBeDefined();
   });
 
-  it("warns when an active member has not renewed the running year", () => {
+  it("keeps what the payment is judged on", () => {
     show(member());
 
-    expect(screen.getByText(/لم يجدد عضوية 2026/)).toBeDefined();
+    for (const label of [texts.phone, texts.method, texts.requestDate, texts.requestTime]) {
+      expect(screen.getByText(label)).toBeDefined();
+    }
+    expect(screen.getByText(texts.proofTitle)).toBeDefined();
+  });
+});
+
+describe("what the drawer leaves to the member page", () => {
+  it("says nothing about a standing, since a row that opens it is waiting", () => {
+    show(member());
+
+    expect(screen.queryByText(STATUS_LABEL.PENDING)).toBeNull();
   });
 
-  it("stays quiet for a member already on the running year", () => {
-    show(member({ membershipYear: 2026, memberNumber: "AJVT-2026-0001" }));
+  it("lists no activity the person registered for", () => {
+    show(
+      member({
+        registrations: [{ activityId: "a1", activity: { id: "a1", title: "دوري الحي" } }],
+      }),
+    );
 
-    expect(screen.queryByText(/لم يجدد عضوية/)).toBeNull();
+    expect(screen.queryByText("دوري الحي")).toBeNull();
   });
 
-  it("stays quiet for a pending request, where renewal is not the question", () => {
-    show(member({ status: "PENDING", memberNumber: null }));
+  it("offers nothing about the account behind the person", () => {
+    show(member());
 
-    expect(screen.queryByText(/لم يجدد عضوية/)).toBeNull();
+    expect(screen.queryByText(memberAccount.password)).toBeNull();
+    expect(screen.queryByText(memberAccount.none)).toBeNull();
   });
 });

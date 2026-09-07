@@ -27,6 +27,7 @@ export { ageStandings, pendingAgeGroups } from "./ageGroups";
 export { adminAccounts, activityPicker } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
+export { memberAccount } from "./memberAccount";
 export { adminShell, adminTabs } from "./adminNav";
 export { adminTools, auditLogPage, deletedRecords } from "./adminTools";
 export { association } from "./association";
