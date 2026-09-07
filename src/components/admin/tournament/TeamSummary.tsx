@@ -8,7 +8,7 @@ import SquadBar from "./SquadBar";
 import type { OutsideShare } from "@/lib/squadBar";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
-import { fixedSquad, rosterFault, type SquadSize } from "@/lib/squadSize";
+import { rosterFault, squadIsBarred, type SquadSize } from "@/lib/squadSize";
 const COMPLETE = { background: "#d1fae5", color: "#065f46" };
 const SHORT = { background: "#fef3c7", color: "#92400e" };
 const OVER = { background: "#fee2e2", color: "#991b1b" };
@@ -43,7 +43,7 @@ export default function TeamSummary({
   const count = team.members.length;
   const awaiting = team.members.filter((m) => m.status === "PENDING").length;
   const tone = rosterTone(count, squad);
-  const barred = squad.max !== null && fixedSquad(squad) === null;
+  const barred = squadIsBarred(squad);
 
   return (
     <summary

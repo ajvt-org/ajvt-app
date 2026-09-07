@@ -363,36 +363,30 @@ describe("the squad the tournament asks for", () => {
     return [...document.querySelectorAll('span[dir="rtl"]')].map((el) => el.textContent);
   }
 
-  it("says it once above the list rather than on every card", () => {
+  it("leaves a range to the bars the cards draw", () => {
     showSquad({ min: 16, max: 22 });
 
-    expect(screen.getByText(/حجم الفريق/)).toBeDefined();
-    expect(document.body.textContent?.match(/16-22/g)).toHaveLength(1);
-  });
-
-  it("gives the range its own direction so the smaller number reads first", () => {
-    showSquad({ min: 16, max: 22 });
-
-    expect(isolated()).toEqual(["16-22"]);
-    expect([...document.querySelectorAll("bdi")].map((el) => el.textContent)).toEqual(["16", "22"]);
-  });
-
-  it("leaves each card showing where its squad sits, not the range written out", () => {
-    showSquad({ min: 16, max: 22 });
-
-    const summaries = [...document.querySelectorAll("summary")].map((s) => s.textContent);
-    expect(summaries.some((text) => text?.includes("16-22"))).toBe(false);
+    expect(screen.queryByText(/حجم الفريق/)).toBeNull();
+    expect(isolated()).toEqual([]);
     const bars = [...document.querySelectorAll('summary [role="img"]')].map((bar) =>
       bar.getAttribute("aria-label"),
     );
     expect(bars).toContain(teamsTab.squadOfRange(3, 16, 22));
   });
 
-  it("states a fixed squad as the one number it is", () => {
+  it("states a fixed squad, which no card draws", () => {
     showSquad({ min: 11, max: 11 });
 
     expect(screen.getByText("حجم الفريق 11")).toBeDefined();
+    expect(document.querySelectorAll('summary [role="img"]')).toHaveLength(0);
     expect(isolated()).toEqual([]);
+  });
+
+  it("states an open ended minimum, which no card draws either", () => {
+    showSquad({ min: 16, max: null });
+
+    expect(screen.getByText("حجم الفريق 16+")).toBeDefined();
+    expect(document.querySelectorAll('summary [role="img"]')).toHaveLength(0);
   });
 
   it("stays quiet when the tournament sets no size", () => {
