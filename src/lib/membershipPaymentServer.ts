@@ -1,11 +1,12 @@
 import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
-import { isPaidAmount, mirrorMembershipStatus } from "./paymentMirror";
+import { isPaidAmount } from "./paymentMirror";
 import {
   ensureReceiptsFor,
   syncReceiptsFor,
   withdrawReceiptsBeforeDelete,
 } from "./paymentReceiptServer";
 import { setMembershipStatus } from "./membershipRecord";
+import type { MembershipVerdict } from "./membershipVerdict";
 import { currentMembership } from "./currentMembershipServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -75,6 +76,23 @@ export async function writeMembershipFee(
   await ensureReceiptsFor(db, { id: made.id });
 }
 
+export async function recordFeeVerdict(
+  db: Db,
+  userId: string,
+  year: number,
+  verdict: MembershipVerdict,
+  now: Date,
+) {
+  await db.payment.updateMany({
+    where: { userId, year, purpose: "MEMBERSHIP" },
+    data: {
+      status: verdict.status,
+      ...(verdict.reviewedBy ? { reviewedBy: verdict.reviewedBy, reviewedAt: now } : {}),
+    },
+  });
+  await syncReceiptsFor(db, { userId, year, purpose: "MEMBERSHIP" });
+}
+
 export async function recordMembershipPayment(
   db: Db,
   userId: string,
@@ -97,7 +115,7 @@ export async function syncSurplusStatus(db: Db, userId: string, reviewedBy?: str
     reviewedBy: reviewedBy ?? null,
   };
   const now = new Date();
-  await mirrorMembershipStatus(db, userId, membership.year, verdict, now);
+  await recordFeeVerdict(db, userId, membership.year, verdict, now);
   await setMembershipStatus(db, userId, membership.year, verdict, now);
 }
 

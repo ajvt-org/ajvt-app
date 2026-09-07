@@ -6,7 +6,7 @@ vi.mock("./paymentReceiptServer", () => ({
   withdrawReceiptsBeforeDelete: vi.fn(async () => 0),
 }));
 
-import { writeMembershipFee } from "./membershipPaymentServer";
+import { recordFeeVerdict, writeMembershipFee } from "./membershipPaymentServer";
 import { withdrawReceiptsBeforeDelete } from "./paymentReceiptServer";
 
 type Call = { op: string; args: Record<string, unknown> };
@@ -24,6 +24,7 @@ function fakeDb(standing: { id: string } | null = null) {
       findFirst: vi.fn(async () => standing),
       create: vi.fn(record("create")),
       update: vi.fn(record("update")),
+      updateMany: vi.fn(record("updateMany")),
       delete: vi.fn(record("delete")),
     },
     user: { findUnique: vi.fn(async () => ({ fullName: "محمد" })) },
@@ -133,5 +134,46 @@ describe("the payment a membership fee is written to", () => {
     await writeMembershipFee(db, "u1", 2026, null, 1000, FEE);
 
     expect(calls.filter((c) => c.op !== "findFirst")).toHaveLength(0);
+  });
+});
+
+describe("the verdict a membership payment carries", () => {
+  it("lands on the year's membership payment", async () => {
+    const { db, calls } = fakeDb();
+
+    await recordFeeVerdict(db, "u1", 2026, { status: "REJECTED" }, REVIEWED_ON);
+
+    expect(only(calls, "updateMany")[0].args).toMatchObject({
+      where: { userId: "u1", year: 2026, purpose: "MEMBERSHIP" },
+      data: { status: "REJECTED" },
+    });
+  });
+
+  it("takes the reviewer with it when one is named", async () => {
+    const { db, calls } = fakeDb();
+
+    await recordFeeVerdict(db, "u1", 2026, { status: "ACTIVE", reviewedBy: "boss" }, REVIEWED_ON);
+
+    expect(only(calls, "updateMany")[0].args.data).toEqual({
+      status: "ACTIVE",
+      reviewedBy: "boss",
+      reviewedAt: REVIEWED_ON,
+    });
+  });
+
+  it("leaves the reviewer alone when the verdict names nobody", async () => {
+    const { db, calls } = fakeDb();
+
+    await recordFeeVerdict(db, "u1", 2026, { status: "PENDING" }, REVIEWED_ON);
+
+    expect(only(calls, "updateMany")[0].args.data).toEqual({ status: "PENDING" });
+  });
+
+  it("never takes a payment away, whatever the verdict", async () => {
+    const { db, calls } = fakeDb({ id: "p1" });
+
+    await recordFeeVerdict(db, "u1", 2026, { status: "REJECTED" }, REVIEWED_ON);
+
+    expect(only(calls, "delete")).toHaveLength(0);
   });
 });

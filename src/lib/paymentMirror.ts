@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import {
   ensureReceiptsFor,
   syncReceiptsFor,
@@ -9,29 +9,6 @@ type Db = PrismaClient | Prisma.TransactionClient;
 
 export function isPaidAmount(amount: number | null): amount is number {
   return amount !== null && amount > 0;
-}
-
-export interface MembershipVerdict {
-  status: ReviewStatus;
-  rejectionReason?: string | null;
-  reviewedBy?: string | null;
-}
-
-export async function mirrorMembershipStatus(
-  db: Db,
-  userId: string,
-  year: number,
-  verdict: MembershipVerdict,
-  now: Date,
-) {
-  await db.payment.updateMany({
-    where: { userId, year, purpose: "MEMBERSHIP" },
-    data: {
-      status: verdict.status,
-      ...(verdict.reviewedBy ? { reviewedBy: verdict.reviewedBy, reviewedAt: now } : {}),
-    },
-  });
-  await syncReceiptsFor(db, { userId, year, purpose: "MEMBERSHIP" });
 }
 
 export interface DonationMirror {

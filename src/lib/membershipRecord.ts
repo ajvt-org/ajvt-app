@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
-import { stampRecordedBy, type MembershipVerdict } from "./paymentMirror";
+import { stampRecordedBy } from "./paymentMirror";
+import type { MembershipVerdict } from "./membershipVerdict";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 

@@ -4,7 +4,8 @@ import { requireAdminRole } from "@/lib/auth";
 import { issueMembership } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
-import { mirrorMembershipStatus, type MembershipVerdict } from "@/lib/paymentMirror";
+import { recordFeeVerdict } from "@/lib/membershipPaymentServer";
+import type { MembershipVerdict } from "@/lib/membershipVerdict";
 import { recordMembershipYear, setMembershipStatus } from "@/lib/membershipRecord";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { membershipPaymentOf } from "@/lib/membershipPaymentRead";
@@ -50,6 +51,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       reviewedBy: session.username,
     };
     const now = new Date();
+    await recordFeeVerdict(tx, id, existing.year, verdict, now);
     await setMembershipStatus(tx, id, existing.year, verdict, now);
     if (issued) await tx.user.update({ where: { id }, data: issued });
     if (action === "ACTIVE") {
@@ -59,7 +61,6 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
         recordedBy: session.username,
       });
     }
-    await mirrorMembershipStatus(tx, id, existing.year, verdict, now);
     return { userId: id };
   });
 
