@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { backFromNext, needsSession } from "./authPaths";
+import { backFromNext, isAdminProtected, needsSession } from "./authPaths";
 
 describe("needsSession", () => {
   it("holds for the pages the proxy guards", () => {
@@ -7,6 +7,22 @@ describe("needsSession", () => {
     expect(needsSession("/profile")).toBe(true);
     expect(needsSession("/change-password")).toBe(true);
     expect(needsSession("/admin/dashboard")).toBe(true);
+  });
+
+  it("holds for every admin screen and for the admin landing itself", () => {
+    expect(isAdminProtected("/admin")).toBe(true);
+    expect(isAdminProtected("/admin/members")).toBe(true);
+    expect(isAdminProtected("/admin/tournament/abc")).toBe(true);
+    expect(isAdminProtected("/admin/broadcast")).toBe(true);
+  });
+
+  it("does not hold for the admin login screen", () => {
+    expect(isAdminProtected("/admin/login")).toBe(false);
+    expect(needsSession("/admin/login")).toBe(false);
+  });
+
+  it("does not hold for a path that merely starts with the same letters", () => {
+    expect(isAdminProtected("/administration")).toBe(false);
   });
 
   it("holds for an edit of an existing submission but not a new one", () => {

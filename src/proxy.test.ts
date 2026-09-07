@@ -4,9 +4,6 @@ import { SignJWT } from "jose";
 import { proxy, config } from "@/proxy";
 import { LOGO_PATHS } from "@/lib/logo";
 
-// Where every route sends every kind of caller, as a table. The proxy has no
-// database, so all it can tell apart is which cookie you carry: whether the
-// account has a member attached is decided a layer down, in requireUser.
 const SECRET = new TextEncoder().encode("test-secret");
 
 async function sign(payload: Record<string, unknown>): Promise<string> {
@@ -45,7 +42,6 @@ const LOGIN = (next: string) => `/login?next=${encodeURIComponent(next)}`;
 const ADMIN_LOGIN = (next: string) => `/admin/login?next=${encodeURIComponent(next)}`;
 const CHANGE = "/change-password";
 
-// path -> where each state ends up. "self" means the request is left alone.
 const MATRIX: Record<string, Record<State, string>> = {
   "/": { visitor: "self", member: "self", locked: CHANGE, forged: "self", admin: "self" },
   "/activities": {
@@ -129,6 +125,27 @@ const MATRIX: Record<string, Record<State, string>> = {
     forged: ADMIN_LOGIN("/admin/dashboard"),
     admin: "self",
   },
+  "/admin": {
+    visitor: ADMIN_LOGIN("/admin"),
+    member: ADMIN_LOGIN("/admin"),
+    locked: ADMIN_LOGIN("/admin"),
+    forged: ADMIN_LOGIN("/admin"),
+    admin: "self",
+  },
+  "/admin/members": {
+    visitor: ADMIN_LOGIN("/admin/members"),
+    member: ADMIN_LOGIN("/admin/members"),
+    locked: ADMIN_LOGIN("/admin/members"),
+    forged: ADMIN_LOGIN("/admin/members"),
+    admin: "self",
+  },
+  "/admin/tournament/abc": {
+    visitor: ADMIN_LOGIN("/admin/tournament/abc"),
+    member: ADMIN_LOGIN("/admin/tournament/abc"),
+    locked: ADMIN_LOGIN("/admin/tournament/abc"),
+    forged: ADMIN_LOGIN("/admin/tournament/abc"),
+    admin: "self",
+  },
 };
 
 describe("proxy routing", () => {
@@ -155,9 +172,6 @@ describe("the temporary password lock", () => {
   });
 });
 
-// The matcher decides which requests reach the proxy at all. It went from four
-// named routes to everything-except, which is the change here with the widest
-// blast radius: too greedy and the app stops serving its own assets.
 describe("the proxy matcher", () => {
   const pattern = new RegExp(`^${config.matcher[0]}$`);
 
@@ -172,6 +186,8 @@ describe("the proxy matcher", () => {
     "/change-password",
     "/form",
     "/membership",
+    "/admin",
+    "/admin/login",
     "/admin/dashboard",
   ])("covers %s", (path) => {
     expect(pattern.test(path)).toBe(true);
