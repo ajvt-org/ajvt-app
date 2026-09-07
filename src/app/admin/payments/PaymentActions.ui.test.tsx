@@ -16,14 +16,39 @@ describe("the actions under a payment", () => {
     expect(routine.contains(screen.getByText("حذف"))).toBe(false);
   });
 
-  it("pushes the destructive group to the far side of whichever line it lands on", () => {
+  it("lets the routine group take the slack so the destructive one keeps the far end", () => {
     render(
       <PaymentActions danger={<button>حذف</button>}>
         <button>قبول</button>
       </PaymentActions>,
     );
 
-    expect(screen.getByText("حذف").parentElement!.className).toContain("ms-auto");
+    expect(screen.getByText("قبول").parentElement!.className).toContain("flex-1");
+  });
+
+  it("never lets the destructive group be squeezed or carried onto another line", () => {
+    render(
+      <PaymentActions danger={<button>حذف</button>}>
+        <button>قبول</button>
+      </PaymentActions>,
+    );
+
+    const danger = screen.getByText("حذف").parentElement!;
+    expect(danger.className).toContain("shrink-0");
+    expect(danger.parentElement!.className).not.toContain("flex-wrap");
+  });
+
+  it("gives a panel opened in the bar the whole line and drops the destructive group under it", () => {
+    render(
+      <PaymentActions stacked danger={<button>حذف</button>}>
+        <button>قبول</button>
+      </PaymentActions>,
+    );
+
+    const routine = screen.getByText("قبول").parentElement!;
+    const danger = screen.getByText("حذف").parentElement!;
+    expect(routine.className).toContain("basis-full");
+    expect(danger.className).toContain("ms-auto");
   });
 
   it("draws no destructive group when a payment has nothing to destroy", () => {
