@@ -60,6 +60,7 @@ export { memberImport } from "./memberImport";
 export { memberImportDialog } from "./memberImportDialog";
 export { memberProof } from "./memberProof";
 export { membershipStanding } from "./membershipStanding";
+export { membershipEnding, MEMBERSHIP_ENDING_REASONS } from "./membershipEnding";
 export { memberMatches } from "./memberMatches";
 export { myActivities } from "./myActivities";
 export { mvpVote } from "./mvpVote";
