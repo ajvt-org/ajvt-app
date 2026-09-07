@@ -6,6 +6,7 @@ import { resetDb, post, get, patch, createAdmin, signInAsAdmin } from "./helpers
 
 const METHOD = "بنكيلي";
 const CASH = "نقداً";
+const OTHER = "السداد";
 const NEW_CODE = "999999";
 
 async function methodNamed(name: string) {
@@ -85,10 +86,10 @@ describe("the numbers an admin keeps under a method", () => {
     const existing = await prisma.paymentAccount.findFirstOrThrow({
       where: { methodId: method.id },
     });
-    const cash = await methodNamed(CASH);
+    const other = await methodNamed(OTHER);
     const res = await POST(
-      post(`/api/admin/payment-methods/${cash.id}/accounts`, { code: existing.code }),
-      on(cash.id),
+      post(`/api/admin/payment-methods/${other.id}/accounts`, { code: existing.code }),
+      on(other.id),
     );
     expect(res.status).toBe(201);
   });
