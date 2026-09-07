@@ -163,6 +163,22 @@ describe("GET /api/files/[filename]", () => {
     expect((await fetchFile("headshot.webp")).status).toBe(200);
   });
 
+  it("does not open another member's proof to the account holding it as a photo", async () => {
+    const { other } = await seedEverything();
+    await prisma.user.update({ where: { id: other.id }, data: { photo: "member-proof.webp" } });
+    await signInAs(other);
+
+    expect((await fetchFile("member-proof.webp")).status).toBe(404);
+  });
+
+  it("still serves that proof to the member it belongs to", async () => {
+    const { owner, other } = await seedEverything();
+    await prisma.user.update({ where: { id: other.id }, data: { photo: "member-proof.webp" } });
+    await signInAs(owner);
+
+    expect((await fetchFile("member-proof.webp")).status).toBe(200);
+  });
+
   it("still blocks path traversal", async () => {
     const { owner } = await seedEverything();
     await signInAs(owner);
