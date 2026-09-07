@@ -16,13 +16,7 @@ export default function IconLabel({
   after?: boolean;
 }) {
   const icon = (
-    <Icon
-      name={name}
-      size={size}
-      filled={filled}
-      color={color}
-      className={after ? "icon-label-optical" : undefined}
-    />
+    <Icon name={name} size={size} filled={filled} color={color} className="icon-label-optical" />
   );
   return (
     <span className="icon-label inline-flex items-center justify-center gap-1.5">
