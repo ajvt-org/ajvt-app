@@ -19,10 +19,11 @@ import {
 } from "./matchSides";
 import type { MatchShape } from "@prisma/client";
 import { isFootball } from "./matchShape";
-import { deriveSeries, type PlayedPart } from "./matchSeries";
+import { deriveSeries, type PlayedUnit } from "./matchSeries";
 import { canBalance, evenlyDrawnOpeners } from "./seriesColours";
 import type { PartColour } from "@prisma/client";
-import { rulesOf } from "./matchSeriesServer";
+import { LEVELS_SELECT, rulesOf } from "./matchSeriesServer";
+import { ladderOf, type LevelRow } from "./matchLevels";
 
 async function nextMatchOrder(activityId: string) {
   const row = await prisma.match.findFirst({
@@ -42,7 +43,7 @@ interface BracketRow {
   awayTeamId: string | null;
   sideATeamId: string | null;
   sideBTeamId: string | null;
-  parts: PlayedPart[];
+  parts: PlayedUnit[];
 }
 
 async function matchShapeOf(activityId: string): Promise<MatchShape> {
@@ -189,7 +190,7 @@ export async function drawBracket(activityId: string, redo = false) {
       maxTeamSize: true,
       matchShape: true,
       hasColours: true,
-      partsPerMatch: true,
+      levels: LEVELS_SELECT,
     },
   });
   const teams = await prisma.team.findMany({
@@ -252,7 +253,9 @@ export async function drawBracket(activityId: string, redo = false) {
   return {
     created,
     label,
-    coloursBalance: hasColours ? canBalance(activity?.partsPerMatch ?? 0) : null,
+    coloursBalance: hasColours
+      ? canBalance(ladderOf(activity?.levels ?? [])[0]?.unitsPerParent ?? 0)
+      : null,
   };
 }
 
@@ -281,11 +284,11 @@ function footballWinner(
 }
 
 function seriesWinner(
-  activity: Parameters<typeof rulesOf>[0],
-  parts: PlayedPart[],
+  levels: LevelRow[],
+  parts: PlayedUnit[],
   sides: { first: string | null; second: string | null },
 ): string | null {
-  const standing = deriveSeries(rulesOf(activity, true), parts);
+  const standing = deriveSeries(rulesOf(ladderOf(levels)), parts);
   if (!standing.over || standing.winner === null) return null;
   return standing.winner === "SIDE_A" ? sides.first : sides.second;
 }
@@ -303,13 +306,7 @@ function suggestionError(problem: string, words: EntrantWording): string {
 async function groupTables(activityId: string) {
   const setup = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: {
-      matchShape: true,
-      partsPerMatch: true,
-      matchEnding: true,
-      partsToWin: true,
-      partDecision: true,
-    },
+    select: { matchShape: true, levels: LEVELS_SELECT },
   });
   const shape = setup.matchShape;
   const [groups, teams, matches] = await Promise.all([
@@ -357,7 +354,7 @@ async function groupTables(activityId: string) {
         ...m,
         firstTeam: sides.first,
         secondTeam: sides.second,
-        series: series ? deriveSeries(rulesOf(setup), m.parts) : null,
+        series: series ? deriveSeries(rulesOf(ladderOf(setup.levels)), m.parts) : null,
       };
     });
   return {
@@ -405,7 +402,7 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
 
   const setup = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: { matchShape: true, hasColours: true, partsPerMatch: true },
+    select: { matchShape: true, hasColours: true, levels: LEVELS_SELECT },
   });
   const shape = setup.matchShape;
   const waiting = await clearRedoableBracket(activityId, redo, shape);
@@ -427,20 +424,16 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
     created,
     label,
     problem,
-    coloursBalance: setup.hasColours ? canBalance(setup.partsPerMatch ?? 0) : null,
+    coloursBalance: setup.hasColours
+      ? canBalance(ladderOf(setup.levels)[0]?.unitsPerParent ?? 0)
+      : null,
   };
 }
 
 export async function advanceBracket(activityId: string) {
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: {
-      matchShape: true,
-      partsPerMatch: true,
-      matchEnding: true,
-      partsToWin: true,
-      partDecision: true,
-    },
+    select: { matchShape: true, levels: LEVELS_SELECT },
   });
   const shape = activity.matchShape;
   const bracketMatches = await bracketRows(activityId);
@@ -480,7 +473,7 @@ export async function advanceBracket(activityId: string) {
     const sides = matchSideIds(m, shape);
     const winner = isFootball(shape)
       ? footballWinner(m, sides, scoreOf.get(m.id))
-      : seriesWinner(activity, m.parts, sides);
+      : seriesWinner(activity.levels, m.parts, sides);
     if (!winner) throw new ConflictError(messages.tieNeedsPenalties);
     winners.push(winner);
   }

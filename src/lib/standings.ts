@@ -19,7 +19,7 @@ export interface StandingsMatchInput {
   secondTeam: { id: string } | null;
   homeScore: number | null;
   awayScore: number | null;
-  series?: { sideAHalves: number; sideBHalves: number; over: boolean } | null;
+  series?: { sideATotal: number; sideBTotal: number; over: boolean } | null;
   status: string;
   isKnockout: boolean;
   bookings?: StandingsBookingInput[];
@@ -30,7 +30,7 @@ export const DRAW_POINTS = 1;
 
 function scoredIn(m: StandingsMatchInput): { a: number; b: number } | null {
   if (m.series !== undefined && m.series !== null) {
-    return m.series.over ? { a: m.series.sideAHalves, b: m.series.sideBHalves } : null;
+    return m.series.over ? { a: m.series.sideATotal, b: m.series.sideBTotal } : null;
   }
   if (m.homeScore === null || m.awayScore === null) return null;
   return { a: m.homeScore, b: m.awayScore };

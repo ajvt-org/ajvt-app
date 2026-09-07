@@ -12,13 +12,39 @@ import {
   type RuleShape,
 } from "./adjustmentRules";
 import { isUniqueViolation } from "./prismaError";
+import { childLevelAt, ladderOf, levelAt, type Ladder, type LevelRow } from "./matchLevels";
 import {
   deriveSeries,
-  nextPartOrder,
-  type PlayedPart,
+  nextUnitOrder,
+  type PlayedUnit,
   type SeriesRules,
   type SeriesStanding,
 } from "./matchSeries";
+
+export const LEVEL_FIELDS = {
+  id: true,
+  order: true,
+  singular: true,
+  plural: true,
+  ending: true,
+  unitsPerParent: true,
+  unitsToWin: true,
+  target: true,
+  deciderTarget: true,
+  bothPastTarget: true,
+  extendsWhenLevel: true,
+  extensionUnits: true,
+  startingCredit: true,
+  creditWindow: true,
+  halvesPerUnit: true,
+  decision: true,
+  wonUnitWorth: true,
+  doubledWorth: true,
+  doublesOnBlankOpponent: true,
+  doublesOnRecoveredCredit: true,
+} as const;
+
+export const LEVELS_SELECT = { orderBy: { order: "asc" }, select: LEVEL_FIELDS } as const;
 
 export const MATCH_WITH_SERIES = {
   parts: { orderBy: { order: "asc" } },
@@ -26,13 +52,7 @@ export const MATCH_WITH_SERIES = {
   activity: {
     select: {
       matchShape: true,
-      partsPerMatch: true,
-      matchEnding: true,
-      partsToWin: true,
-      partDecision: true,
-      partTarget: true,
-      partWord: true,
-      partsWord: true,
+      levels: LEVELS_SELECT,
       hasColours: true,
       firstColourWord: true,
       secondColourWord: true,
@@ -41,6 +61,13 @@ export const MATCH_WITH_SERIES = {
 } as const;
 
 type Client = PrismaClient | typeof prisma;
+
+export interface SeriesActivity {
+  levels: LevelRow[];
+  hasColours: boolean;
+  firstColourWord: string | null;
+  secondColourWord: string | null;
+}
 
 export async function loadSeriesMatch(matchId: string, client: Client = prisma) {
   const match = await client.match.findUnique({
@@ -51,37 +78,43 @@ export async function loadSeriesMatch(matchId: string, client: Client = prisma) 
   if (isFootball(match.activity.matchShape)) {
     throw new ValidationError(messages.partsFootballOnly);
   }
-  if (!isSeriesConfigured(match.activity)) {
+  if (!isSeriesConfigured(ladderOf(match.activity.levels), match.activity)) {
     throw new ConflictError(messages.seriesNotConfigured);
   }
   return match;
 }
 
-export function rulesOf(
-  activity: {
-    partsPerMatch: number | null;
-    matchEnding: "PLAY_ALL" | "FIRST_TO" | null;
-    partsToWin: number | null;
-    partDecision: "OUTCOME" | "POINTS" | "SCORE" | null;
-  },
-  isKnockout = false,
-): SeriesRules {
+export function rulesOf(ladder: Ladder, depth = 0): SeriesRules {
+  const level = levelAt(ladder, depth);
+  const child = childLevelAt(ladder, depth);
   return {
-    partsPerMatch: activity.partsPerMatch ?? 0,
-    matchEnding: activity.matchEnding ?? "PLAY_ALL",
-    partsToWin: activity.partsToWin,
-    partDecision: activity.partDecision ?? "OUTCOME",
-    extendsWhenLevel: isKnockout,
+    ending: level?.ending ?? "PLAY_ALL",
+    unitsPerParent: level?.unitsPerParent ?? 0,
+    unitsToWin: level?.unitsToWin ?? null,
+    target: level?.target ?? null,
+    deciderTarget: level?.deciderTarget ?? null,
+    bothPastTarget: level?.bothPastTarget ?? null,
+    extendsWhenLevel: level?.extendsWhenLevel ?? false,
+    extensionUnits: level?.extensionUnits ?? 0,
+    startingCredit: level?.startingCredit ?? 0,
+    creditWindow: level?.creditWindow ?? 0,
+    halvesPerUnit: level?.halvesPerUnit ?? 2,
+    decision: child?.decision ?? "OUTCOME",
+    wonUnitWorth: child?.wonUnitWorth ?? 1,
+    doubledWorth: child?.doubledWorth ?? 1,
+    doublesOnBlankOpponent: child?.doublesOnBlankOpponent ?? false,
+    doublesOnRecoveredCredit: child?.doublesOnRecoveredCredit ?? false,
   };
 }
 
 export function standingOf(
-  activity: Parameters<typeof rulesOf>[0],
-  parts: PlayedPart[],
-  isKnockout = false,
+  activity: { levels: LevelRow[] },
+  units: PlayedUnit[],
   recorded: RecordedInstance[] = [],
 ): SeriesStanding {
-  return deriveSeries(rulesOf(activity, isKnockout), parts, asAdjustments(recorded));
+  const ladder = ladderOf(activity.levels);
+  const rules = rulesOf(ladder);
+  return deriveSeries(rules, units, asAdjustments(recorded, rules.halvesPerUnit));
 }
 
 export interface PartInput {
@@ -92,16 +125,15 @@ export interface PartInput {
 
 const OUTCOMES = new Set(["SIDE_A", "SIDE_B", "DRAW"]);
 
-export function readPart(
+export function readUnit(
   input: PartInput,
-  decision: "OUTCOME" | "POINTS" | "SCORE",
-  partTarget: number | null,
+  level: LevelRow,
 ): {
   outcome: "SIDE_A" | "SIDE_B" | "DRAW" | null;
   sideAPoints: number | null;
   sideBPoints: number | null;
 } {
-  if (decision === "OUTCOME") {
+  if (level.decision === "OUTCOME") {
     if (typeof input.outcome !== "string" || !OUTCOMES.has(input.outcome)) {
       throw new ValidationError(messages.partWantsAnOutcome);
     }
@@ -117,25 +149,22 @@ export function readPart(
   if (!Number.isInteger(a) || !Number.isInteger(b) || (a as number) < 0 || (b as number) < 0) {
     throw new ValidationError(messages.partWantsTwoScores);
   }
-  const sideAPoints = a as number;
-  const sideBPoints = b as number;
+  return { outcome: null, sideAPoints: a as number, sideBPoints: b as number };
+}
 
-  if (decision === "POINTS") {
-    const target = partTarget ?? 0;
-    if (Math.max(sideAPoints, sideBPoints) < target) {
-      throw new ValidationError(messages.partBelowItsTarget(target));
-    }
-  }
-  return { outcome: null, sideAPoints, sideBPoints };
+function unitLevelOf(match: Awaited<ReturnType<typeof loadSeriesMatch>>): LevelRow {
+  const level = childLevelAt(ladderOf(match.activity.levels), 0);
+  if (!level) throw new ConflictError(messages.seriesNotConfigured);
+  return level;
 }
 
 export async function addPart(matchId: string, input: PartInput) {
   const match = await loadSeriesMatch(matchId);
-  const standing = standingOf(match.activity, match.parts, match.isKnockout, match.adjustments);
+  const standing = standingOf(match.activity, match.parts, match.adjustments);
   if (standing.over) throw new ConflictError(messages.matchTakesNoMoreParts);
 
-  const result = readPart(input, match.activity.partDecision!, match.activity.partTarget);
-  const order = nextPartOrder(match.parts);
+  const result = readUnit(input, unitLevelOf(match));
+  const order = nextUnitOrder(match.parts);
   const sideAColour =
     match.activity.hasColours && match.sideAOpensAs
       ? colourOfPart(match.sideAOpensAs, order)
@@ -149,7 +178,7 @@ export async function correctPart(matchId: string, partId: string, input: PartIn
   const part = match.parts.find((row) => row.id === partId);
   if (!part) throw new NotFoundError(messages.partNotFound);
 
-  const result = readPart(input, match.activity.partDecision!, match.activity.partTarget);
+  const result = readUnit(input, unitLevelOf(match));
   return prisma.matchPart.update({ where: { id: partId }, data: { ...result, abandoned: false } });
 }
 
@@ -164,7 +193,7 @@ export async function removePart(matchId: string, partId: string) {
 
 export async function recordAdjustment(matchId: string, ruleId: string, side: MatchSide) {
   const match = await loadSeriesMatch(matchId);
-  const standing = standingOf(match.activity, match.parts, match.isKnockout, match.adjustments);
+  const standing = standingOf(match.activity, match.parts, match.adjustments);
   if (standing.over) throw new ConflictError(messages.matchTakesNoMoreParts);
 
   const rule = await prisma.adjustmentRule.findFirst({
@@ -172,7 +201,7 @@ export async function recordAdjustment(matchId: string, ruleId: string, side: Ma
   });
   if (!rule) throw new NotFoundError(messages.adjustmentRuleNotFound);
 
-  const order = nextPartOrder(match.parts);
+  const order = nextUnitOrder(match.parts);
 
   return prisma.$transaction(async (tx) => {
     await tx.matchPart.create({
@@ -216,13 +245,21 @@ export async function listAdjustmentRules(activityId: string) {
 export async function declareAdjustmentRule(activityId: string, input: RuleShape) {
   const problem = ruleProblem(input);
   if (problem) throw new ValidationError(messages.adjustmentRule[problem]);
+  if (input.levelId) {
+    const level = await prisma.matchLevel.findFirst({
+      where: { id: input.levelId, activityId },
+    });
+    if (!level) throw new NotFoundError(messages.levelNotInTournament);
+  }
   try {
     return await prisma.adjustmentRule.create({
       data: {
         activityId,
         name: input.name.trim(),
-        partsToSelf: input.partsToSelf,
-        partsFromOther: input.partsFromOther,
+        unitsToSelf: input.unitsToSelf,
+        unitsFromOther: input.unitsFromOther,
+        levelId: input.levelId ?? null,
+        endsUnit: input.endsUnit ?? false,
       },
     });
   } catch (err) {
@@ -242,6 +279,7 @@ export function seriesStateOf(match: Awaited<ReturnType<typeof loadSeriesMatch>>
   return {
     parts: match.parts,
     adjustments: match.adjustments,
-    standing: standingOf(match.activity, match.parts, match.isKnockout, match.adjustments),
+    levels: ladderOf(match.activity.levels),
+    standing: standingOf(match.activity, match.parts, match.adjustments),
   };
 }
