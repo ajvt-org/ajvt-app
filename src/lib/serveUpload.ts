@@ -3,6 +3,7 @@ import { readFile } from "fs/promises";
 import { extname, join } from "path";
 import { getUploadDir } from "./uploadDir";
 import { toBaseFilename } from "./imageProcessing";
+import { logger } from "./logger";
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -27,18 +28,34 @@ export async function serveUpload(
   allow: (base: string) => Promise<boolean>,
   cacheControl: string,
 ): Promise<NextResponse> {
-  try {
-    if (!isSafeUploadName(filename)) return notFound();
-    if (!(await allow(toBaseFilename(filename)))) return notFound();
+  if (!isSafeUploadName(filename)) {
+    logger.warn("upload.refused.name", { filename });
+    return notFound();
+  }
 
-    const buffer = await readFile(join(getUploadDir(), filename));
+  let permitted: boolean;
+  try {
+    permitted = await allow(toBaseFilename(filename));
+  } catch (err) {
+    logger.error("upload.refused.lookup", err);
+    return notFound();
+  }
+  if (!permitted) {
+    logger.info("upload.refused.permission", { filename });
+    return notFound();
+  }
+
+  const dir = getUploadDir();
+  try {
+    const buffer = await readFile(join(dir, filename));
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": MIME[extname(filename).toLowerCase()] || "application/octet-stream",
         "Cache-Control": cacheControl,
       },
     });
-  } catch {
+  } catch (err) {
+    logger.error("upload.refused.read", { dir, filename, err: (err as Error)?.message });
     return notFound();
   }
 }
