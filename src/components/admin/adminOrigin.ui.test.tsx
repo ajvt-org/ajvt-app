@@ -16,6 +16,7 @@ const NAME = "الحسن احمدو";
 
 const entry: TeamMemberEntry = {
   status: "ACTIVE",
+  invitedByCaptain: false,
   member: {
     id: "p1",
     fullName: NAME,

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { newTeamSchema } from "./schema";
-import { refuseSecondTeam, requireTeamBuilder } from "@/lib/teamBuildingServer";
+import { clearOtherSeats, refuseSecondTeam, requireTeamBuilder } from "@/lib/teamBuildingServer";
 import { myTeamView } from "@/lib/myTeamServer";
 import { common } from "@/lib/messages";
 
@@ -22,14 +22,15 @@ export const POST = withRoute("POST /api/teams", async (req: NextRequest) => {
   const { userId, activity } = await requireTeamBuilder(activityId);
   await refuseSecondTeam(activityId, userId);
 
-  const team = await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     const created = await tx.team.create({
       data: { activityId, name, autoNamed: false, captainUserId: userId },
       select: { id: true },
     });
     await tx.teamMember.create({ data: { teamId: created.id, userId, status: "ACTIVE" } });
+    await clearOtherSeats(tx, activityId, userId, created.id);
     return created;
   });
 
-  return NextResponse.json(await myTeamView(activity, userId, team.id), { status: 201 });
+  return NextResponse.json(await myTeamView(activity, userId), { status: 201 });
 });

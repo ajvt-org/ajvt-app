@@ -12,7 +12,7 @@ function only(scoped: string[] | null) {
 export async function activityAttention(scoped: string[] | null): Promise<AttentionRow[]> {
   const [joins, registrations, suspensions] = await Promise.all([
     prisma.teamMember.findMany({
-      where: { status: "PENDING", team: only(scoped) },
+      where: { status: "PENDING", invitedByCaptain: false, team: only(scoped) },
       select: {
         id: true,
         createdAt: true,
@@ -66,7 +66,9 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
 
 export async function activityAttentionCount(scoped: string[] | null): Promise<number> {
   const [joins, registrations, suspensions] = await Promise.all([
-    prisma.teamMember.count({ where: { status: "PENDING", team: only(scoped) } }),
+    prisma.teamMember.count({
+      where: { status: "PENDING", invitedByCaptain: false, team: only(scoped) },
+    }),
     prisma.activityRegistration.count({ where: { status: "PENDING", ...only(scoped) } }),
     prisma.suspension.count({ where: { status: "PROPOSED", ...only(scoped) } }),
   ]);

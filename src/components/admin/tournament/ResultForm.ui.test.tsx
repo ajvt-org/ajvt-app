@@ -70,6 +70,7 @@ function team(id: string, name: string, members: [string, string][]): Team {
     group: null,
     members: members.map(([mid, fullName]) => ({
       status: "ACTIVE",
+      invitedByCaptain: false,
       member: {
         id: mid,
         fullName,
