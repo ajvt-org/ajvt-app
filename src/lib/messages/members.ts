@@ -17,8 +17,8 @@ export const members = {
   attachProof: "يرجى إرفاق صورة الكابتير",
   waitForUpload: "يرجى الانتظار حتى انتهاء رفع الصورة",
   statusInvalid: "حالة غير صالحة",
-  rejectionReasonRequired: "سبب رفض الدفع مطلوب",
-  rejectionReasonInvalid: "سبب رفض الدفع غير صالح",
+  rejectionReasonRequired: "سبب رفض الإثبات مطلوب",
+  rejectionReasonInvalid: "سبب رفض الإثبات غير صالح",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
   alreadyAccepted: "هذا العضو مقبول بالفعل",
   invalidMember: "عضو غير صالح",
@@ -33,6 +33,11 @@ export const members = {
   renewAlreadyDone: "العضوية مجددة لهذه السنة بالفعل",
   renewYearBehind: "عضوية هذا العضو تتجاوز السنة الجارية",
   photoLocked: "تغيير الصورة موقوف على هذا الحساب، راجع إدارة الرابطة",
+  endingReasonRequired: "سبب إنهاء العضوية مطلوب",
+  endingReasonInvalid: "سبب إنهاء العضوية غير صالح",
+  endNotStanding: "لا يمكن إنهاء عضوية غير مقبولة",
+  endAlreadyEnded: "هذه العضوية منتهية بالفعل",
+  restoreNotEnded: "هذه العضوية غير منتهية",
 } as const;
 
 export const ageGroups = {

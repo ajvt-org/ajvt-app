@@ -28,8 +28,8 @@ export function usePaymentsData() {
   const [data, setData] = useState<Loaded>(EMPTY);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
+  function load() {
+    return Promise.all([
       fetch("/api/admin/payment-proofs").then((r): Promise<unknown> => {
         if (r.status === 401) {
           router.push(loginPathWithNext("/admin/login"));
@@ -49,14 +49,18 @@ export function usePaymentsData() {
           destinations: readDestinations(destinationsData),
         }),
       )
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
     ...data,
     loading,
+    reload: load,
     setProofs: (fn: (prev: Proof[]) => Proof[]) => setData((p) => ({ ...p, proofs: fn(p.proofs) })),
   };
 }

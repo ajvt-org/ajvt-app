@@ -10,6 +10,7 @@ const row = (year: number, over: Record<string, unknown> = {}) => ({
   userId: "u1",
   year,
   status: "ACTIVE" as const,
+  endedAt: null,
   ...over,
 });
 
@@ -61,7 +62,11 @@ describe("latestByAccount", () => {
 
 describe("asMembershipState", () => {
   it("names the year the way the state model reads it", () => {
-    expect(asMembershipState(row(2026))).toEqual({ status: "ACTIVE", membershipYear: 2026 });
+    expect(asMembershipState(row(2026))).toEqual({
+      status: "ACTIVE",
+      membershipYear: 2026,
+      endedAt: null,
+    });
   });
 
   it("passes an account with no membership straight through", () => {
@@ -72,7 +77,16 @@ describe("asMembershipState", () => {
     expect(asMembershipState(row(2025, { status: "PENDING" as const }))).toEqual({
       status: "PENDING",
       membershipYear: 2025,
+      endedAt: null,
     });
+  });
+});
+
+describe("asMembershipState carries the ending", () => {
+  it("hands the ending date on so the state model can read it", () => {
+    const endedAt = new Date("2026-06-01");
+
+    expect(asMembershipState(row(2026, { endedAt }))?.endedAt).toBe(endedAt);
   });
 });
 

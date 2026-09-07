@@ -7,6 +7,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofUpload from "@/components/ProofUpload";
 import { api, errorMessage } from "@/lib/api";
 import type { MemberData } from "@/lib/useMember";
+import { membershipStanding as standing, memberRejected as texts } from "@/lib/texts";
 
 export default function MemberRejected({
   member,
@@ -48,7 +49,7 @@ export default function MemberRejected({
           style={{ background: "#fff5f5", border: "1px solid #fca5a5" }}
         >
           <p className="text-xs font-bold mb-0.5" style={{ color: "#991b1b" }}>
-            سبب رفض الدفع
+            {standing.applicationRefused.reasonLabel}
           </p>
           <p className="text-sm font-semibold" style={{ color: "#991b1b" }}>
             {member.rejectionReason}
@@ -57,7 +58,7 @@ export default function MemberRejected({
       )}
 
       <p className="text-sm mb-3 font-bold" style={{ color: "var(--text-main)" }}>
-        أرفق صورة جديدة لإثبات الدفع وأعد الإرسال مباشرة
+        {texts.attachNew}
       </p>
       <ProofUpload existingProof={member.paymentProof} onUploaded={setNewProof} />
 
@@ -72,7 +73,7 @@ export default function MemberRejected({
         disabled={!newProof || resubmitting}
         className="btn btn-primary mt-3 disabled:opacity-40"
       >
-        {resubmitting ? "جاري إعادة الإرسال..." : <ArrowLabel>إعادة الإرسال</ArrowLabel>}
+        {resubmitting ? texts.resending : <ArrowLabel>{texts.resend}</ArrowLabel>}
       </button>
 
       <button
@@ -80,7 +81,7 @@ export default function MemberRejected({
         className="text-xs font-bold mt-3 w-full text-center"
         style={{ color: "var(--mint-600)" }}
       >
-        أو عدّل الدفع بالكامل
+        {texts.editWholePayment}
       </button>
     </div>
   );

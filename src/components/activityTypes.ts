@@ -54,6 +54,7 @@ type ApiMember = {
   photo: string | null;
   status: string;
   membershipYear: number;
+  endedAt?: string | null;
   registrations: { activityId: string; status: string; rejectionReason: string | null }[];
   teamMemberships: { status: string; team: { id: string; name: string; activityId: string } }[];
 };
@@ -65,8 +66,14 @@ export function toEligibleMember(
   if (!member || member.status !== "ACTIVE") return null;
   const behind =
     typeof currentYear === "number" &&
-    membershipState({ status: "ACTIVE", membershipYear: member.membershipYear }, currentYear) ===
-      "BEHIND";
+    membershipState(
+      {
+        status: "ACTIVE",
+        membershipYear: member.membershipYear,
+        endedAt: member.endedAt ?? null,
+      },
+      currentYear,
+    ) === "BEHIND";
   return {
     id: member.id,
     fullName: member.fullName,

@@ -10,10 +10,11 @@ import type { MemberData } from "@/lib/useMember";
 type Tone = Exclude<MembershipState, "UP_TO_DATE">;
 
 const TONES: Record<Tone, { icon: IconName; bg: string; border: string; ink: string }> = {
-  NO_PAYMENT: { icon: "wallet", bg: "var(--mint-50)", border: "var(--mint-200)", ink: "#047857" },
-  AWAITING_REVIEW: { icon: "clock", bg: "#fef9ee", border: "#fcd34d", ink: "#b45309" },
-  REFUSED: { icon: "close", bg: "#fff5f5", border: "#fca5a5", ink: "#b91c1c" },
+  NOT_A_MEMBER: { icon: "wallet", bg: "var(--mint-50)", border: "var(--mint-200)", ink: "#047857" },
+  APPLIED: { icon: "clock", bg: "#fef9ee", border: "#fcd34d", ink: "#b45309" },
+  APPLICATION_REFUSED: { icon: "close", bg: "#fff5f5", border: "#fca5a5", ink: "#b91c1c" },
   BEHIND: { icon: "hourglass", bg: "#fef9ee", border: "#fcd34d", ink: "#b45309" },
+  ENDED: { icon: "ban", bg: "#fff5f5", border: "#fca5a5", ink: "#b91c1c" },
 };
 
 export default function MembershipStanding({
@@ -49,16 +50,18 @@ export default function MembershipStanding({
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             {body(state, member, currentYear)}
           </p>
-          {state === "REFUSED" && member?.rejectionReason && (
+          {state === "APPLICATION_REFUSED" && member?.rejectionReason && (
             <p className="text-xs font-bold" style={{ color: tone.ink }}>
-              {texts.refused.reasonLabel}: {member.rejectionReason}
+              {texts.applicationRefused.reasonLabel}: {member.rejectionReason}
             </p>
           )}
-          {state === "NO_PAYMENT" && (
-            <StandingLink href="/membership">{texts.noPayment.action}</StandingLink>
+          {state === "NOT_A_MEMBER" && (
+            <StandingLink href="/membership">{texts.notAMember.action}</StandingLink>
           )}
-          {state === "REFUSED" && member && (
-            <StandingLink href={`/membership?id=${member.id}`}>{texts.refused.action}</StandingLink>
+          {state === "APPLICATION_REFUSED" && member && (
+            <StandingLink href={`/membership?id=${member.id}`}>
+              {texts.applicationRefused.action}
+            </StandingLink>
           )}
           {state === "BEHIND" && member?.memberNumber && (
             <StandingLink href="/membership?renew=1">{texts.behind.action}</StandingLink>
@@ -70,16 +73,18 @@ export default function MembershipStanding({
 }
 
 function title(state: Tone, member: MemberData | null, currentYear: number): string {
-  if (state === "NO_PAYMENT") return texts.noPayment.title;
-  if (state === "AWAITING_REVIEW") return texts.awaitingReview.title;
-  if (state === "REFUSED") return texts.refused.title;
+  if (state === "NOT_A_MEMBER") return texts.notAMember.title;
+  if (state === "APPLIED") return texts.applied.title;
+  if (state === "APPLICATION_REFUSED") return texts.applicationRefused.title;
+  if (state === "ENDED") return texts.ended.title;
   return texts.behind.title(member?.membershipYear ?? currentYear);
 }
 
 function body(state: Tone, member: MemberData | null, currentYear: number): string {
-  if (state === "NO_PAYMENT") return texts.noPayment.body;
-  if (state === "AWAITING_REVIEW") return texts.awaitingReview.body;
-  if (state === "REFUSED") return texts.refused.body;
+  if (state === "NOT_A_MEMBER") return texts.notAMember.body;
+  if (state === "APPLIED") return texts.applied.body;
+  if (state === "APPLICATION_REFUSED") return texts.applicationRefused.body;
+  if (state === "ENDED") return texts.ended.body;
   if (member?.memberNumber) return texts.behind.body(currentYear);
   return `${texts.behind.body(currentYear)} ${texts.behind.viaAdmin}`;
 }

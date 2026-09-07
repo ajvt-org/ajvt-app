@@ -1,18 +1,22 @@
 export const membershipStanding = {
-  noPayment: {
+  notAMember: {
     title: "لم ترسل اشتراكك بعد",
     body: "حسابك جاهز. أرسل رسوم الانتساب لتتمكن من التسجيل في الأنشطة.",
     action: "إرسال الاشتراك",
   },
-  awaitingReview: {
+  applied: {
     title: "دفعك قيد المراجعة",
     body: "سيراجع المشرف إثبات الدفع ويعلمك بالنتيجة قريباً.",
   },
-  refused: {
+  applicationRefused: {
     title: "لم يُقبل إثبات الدفع",
     body: "حسابك وبياناتك كما هي. أرفق إثباتاً جديداً وأعد الإرسال.",
     action: "أعد إرسال الدفع",
-    reasonLabel: "سبب رفض الدفع",
+    reasonLabel: "سبب رفض الإثبات",
+  },
+  ended: {
+    title: "انتهت عضويتك",
+    body: "أنهت الإدارة عضويتك لهذه السنة. راجع إدارة الرابطة لمعرفة التفاصيل.",
   },
   behind: {
     title: (year: number) => `اشتراكك يغطي سنة ${year}`,

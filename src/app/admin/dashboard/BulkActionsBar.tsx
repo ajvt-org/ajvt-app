@@ -5,6 +5,7 @@ import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import type { AgeGroup } from "./types";
 import { counted } from "@/lib/arabicCount";
 import { MEMBER } from "@/lib/messages";
+import { reviewQueue as texts } from "@/lib/texts";
 
 const CHIP = "text-xs px-3 py-1.5 rounded-lg font-bold";
 
@@ -86,7 +87,7 @@ export default function BulkActionsBar({
             className="text-xs font-bold shrink-0"
             style={{ color: "var(--text-muted)" }}
           >
-            سبب رفض الدفع
+            {texts.bulkReasonLabel}
           </label>
           <select
             id="bulk-reason"

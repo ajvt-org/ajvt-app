@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import ProofCard from "./ProofCard";
-import { paymentCard, proofReuse } from "@/lib/texts";
+import { deleteMember, memberDecision, paymentCard, proofReuse } from "@/lib/texts";
 import { money } from "@/lib/money";
 import type { MemberOption, Proof } from "./paymentTypes";
 
@@ -58,6 +58,7 @@ function show(over: Partial<Proof> = {}, members: MemberOption[] = []) {
       onDelete={vi.fn()}
       onLink={vi.fn()}
       onPatch={vi.fn()}
+      onMembershipChanged={vi.fn()}
     />,
   );
 }
@@ -306,5 +307,34 @@ describe("the order a list of payments reads in", () => {
     );
     expect(text.indexOf(paymentCard.generalSupport)).toBeLessThan(text.indexOf("2026/08/20"));
     expect(text.indexOf("2026/08/20")).toBeLessThan(text.indexOf("R-2026-0243"));
+  });
+});
+
+describe("a membership payment carries its own controls", () => {
+  const membership = { kind: "MEMBERSHIP" as const, id: "u1", userId: "u1", amount: null };
+
+  it("offers accepting, refusing, replacing the proof and deleting the payment", () => {
+    mockFetch([]);
+    show(membership);
+
+    expect(screen.getByRole("button", { name: new RegExp(memberDecision.accept) })).toBeTruthy();
+    expect(screen.getByRole("button", { name: new RegExp(memberDecision.refuse) })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /استبدال الإثبات|إضافة إثبات/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: new RegExp(deleteMember.payment) })).toBeTruthy();
+  });
+
+  it("drops the accept once the payment is accepted", () => {
+    mockFetch([]);
+    show({ ...membership, status: "ACTIVE" });
+
+    expect(screen.queryByRole("button", { name: new RegExp(memberDecision.accept) })).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(memberDecision.refuse) })).toBeTruthy();
+  });
+
+  it("offers none of it on a donation", () => {
+    mockFetch([]);
+    show();
+
+    expect(screen.queryByRole("button", { name: new RegExp(deleteMember.payment) })).toBeNull();
   });
 });

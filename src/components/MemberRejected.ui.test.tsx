@@ -39,7 +39,7 @@ describe("MemberRejected", () => {
   it("names what was refused and why", () => {
     render(<MemberRejected member={member()} onReload={vi.fn()} />);
 
-    expect(screen.getByText("سبب رفض الدفع")).toBeDefined();
+    expect(screen.getByText("سبب رفض الإثبات")).toBeDefined();
     expect(screen.getByText("الصورة غير واضحة")).toBeDefined();
   });
 

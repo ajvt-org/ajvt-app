@@ -18,6 +18,7 @@ const MEMBERSHIP_SELECT = {
   paymentMethod: true,
   paymentProof: true,
   referenceCode: true,
+  endedAt: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -48,6 +49,7 @@ type Membership = {
   paymentMethod: string | null;
   paymentProof: string | null;
   referenceCode: string | null;
+  endedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };

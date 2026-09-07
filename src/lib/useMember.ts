@@ -37,6 +37,7 @@ export interface MemberData {
   surplusAnonymous: boolean;
   status: Status;
   rejectionReason: string | null;
+  endedAt: string | null;
   createdAt: string;
   updatedAt: string;
   memberNumber: string | null;

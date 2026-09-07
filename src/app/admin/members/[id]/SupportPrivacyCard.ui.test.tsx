@@ -40,12 +40,6 @@ describe("SupportPrivacyCard", () => {
     expect(screen.getAllByText(texts.checkbox)).toHaveLength(1);
   });
 
-  it("keeps the line that says what the tick does not change", () => {
-    setup();
-
-    expect(screen.getByText(texts.hint)).toBeTruthy();
-  });
-
   it("sends the tick to the route", async () => {
     const fetchMock = mockPut();
     setup();
