@@ -18,6 +18,10 @@ describe("text formatters", () => {
     expect(financeReport.splitDetail(4000, 1000)).toContain(money(4000));
   });
 
+  it("keeps the stage row's unfiltered chip apart from the word the other rows use", () => {
+    expect(activityRow.filters.anyStage).not.toBe(activityRow.filters.any);
+  });
+
   it("names the activity in the row labels", () => {
     expect(activityRow.pendingChip(2)).toContain("2");
     expect(activityRow.moveUp("الدوري")).toContain("الدوري");

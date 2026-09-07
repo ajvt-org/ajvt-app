@@ -74,7 +74,7 @@ describe("the one bar the activities are filtered from", () => {
   it("says what the stage row offers rather than calling it the same word", () => {
     show(mixed());
 
-    expect(screen.getByLabelText("المرحلة: مع المنتهية")).toBeTruthy();
+    expect(screen.getByLabelText("المرحلة: كل المراحل")).toBeTruthy();
     expect(screen.queryByLabelText("المرحلة: الكل")).toBeNull();
   });
 
@@ -91,7 +91,7 @@ describe("the one bar the activities are filtered from", () => {
       view({ stage: "current" }),
     );
 
-    expect(screen.getByLabelText("المرحلة: مع المنتهية").textContent).toContain("2");
+    expect(screen.getByLabelText("المرحلة: كل المراحل").textContent).toContain("2");
     expect(screen.getByLabelText("المرحلة: جارية وقادمة").textContent).toContain("1");
   });
 
