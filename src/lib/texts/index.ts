@@ -33,6 +33,8 @@ export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { confirmDelete, deleteMember } from "./deleteRecords";
 export { reviewQueue } from "./reviewQueue";
+export { memberDecision } from "./memberDecision";
+export { memberRejected } from "./memberRejected";
 export { ouguiya } from "./currency";
 export { paidAmount } from "./paidAmount";
 export { stepPayment } from "./stepPayment";

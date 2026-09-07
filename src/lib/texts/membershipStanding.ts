@@ -12,7 +12,7 @@ export const membershipStanding = {
     title: "لم يُقبل إثبات الدفع",
     body: "حسابك وبياناتك كما هي. أرفق إثباتاً جديداً وأعد الإرسال.",
     action: "أعد إرسال الدفع",
-    reasonLabel: "سبب رفض الدفع",
+    reasonLabel: "سبب رفض الإثبات",
   },
   ended: {
     title: "انتهت عضويتك",

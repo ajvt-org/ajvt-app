@@ -131,7 +131,7 @@ describe("POST /api/admin/validate", () => {
     ]) {
       const res = await POST(post("/api/admin/validate", body));
       expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: "سبب رفض الدفع مطلوب" });
+      expect(await res.json()).toEqual({ error: "سبب رفض الإثبات مطلوب" });
     }
 
     const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });

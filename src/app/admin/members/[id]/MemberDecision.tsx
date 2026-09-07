@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
+import { memberDecision as texts } from "@/lib/texts";
 
 export default function MemberDecision({
   memberId,
@@ -43,7 +44,7 @@ export default function MemberDecision({
       {picking ? (
         <>
           <label className="block text-xs font-bold" htmlFor="decide-reason">
-            سبب رفض الدفع
+            {texts.reasonLabel}
           </label>
           <select
             id="decide-reason"
@@ -64,14 +65,14 @@ export default function MemberDecision({
               className="btn text-sm flex-1"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              {busy ? "..." : "تأكيد رفض الدفع"}
+              {busy ? texts.busy : texts.confirmRefuse}
             </button>
             <button
               onClick={() => setPicking(false)}
               className="btn text-sm"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              إلغاء
+              {texts.cancel}
             </button>
           </div>
         </>
@@ -83,7 +84,7 @@ export default function MemberDecision({
               disabled={busy}
               className="btn btn-primary text-sm flex-1"
             >
-              {busy ? "..." : <IconLabel name="check">قبول الدفع</IconLabel>}
+              {busy ? texts.busy : <IconLabel name="check">{texts.accept}</IconLabel>}
             </button>
           )}
           {status !== "REJECTED" && (
@@ -93,7 +94,7 @@ export default function MemberDecision({
               className={`btn text-sm ${status === "PENDING" ? "flex-1" : ""}`}
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              <IconLabel name="close">رفض الدفع</IconLabel>
+              <IconLabel name="close">{texts.refuse}</IconLabel>
             </button>
           )}
         </div>

@@ -244,6 +244,8 @@ const KEPT_CLEAN = [
   "src/lib/membershipEnding.ts",
   "src/lib/membershipEndingServer.ts",
   "src/lib/membershipEndingMessages.ts",
+  "src/app/admin/members/[id]/MemberDecision.tsx",
+  "src/components/MemberRejected.tsx",
 ];
 
 function sourceFiles(path: string): string[] {

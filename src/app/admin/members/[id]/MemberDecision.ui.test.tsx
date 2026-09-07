@@ -63,10 +63,10 @@ describe("MemberDecision", () => {
     expect(fetchMock).not.toHaveBeenCalled();
 
     await userEvent.selectOptions(
-      screen.getByLabelText("سبب رفض الدفع"),
+      screen.getByLabelText("سبب رفض الإثبات"),
       "معلومات ناقصة أو غير صحيحة",
     );
-    await userEvent.click(screen.getByRole("button", { name: "تأكيد رفض الدفع" }));
+    await userEvent.click(screen.getByRole("button", { name: "تأكيد الرفض" }));
 
     await waitFor(() => expect(onDecided).toHaveBeenCalled());
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
