@@ -1,25 +1,31 @@
 "use client";
 
-import Link from "next/link";
-import ArrowLabel from "@/components/ArrowLabel";
+import { useState } from "react";
+import IconLabel from "@/components/IconLabel";
 import ProfileSection from "@/components/admin/ProfileSection";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
 import { membershipSummary as texts } from "@/lib/texts";
+import type { MemberProfile } from "@/components/admin/profileTypes";
+import MembershipPaymentDialog from "./MembershipPaymentDialog";
 
 export default function MembershipSummary({
-  userId,
-  membershipYear,
-  status,
-  endedAt,
+  member,
   currentYear,
+  onChanged,
 }: {
-  userId: string;
-  membershipYear: number;
-  status: StatefulMembership["status"];
-  endedAt: string | null;
+  member: MemberProfile["member"];
   currentYear: number;
+  onChanged: () => void;
 }) {
-  const state = membershipState({ status, membershipYear, endedAt }, currentYear);
+  const [opening, setOpening] = useState(false);
+  const state = membershipState(
+    {
+      status: member.status as StatefulMembership["status"],
+      membershipYear: member.membershipYear,
+      endedAt: member.endedAt,
+    },
+    currentYear,
+  );
 
   return (
     <ProfileSection icon="card" title={texts.title}>
@@ -31,18 +37,27 @@ export default function MembershipSummary({
         <div className="flex justify-between gap-3">
           <dt style={{ color: "var(--text-muted)" }}>{texts.year}</dt>
           <dd className="font-bold" dir="ltr">
-            {membershipYear}
+            {member.membershipYear}
           </dd>
         </div>
       </dl>
 
-      <Link
-        href={`/admin/payments?kind=MEMBERSHIP&focus=${userId}`}
-        className="inline-flex text-xs font-bold px-3 py-2 rounded-lg mt-1"
+      <button
+        onClick={() => setOpening(true)}
+        className="btn btn-sm font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        <ArrowLabel>{texts.toPayment}</ArrowLabel>
-      </Link>
+        <IconLabel name="card">{texts.toPayment}</IconLabel>
+      </button>
+
+      {opening && (
+        <MembershipPaymentDialog
+          member={member}
+          currentYear={currentYear}
+          onChanged={onChanged}
+          onClose={() => setOpening(false)}
+        />
+      )}
     </ProfileSection>
   );
 }
