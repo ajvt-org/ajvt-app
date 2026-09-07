@@ -28,29 +28,11 @@ async function rowsOf(table: MoneyTable): Promise<AttachableRow[]> {
     });
     return rows.map((row) => ({ id: row.id, method: row.method, amount: row.amount }));
   }
-  if (table === "Membership") {
-    const rows = await prisma.membership.findMany({
-      where,
-      select: { id: true, paymentMethod: true },
-    });
-    return rows.map((row) => ({ id: row.id, method: row.paymentMethod, amount: 0 }));
-  }
   const rows = await prisma.donation.findMany({
     where,
     select: { id: true, paymentMethod: true, amount: true },
   });
   return rows.map((row) => ({ id: row.id, method: row.paymentMethod, amount: row.amount ?? 0 }));
-}
-
-async function mirrorDisagreements(): Promise<number> {
-  const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-    SELECT COUNT(*)::bigint AS count
-    FROM "Membership" m
-    JOIN "Payment" p
-      ON p."userId" = m."userId" AND p."year" = m."year" AND p."purpose" = 'MEMBERSHIP'
-    WHERE m."accountId" IS DISTINCT FROM p."accountId"
-  `;
-  return Number(rows[0]?.count ?? 0);
 }
 
 async function main() {
@@ -80,9 +62,7 @@ async function main() {
     for (const [accountId, attaching] of byAccount) {
       const code = [...sole.values()].find((a) => a.id === accountId)?.code ?? accountId;
       const ids = attaching.map((row) => row.id);
-      const worth =
-        table === "Membership" ? "counted on the payment" : `${totalOf(attaching)} in total`;
-      console.log(`  ${table} ${ids.length} rows to ${code}, ${worth}`);
+      console.log(`  ${table} ${ids.length} rows to ${code}, ${totalOf(attaching)} in total`);
       touched.push({ table, accountId, ids });
     }
 
@@ -106,13 +86,6 @@ async function main() {
     console.log("  Attached them all in one go.");
     console.log("");
   }
-
-  const disagreements = await mirrorDisagreements();
-  console.log(
-    disagreements === 0
-      ? "  Every membership agrees with its mirrored payment."
-      : `  ${disagreements} memberships disagree with their mirrored payment. Stop and read the mirror.`,
-  );
 }
 
 main()

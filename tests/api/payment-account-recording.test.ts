@@ -197,8 +197,6 @@ describe("recording which number money entered by hand landed in", () => {
     );
 
     expect(res.status).toBe(201);
-    const membership = await prisma.membership.findFirstOrThrow({ where: { userId: person.id } });
-    expect(membership.accountId).toBe(account.id);
     const payment = await prisma.payment.findFirstOrThrow({ where: { userId: person.id } });
     expect(payment.accountId).toBe(account.id);
   });

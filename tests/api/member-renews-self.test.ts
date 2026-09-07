@@ -38,6 +38,12 @@ async function signedInMember(over: Record<string, unknown> = {}) {
 const latest = (userId: string) =>
   prisma.membership.findFirstOrThrow({ where: { userId }, orderBy: { year: "desc" } });
 
+const latestFee = (userId: string) =>
+  prisma.payment.findFirstOrThrow({
+    where: { userId, purpose: "MEMBERSHIP" },
+    orderBy: { year: "desc" },
+  });
+
 describe("a member renewing their own membership", () => {
   beforeEach(async () => {
     await resetDb();
@@ -58,10 +64,10 @@ describe("a member renewing their own membership", () => {
 
     await renew();
 
-    const row = await latest(user.id);
-    expect(row.status).toBe("PENDING");
-    expect(row.reviewedBy).toBeNull();
-    expect(row.reviewedAt).toBeNull();
+    expect((await latest(user.id)).status).toBe("PENDING");
+    const fee = await latestFee(user.id);
+    expect(fee.reviewedBy).toBeNull();
+    expect(fee.reviewedAt).toBeNull();
   });
 
   it("names the member as the one who recorded it", async () => {
@@ -69,7 +75,7 @@ describe("a member renewing their own membership", () => {
 
     await renew();
 
-    expect((await latest(user.id)).recordedBy).toBe("محمد ولد أحمد");
+    expect((await latestFee(user.id)).recordedBy).toBe("محمد ولد أحمد");
   });
 
   it("banks the money as a payment waiting on the same review", async () => {

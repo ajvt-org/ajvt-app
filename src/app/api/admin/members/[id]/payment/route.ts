@@ -7,7 +7,6 @@ import { parse } from "@/lib/validation";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
-import { saveMembershipYear } from "@/lib/membershipRecord";
 import { currentMembershipPaid } from "@/lib/currentMembershipServer";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
@@ -45,16 +44,27 @@ export const PUT = withRoute(
 
     const before = await totalPaidFor(prisma, id);
 
+    const edited =
+      paymentMethod !== undefined || accountId !== undefined || paymentProof !== undefined;
+
     await prisma.$transaction(async (tx) => {
-      if (paymentMethod !== undefined || accountId !== undefined || paymentProof !== undefined) {
-        await saveMembershipYear(tx, id, current.year, {
-          ...(paymentMethod !== undefined ? { paymentMethod } : {}),
-          ...(accountId !== undefined ? { accountId: accountId || null } : {}),
-          ...(paymentProof !== undefined ? { paymentProof } : {}),
-        });
-      }
-      if (amountTransferred !== undefined) {
-        await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
+      if (edited || amountTransferred !== undefined) {
+        await recordMembershipPayment(
+          tx,
+          id,
+          amountTransferred !== undefined ? amountTransferred : before,
+          membershipFee,
+          {
+            method: paymentMethod !== undefined ? paymentMethod : current.paymentMethod,
+            accountId: accountId !== undefined ? accountId || null : current.accountId,
+            bankReference: current.bankReference,
+            proof: paymentProof !== undefined ? paymentProof : current.paymentProof,
+            referenceCode: current.referenceCode,
+            status: current.status,
+            reviewedBy: current.reviewedBy,
+            reviewedAt: current.reviewedAt,
+          },
+        );
       }
     });
 

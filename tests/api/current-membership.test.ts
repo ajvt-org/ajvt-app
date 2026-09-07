@@ -9,7 +9,7 @@ async function account(fullName: string) {
 
 async function membership(userId: string, year: number, over: Record<string, unknown> = {}) {
   return prisma.membership.create({
-    data: { userId, year, status: "ACTIVE", paymentMethod: "بنكيلي", ...over },
+    data: { userId, year, status: "ACTIVE", ...over },
   });
 }
 
@@ -20,11 +20,11 @@ describe("the membership an account is on now", () => {
 
   it("is the only year an account that joined once has", async () => {
     const user = await account("محمد ولد أحمد");
-    await membership(user.id, 2026, { paymentMethod: "مصرفي" });
+    await membership(user.id, 2026);
 
     const current = await currentMembership(prisma, user.id);
 
-    expect(current).toMatchObject({ year: 2026, status: "ACTIVE", paymentMethod: "مصرفي" });
+    expect(current).toMatchObject({ year: 2026, status: "ACTIVE" });
   });
 
   it("is the newest year once the account has renewed", async () => {

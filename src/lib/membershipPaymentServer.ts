@@ -1,60 +1,107 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
-import { mirrorMembershipPayment, mirrorMembershipStatus } from "./paymentMirror";
-import { setMembershipStatus } from "./membershipRecord";
+import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
+import { isPaidAmount } from "./paymentMirror";
+import {
+  ensureReceiptsFor,
+  syncReceiptsFor,
+  withdrawReceiptsBeforeDelete,
+} from "./paymentReceiptServer";
+import type { MembershipVerdict } from "./membershipVerdict";
 import { currentMembership } from "./currentMembershipServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
+
+export interface MembershipFee {
+  method?: string | null;
+  accountId?: string | null;
+  bankReference?: string | null;
+  proof?: string | null;
+  referenceCode?: string | null;
+  status?: ReviewStatus;
+  reviewedBy?: string | null;
+  reviewedAt?: Date | null;
+  recordedBy?: string | null;
+  anonymous?: boolean;
+}
+
+export async function writeMembershipFee(
+  db: Db,
+  userId: string,
+  year: number,
+  total: number | null,
+  fee: number,
+  fields: MembershipFee = {},
+) {
+  const standing = await db.payment.findFirst({
+    where: { userId, year, purpose: "MEMBERSHIP" },
+    select: { id: true },
+  });
+
+  if (!isPaidAmount(total)) {
+    if (standing) {
+      await withdrawReceiptsBeforeDelete(db, { id: standing.id });
+      await db.payment.delete({ where: { id: standing.id } });
+    }
+    return;
+  }
+
+  const { anonymous: choice, ...columns } = fields;
+
+  if (standing) {
+    await db.payment.update({
+      where: { id: standing.id },
+      data: { ...columns, amount: total, feeApplied: fee },
+    });
+    await syncReceiptsFor(db, { id: standing.id });
+    return;
+  }
+
+  const anonymous = choice ?? false;
+  const account = anonymous
+    ? null
+    : await db.user.findUnique({ where: { id: userId }, select: { fullName: true } });
+
+  const made = await db.payment.create({
+    data: {
+      ...columns,
+      purpose: "MEMBERSHIP",
+      userId,
+      year,
+      amount: total,
+      feeApplied: fee,
+      anonymous,
+      donorName: account?.fullName ?? null,
+    },
+  });
+  await ensureReceiptsFor(db, { id: made.id });
+}
+
+export async function recordFeeVerdict(
+  db: Db,
+  userId: string,
+  year: number,
+  verdict: MembershipVerdict,
+  now: Date,
+) {
+  await db.payment.updateMany({
+    where: { userId, year, purpose: "MEMBERSHIP" },
+    data: {
+      status: verdict.status,
+      ...(verdict.reviewedBy ? { reviewedBy: verdict.reviewedBy, reviewedAt: now } : {}),
+    },
+  });
+  await syncReceiptsFor(db, { userId, year, purpose: "MEMBERSHIP" });
+}
 
 export async function recordMembershipPayment(
   db: Db,
   userId: string,
   total: number | null,
   fee: number,
-  choice?: boolean,
+  fields: MembershipFee = {},
 ) {
   const membership = await currentMembership(db, userId);
   if (!membership) return;
-
-  const account = await db.user.findUnique({
-    where: { id: userId },
-    select: { fullName: true },
-  });
-  const kept = await db.payment.findFirst({
-    where: { userId, year: membership.year, purpose: "MEMBERSHIP" },
-    select: { anonymous: true },
-  });
-  const anonymous = kept?.anonymous ?? choice ?? false;
-
-  await mirrorMembershipPayment(db, {
-    userId,
-    year: membership.year,
-    amount: total,
-    feeApplied: fee,
-    method: membership.paymentMethod,
-    accountId: membership.accountId,
-    bankReference: membership.bankReference,
-    proof: membership.paymentProof,
-    referenceCode: membership.referenceCode,
-    status: membership.status,
-    reviewedBy: membership.reviewedBy,
-    reviewedAt: membership.reviewedAt,
-    anonymous,
-    donorName: anonymous ? null : (account?.fullName ?? null),
-  });
-}
-
-export async function syncSurplusStatus(db: Db, userId: string, reviewedBy?: string) {
-  const membership = await currentMembership(db, userId);
-  if (!membership) return;
-
-  const verdict = {
-    status: membership.status,
-    rejectionReason: membership.rejectionReason,
-    reviewedBy: reviewedBy ?? null,
-  };
-  const now = new Date();
-  await mirrorMembershipStatus(db, userId, membership.year, verdict, now);
-  await setMembershipStatus(db, userId, membership.year, verdict, now);
+  await writeMembershipFee(db, userId, membership.year, total, fee, fields);
 }
 
 export async function setSurplusVisibility(db: Db, userId: string, anonymous: boolean) {

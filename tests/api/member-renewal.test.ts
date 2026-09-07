@@ -106,7 +106,9 @@ describe("renewing a membership", () => {
 
     await renew(existing.userId);
 
-    const latest = await prisma.membership.findFirstOrThrow({ where: { year: YEAR } });
+    const latest = await prisma.payment.findFirstOrThrow({
+      where: { year: YEAR, purpose: "MEMBERSHIP" },
+    });
     expect(latest.recordedBy).toBe("boss");
   });
 

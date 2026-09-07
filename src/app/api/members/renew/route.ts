@@ -45,26 +45,21 @@ export const POST = withRoute("Member renew", async (req: NextRequest) => {
   );
   if (refusal) throw new ConflictError(renewalRefusalMessage(refusal));
 
+  const bankNumber = readBankReference(bankReference) || null;
+
   await prisma.$transaction(async (tx) => {
     await tx.membership.create({
-      data: {
-        userId: session.userId,
-        year: membershipYear,
-        status: "PENDING",
-        paymentMethod,
-        accountId: accountId || null,
-        bankReference: readBankReference(bankReference) || null,
-        paymentProof,
-        recordedBy: nameOf(account),
-      },
+      data: { userId: session.userId, year: membershipYear, status: "PENDING" },
     });
-    await recordMembershipPayment(
-      tx,
-      session.userId,
-      Number(paidAmount),
-      membershipFee,
-      surplusAnonymous,
-    );
+    await recordMembershipPayment(tx, session.userId, Number(paidAmount), membershipFee, {
+      method: paymentMethod,
+      accountId: accountId || null,
+      bankReference: bankNumber,
+      proof: paymentProof,
+      status: "PENDING",
+      recordedBy: nameOf(account),
+      anonymous: surplusAnonymous,
+    });
   });
 
   await logAction(

@@ -39,6 +39,11 @@ const feeFor = async (memberId: string, year: number) => {
   return Math.min(payment.amount, payment.feeApplied ?? payment.amount);
 };
 
+const paymentFor = (memberId: string, year: number) =>
+  prisma.payment.findFirstOrThrow({
+    where: { userId: memberId, purpose: "MEMBERSHIP", year },
+  });
+
 describe("the year record a membership request opens", () => {
   beforeEach(async () => {
     await resetDb();
@@ -50,7 +55,7 @@ describe("the year record a membership request opens", () => {
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(record.year).toBe(runningYear());
     expect(record.status).toBe("PENDING");
-    expect(record.reviewedBy).toBeNull();
+    expect((await paymentFor(member.userId, record.year)).reviewedBy).toBeNull();
   });
 
   it("carries what the member sent with the request", async () => {
@@ -58,8 +63,9 @@ describe("the year record a membership request opens", () => {
 
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.userId, record.year)).toBe(100);
-    expect(record.paymentMethod).toBe("بنكيلي");
-    expect(record.paymentProof).toBe("proof.webp");
+    const payment = await paymentFor(member.userId, record.year);
+    expect(payment.method).toBe("بنكيلي");
+    expect(payment.proof).toBe("proof.webp");
   });
 
   it("is stamped the moment an admin approves", async () => {
@@ -72,10 +78,11 @@ describe("the year record a membership request opens", () => {
     expect(record.year).toBe(runningYear());
     expect(record.status).toBe("ACTIVE");
     expect(await feeFor(member.userId, record.year)).toBe(100);
-    expect(record.paymentMethod).toBe("بنكيلي");
-    expect(record.recordedBy).toBe("admin");
-    expect(record.reviewedBy).toBe("admin");
-    expect(record.reviewedAt).not.toBeNull();
+    const payment = await paymentFor(member.userId, record.year);
+    expect(payment.method).toBe("بنكيلي");
+    expect(payment.recordedBy).toBe("محمد ولد أحمد");
+    expect(payment.reviewedBy).toBe("admin");
+    expect(payment.reviewedAt).not.toBeNull();
   });
 
   it("keeps only the fee when the member paid more", async () => {
@@ -114,7 +121,7 @@ describe("the year record a membership request opens", () => {
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(record.status).toBe("REJECTED");
     expect(record.rejectionReason).toBe("الصورة غير واضحة");
-    expect(record.reviewedBy).toBe("admin");
+    expect((await paymentFor(member.userId, record.year)).reviewedBy).toBe("admin");
   });
 
   it("survives a second approval without changing what was banked", async () => {
@@ -162,6 +169,6 @@ describe("the year record a membership request opens", () => {
 
     const record = await prisma.membership.findFirstOrThrow();
     expect(record.status).toBe("PENDING");
-    expect(record.reviewedBy).toBeNull();
+    expect(await prisma.payment.count({ where: { userId: record.userId } })).toBe(0);
   });
 });

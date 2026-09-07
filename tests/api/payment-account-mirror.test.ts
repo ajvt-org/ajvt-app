@@ -17,20 +17,18 @@ describe("the account a money row carries", () => {
     await resetDb();
   });
 
-  it("reaches the payment a membership is mirrored into", async () => {
+  it("reaches the payment a membership fee is written to", async () => {
     const account = await anAccount();
     const user = await createUser();
     await prisma.membership.create({
-      data: {
-        userId: user.id,
-        year: YEAR,
-        status: "ACTIVE",
-        paymentMethod: "بنكيلي",
-        accountId: account.id,
-      },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
 
-    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE);
+    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
+      method: "بنكيلي",
+      accountId: account.id,
+      status: "ACTIVE",
+    });
 
     const payment = await prisma.payment.findFirstOrThrow({
       where: { userId: user.id, year: YEAR, purpose: "MEMBERSHIP" },
@@ -67,13 +65,16 @@ describe("the account a money row carries", () => {
     expect(payment.accountId).toBeNull();
   });
 
-  it("leaves the payment without one when the membership has none", async () => {
+  it("leaves the payment without one when the fee names none", async () => {
     const user = await createUser("22334466");
     await prisma.membership.create({
-      data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "نقداً" },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
 
-    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE);
+    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
+      method: "نقداً",
+      status: "ACTIVE",
+    });
 
     const payment = await prisma.payment.findFirstOrThrow({
       where: { userId: user.id, year: YEAR, purpose: "MEMBERSHIP" },
@@ -87,19 +88,17 @@ describe("the bank's own reference on a money row", () => {
     await resetDb();
   });
 
-  it("reaches the payment a membership is mirrored into", async () => {
+  it("reaches the payment a membership fee is written to", async () => {
     const user = await createUser("22551100");
     await prisma.membership.create({
-      data: {
-        userId: user.id,
-        year: YEAR,
-        status: "ACTIVE",
-        paymentMethod: "بنكيلي",
-        bankReference: "7026081422303210001",
-      },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
 
-    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE);
+    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
+      method: "بنكيلي",
+      bankReference: "7026081422303210001",
+      status: "ACTIVE",
+    });
 
     const payment = await prisma.payment.findFirstOrThrow({
       where: { userId: user.id, purpose: "MEMBERSHIP" },
@@ -123,33 +122,34 @@ describe("the bank's own reference on a money row", () => {
     expect(payment.bankReference).toBe("TR10000000001");
   });
 
-  it("is not the order code the app generates, which stays where it was", async () => {
+  it("is not the order code the app generates, which the payment keeps apart", async () => {
     const user = await createUser("22551122");
     await prisma.membership.create({
-      data: {
-        userId: user.id,
-        year: YEAR,
-        status: "ACTIVE",
-        paymentMethod: "بنكيلي",
-        referenceCode: "AJV-TEST1",
-        bankReference: "TR10000000002",
-      },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
 
-    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE);
+    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
+      method: "بنكيلي",
+      referenceCode: "AJV-TEST1",
+      bankReference: "TR10000000002",
+      status: "ACTIVE",
+    });
 
-    const membership = await prisma.membership.findFirstOrThrow({ where: { userId: user.id } });
-    expect(membership.referenceCode).toBe("AJV-TEST1");
-    expect(membership.bankReference).toBe("TR10000000002");
+    const payment = await prisma.payment.findFirstOrThrow({ where: { userId: user.id } });
+    expect(payment.referenceCode).toBe("AJV-TEST1");
+    expect(payment.bankReference).toBe("TR10000000002");
   });
 
   it("stays empty when nobody typed one", async () => {
     const user = await createUser("22551133");
     await prisma.membership.create({
-      data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "بنكيلي" },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
 
-    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE);
+    await recordMembershipPayment(prisma, user.id, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
+      method: "بنكيلي",
+      status: "ACTIVE",
+    });
 
     const payment = await prisma.payment.findFirstOrThrow({
       where: { userId: user.id, purpose: "MEMBERSHIP" },

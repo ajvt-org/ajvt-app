@@ -74,32 +74,21 @@ model User {
 }
 
 model Membership {
-  id              String          @id @default(cuid())
+  id              String       @id @default(cuid())
   userId          String
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   year            Int
-  status          ReviewStatus    @default(PENDING)
+  status          ReviewStatus @default(PENDING)
   rejectionReason String?
-  paymentMethod   String?
-  accountId       String?
-  bankReference   String?
-  account         PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  paymentProof    String?
-  referenceCode   String?         @unique
-  recordedBy      String?
-  reviewedBy      String?
-  reviewedAt      DateTime?
   endedAt         DateTime?
   endedReason     String?
   endedBy         String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@unique([userId, year])
   @@index([year])
   @@index([status])
-  @@index([accountId])
-  @@index([bankReference])
 }
 
 model Activity {
@@ -629,10 +618,9 @@ model PaymentAccount {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  payments    Payment[]
-  memberships Membership[]
-  donations   Donation[]
-  expenses    Expense[]
+  payments  Payment[]
+  donations Donation[]
+  expenses  Expense[]
 
   @@unique([methodId, code])
   @@index([methodId, active])

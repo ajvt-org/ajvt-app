@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import {
   ensureReceiptsFor,
   syncReceiptsFor,
@@ -9,93 +9,6 @@ type Db = PrismaClient | Prisma.TransactionClient;
 
 export function isPaidAmount(amount: number | null): amount is number {
   return amount !== null && amount > 0;
-}
-
-export interface MembershipVerdict {
-  status: ReviewStatus;
-  rejectionReason?: string | null;
-  reviewedBy?: string | null;
-}
-
-export interface MembershipMirror {
-  userId: string;
-  year: number;
-  amount: number | null;
-  feeApplied: number;
-  method: string | null;
-  accountId: string | null;
-  bankReference: string | null;
-  proof: string | null;
-  referenceCode: string | null;
-  status: "PENDING" | "ACTIVE" | "REJECTED";
-  reviewedBy: string | null;
-  reviewedAt: Date | null;
-  anonymous: boolean;
-  donorName: string | null;
-  recordedBy?: string | null;
-}
-
-export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
-  const existing = await db.payment.findFirst({
-    where: { userId: m.userId, year: m.year, purpose: "MEMBERSHIP" },
-    select: { id: true },
-  });
-
-  if (!isPaidAmount(m.amount)) {
-    if (existing) {
-      await withdrawReceiptsBeforeDelete(db, { id: existing.id });
-      await db.payment.delete({ where: { id: existing.id } });
-    }
-    return;
-  }
-
-  const data = {
-    amount: m.amount,
-    feeApplied: m.feeApplied,
-    method: m.method,
-    accountId: m.accountId,
-    bankReference: m.bankReference,
-    proof: m.proof,
-    referenceCode: m.referenceCode,
-    status: m.status,
-    reviewedBy: m.reviewedBy,
-    reviewedAt: m.reviewedAt,
-  };
-
-  if (existing) {
-    await db.payment.update({ where: { id: existing.id }, data });
-    await syncReceiptsFor(db, { id: existing.id });
-    return;
-  }
-  const created = await db.payment.create({
-    data: {
-      ...data,
-      purpose: "MEMBERSHIP",
-      userId: m.userId,
-      year: m.year,
-      anonymous: m.anonymous,
-      donorName: m.donorName,
-      recordedBy: m.recordedBy ?? null,
-    },
-  });
-  await ensureReceiptsFor(db, { id: created.id });
-}
-
-export async function mirrorMembershipStatus(
-  db: Db,
-  userId: string,
-  year: number,
-  verdict: MembershipVerdict,
-  now: Date,
-) {
-  await db.payment.updateMany({
-    where: { userId, year, purpose: "MEMBERSHIP" },
-    data: {
-      status: verdict.status,
-      ...(verdict.reviewedBy ? { reviewedBy: verdict.reviewedBy, reviewedAt: now } : {}),
-    },
-  });
-  await syncReceiptsFor(db, { userId, year, purpose: "MEMBERSHIP" });
 }
 
 export interface DonationMirror {
@@ -205,11 +118,4 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
 export async function removeMirroredDonation(db: Db, donationId: string) {
   await withdrawReceiptsBeforeDelete(db, { id: donationId });
   await db.payment.deleteMany({ where: { id: donationId } });
-}
-
-export async function stampRecordedBy(db: Db, userId: string, year: number, username: string) {
-  await db.payment.updateMany({
-    where: { userId, year, purpose: "MEMBERSHIP", recordedBy: null },
-    data: { recordedBy: username },
-  });
 }

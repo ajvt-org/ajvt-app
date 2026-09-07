@@ -34,9 +34,6 @@ function paying(userId: string, body: Record<string, unknown>) {
 const paymentOf = (userId: string, year = YEAR) =>
   prisma.payment.findFirstOrThrow({ where: { userId, year, purpose: "MEMBERSHIP" } });
 
-const membershipOf = (userId: string, year = YEAR) =>
-  prisma.membership.findUniqueOrThrow({ where: { userId_year: { userId, year } } });
-
 describe("recording a membership payment validates against the payment", () => {
   beforeEach(async () => {
     await resetDb();
@@ -60,21 +57,17 @@ describe("recording a membership payment validates against the payment", () => {
     const res = await PAY(...paying(m.userId, { accountId: elsewhere.id }));
 
     expect(res.status).toBe(400);
-    expect((await membershipOf(m.userId)).accountId).toBeNull();
+    expect((await paymentOf(m.userId)).accountId).toBeNull();
   });
 
   it("takes the method it checks the number against from the payment", async () => {
     const m = await paidMember();
     const account = await accountOn(METHOD);
-    await prisma.membership.update({
-      where: { userId_year: { userId: m.userId, year: YEAR } },
-      data: { paymentMethod: OTHER },
-    });
 
     const res = await PAY(...paying(m.userId, { accountId: account.id }));
 
     expect(res.status).toBe(200);
-    expect((await membershipOf(m.userId)).accountId).toBe(account.id);
+    expect((await paymentOf(m.userId)).accountId).toBe(account.id);
   });
 
   it("refuses a closed number the payment was not already pointing at", async () => {
@@ -119,21 +112,15 @@ describe("recording a membership payment validates against the payment", () => {
     );
 
     expect(res.status).toBe(200);
-    const membership = await membershipOf(m.userId);
-    expect(membership.paymentMethod).toBe(METHOD);
-    expect(membership.accountId).toBe(account.id);
-    expect(membership.paymentProof).toBe("new.jpg");
     const payment = await paymentOf(m.userId);
+    expect(payment.method).toBe(METHOD);
+    expect(payment.accountId).toBe(account.id);
     expect(payment.proof).toBe("new.jpg");
     expect(payment.amount).toBe(MEMBERSHIP_FEE + 50);
   });
 
   it("names the proof it replaced from the payment in the trail", async () => {
     const m = await paidMember({ paymentProof: "kept.jpg" });
-    await prisma.membership.update({
-      where: { userId_year: { userId: m.userId, year: YEAR } },
-      data: { paymentProof: "stale.jpg" },
-    });
 
     await PAY(...paying(m.userId, { paymentProof: "new.jpg" }));
 
@@ -153,7 +140,7 @@ describe("renewing a membership still writes both records", () => {
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
   });
 
-  it("stamps the method, the recorder and the verdict on both", async () => {
+  it("stamps the method, the recorder and the verdict on the payment", async () => {
     const m = await paidMember({ membershipYear: YEAR - 1, memberNumber: "AJVT-2026-0002" });
     await saveAppSettings({ membershipYear: YEAR, membershipFee: MEMBERSHIP_FEE });
 
@@ -166,11 +153,6 @@ describe("renewing a membership still writes both records", () => {
     );
 
     expect(res.status).toBe(201);
-    const membership = await membershipOf(m.userId);
-    expect(membership.paymentMethod).toBe(METHOD);
-    expect(membership.recordedBy).toBe("boss");
-    expect(membership.reviewedBy).toBe("boss");
-    expect(membership.reviewedAt).not.toBeNull();
     const payment = await paymentOf(m.userId);
     expect(payment.method).toBe(METHOD);
     expect(payment.recordedBy).toBe("boss");

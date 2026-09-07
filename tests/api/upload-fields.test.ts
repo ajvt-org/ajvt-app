@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { UPLOAD_FIELDS, locateUpload, renameUpload } from "@/lib/uploadFields";
 import type { PublicFileRoute } from "@/lib/uploadFields";
 import { resetDb, createUser, get, withParams, personFor, makeMember } from "./helpers";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 
 import { GET as ACTIVITY_FILE } from "@/app/api/files/activity/[filename]/route";
 import { GET as DONATION_FILE } from "@/app/api/files/donation/[filename]/route";
@@ -20,10 +21,14 @@ async function memberWith(over: Record<string, unknown>) {
     fullName: "عضو",
     age: "البدريين",
     paymentMethod: "بنكيلي",
+    paidAmount: MEMBERSHIP_FEE,
     status: "ACTIVE",
     ...over,
   });
 }
+
+const proofOf = (userId: string) =>
+  prisma.payment.findFirstOrThrow({ where: { userId, purpose: "MEMBERSHIP" } });
 
 describe("the upload field registry", () => {
   beforeEach(async () => {
@@ -33,7 +38,6 @@ describe("the upload field registry", () => {
   it("lists every column that can hold an upload filename", () => {
     expect(UPLOAD_FIELDS.map((f) => f.id)).toEqual([
       "user.photo",
-      "membership.paymentProof",
       "activityRegistration.paymentProof",
       "donation.proof",
       "payment.proof",
@@ -50,7 +54,6 @@ describe("the upload field registry", () => {
     const served = UPLOAD_FIELDS.filter((f) => f.serve.via === "authenticated").map((f) => f.id);
     expect(served).toEqual([
       "user.photo",
-      "membership.paymentProof",
       "activityRegistration.paymentProof",
       "donation.proof",
       "payment.proof",
@@ -88,8 +91,7 @@ describe("renameUpload", () => {
 
     await renameUpload("old.png", "new.webp", "newhash");
 
-    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(after.paymentProof).toBe("new.webp");
+    expect((await proofOf(member.userId)).proof).toBe("new.webp");
     expect((await personFor(member.id)).photo).toBe("new.webp");
     expect((await prisma.expense.findFirstOrThrow()).proof).toBe("new.webp");
     const fingerprint = await prisma.proofImage.findUniqueOrThrow({
@@ -103,7 +105,7 @@ describe("renameUpload", () => {
     const member = await memberWith({ paymentProof: "old.png" });
     await prisma.proofImage.create({ data: { filename: "old.png", sha256: "oldhash" } });
     const broken = vi
-      .spyOn(UPLOAD_FIELDS[6], "rename")
+      .spyOn(UPLOAD_FIELDS[5], "rename")
       .mockImplementation(
         () => prisma.proofImage.create({ data: { filename: "old.png", sha256: "clash" } }) as never,
       );
@@ -111,9 +113,7 @@ describe("renameUpload", () => {
     await expect(renameUpload("old.png", "new.webp", "newhash")).rejects.toThrow();
     broken.mockRestore();
 
-    expect(
-      (await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } })).paymentProof,
-    ).toBe("old.png");
+    expect((await proofOf(member.userId)).proof).toBe("old.png");
     expect(
       (await prisma.proofImage.findUniqueOrThrow({ where: { filename: "old.png" } })).sha256,
     ).toBe("oldhash");

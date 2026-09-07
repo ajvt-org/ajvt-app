@@ -9,11 +9,19 @@ import { resetDb, makeMember } from "./helpers";
 const ANON = "فاعل خير";
 
 async function member(fullName: string, status: "ACTIVE" | "PENDING" = "ACTIVE") {
-  return makeMember({
+  const made = await makeMember({
     fullName,
     age: "البدريين",
     paymentMethod: "بنكيلي",
     status,
+  });
+  return { ...made, status };
+}
+
+async function feePaid(m: { userId: string; status: "ACTIVE" | "PENDING" }, amount: number) {
+  await recordMembershipPayment(prisma, m.userId, amount, 100, {
+    method: "بنكيلي",
+    status: m.status,
   });
 }
 
@@ -40,7 +48,7 @@ describe("the finance summary", () => {
 
   it("splits one membership payment into the fee it covered and the support it carried", async () => {
     const m = await member("محمد");
-    await recordMembershipPayment(prisma, m.userId, 1000, 100);
+    await feePaid(m, 1000);
 
     const summary = await getFinanceSummary(ADMIN);
 
@@ -52,7 +60,7 @@ describe("the finance summary", () => {
 
   it("puts both halves on the day the payment was taken", async () => {
     const m = await member("محمد");
-    await recordMembershipPayment(prisma, m.userId, 1000, 100);
+    await feePaid(m, 1000);
 
     const summary = await getFinanceSummary(ADMIN);
 
@@ -68,7 +76,7 @@ describe("the finance summary", () => {
 
   it("counts a member who paid the fee alone as membership and nothing else", async () => {
     const m = await member("محمد");
-    await recordMembershipPayment(prisma, m.userId, 100, 100);
+    await feePaid(m, 100);
 
     const summary = await getFinanceSummary(ADMIN);
 
@@ -78,7 +86,7 @@ describe("the finance summary", () => {
 
   it("leaves out a payment still awaiting review", async () => {
     const m = await member("محمد", "PENDING");
-    await recordMembershipPayment(prisma, m.userId, 1000, 100);
+    await feePaid(m, 1000);
 
     expect((await getFinanceSummary(ADMIN)).totalRevenue).toBe(0);
   });
@@ -103,7 +111,7 @@ describe("the finance summary", () => {
 
   it("keeps an old payment in the totals but off the day list", async () => {
     const m = await member("محمد");
-    await recordMembershipPayment(prisma, m.userId, 1000, 100);
+    await feePaid(m, 1000);
     await prisma.payment.updateMany({ data: { createdAt: new Date("2020-01-01T12:00:00Z") } });
 
     const summary = await getFinanceSummary(ADMIN, 30);

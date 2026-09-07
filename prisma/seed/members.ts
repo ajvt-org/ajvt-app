@@ -4,7 +4,7 @@ import { PAYMENT_METHOD_SHARE, REJECTION_REASONS } from "./data";
 import { placeholder } from "./images";
 import { daysAgo, fullName, next, pick, referenceCode } from "./random";
 import { runningYear } from "../../src/lib/membershipYear";
-import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
+import { writeMembershipFee } from "../../src/lib/membershipPaymentServer";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
 import { saveMembershipYear } from "../../src/lib/membershipRecord";
@@ -79,36 +79,16 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     const joined = daysAgo(Math.max(1, 130 - i));
     const reviewedOn = daysAgo(1);
 
-    const snapshot = {
+    const standing = {
       status,
       rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
-      paymentMethod: method,
-      paymentProof: proof,
-      referenceCode: referenceCode(i),
     };
-    await saveMembershipYear(prisma, owner, membershipYear, snapshot);
-    if (isActive) {
-      await prisma.membership.updateMany({
-        where: { userId: owner, year: membershipYear },
-        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: reviewedOn },
-      });
-    }
+    await saveMembershipYear(prisma, owner, membershipYear, standing);
 
     if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
       const reviewedLastYear = daysAgo(370);
-      await saveMembershipYear(prisma, owner, current - 1, {
-        ...snapshot,
-        referenceCode: null,
-      });
-      await prisma.membership.updateMany({
-        where: { userId: owner, year: current - 1 },
-        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: reviewedLastYear },
-      });
-      await mirrorMembershipPayment(prisma, {
-        userId: owner,
-        year: current - 1,
-        amount: MEMBERSHIP_FEE,
-        feeApplied: MEMBERSHIP_FEE,
+      await saveMembershipYear(prisma, owner, current - 1, standing);
+      await writeMembershipFee(prisma, owner, current - 1, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
         method,
         accountId: null,
         bankReference: null,
@@ -117,17 +97,12 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         status,
         reviewedBy: "admin",
         reviewedAt: reviewedLastYear,
-        anonymous: false,
-        donorName: fullName(i),
         recordedBy: "admin",
+        anonymous: false,
       });
     }
 
-    await mirrorMembershipPayment(prisma, {
-      userId: owner,
-      year: membershipYear,
-      amount: paid,
-      feeApplied: MEMBERSHIP_FEE,
+    await writeMembershipFee(prisma, owner, membershipYear, paid, MEMBERSHIP_FEE, {
       method,
       accountId: null,
       bankReference: null,
@@ -136,8 +111,8 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       status,
       reviewedBy: isActive ? "admin" : null,
       reviewedAt: isActive ? reviewedOn : null,
+      recordedBy: isActive ? "admin" : null,
       anonymous: false,
-      donorName: fullName(i),
     });
 
     const withName = { userId: owner, createdAt: joined, fullName: fullName(i) };

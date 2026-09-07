@@ -280,11 +280,11 @@ describe("changing a number an admin already added", () => {
     expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
   });
 
-  it("counts a membership once, not once more for its mirror", async () => {
+  it("counts the payment a membership fee went into", async () => {
     const { method, account } = await anAccount();
     const user = await prisma.user.create({ data: { fullName: "عضو" } });
     await prisma.membership.create({
-      data: { userId: user.id, year: 2026, status: "ACTIVE", accountId: account.id },
+      data: { userId: user.id, year: 2026, status: "ACTIVE" },
     });
     await prisma.payment.create({
       data: {

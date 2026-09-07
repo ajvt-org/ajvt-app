@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { SUPER_ROLE } from "@/lib/adminRoles";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
-import { mirrorMembershipPayment } from "@/lib/paymentMirror";
+import { writeMembershipFee } from "@/lib/membershipPaymentServer";
 import { resetDb, post, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
 
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
@@ -24,12 +24,7 @@ function memberOnLastYear() {
 }
 
 async function lastYearSurplus(memberId: string, amount: number) {
-  const userId = memberId;
-  await mirrorMembershipPayment(prisma, {
-    userId,
-    year: LAST,
-    amount: 100 + amount,
-    feeApplied: 100,
+  await writeMembershipFee(prisma, memberId, LAST, 100 + amount, 100, {
     method: "بنكيلي",
     accountId: null,
     bankReference: null,
@@ -39,7 +34,6 @@ async function lastYearSurplus(memberId: string, amount: number) {
     reviewedBy: null,
     reviewedAt: null,
     anonymous: false,
-    donorName: "محمد ولد أحمد",
   });
 }
 
@@ -114,12 +108,8 @@ describe("a surplus belongs to the year it was paid for", () => {
     await lastYearSurplus(m.id, 400);
     await renew(m.userId, 1000);
 
-    const { syncSurplusStatus } = await import("@/lib/membershipPaymentServer");
-    await prisma.membership.updateMany({
-      where: { userId: m.userId, year: YEAR },
-      data: { status: "REJECTED" },
-    });
-    await syncSurplusStatus(prisma, m.userId);
+    const { recordFeeVerdict } = await import("@/lib/membershipPaymentServer");
+    await recordFeeVerdict(prisma, m.userId, YEAR, { status: "REJECTED" }, new Date());
 
     const rows = await surplusRows(m.id);
     expect(rows.map((r) => r.status)).toEqual(["ACTIVE", "REJECTED"]);

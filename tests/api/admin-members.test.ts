@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/members/[id]/route";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 import { prisma } from "@/lib/prisma";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 import {
   resetDb,
   patch,
@@ -37,10 +38,14 @@ async function memberFor(userId: string | null, over: Record<string, unknown> = 
     fullName: "عضو",
     age: "البدريين",
     paymentMethod: "بنكيلي",
+    paidAmount: MEMBERSHIP_FEE,
     status: "ACTIVE",
     ...over,
   });
 }
+
+const feeOf = (userId: string) =>
+  prisma.payment.findFirstOrThrow({ where: { userId, purpose: "MEMBERSHIP" } });
 
 describe("admin membership is one per account", () => {
   beforeEach(async () => {
@@ -94,7 +99,7 @@ describe("admin membership is one per account", () => {
     );
     await PAY(
       put(`/api/admin/members/${member.userId}/payment`, {
-        amountTransferred: null,
+        amountTransferred: MEMBERSHIP_FEE,
         paymentMethod: "السداد",
       }),
       withId(member.userId),
@@ -102,10 +107,7 @@ describe("admin membership is one per account", () => {
 
     expect(res.status).toBe(200);
     expect((await personFor(member.userId)).age).toBe("الفائزين");
-    expect(
-      (await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } }))
-        .paymentMethod,
-    ).toBe("السداد");
+    expect((await feeOf(member.userId)).method).toBe("السداد");
 
     const log = await prisma.auditLog.findFirstOrThrow({
       where: { targetType: "Member", targetId: member.userId, action: "UPDATE_MEMBER" },
@@ -128,8 +130,7 @@ describe("admin membership is one per account", () => {
       withId(member.userId),
     );
 
-    const updated = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(updated.paymentMethod).toBe("بنكيلي");
+    expect((await feeOf(member.userId)).method).toBe("بنكيلي");
     expect((await personFor(member.userId)).fullName).toBe("عضو");
   });
 
@@ -146,10 +147,7 @@ describe("admin membership is one per account", () => {
     );
 
     expect(res.status).toBe(400);
-    const untouched = await prisma.membership.findFirstOrThrow({
-      where: { userId: member.userId },
-    });
-    expect(untouched.paymentMethod).toBe("بنكيلي");
+    expect((await feeOf(member.userId)).method).toBe("بنكيلي");
   });
 
   it("refuses to attach an account that already carries a member", async () => {
