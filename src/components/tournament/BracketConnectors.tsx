@@ -14,7 +14,7 @@ export default function BracketConnectors({
 
   return (
     <svg
-      className="absolute top-0 pointer-events-none"
+      className="bracket-connectors pointer-events-none"
       style={{ left: -COLUMN_GAP, width: COLUMN_GAP, height }}
       width={COLUMN_GAP}
       height={height}
