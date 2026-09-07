@@ -87,9 +87,6 @@ export default function TreasuryView({ treasury }: { treasury: Treasury }) {
         <p className="font-black text-white mt-1" style={{ fontSize: 30 }}>
           <Money value={treasury.balance} />
         </p>
-        <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.75)" }}>
-          {texts.balanceHint}
-        </p>
       </div>
 
       <div className="card p-4">
