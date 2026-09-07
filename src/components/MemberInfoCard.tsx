@@ -2,20 +2,25 @@ import IconLabel from "@/components/IconLabel";
 import { formatDate } from "@/lib/utils";
 import type { MemberData } from "@/lib/useMember";
 import PaidAmountRows from "@/components/PaidAmountRows";
-import { myProfile, villageField } from "@/lib/texts";
+import { membershipEnding, myProfile, villageField } from "@/lib/texts";
+import { membershipState } from "@/lib/membershipState";
 
 const texts = myProfile.details;
 
 export default function MemberInfoCard({
   member,
+  currentYear = null,
   onCard = false,
   onEdit,
 }: {
   member: MemberData;
+  currentYear?: number | null;
   onCard?: boolean;
   onEdit?: () => void;
 }) {
-  const granted = member.status === "ACTIVE";
+  const state = membershipState(member, currentYear ?? member.membershipYear);
+  const applying = state === "APPLIED" || state === "APPLICATION_REFUSED";
+  const ended = state === "ENDED";
 
   return (
     <div className="card p-5">
@@ -37,7 +42,7 @@ export default function MemberInfoCard({
         <InfoRow label={texts.phone} value={member.user?.phone ?? "—"} dir="ltr" />
         {!onCard && <InfoRow label={villageField.label} value={member.village} />}
         {!onCard && member.age && <InfoRow label={texts.age} value={member.age} />}
-        {!granted && (
+        {applying && (
           <>
             <InfoRow label={texts.paymentMethod} value={member.paymentMethod ?? "—"} />
             <PaidAmountRows
@@ -48,7 +53,10 @@ export default function MemberInfoCard({
             <InfoRow label={texts.requestedOn} value={formatDate(member.createdAt)} />
           </>
         )}
-        {granted && <InfoRow label={texts.acceptedOn} value={formatDate(member.updatedAt)} />}
+        {!applying && <InfoRow label={texts.acceptedOn} value={formatDate(member.updatedAt)} />}
+        {ended && member.endedAt && (
+          <InfoRow label={membershipEnding.endedOn} value={formatDate(member.endedAt)} />
+        )}
       </div>
     </div>
   );

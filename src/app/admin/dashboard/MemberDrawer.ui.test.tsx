@@ -28,6 +28,7 @@ function member(over: Partial<Member> = {}): Member {
     supportAmount: 400,
     status: "PENDING",
     rejectionReason: null,
+    endedAt: null,
     membershipYear: 2025,
     referenceCode: null,
     memberNumber: "AJVT-2025-0026",
@@ -116,7 +117,7 @@ describe("what the drawer leaves to the member page", () => {
   it("offers nothing about the account behind the person", () => {
     show(member());
 
-    expect(screen.queryByText(memberAccount.password)).toBeNull();
+    expect(screen.queryByText(memberAccount.reset)).toBeNull();
     expect(screen.queryByText(memberAccount.none)).toBeNull();
   });
 });

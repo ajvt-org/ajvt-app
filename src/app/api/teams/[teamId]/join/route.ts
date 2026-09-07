@@ -7,6 +7,9 @@ import { teamMemberSchema } from "./schema";
 import { entrantWording, members, tournament } from "@/lib/messages";
 import { entrantOfActivity, entrantOfTeam } from "@/lib/entrantServer";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { asMembershipState } from "@/lib/currentMembership";
+import { membershipState } from "@/lib/membershipState";
+import { getAppSettings } from "@/lib/settingsServer";
 import { releaseCaptain } from "@/lib/teamCaptainServer";
 
 export const POST = withRoute(
@@ -26,6 +29,12 @@ export const POST = withRoute(
     if (membership.status !== "ACTIVE") {
       return NextResponse.json({ error: tournament.joinNeedsMembership }, { status: 403 });
     }
+
+    const { membershipYear } = await getAppSettings();
+    if (membershipState(asMembershipState(membership), membershipYear) === "ENDED") {
+      return NextResponse.json({ error: tournament.joinMembershipEnded }, { status: 403 });
+    }
+
     if (!team) {
       return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }

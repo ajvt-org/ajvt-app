@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { membershipState, needsAttention, type StatefulMembership } from "./membershipState";
+import {
+  holdsMembership,
+  membershipState,
+  needsAttention,
+  type StatefulMembership,
+} from "./membershipState";
 
 const YEAR = 2026;
 
@@ -60,6 +65,22 @@ describe("membershipState", () => {
     expect(membershipState(member({ status: "REJECTED", endedAt: new Date() }), YEAR)).toBe(
       "APPLICATION_REFUSED",
     );
+  });
+
+  it("counts the paid-up year and the year behind as holding a membership", () => {
+    expect(holdsMembership("UP_TO_DATE")).toBe(true);
+    expect(holdsMembership("BEHIND")).toBe(true);
+  });
+
+  it("stops holding a membership once an admin has ended it", () => {
+    expect(holdsMembership("ENDED")).toBe(false);
+    expect(holdsMembership(membershipState(member({ endedAt: new Date() }), YEAR))).toBe(false);
+  });
+
+  it("does not hold a membership on an application never accepted", () => {
+    expect(holdsMembership("NOT_A_MEMBER")).toBe(false);
+    expect(holdsMembership("APPLIED")).toBe(false);
+    expect(holdsMembership("APPLICATION_REFUSED")).toBe(false);
   });
 
   it("has something to say in every state but the paid-up one", () => {

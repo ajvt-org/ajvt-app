@@ -31,7 +31,11 @@ export default function SquadList({
   }
 
   return (
-    <ul className="mt-2 grid gap-x-3 gap-y-2 [grid-template-columns:repeat(auto-fill,minmax(10rem,1fr))]">
+    <ul
+      className={`mt-2 grid gap-x-3 gap-y-2${
+        follow ? "" : " [grid-template-columns:repeat(auto-fill,minmax(10rem,1fr))]"
+      }`}
+    >
       {captainFirst(players, captainId).map((player) => {
         const leads = isCaptain(player.id, captainId);
         const mine = isViewer(player.id, viewerId);
@@ -43,7 +47,7 @@ export default function SquadList({
           >
             <PlayerAvatar photo={player.photo} fullName={player.fullName} size={26} />
             <span
-              className="text-sm font-bold min-w-0"
+              className={`text-sm font-bold min-w-0${follow ? " flex-1" : ""}`}
               style={{
                 color: mine ? "var(--mint-700)" : "var(--text-main)",
                 wordBreak: "break-word",

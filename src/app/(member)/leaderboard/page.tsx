@@ -4,6 +4,9 @@ import { getUserSession } from "@/lib/auth";
 import { currentViewer } from "@/lib/supportViewer";
 import { prisma } from "@/lib/prisma";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { asMembershipState } from "@/lib/currentMembership";
+import { holdsMembership, membershipState } from "@/lib/membershipState";
+import { getAppSettings } from "@/lib/settingsServer";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import SupportersTable from "@/components/SupportersTable";
@@ -17,10 +20,14 @@ async function getViewer() {
   const session = await getUserSession();
   if (!session) return null;
   const { userId } = session as { userId: string };
-  const current = await currentMembership(prisma, userId);
+  const [current, { membershipYear }] = await Promise.all([
+    currentMembership(prisma, userId),
+    getAppSettings(),
+  ]);
+  const standing = membershipState(asMembershipState(current), membershipYear);
   return {
     userId,
-    donateHref: current?.status === "ACTIVE" ? `/donate?userId=${userId}` : "/donate",
+    donateHref: holdsMembership(standing) ? `/donate?userId=${userId}` : "/donate",
   };
 }
 

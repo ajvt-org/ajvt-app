@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 import MemberProofForm from "@/components/admin/MemberProofForm";
+import VerbButton from "@/components/admin/VerbButton";
+import { GRAVE, LEAD, RISKY } from "@/components/admin/verbTones";
 import { api, errorMessage } from "@/lib/api";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { deleteMember, memberDecision as texts } from "@/lib/texts";
 import PaymentActions from "./PaymentActions";
-import { DANGER, DANGER_OUTLINE, QUIET } from "./donationTones";
+import { DANGER, QUIET } from "./donationTones";
 
 export default function MembershipActions({
   userId,
@@ -25,6 +26,7 @@ export default function MembershipActions({
   onChanged: () => void;
 }) {
   const [picking, setPicking] = useState(false);
+  const [replacing, setReplacing] = useState(false);
   const [reason, setReason] = useState<string>(REJECTION_REASONS[0]);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -91,37 +93,42 @@ export default function MembershipActions({
         </div>
       ) : (
         <PaymentActions
+          stacked={replacing}
           danger={
-            <button
-              onClick={() => setConfirming(true)}
+            <VerbButton
+              icon="trash"
+              label={deleteMember.payment}
+              tone={GRAVE}
               disabled={busy}
-              className="btn btn-sm font-bold"
-              style={DANGER_OUTLINE}
-            >
-              <IconLabel name="trash">{deleteMember.payment}</IconLabel>
-            </button>
+              onClick={() => setConfirming(true)}
+            />
           }
         >
           {status !== "ACTIVE" && (
-            <button
-              onClick={() => decide("ACTIVE")}
+            <VerbButton
+              icon="check"
+              label={texts.accept}
+              tone={LEAD}
               disabled={busy}
-              className="btn btn-sm btn-primary font-bold"
-            >
-              {busy ? texts.busy : <IconLabel name="check">{texts.accept}</IconLabel>}
-            </button>
+              onClick={() => decide("ACTIVE")}
+            />
           )}
           {status !== "REJECTED" && (
-            <button
-              onClick={() => setPicking(true)}
+            <VerbButton
+              icon="close"
+              label={texts.refuse}
+              tone={RISKY}
               disabled={busy}
-              className="btn btn-sm font-bold"
-              style={DANGER}
-            >
-              <IconLabel name="close">{texts.refuse}</IconLabel>
-            </button>
+              onClick={() => setPicking(true)}
+            />
           )}
-          <MemberProofForm memberId={userId} proof={proof} onSaved={onChanged} />
+          <MemberProofForm
+            memberId={userId}
+            proof={proof}
+            onSaved={onChanged}
+            onOpenChange={setReplacing}
+            compact
+          />
         </PaymentActions>
       )}
 

@@ -8,13 +8,10 @@ import { auditActionLabel } from "@/lib/auditLabels";
 import IconLabel from "@/components/IconLabel";
 import AdminBackLink from "@/components/admin/AdminBackLink";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
-import ProfileSection from "@/components/admin/ProfileSection";
 import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
-import MemberHeader from "./MemberHeader";
+import MemberIdentityCard from "./MemberIdentityCard";
 import DeleteMemberCard from "./DeleteMemberCard";
-import MemberAccountCard from "./MemberAccountCard";
-import MemberPhotoRow from "./MemberPhotoRow";
 import MembershipPanel from "@/app/admin/dashboard/MembershipPanel";
 import MembershipCard from "./MembershipCard";
 import ProfileGroup from "./ProfileGroup";
@@ -86,16 +83,19 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
     <div className="admin-page space-y-5">
       <AdminBackLink href={back.href}>{back.label}</AdminBackLink>
 
-      <MemberHeader
+      <MemberIdentityCard
+        memberId={member.id}
+        userId={member.user?.id ?? null}
         fullName={member.fullName}
         photo={member.photo}
         phone={member.user?.phone ?? null}
         village={member.village}
         age={member.age}
         memberNumber={member.memberNumber}
-        status={member.status}
+        photoLocked={member.photoLocked}
         editing={editing}
         onToggleEdit={() => setEditing((v) => !v)}
+        onChanged={load}
       />
 
       <SamePersonWarning memberId={member.id} />
@@ -110,24 +110,6 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
           onCancel={() => setEditing(false)}
         />
       )}
-
-      <ProfileGroup title={texts.groupPerson}>
-        <ProfileSection icon="user" title={texts.account}>
-          <MemberAccountCard
-            memberId={member.id}
-            userId={member.user?.id ?? null}
-            phone={member.user?.phone ?? null}
-            onChanged={load}
-          />
-
-          <MemberPhotoRow
-            memberId={member.id}
-            photo={member.photo}
-            locked={member.photoLocked}
-            onChanged={load}
-          />
-        </ProfileSection>
-      </ProfileGroup>
 
       <ProfileGroup title={texts.groupMembership}>
         <MembershipCard member={member} currentYear={currentYear} onChanged={load} />

@@ -1,3 +1,10 @@
+import {
+  holdsMembership,
+  membershipState,
+  type MembershipState,
+  type StatefulMembership,
+} from "./membershipState";
+
 export type MemberFilters = {
   status: string;
   q: string;
@@ -26,6 +33,7 @@ export const NO_FILTERS: MemberFilters = {
 
 export type FilterableMember = {
   status: string;
+  endedAt: string | null;
   fullName: string;
   referenceCode: string | null;
   age: string | null;
@@ -151,8 +159,19 @@ export function membershipYearsPresent(members: FilterableMember[]): number[] {
   return [...new Set(members.map((m) => m.membershipYear))].sort((a, b) => b - a);
 }
 
+function standingOf(member: FilterableMember, year: number): MembershipState {
+  return membershipState(
+    {
+      status: member.status as StatefulMembership["status"],
+      membershipYear: member.membershipYear,
+      endedAt: member.endedAt,
+    },
+    year,
+  );
+}
+
 export function upToDate(members: FilterableMember[], membership: Membership) {
-  const active = members.filter((m) => m.status === "ACTIVE");
+  const active = members.filter((m) => holdsMembership(standingOf(m, membership.year)));
   const current = active.filter((m) => matchesStanding(m, "current", membership));
   return { current: current.length, active: active.length };
 }

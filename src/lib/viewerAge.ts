@@ -1,17 +1,23 @@
 import { prisma } from "./prisma";
 import { getUserSession } from "./auth";
-import { latestMembership } from "./currentMembership";
+import { asMembershipState, latestMembership } from "./currentMembership";
+import { holdsMembership, membershipState } from "./membershipState";
+import { getAppSettings } from "./settingsServer";
 
 export async function getViewerAge(): Promise<string | null> {
   const session = await getUserSession();
   if (!session) return null;
 
   const { userId } = session as { userId: string };
-  const rows = await prisma.membership.findMany({
-    where: { userId },
-    select: { year: true, status: true, user: { select: { age: true } } },
-  });
+  const [rows, { membershipYear }] = await Promise.all([
+    prisma.membership.findMany({
+      where: { userId },
+      select: { year: true, status: true, endedAt: true, user: { select: { age: true } } },
+    }),
+    getAppSettings(),
+  ]);
   const current = latestMembership(rows);
+  if (!holdsMembership(membershipState(asMembershipState(current), membershipYear))) return null;
 
-  return current?.status === "ACTIVE" ? (current.user.age ?? null) : null;
+  return current?.user.age ?? null;
 }

@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { STANDING_MATCH_SELECT } from "@/lib/activityMatches";
 import { MAX_ENROLLMENTS, mapEnrollments, type EnrollmentItem } from "@/lib/verifyEnrollments";
-import { latestMembership } from "@/lib/currentMembership";
+import { asMembershipState, latestMembership } from "@/lib/currentMembership";
+import { holdsMembership, membershipState } from "@/lib/membershipState";
+import { getAppSettings } from "@/lib/settingsServer";
 
 export type VerifiedMember = {
   fullName: string | null;
@@ -22,7 +24,7 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
       village: true,
       memberNumber: true,
       photo: true,
-      memberships: { select: { year: true, status: true, createdAt: true } },
+      memberships: { select: { year: true, status: true, endedAt: true, createdAt: true } },
       registrations: {
         where: { status: "ACTIVE" },
         select: {
@@ -61,12 +63,14 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
     },
   });
 
+  const { membershipYear } = await getAppSettings();
   const current = person ? latestMembership(person.memberships) : null;
   const joined = person?.memberships.reduce<Date | null>(
     (first, m) => (first === null || m.createdAt < first ? m.createdAt : first),
     null,
   );
-  if (!person || !joined || current?.status !== "ACTIVE") return null;
+  const standing = membershipState(asMembershipState(current), membershipYear);
+  if (!person || !joined || !holdsMembership(standing)) return null;
 
   return {
     fullName: person.fullName,

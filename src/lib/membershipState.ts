@@ -22,3 +22,7 @@ export function membershipState(
 export function needsAttention(state: MembershipState): boolean {
   return state !== "UP_TO_DATE";
 }
+
+export function holdsMembership(state: MembershipState): boolean {
+  return state === "UP_TO_DATE" || state === "BEHIND";
+}

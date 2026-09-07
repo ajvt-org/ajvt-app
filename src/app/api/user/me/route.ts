@@ -6,7 +6,8 @@ import { sendMatchReminders, sendTeamChoiceReminders } from "@/lib/tournamentNot
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { anonymousForYear, paidForYear, type MembershipPaymentRow } from "@/lib/paidBreakdown";
-import { latestMembership } from "@/lib/currentMembership";
+import { asMembershipState, latestMembership } from "@/lib/currentMembership";
+import { holdsMembership, membershipState } from "@/lib/membershipState";
 import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 import { getAppSettings } from "@/lib/settingsServer";
 import { accounts } from "@/lib/messages";
@@ -115,7 +116,8 @@ export const GET = withRoute("GET /api/user/me", async () => {
   const current = latestMembership(user.memberships);
 
   let person = personOf(user);
-  if (!user.memberNumber && current?.status === "ACTIVE") {
+  const standing = membershipState(asMembershipState(current), currentYear);
+  if (!user.memberNumber && holdsMembership(standing)) {
     const issued = await prisma.$transaction(async (tx) => {
       const next = await issueMembership(tx);
       await tx.user.update({ where: { id: session.userId }, data: next });

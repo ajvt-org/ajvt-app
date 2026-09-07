@@ -38,8 +38,11 @@ export default function ReceiptRow({
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-2 min-w-0">
             <span
-              className="text-sm font-bold truncate"
-              style={{ color: voided ? "var(--text-muted)" : "var(--text-main)" }}
+              className="text-sm font-bold min-w-0"
+              style={{
+                color: voided ? "var(--text-muted)" : "var(--text-main)",
+                wordBreak: "break-word",
+              }}
             >
               {receipt.reason}
             </span>

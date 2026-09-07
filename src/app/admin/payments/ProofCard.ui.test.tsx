@@ -348,11 +348,13 @@ describe("a membership payment carries its own controls", () => {
 
   it("reads from the decision on the proof towards the deletion of the payment", () => {
     mockFetch([]);
-    const { container } = show(membership);
-    const text = container.textContent!;
+    show(membership);
 
-    expect(text.indexOf(memberDecision.accept)).toBeLessThan(text.indexOf(memberDecision.refuse));
-    expect(text.indexOf(memberDecision.refuse)).toBeLessThan(text.indexOf(deleteMember.payment));
+    const accept = screen.getByRole("button", { name: new RegExp(memberDecision.accept) });
+    const refuse = screen.getByRole("button", { name: new RegExp(memberDecision.refuse) });
+    const remove = screen.getByRole("button", { name: new RegExp(deleteMember.payment) });
+    expect(accept.compareDocumentPosition(refuse) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(refuse.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("keeps the deletion out of the group the decisions sit in", () => {
@@ -370,11 +372,11 @@ describe("what a donation opens inside its own card", () => {
 
   it("reads its classification with the facts rather than above the actions", () => {
     mockFetch([]);
-    const { container } = show({ tags: TAGS });
-    const text = container.textContent!;
+    show({ tags: TAGS });
 
-    expect(text.indexOf("زكاة")).toBeGreaterThan(-1);
-    expect(text.indexOf("زكاة")).toBeLessThan(text.indexOf(donationActions.accept));
+    const tag = screen.getByText("زكاة");
+    const accept = screen.getByRole("button", { name: new RegExp(donationActions.accept) });
+    expect(tag.compareDocumentPosition(accept) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("prints no line about a classification a donation does not carry", () => {
@@ -430,5 +432,47 @@ describe("what a donation opens inside its own card", () => {
     const revoke = screen.getByRole("button", { name: new RegExp(donationActions.revoke) });
     expect(edit.parentElement!.contains(remove)).toBe(false);
     expect(remove.parentElement!.contains(revoke)).toBe(true);
+  });
+
+  it("severs a donation from an account alongside the other verbs that undo something", () => {
+    mockFetch([]);
+    show({ userId: "u1" }, [ACCOUNT]);
+
+    const unlink = screen.getByRole("button", { name: donationEdit.unlink });
+    const remove = screen.getByRole("button", { name: new RegExp(donationActions.remove) });
+    const change = screen.getByRole("button", { name: donationEdit.changeLink });
+    expect(unlink.parentElement!.contains(remove)).toBe(true);
+    expect(unlink.parentElement!.contains(change)).toBe(false);
+  });
+
+  it("draws changing the link and severing it on two different icons", () => {
+    mockFetch([]);
+    show({ userId: "u1" }, [ACCOUNT]);
+
+    const unlink = screen.getByRole("button", { name: donationEdit.unlink });
+    const change = screen.getByRole("button", { name: donationEdit.changeLink });
+    expect(unlink.querySelector("path")!.getAttribute("d")).not.toBe(
+      change.querySelector("path")!.getAttribute("d"),
+    );
+  });
+
+  it("offers no severing on a donation that belongs to nobody", () => {
+    mockFetch([]);
+    show();
+
+    expect(screen.queryByRole("button", { name: donationEdit.unlink })).toBeNull();
+    expect(screen.getByRole("button", { name: donationEdit.link })).toBeTruthy();
+  });
+
+  it("keeps the record folded away until it is asked for", async () => {
+    mockFetch([]);
+    show();
+
+    const history = screen.getByRole("button", { name: new RegExp(paymentCard.history) });
+    expect(history.getAttribute("aria-expanded")).toBe("false");
+
+    await userEvent.click(history);
+
+    expect(history.getAttribute("aria-expanded")).toBe("true");
   });
 });

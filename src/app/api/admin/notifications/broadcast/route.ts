@@ -9,7 +9,9 @@ import { broadcastSchema } from "./schema";
 import { logger } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
 import { counted } from "@/lib/arabicCount";
-import { latestByAccount } from "@/lib/currentMembership";
+import { asMembershipState, latestByAccount } from "@/lib/currentMembership";
+import { holdsMembership, membershipState } from "@/lib/membershipState";
+import { getAppSettings } from "@/lib/settingsServer";
 import { RECIPIENT } from "@/lib/messages";
 
 export const POST = withRoute(
@@ -26,12 +28,15 @@ export const POST = withRoute(
       where.user = { registrations: { some: { activityId: activityId! } } };
     if (target === "AGE") where.user = { age: age!.trim() };
 
-    const rows = await prisma.membership.findMany({
-      where,
-      select: { userId: true, year: true, status: true },
-    });
+    const [rows, { membershipYear }] = await Promise.all([
+      prisma.membership.findMany({
+        where,
+        select: { userId: true, year: true, status: true, endedAt: true },
+      }),
+      getAppSettings(),
+    ]);
     const userIds = [...latestByAccount(rows).values()]
-      .filter((row) => row.status === "ACTIVE")
+      .filter((row) => holdsMembership(membershipState(asMembershipState(row), membershipYear)))
       .map((row) => row.userId);
 
     const payload = { title: title.trim(), body: body.trim() };
