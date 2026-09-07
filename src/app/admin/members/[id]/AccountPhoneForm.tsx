@@ -36,30 +36,27 @@ export default function AccountPhoneForm({
 
   if (!editing) {
     return (
-      <div className="flex items-center justify-between gap-3">
-        <span style={{ color: "var(--text-muted)" }}>{texts.label}</span>
-        <span className="flex items-center gap-2">
-          {phone ? (
-            <span className="font-bold" dir="ltr">
-              {phone}
-            </span>
-          ) : (
-            <span className="font-bold" style={{ color: "var(--text-muted)" }}>
-              {texts.none}
-            </span>
-          )}
-          <button
-            onClick={() => {
-              setValue(phone ?? "");
-              setError("");
-              setEditing(true);
-            }}
-            className="text-xs font-bold px-2 py-1 rounded-lg"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            <IconLabel name={phone ? "pencil" : "plus"}>{phone ? texts.edit : texts.add}</IconLabel>
-          </button>
-        </span>
+      <div className="flex items-center gap-2">
+        {phone ? (
+          <span className="font-bold" dir="ltr">
+            {phone}
+          </span>
+        ) : (
+          <span className="font-bold" style={{ color: "var(--text-muted)" }}>
+            {texts.none}
+          </span>
+        )}
+        <button
+          onClick={() => {
+            setValue(phone ?? "");
+            setError("");
+            setEditing(true);
+          }}
+          className="text-xs font-bold px-2 py-1 rounded-lg"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <IconLabel name={phone ? "pencil" : "plus"}>{phone ? texts.edit : texts.add}</IconLabel>
+        </button>
       </div>
     );
   }
