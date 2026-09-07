@@ -3,6 +3,7 @@ export const seriesResult = {
   none: (units: string) => `لم تُسجَّل ${units} بعد`,
   unitNumber: (word: string, order: number) => `${word} ${order}`,
   abandoned: "متوقفة",
+  endedBy: (name: string) => `أنهتها ${name}`,
   won: "فوز",
   drawn: "تعادل",
   wonBy: (name: string) => `فوز ${name}`,

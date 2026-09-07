@@ -19,17 +19,34 @@ export interface UnitRow {
   sideBLostCredit: boolean;
 }
 
+export interface AdjustmentRule {
+  id: string;
+  name: string;
+  unitsToSelf: number;
+  unitsFromOther: number;
+  levelId: string | null;
+  endsUnit: boolean;
+}
+
 export interface AdjustmentRow {
   id: string;
   unitId: string;
   side: "SIDE_A" | "SIDE_B";
-  rule: { id: string; name: string; unitsToSelf: number; unitsFromOther: number };
+  rule: AdjustmentRule;
+}
+
+export interface Placement {
+  move: AdjustmentRow;
+  container: string | null;
+  order: number;
+  ended: string | null;
 }
 
 export interface ResolvedUnit {
   row: UnitRow;
   depth: number;
   decider: boolean;
+  endedBy: AdjustmentRule | null;
   children: ResolvedUnit[];
   standing: SeriesStanding | null;
   played: PlayedUnit;
@@ -63,7 +80,7 @@ export function rulesAt(ladder: Ladder, depth: number): SeriesRules {
   };
 }
 
-function typedPlay(row: UnitRow): PlayedUnit {
+function typedPlay(row: UnitRow, endedByRule: boolean): PlayedUnit {
   return {
     order: row.order,
     abandoned: row.abandoned,
@@ -73,10 +90,16 @@ function typedPlay(row: UnitRow): PlayedUnit {
     worth: row.worth,
     sideALostCredit: row.sideALostCredit,
     sideBLostCredit: row.sideBLostCredit,
+    endedByRule,
   };
 }
 
-function computedPlay(row: UnitRow, standing: SeriesStanding, worth: number | null): PlayedUnit {
+function computedPlay(
+  row: UnitRow,
+  standing: SeriesStanding,
+  worth: number | null,
+  endedByRule: boolean,
+): PlayedUnit {
   const decided = standing.over;
   return {
     order: row.order,
@@ -87,6 +110,7 @@ function computedPlay(row: UnitRow, standing: SeriesStanding, worth: number | nu
     worth,
     sideALostCredit: standing.sideALostCredit,
     sideBLostCredit: standing.sideBLostCredit,
+    endedByRule,
   };
 }
 
@@ -105,9 +129,10 @@ function lostCreditOf(standing: SeriesStanding, side: "SIDE_A" | "SIDE_B"): bool
 export function computedWorth(
   ladder: Ladder,
   depth: number,
+  container: string | null,
   children: ResolvedUnit[],
   standing: SeriesStanding,
-  adjustments: AdjustmentRow[],
+  placements: Placement[],
   decider = false,
 ): number {
   const own = ladder[depth];
@@ -119,8 +144,9 @@ export function computedWorth(
     const before = standingUnder(
       ladder,
       depth,
+      container,
       children.slice(0, standing.unitsRecorded - 1),
-      adjustments,
+      placements,
       decider,
     );
     if (totalOf(before, other(standing.winner)) === 0) return own.doubledWorth;
@@ -139,11 +165,26 @@ function byParent(rows: UnitRow[]): Map<string | null, UnitRow[]> {
   return groups;
 }
 
-function movesIn(units: ResolvedUnit[], adjustments: AdjustmentRow[]): RecordedInstance[] {
-  const orderOf = new Map(units.map((unit) => [unit.row.id, unit.row.order]));
-  return adjustments
-    .filter((move) => orderOf.has(move.unitId))
-    .map((move) => ({ order: orderOf.get(move.unitId)!, side: move.side, rule: move.rule }));
+export function placeMoves(rows: UnitRow[], adjustments: AdjustmentRow[]): Placement[] {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const placed: Placement[] = [];
+  for (const move of adjustments) {
+    const on = byId.get(move.unitId);
+    if (!on) continue;
+    const parent = on.parentId === null ? null : byId.get(on.parentId);
+    if (!move.rule.endsUnit || !parent) {
+      placed.push({ move, container: on.parentId, order: on.order, ended: null });
+      continue;
+    }
+    placed.push({ move, container: parent.parentId, order: parent.order, ended: parent.id });
+  }
+  return placed;
+}
+
+function movesIn(container: string | null, placements: Placement[]): RecordedInstance[] {
+  return placements
+    .filter((placed) => placed.container === container)
+    .map((placed) => ({ order: placed.order, side: placed.move.side, rule: placed.move.rule }));
 }
 
 export function decidesItsParent(
@@ -161,43 +202,69 @@ export function resolveMatch(
 ): ResolvedMatch {
   const ladder = ladderOf(levels);
   const groups = byParent(rows);
+  const placements = placeMoves(rows, adjustments);
+  const endings = new Map(
+    placements.filter((placed) => placed.ended).map((placed) => [placed.ended!, placed.move.rule]),
+  );
 
   const resolve = (row: UnitRow, depth: number, decider: boolean): ResolvedUnit => {
-    const children = resolveSiblings(groups.get(row.id) ?? [], depth + 1);
+    const endedBy = endings.get(row.id) ?? null;
+    const children = resolveSiblings(row.id, groups.get(row.id) ?? [], depth + 1);
     if (children.length === 0) {
-      return { row, depth, decider, children, standing: null, played: typedPlay(row) };
+      return {
+        row,
+        depth,
+        decider,
+        endedBy,
+        children,
+        standing: null,
+        played: typedPlay(row, endedBy !== null),
+      };
     }
-    const standing = standingUnder(ladder, depth, children, adjustments, decider);
-    const worth = computedWorth(ladder, depth, children, standing, adjustments, decider);
-    return { row, depth, decider, children, standing, played: computedPlay(row, standing, worth) };
+    const standing = standingUnder(ladder, depth, row.id, children, placements, decider);
+    const worth = computedWorth(ladder, depth, row.id, children, standing, placements, decider);
+    return {
+      row,
+      depth,
+      decider,
+      endedBy,
+      children,
+      standing,
+      played: computedPlay(row, standing, worth, endedBy !== null),
+    };
   };
 
-  const resolveSiblings = (rows: UnitRow[], depth: number): ResolvedUnit[] => {
+  const resolveSiblings = (
+    container: string | null,
+    rows: UnitRow[],
+    depth: number,
+  ): ResolvedUnit[] => {
     const done: ResolvedUnit[] = [];
     for (const row of rows) {
-      const before = standingUnder(ladder, depth - 1, done, adjustments);
+      const before = standingUnder(ladder, depth - 1, container, done, placements);
       const decider = decidesItsParent(rulesAt(ladder, depth - 1), done.length, before);
       done.push(resolve(row, depth, decider));
     }
     return done;
   };
 
-  const units = resolveSiblings(groups.get(null) ?? [], 1);
-  return { units, standing: standingUnder(ladder, 0, units, adjustments) };
+  const units = resolveSiblings(null, groups.get(null) ?? [], 1);
+  return { units, standing: standingUnder(ladder, 0, null, units, placements) };
 }
 
 function standingUnder(
   ladder: Ladder,
   depth: number,
+  container: string | null,
   children: ResolvedUnit[],
-  adjustments: AdjustmentRow[],
+  placements: Placement[],
   decider = false,
 ): SeriesStanding {
   const rules = rulesAt(ladder, depth);
   return deriveSeries(
     rules,
     children.map((child) => child.played),
-    asAdjustments(movesIn(children, adjustments), rules.halvesPerUnit),
+    asAdjustments(movesIn(container, placements), rules.halvesPerUnit),
     decider,
   );
 }
@@ -226,12 +293,14 @@ export interface UnitNode {
   worth: number | null;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
+  decider: boolean;
+  endedBy: AdjustmentRule | null;
   children: UnitNode[];
   standing: SeriesStanding | null;
 }
 
 export function toNodes(units: ResolvedUnit[]): UnitNode[] {
-  return units.map(({ row, children, standing, played }) => ({
+  return units.map(({ row, children, standing, played, endedBy, decider }) => ({
     id: row.id,
     levelId: row.levelId,
     order: row.order,
@@ -240,9 +309,11 @@ export function toNodes(units: ResolvedUnit[]): UnitNode[] {
     sideAPoints: row.sideAPoints,
     sideBPoints: row.sideBPoints,
     sideAColour: row.sideAColour,
+    decider,
     worth: played.worth ?? null,
     sideALostCredit: played.sideALostCredit ?? false,
     sideBLostCredit: played.sideBLostCredit ?? false,
+    endedBy,
     children: toNodes(children),
     standing,
   }));

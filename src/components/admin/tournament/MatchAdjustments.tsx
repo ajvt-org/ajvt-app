@@ -4,6 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { countedUnits, type LevelRow } from "@/lib/matchLevels";
+import { offerableRules } from "@/lib/adjustmentRules";
 import { seriesResult as texts } from "@/lib/texts";
 import type { AdjustmentRuleRow, RecordedAdjustmentRow, UnitRow } from "./seriesTypes";
 
@@ -40,7 +41,12 @@ export default function MatchAdjustments({
   const [side, setSide] = useState<"" | "SIDE_A" | "SIDE_B">("");
   const [unitId, setUnitId] = useState("");
 
-  if (rules.length === 0 && recorded.length === 0) return null;
+  const offerable = offerableRules(
+    rules,
+    units.map((row) => row.levelId),
+  );
+
+  if (offerable.length === 0 && recorded.length === 0) return null;
 
   const orderOf = new Map(units.map((row) => [row.id, row.order]));
 
@@ -81,7 +87,7 @@ export default function MatchAdjustments({
         </div>
       )}
 
-      {open && rules.length > 0 && units.length > 0 && (
+      {open && offerable.length > 0 && units.length > 0 && (
         <div className="space-y-2">
           <select
             aria-label={texts.recordMove}
@@ -91,7 +97,7 @@ export default function MatchAdjustments({
             className="input input-sm"
           >
             <option value="">{texts.pickMove}</option>
-            {rules.map((rule) => (
+            {offerable.map((rule) => (
               <option key={rule.id} value={rule.id}>
                 {effectOf(rule, unit)}
               </option>

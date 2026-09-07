@@ -16,6 +16,8 @@ function part(id: string, order: number, extra: Partial<UnitRow> = {}): UnitRow 
     worth: null,
     sideALostCredit: false,
     sideBLostCredit: false,
+    decider: false,
+    endedBy: null,
     children: [],
     standing: null,
     ...extra,

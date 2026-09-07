@@ -231,3 +231,56 @@ describe("what a match records", () => {
     expect(body.adjustments[0].side).toBe("SIDE_A");
   });
 });
+
+describe("a move that names its own level", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  async function levelsOf(activityId: string) {
+    return prisma.matchLevel.findMany({ where: { activityId }, orderBy: { order: "asc" } });
+  }
+
+  it("is refused on a unit at another level", async () => {
+    const { activity, match } = await tournamentWithMatch();
+    const levels = await levelsOf(activity.id);
+    const rule = await (
+      await declare(activity.id, { ...TEYSSE, levelId: levels[0].id, endsUnit: true })
+    ).json();
+    const answer = await (await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 })).json();
+
+    const res = await record(match.id, {
+      ruleId: rule.rule.id,
+      side: "SIDE_A",
+      unitId: answer.unit.id,
+    });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.moveWantsItsOwnLevel);
+  });
+
+  it("is taken on a unit at the level it names", async () => {
+    const { activity, match } = await tournamentWithMatch();
+    const levels = await levelsOf(activity.id);
+    const rule = await (await declare(activity.id, { ...TEYSSE, levelId: levels[1].id })).json();
+    const answer = await (await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 })).json();
+
+    const res = await record(match.id, {
+      ruleId: rule.rule.id,
+      side: "SIDE_A",
+      unitId: answer.unit.id,
+    });
+
+    expect(res.status).toBe(201);
+  });
+
+  it("is refused for a level the tournament does not have", async () => {
+    const { activity } = await tournamentWithMatch();
+
+    const res = await declare(activity.id, { ...TEYSSE, levelId: "nope" });
+
+    expect(res.status).toBe(404);
+    expect((await res.json()).error).toBe(messages.levelNotInTournament);
+  });
+});

@@ -28,6 +28,8 @@ const UNITS: UnitRow[] = [
     worth: null,
     sideALostCredit: false,
     sideBLostCredit: false,
+    decider: false,
+    endedBy: null,
     children: [],
     standing: null,
   },

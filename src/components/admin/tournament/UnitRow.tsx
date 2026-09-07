@@ -7,6 +7,7 @@ import type { SeriesConfig } from "./seriesConfig";
 import type { UnitRow as Unit } from "./seriesTypes";
 
 export function scoreText(unit: Unit, sides: string[]): string {
+  if (unit.endedBy) return texts.endedBy(unit.endedBy.name);
   if (unit.abandoned) return texts.abandoned;
   if (unit.standing) {
     if (unit.standing.winner === "SIDE_A") return texts.wonBy(sides[0]);

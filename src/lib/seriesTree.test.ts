@@ -175,7 +175,14 @@ describe("a unit with something under it", () => {
 });
 
 describe("a move recorded in a unit", () => {
-  const rule = { id: "r", name: "تيس", unitsToSelf: 1, unitsFromOther: 1 };
+  const rule = {
+    id: "r",
+    name: "تيس",
+    unitsToSelf: 1,
+    unitsFromOther: 1,
+    levelId: null,
+    endsUnit: false,
+  };
 
   it("swings the level above the unit it sits in, before that unit is scored", () => {
     const rows = [unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 12, sideBPoints: 4 })];
@@ -460,5 +467,68 @@ describe("the deciding unit of a level", () => {
 
     expect(units[2].standing?.target).toBe(2);
     expect(units[2].standing?.over).toBe(true);
+  });
+});
+
+describe("a rule that ends the unit it lands in", () => {
+  const teysse = {
+    id: "teysse",
+    name: "تيس",
+    unitsToSelf: 2,
+    unitsFromOther: 2,
+    levelId: "round",
+    endsUnit: true,
+  };
+
+  const rows = [
+    unit({ id: "s1", levelId: "set", order: 1 }),
+    unit({ id: "p1", levelId: "point", parentId: "s1", order: 1 }),
+    unit({
+      id: "r1",
+      levelId: "round",
+      parentId: "p1",
+      order: 1,
+      sideAPoints: 60,
+      sideBPoints: 10,
+    }),
+    unit({ id: "r2", levelId: "round", parentId: "p1", order: 2, sideAPoints: 30, sideBPoints: 5 }),
+    unit({
+      id: "p2",
+      levelId: "point",
+      parentId: "s1",
+      order: 2,
+      sideAPoints: 101,
+      sideBPoints: 4,
+    }),
+  ];
+  const moves: AdjustmentRow[] = [{ id: "a1", unitId: "r2", side: "SIDE_B", rule: teysse }];
+
+  it("ends the unit the round it landed in belongs to", () => {
+    const { units } = resolveMatch(CARDS, rows, moves);
+
+    expect(units[0].children[0].endedBy?.name).toBe("تيس");
+  });
+
+  it("discards the ended unit rather than scoring it", () => {
+    const { units } = resolveMatch(CARDS, rows, moves);
+
+    expect(units[0].children[0].played.endedByRule).toBe(true);
+    expect(units[0].standing?.unitsScored).toBe(1);
+  });
+
+  it("moves the score of the level above the one that ended", () => {
+    const { units } = resolveMatch(CARDS, rows, moves);
+
+    expect(units[0].standing?.sideBTotal).toBe(2);
+    expect(units[0].standing?.sideATotal).toBe(-1);
+  });
+
+  it("leaves the point scoring where the rule does not end a unit", () => {
+    const { units } = resolveMatch(CARDS, rows, [
+      { ...moves[0], rule: { ...teysse, endsUnit: false } },
+    ]);
+
+    expect(units[0].children[0].endedBy).toBeNull();
+    expect(units[0].children[0].played.endedByRule).toBe(false);
   });
 });
