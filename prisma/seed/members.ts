@@ -77,6 +77,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     const paid = [500, 1000, 1500, 2000, 3000][i % 5];
 
     const joined = daysAgo(Math.max(1, 130 - i));
+    const reviewedOn = daysAgo(1);
 
     const snapshot = {
       status,
@@ -89,20 +90,19 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     if (isActive) {
       await prisma.membership.updateMany({
         where: { userId: owner, year: membershipYear },
-        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(1) },
+        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: reviewedOn },
       });
     }
 
-    // A few members carry last year as well, so the years panel has a history
-    // to show rather than a single row.
     if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
+      const reviewedLastYear = daysAgo(370);
       await saveMembershipYear(prisma, owner, current - 1, {
         ...snapshot,
         referenceCode: null,
       });
       await prisma.membership.updateMany({
         where: { userId: owner, year: current - 1 },
-        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(370) },
+        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: reviewedLastYear },
       });
       await mirrorMembershipPayment(prisma, {
         userId: owner,
@@ -113,7 +113,10 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         accountId: null,
         bankReference: null,
         proof,
+        referenceCode: null,
         status,
+        reviewedBy: "admin",
+        reviewedAt: reviewedLastYear,
         anonymous: false,
         donorName: fullName(i),
         recordedBy: "admin",
@@ -129,7 +132,10 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       accountId: null,
       bankReference: null,
       proof,
+      referenceCode: referenceCode(i),
       status,
+      reviewedBy: isActive ? "admin" : null,
+      reviewedAt: isActive ? reviewedOn : null,
       anonymous: false,
       donorName: fullName(i),
     });

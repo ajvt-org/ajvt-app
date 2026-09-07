@@ -4,7 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { issueMembership } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
-import { mirrorMembershipStatus } from "@/lib/paymentMirror";
+import { mirrorMembershipStatus, type MembershipVerdict } from "@/lib/paymentMirror";
 import { recordMembershipYear, setMembershipStatus } from "@/lib/membershipRecord";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { getAppSettings } from "@/lib/settingsServer";
@@ -42,17 +42,13 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   const updated = await prisma.$transaction(async (tx) => {
     if (!account || !existing) throw new ValidationError(members.notFound);
     const issued = needsNumber ? await issueMembership(tx) : undefined;
-    await setMembershipStatus(
-      tx,
-      id,
-      existing.year,
-      {
-        status: action,
-        rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
-        reviewedBy: session.username,
-      },
-      new Date(),
-    );
+    const verdict: MembershipVerdict = {
+      status: action,
+      rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
+      reviewedBy: session.username,
+    };
+    const now = new Date();
+    await setMembershipStatus(tx, id, existing.year, verdict, now);
     if (issued) await tx.user.update({ where: { id }, data: issued });
     if (action === "ACTIVE") {
       await recordMembershipYear(tx, id, existing.year, membershipFee, {
@@ -61,7 +57,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
         recordedBy: session.username,
       });
     }
-    await mirrorMembershipStatus(tx, id, existing.year, action);
+    await mirrorMembershipStatus(tx, id, existing.year, verdict, now);
     return { userId: id };
   });
 

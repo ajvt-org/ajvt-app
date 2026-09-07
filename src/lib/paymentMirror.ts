@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
 import {
   ensureReceiptsFor,
   syncReceiptsFor,
@@ -11,6 +11,12 @@ export function isPaidAmount(amount: number | null): amount is number {
   return amount !== null && amount > 0;
 }
 
+export interface MembershipVerdict {
+  status: ReviewStatus;
+  rejectionReason?: string | null;
+  reviewedBy?: string | null;
+}
+
 export interface MembershipMirror {
   userId: string;
   year: number;
@@ -20,7 +26,10 @@ export interface MembershipMirror {
   accountId: string | null;
   bankReference: string | null;
   proof: string | null;
+  referenceCode: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
+  reviewedBy: string | null;
+  reviewedAt: Date | null;
   anonymous: boolean;
   donorName: string | null;
   recordedBy?: string | null;
@@ -47,7 +56,10 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
     accountId: m.accountId,
     bankReference: m.bankReference,
     proof: m.proof,
+    referenceCode: m.referenceCode,
     status: m.status,
+    reviewedBy: m.reviewedBy,
+    reviewedAt: m.reviewedAt,
   };
 
   if (existing) {
@@ -73,11 +85,15 @@ export async function mirrorMembershipStatus(
   db: Db,
   userId: string,
   year: number,
-  status: "PENDING" | "ACTIVE" | "REJECTED",
+  verdict: MembershipVerdict,
+  now: Date,
 ) {
   await db.payment.updateMany({
     where: { userId, year, purpose: "MEMBERSHIP" },
-    data: { status },
+    data: {
+      status: verdict.status,
+      ...(verdict.reviewedBy ? { reviewedBy: verdict.reviewedBy, reviewedAt: now } : {}),
+    },
   });
   await syncReceiptsFor(db, { userId, year, purpose: "MEMBERSHIP" });
 }
