@@ -13,9 +13,10 @@ import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
 import MemberHeader from "./MemberHeader";
 import DeleteMemberCard from "./DeleteMemberCard";
-import AccountPhoneForm from "./AccountPhoneForm";
+import MemberAccountCard from "./MemberAccountCard";
 import MemberPhotoCard from "./MemberPhotoCard";
 import MembershipEndingCard from "./MembershipEndingCard";
+import MembershipPanel from "@/app/admin/dashboard/MembershipPanel";
 import MembershipSummary from "./MembershipSummary";
 import ProfileGroup from "./ProfileGroup";
 import ProfileList from "./ProfileList";
@@ -112,13 +113,16 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
       )}
 
       <ProfileGroup title={texts.groupPerson}>
-        {member.user && (
-          <ProfileSection icon="user" title={texts.account}>
-            <div className="text-sm">
-              <AccountPhoneForm memberId={member.id} phone={member.user.phone} onChanged={load} />
-            </div>
-          </ProfileSection>
-        )}
+        <ProfileSection icon="user" title={texts.account}>
+          <div className="text-sm">
+            <MemberAccountCard
+              memberId={member.id}
+              userId={member.user?.id ?? null}
+              phone={member.user?.phone ?? null}
+              onChanged={load}
+            />
+          </div>
+        </ProfileSection>
 
         <MemberPhotoCard
           memberId={member.id}
@@ -136,6 +140,8 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
           endedAt={member.endedAt}
           currentYear={currentYear}
         />
+
+        <MembershipPanel memberId={member.id} />
 
         <MembershipEndingCard
           memberId={member.id}
