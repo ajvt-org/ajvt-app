@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { counted } from "@/lib/arabicCount";
-import { countedNoun, CORRECT_ANSWERS, ANSWERS } from "@/lib/arabicPlural";
 import { POINT } from "@/lib/messages";
 import { quizQuestionList as texts } from "@/lib/texts";
 
@@ -12,10 +11,11 @@ import AdminList from "@/components/admin/AdminList";
 import type { MoveDirection } from "@/lib/quizQuestionOrder";
 import type { QuestionRow } from "./types";
 
-const CHIP = "text-xs px-3 py-1.5 rounded-lg font-bold";
-const MINT = { background: "var(--mint-100)", color: "var(--mint-700)" };
-const ARROW = "w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30";
-const ARROW_STYLE = { background: "var(--mint-50)", color: "var(--mint-700)" };
+const ACTION = "w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30";
+const MINT = { background: "var(--mint-50)", color: "var(--mint-700)" };
+const RED = { background: "#fee2e2", color: "#991b1b" };
+const MARK = "badge text-xs";
+const MARK_STYLE = { background: "var(--mint-50)", color: "var(--mint-700)" };
 
 function matches(question: QuestionRow, needle: string) {
   return (
@@ -44,74 +44,104 @@ function QuestionCard({
   onDelete: () => void;
   onMove: (direction: MoveDirection) => void;
 }) {
+  const correct = question.answers.filter((answer) => answer.isCorrect);
+
   return (
     <div className="card p-3 space-y-2" style={{ opacity: question.active ? 1 : 0.6 }}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-            {question.text}
-          </p>
-          <p
-            className="text-xs mt-0.5 flex items-center gap-1 flex-wrap"
-            style={{ color: "var(--text-muted)" }}
+      <bdi className="block font-bold text-sm" style={{ color: "var(--text-main)" }}>
+        {question.text}
+      </bdi>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className={MARK} style={MARK_STYLE}>
+          {question.category}
+        </span>
+        <span className={MARK} style={MARK_STYLE}>
+          <Icon name="star" size={11} />
+          {counted(question.points, POINT)}
+        </span>
+        <span
+          className={MARK}
+          style={MARK_STYLE}
+          title={texts.answersMark}
+          aria-label={texts.answersMark}
+        >
+          <Icon name="list" size={11} />
+          {texts.answerShape(question.correctCount, question.answers.length)}
+        </span>
+        {!question.active && (
+          <span
+            className={MARK}
+            style={{ background: "var(--mint-100)", color: "var(--text-muted)" }}
           >
-            {question.category} ·<Icon name="star" size={11} />
-            {counted(question.points, POINT)} ·{" "}
-            {countedNoun(question.correctCount, CORRECT_ANSWERS)} {texts.outOf}{" "}
-            {countedNoun(question.answers.length, ANSWERS)}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
-            {texts.play(question.sentCount, question.answeredCount, question.correctSubmissions)}
-          </p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {!question.active && (
-            <span
-              className="badge"
-              style={{ background: "var(--mint-100)", color: "var(--text-muted)" }}
-            >
-              {texts.disabled}
-            </span>
-          )}
-          <button
-            aria-label={texts.moveUp}
-            onClick={() => onMove("up")}
-            disabled={busy || !canMoveUp}
-            className={ARROW}
-            style={ARROW_STYLE}
-          >
-            <Icon name="chevronUp" size={15} />
-          </button>
-          <button
-            aria-label={texts.moveDown}
-            onClick={() => onMove("down")}
-            disabled={busy || !canMoveDown}
-            className={ARROW}
-            style={ARROW_STYLE}
-          >
-            <Icon name="chevronDown" size={15} />
-          </button>
-        </div>
+            {texts.disabled}
+          </span>
+        )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button onClick={onEdit} disabled={busy} className={CHIP} style={MINT}>
-          <IconLabel name="pencil">{texts.edit}</IconLabel>
-        </button>
-        <button onClick={onToggle} disabled={busy} className={CHIP} style={MINT}>
-          {question.active ? (
-            <IconLabel name="ban">{texts.disable}</IconLabel>
-          ) : (
-            <IconLabel name="check">{texts.enable}</IconLabel>
-          )}
+      {correct.length > 0 ? (
+        <p className="flex items-center gap-1.5 text-xs" style={{ color: "var(--mint-700)" }}>
+          <Icon name="check" size={12} className="shrink-0" />
+          <bdi className="min-w-0 truncate">{correct.map((answer) => answer.text).join(" · ")}</bdi>
+        </p>
+      ) : (
+        <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
+          {texts.noCorrect}
+        </p>
+      )}
+
+      {question.sentCount > 0 && (
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {texts.play(question.sentCount, question.answeredCount, question.correctSubmissions)}
+        </p>
+      )}
+
+      <div className="flex items-center gap-1">
+        <button
+          aria-label={texts.moveUp}
+          onClick={() => onMove("up")}
+          disabled={busy || !canMoveUp}
+          className={ACTION}
+          style={MINT}
+        >
+          <Icon name="chevronUp" size={15} />
         </button>
         <button
+          aria-label={texts.moveDown}
+          onClick={() => onMove("down")}
+          disabled={busy || !canMoveDown}
+          className={ACTION}
+          style={MINT}
+        >
+          <Icon name="chevronDown" size={15} />
+        </button>
+
+        <button
+          aria-label={texts.edit}
+          onClick={onEdit}
+          disabled={busy}
+          className={`${ACTION} ms-auto`}
+          style={MINT}
+        >
+          <Icon name="pencil" size={15} />
+        </button>
+        <button
+          aria-label={question.active ? texts.disable : texts.enable}
+          onClick={onToggle}
+          disabled={busy}
+          className={ACTION}
+          style={MINT}
+        >
+          <Icon name={question.active ? "ban" : "check"} size={15} />
+        </button>
+        <button
+          aria-label={texts.remove}
           onClick={onDelete}
           disabled={busy}
-          className={CHIP}
-          style={{ background: "#fee2e2", color: "#991b1b" }}
+          className={ACTION}
+          style={RED}
         >
-          {busy ? "..." : <IconLabel name="trash">{texts.remove}</IconLabel>}
+          <Icon name="trash" size={15} />
         </button>
       </div>
     </div>
