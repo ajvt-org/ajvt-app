@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { push } from "@/lib/messages";
+import { notificationsToggle } from "@/lib/texts/notifications";
 
 vi.mock("@/lib/api", () => ({
   api: { get: vi.fn(async () => ({ categories: [] })), put: vi.fn() },
@@ -23,10 +24,10 @@ function browser({ vapid, permission }: { vapid: boolean; permission?: string })
   });
 }
 
-async function renderToggle() {
+async function renderToggle(awaitingDecision = false) {
   vi.resetModules();
   const { default: NotificationsToggle } = await import("./NotificationsToggle");
-  return render(<NotificationsToggle />);
+  return render(<NotificationsToggle awaitingDecision={awaitingDecision} />);
 }
 
 afterEach(() => {
@@ -70,5 +71,31 @@ describe("the notifications row", () => {
     const master = await screen.findByRole("switch");
     expect(master.hasAttribute("disabled")).toBe(true);
     expect(screen.queryByText(push.categoriesHeading)).toBeNull();
+  });
+
+  it("carries nothing under the label while the switch is off", async () => {
+    browser({ vapid: true });
+
+    const { container } = await renderToggle();
+
+    await screen.findByRole("switch");
+    expect(container.querySelectorAll("p")).toHaveLength(1);
+    expect(screen.getByText(notificationsToggle.label)).not.toBeNull();
+  });
+
+  it("sends a blocked reader to the browser settings", async () => {
+    browser({ vapid: true, permission: "denied" });
+
+    await renderToggle();
+
+    expect(await screen.findByText(notificationsToggle.blocked)).not.toBeNull();
+  });
+
+  it("says what the switch does for somebody waiting on a decision", async () => {
+    browser({ vapid: true });
+
+    await renderToggle(true);
+
+    expect(await screen.findByText(notificationsToggle.awaitingDecision)).not.toBeNull();
   });
 });
