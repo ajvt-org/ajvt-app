@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Icon from "@/components/Icon";
+import ActivityRowBody from "@/components/ActivityRowBody";
 import AdminBackLink from "@/components/admin/AdminBackLink";
 import PageLoading from "@/components/PageLoading";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import { arrangedGroups, moveWithinStage } from "@/lib/activityArrange";
+import { formatActivityDates } from "@/lib/activityDates";
 import { activityRow as texts } from "@/lib/texts";
+import { CategoryChip } from "../ActivityChips";
 import { useActivitiesData } from "../useActivitiesData";
 import type { Activity } from "../activityTypes";
 
@@ -25,28 +28,36 @@ function Row({
   onMove: (direction: -1 | 1) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "white" }}>
-      <span className="min-w-0 flex-1 text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        {activity.title}
+    <div className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: "white" }}>
+      <ActivityRowBody
+        title={activity.title}
+        photo={activity.photo}
+        isVolunteer={activity.isVolunteer}
+        when={formatActivityDates(activity)}
+        chips={
+          <CategoryChip isTournament={activity.isTournament} isVolunteer={activity.isVolunteer} />
+        }
+      />
+      <span className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={() => onMove(-1)}
+          disabled={first || busy}
+          aria-label={texts.moveUp(activity.title)}
+          className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
+          style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
+        >
+          <Icon name="chevronUp" size={15} />
+        </button>
+        <button
+          onClick={() => onMove(1)}
+          disabled={last || busy}
+          aria-label={texts.moveDown(activity.title)}
+          className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
+          style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
+        >
+          <Icon name="chevronDown" size={15} />
+        </button>
       </span>
-      <button
-        onClick={() => onMove(-1)}
-        disabled={first || busy}
-        aria-label={texts.moveUp(activity.title)}
-        className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
-        style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
-      >
-        <Icon name="chevronUp" size={15} />
-      </button>
-      <button
-        onClick={() => onMove(1)}
-        disabled={last || busy}
-        aria-label={texts.moveDown(activity.title)}
-        className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
-        style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
-      >
-        <Icon name="chevronDown" size={15} />
-      </button>
     </div>
   );
 }
@@ -82,14 +93,9 @@ export default function ActivityOrderPage() {
     <div className="admin-page space-y-3">
       <AdminBackLink href="/admin/activities">{texts.arrangeBack}</AdminBackLink>
 
-      <div className="card p-4 space-y-1">
-        <p className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          {texts.arrangeTitle}
-        </p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.arrangeNote}
-        </p>
-      </div>
+      <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
+        {texts.arrangeNote}
+      </p>
 
       {groups.length === 0 ? (
         <p className="card p-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
