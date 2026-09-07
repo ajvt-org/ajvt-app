@@ -112,9 +112,18 @@ export interface UnitInput {
   sideBPoints?: unknown;
   sideALostCredit?: unknown;
   sideBLostCredit?: unknown;
+  worth?: unknown;
 }
 
 const OUTCOMES = new Set(["SIDE_A", "SIDE_B", "DRAW"]);
+
+function readWorth(given: unknown): number | null {
+  if (given === undefined || given === null) return null;
+  if (!Number.isInteger(given) || (given as number) < 1) {
+    throw new ValidationError(messages.unitWorthInvalid);
+  }
+  return given as number;
+}
 
 export function readUnit(
   input: UnitInput,
@@ -126,10 +135,12 @@ export function readUnit(
   sideBPoints: number | null;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
+  worth: number | null;
 } {
   const credit = {
     sideALostCredit: input.sideALostCredit === true,
     sideBLostCredit: input.sideBLostCredit === true,
+    worth: readWorth(input.worth),
   };
   if (input.abandoned === true) {
     return { abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null, ...credit };

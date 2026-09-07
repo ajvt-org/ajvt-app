@@ -75,7 +75,7 @@ function typedPlay(row: UnitRow): PlayedUnit {
   };
 }
 
-function computedPlay(row: UnitRow, standing: SeriesStanding): PlayedUnit {
+function computedPlay(row: UnitRow, standing: SeriesStanding, worth: number | null): PlayedUnit {
   const decided = standing.over;
   return {
     order: row.order,
@@ -83,10 +83,46 @@ function computedPlay(row: UnitRow, standing: SeriesStanding): PlayedUnit {
     outcome: standing.winner ?? (decided ? "DRAW" : null),
     sideAPoints: standing.sideATotal,
     sideBPoints: standing.sideBTotal,
-    worth: row.worth,
+    worth,
     sideALostCredit: standing.sideALostCredit,
     sideBLostCredit: standing.sideBLostCredit,
   };
+}
+
+function other(side: "SIDE_A" | "SIDE_B"): "SIDE_A" | "SIDE_B" {
+  return side === "SIDE_A" ? "SIDE_B" : "SIDE_A";
+}
+
+function totalOf(standing: SeriesStanding, side: "SIDE_A" | "SIDE_B"): number {
+  return side === "SIDE_A" ? standing.sideATotal : standing.sideBTotal;
+}
+
+function lostCreditOf(standing: SeriesStanding, side: "SIDE_A" | "SIDE_B"): boolean {
+  return side === "SIDE_A" ? standing.sideALostCredit : standing.sideBLostCredit;
+}
+
+export function computedWorth(
+  ladder: Ladder,
+  depth: number,
+  children: ResolvedUnit[],
+  standing: SeriesStanding,
+  adjustments: AdjustmentRow[],
+): number {
+  const own = ladder[depth];
+  if (!own || standing.winner === null) return own?.wonUnitWorth ?? 1;
+  if (own.doublesOnRecoveredCredit && lostCreditOf(standing, standing.winner)) {
+    return own.doubledWorth;
+  }
+  if (own.doublesOnBlankOpponent && standing.unitsRecorded > 0) {
+    const before = standingUnder(
+      ladder,
+      depth,
+      children.slice(0, standing.unitsRecorded - 1),
+      adjustments,
+    );
+    if (totalOf(before, other(standing.winner)) === 0) return own.doubledWorth;
+  }
+  return own.wonUnitWorth;
 }
 
 function byParent(rows: UnitRow[]): Map<string | null, UnitRow[]> {
@@ -121,7 +157,8 @@ export function resolveMatch(
       return { row, depth, children, standing: null, played: typedPlay(row) };
     }
     const standing = standingUnder(ladder, depth, children, adjustments);
-    return { row, depth, children, standing, played: computedPlay(row, standing) };
+    const worth = computedWorth(ladder, depth, children, standing, adjustments);
+    return { row, depth, children, standing, played: computedPlay(row, standing, worth) };
   };
 
   const units = (groups.get(null) ?? []).map((row) => resolve(row, 1));
@@ -171,7 +208,7 @@ export interface UnitNode {
 }
 
 export function toNodes(units: ResolvedUnit[]): UnitNode[] {
-  return units.map(({ row, children, standing }) => ({
+  return units.map(({ row, children, standing, played }) => ({
     id: row.id,
     levelId: row.levelId,
     order: row.order,
@@ -180,9 +217,9 @@ export function toNodes(units: ResolvedUnit[]): UnitNode[] {
     sideAPoints: row.sideAPoints,
     sideBPoints: row.sideBPoints,
     sideAColour: row.sideAColour,
-    worth: row.worth,
-    sideALostCredit: row.sideALostCredit,
-    sideBLostCredit: row.sideBLostCredit,
+    worth: played.worth ?? null,
+    sideALostCredit: played.sideALostCredit ?? false,
+    sideBLostCredit: played.sideBLostCredit ?? false,
     children: toNodes(children),
     standing,
   }));

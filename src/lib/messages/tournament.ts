@@ -76,6 +76,7 @@ export const tournament = {
   partsFootballOnly: "الجولات لا تكون إلا في بطولة تُحتسب مبارياتها بجولاتها",
   levelNotInTournament: "هذا المستوى ليس من مستويات هذه البطولة",
   unitLevelMissing: "لا مستوى تحت هذه الوحدة، فلا شيء يُسجَّل داخلها",
+  unitWorthInvalid: "قيمة الوحدة يجب أن تكون رقماً صحيحاً موجباً",
   unitTakesItsScoreFromBelow: "هذه الوحدة تأخذ نتيجتها مما تحتها، فلا تقبل نتيجة مكتوبة",
   levelsFootballOnly: "المستويات لا تكون إلا في بطولة تُحتسب مبارياتها بجولاتها",
   levelsLocked: "لا يمكن تغيير مستويات البطولة بعد أن لُعبت مباراة",
