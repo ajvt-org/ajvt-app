@@ -88,6 +88,9 @@ model Membership {
   recordedBy      String?
   reviewedBy      String?
   reviewedAt      DateTime?
+  endedAt         DateTime?
+  endedReason     String?
+  endedBy         String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
