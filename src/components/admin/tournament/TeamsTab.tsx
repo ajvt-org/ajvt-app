@@ -11,6 +11,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import ErrorNotice from "@/components/form/ErrorNotice";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
 import { matchingMembers, matchingPeople, matchingTeams } from "./teamSearch";
@@ -38,6 +39,7 @@ export default function TeamsTab({
   const [newTeamLogo, setNewTeamLogo] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
+  const [asking, setAsking] = useState<string | null>(null);
 
   const unassigned = roster.filter((m) => !m.team);
   const squadText = squadIsBarred(settings.squad) ? null : squadLabel(settings.squad);
@@ -115,7 +117,7 @@ export default function TeamsTab({
   }
 
   function deleteTeam(teamId: string) {
-    if (!confirm(teamsTab.confirmDelete)) return;
+    setAsking(null);
     run(() => api.del(`/api/admin/teams/${teamId}`));
   }
 
@@ -188,7 +190,7 @@ export default function TeamsTab({
           busy={loadingAction}
           onToggle={(summary) => toggle(team.id, summary)}
           onRenameTeam={(name) => renameTeam(team.id, name)}
-          onDeleteTeam={() => deleteTeam(team.id)}
+          onDeleteTeam={() => setAsking(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
           onSetFromHomeVillage={(value) => setFromHomeVillage(team.id, value)}
           onSetCaptain={(memberId) => setCaptain(team.id, memberId)}
@@ -241,6 +243,17 @@ export default function TeamsTab({
             ))}
           </div>
         </div>
+      )}
+      {asking && (
+        <ConfirmDialog
+          title={teamsTab.confirmDeleteTitle}
+          message={teamsTab.confirmDelete}
+          confirmLabel={teamsTab.deleteTeam}
+          danger
+          loading={loadingAction}
+          onConfirm={() => deleteTeam(asking)}
+          onClose={() => setAsking(null)}
+        />
       )}
     </div>
   );

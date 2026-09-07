@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import Icon from "@/components/Icon";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { TeamMemberEntry } from "./types";
@@ -44,16 +46,22 @@ export default function RosterRow({
   const { member, status } = entry;
   const pending = status === "PENDING";
   const from = useAdminOrigin();
+  const [asking, setAsking] = useState(false);
   const captainAction = captain
     ? teamsTab.clearCaptain(member.fullName)
     : teamsTab.makeCaptain(member.fullName);
 
-  function confirmThenRemove() {
-    const question = pending
-      ? teamsTab.confirmReject(member.fullName)
-      : teamsTab.confirmRemove(member.fullName);
-    if (confirm(question)) onRemove();
-  }
+  const question = pending
+    ? {
+        title: teamsTab.confirmRejectTitle,
+        message: teamsTab.confirmReject(member.fullName),
+        confirmLabel: teamsTab.reject,
+      }
+    : {
+        title: teamsTab.confirmRemoveTitle,
+        message: teamsTab.confirmRemove(member.fullName),
+        confirmLabel: teamsTab.remove,
+      };
 
   return (
     <div
@@ -119,7 +127,7 @@ export default function RosterRow({
           <Icon name="captain" size={18} />
         </button>
         <button
-          onClick={confirmThenRemove}
+          onClick={() => setAsking(true)}
           disabled={busy}
           aria-label={
             pending ? teamsTab.rejectOf(member.fullName) : teamsTab.removeOf(member.fullName)
@@ -130,6 +138,21 @@ export default function RosterRow({
           <Icon name="close" size={18} />
         </button>
       </div>
+
+      {asking && (
+        <ConfirmDialog
+          title={question.title}
+          message={question.message}
+          confirmLabel={question.confirmLabel}
+          danger
+          loading={busy}
+          onConfirm={() => {
+            setAsking(false);
+            onRemove();
+          }}
+          onClose={() => setAsking(false)}
+        />
+      )}
     </div>
   );
 }

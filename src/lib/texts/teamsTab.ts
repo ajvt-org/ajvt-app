@@ -5,6 +5,7 @@ const REJECT = "رفض";
 const REMOVE = "إزالة";
 
 export const teamsTab = {
+  confirmDeleteTitle: "حذف فريق",
   confirmDelete: "هل تريد حذف هذا الفريق؟",
   teamCount: (count: number) => `عدد الفرق: ${count}`,
   teamCountShown: (shown: number, total: number) => `عدد الفرق: ${shown} من ${total}`,
@@ -38,7 +39,11 @@ export const teamsTab = {
   acceptOf: (name: string) => `${ACCEPT} ${name}`,
   rejectOf: (name: string) => `${REJECT} ${name}`,
   removeOf: (name: string) => `${REMOVE} ${name}`,
+  confirmRemoveTitle: "إزالة لاعب",
   confirmRemove: (name: string) => `إزالة ${name} من الفريق؟`,
+  remove: REMOVE,
+  reject: REJECT,
+  confirmRejectTitle: "رفض طلب انضمام",
   confirmReject: (name: string) => `رفض طلب ${name} للانضمام؟`,
   openCardOf: (name: string) => `فتح بطاقة ${name}`,
   pickPlayer: "اختر لاعباً...",

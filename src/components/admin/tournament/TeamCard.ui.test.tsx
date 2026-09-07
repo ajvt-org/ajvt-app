@@ -119,8 +119,8 @@ describe("TeamCard", () => {
     fireEvent.click(screen.getByLabelText("قبول أحمد ولد محمد"));
     expect(handlers.onApproveMember).toHaveBeenCalledWith("p1");
 
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     fireEvent.click(screen.getByLabelText("رفض أحمد ولد محمد"));
+    fireEvent.click(screen.getByText(teamsTab.reject));
     expect(handlers.onRemoveMember).toHaveBeenCalledWith("p1");
   });
 
@@ -128,8 +128,8 @@ describe("TeamCard", () => {
     show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 });
 
     expect(screen.queryByLabelText("رفض أحمد ولد محمد")).toBeNull();
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
+    fireEvent.click(screen.getByText(teamsTab.remove));
     expect(handlers.onRemoveMember).toHaveBeenCalledWith("p1");
   });
 

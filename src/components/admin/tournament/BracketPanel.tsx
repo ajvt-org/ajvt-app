@@ -10,6 +10,7 @@ import BracketSuggestion from "./BracketSuggestion";
 import { matchAdmin as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
 import type { MatchesState } from "./matchesState";
+import type { AdminQuestion } from "./askQuestion";
 
 export default function BracketPanel({
   activityId,
@@ -22,7 +23,7 @@ export default function BracketPanel({
   busy: boolean;
   entrant: EntrantKind;
   state: MatchesState;
-  onAction: (endpoint: string, confirmMsg: string, body?: object) => void;
+  onAction: (endpoint: string, question: AdminQuestion, body?: object) => void;
 }) {
   const {
     bracketMatches,
@@ -39,11 +40,27 @@ export default function BracketPanel({
     <BracketSuggestion
       activityId={activityId}
       busy={busy}
-      onValidate={(redo) => onAction("suggestion", texts.confirmSemis, { redo })}
+      onValidate={(redo) =>
+        onAction(
+          "suggestion",
+          {
+            title: texts.generateSemis,
+            message: texts.confirmSemis,
+            confirmLabel: texts.generateSemis,
+          },
+          { redo },
+        )
+      }
     />
   ) : (
     <button
-      onClick={() => onAction("draw", texts.entrant[entrant].confirmDraw)}
+      onClick={() =>
+        onAction("draw", {
+          title: texts.draw,
+          message: texts.entrant[entrant].confirmDraw,
+          confirmLabel: texts.draw,
+        })
+      }
       disabled={busy}
       className="btn btn-primary text-sm"
       style={{ width: "auto" }}
@@ -76,8 +93,26 @@ export default function BracketPanel({
         <button
           onClick={() =>
             isTwoGroupFormat
-              ? onAction("suggestion", texts.confirmRegenerateSemis, { redo: true })
-              : onAction("draw", texts.confirmRedraw, { redo: true })
+              ? onAction(
+                  "suggestion",
+                  {
+                    title: texts.regenerateSemis,
+                    message: texts.confirmRegenerateSemis,
+                    confirmLabel: texts.regenerateSemis,
+                    danger: true,
+                  },
+                  { redo: true },
+                )
+              : onAction(
+                  "draw",
+                  {
+                    title: texts.redraw,
+                    message: texts.confirmRedraw,
+                    confirmLabel: texts.redraw,
+                    danger: true,
+                  },
+                  { redo: true },
+                )
           }
           disabled={busy}
           className="btn btn-primary text-sm"
@@ -90,7 +125,13 @@ export default function BracketPanel({
       )}
       {canAdvanceBracket && (
         <button
-          onClick={() => onAction("next-round", texts.confirmNextRound)}
+          onClick={() =>
+            onAction("next-round", {
+              title: texts.nextRound,
+              message: texts.confirmNextRound,
+              confirmLabel: texts.nextRound,
+            })
+          }
           disabled={busy}
           className="btn btn-primary text-sm"
         >

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import RosterRow from "./RosterRow";
 import type { TeamMemberEntry } from "./types";
+import { confirmDialog, teamsTab } from "@/lib/texts";
 
 const LONG_NAME = "الحسن احمدو يحي البناني";
 
@@ -26,7 +27,8 @@ const handlers = {
 };
 
 function answer(yes: boolean) {
-  vi.stubGlobal("confirm", vi.fn().mockReturnValue(yes));
+  const label = yes ? screen.getByText(teamsTab.remove) : screen.getByText(confirmDialog.cancel);
+  fireEvent.click(label);
 }
 
 function show(
@@ -92,22 +94,29 @@ describe("RosterRow", () => {
   });
 
   it("asks before it removes a player, and cancelling removes nobody", () => {
-    answer(false);
+    const asked = vi.fn();
+    vi.stubGlobal("confirm", asked);
     show(entry(LONG_NAME));
+
     fireEvent.click(screen.getByLabelText(`إزالة ${LONG_NAME}`));
-    expect(confirm).toHaveBeenCalledWith(`إزالة ${LONG_NAME} من الفريق؟`);
+
+    expect(asked).not.toHaveBeenCalled();
+    expect(screen.getByText(`إزالة ${LONG_NAME} من الفريق؟`)).toBeTruthy();
+    answer(false);
     expect(handlers.onRemove).not.toHaveBeenCalled();
 
-    answer(true);
     fireEvent.click(screen.getByLabelText(`إزالة ${LONG_NAME}`));
+    answer(true);
     expect(handlers.onRemove).toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 
   it("asks a different question before rejecting someone still waiting", () => {
-    answer(false);
     show(entry(LONG_NAME, "PENDING"));
+
     fireEvent.click(screen.getByLabelText(`رفض ${LONG_NAME}`));
-    expect(confirm).toHaveBeenCalledWith(`رفض طلب ${LONG_NAME} للانضمام؟`);
+
+    expect(screen.getByText(`رفض طلب ${LONG_NAME} للانضمام؟`)).toBeTruthy();
     expect(handlers.onRemove).not.toHaveBeenCalled();
   });
 
@@ -172,13 +181,13 @@ describe("RosterRow", () => {
   });
 
   it("keeps accept, reject and captain working", () => {
-    answer(true);
     show(entry(LONG_NAME, "PENDING"));
 
     fireEvent.click(screen.getByLabelText(`قبول ${LONG_NAME}`));
     expect(handlers.onApprove).toHaveBeenCalled();
 
     fireEvent.click(screen.getByLabelText(`رفض ${LONG_NAME}`));
+    fireEvent.click(screen.getByText(teamsTab.reject));
     expect(handlers.onRemove).toHaveBeenCalled();
 
     fireEvent.click(screen.getByLabelText(`اجعل ${LONG_NAME} قائد الفريق`));
