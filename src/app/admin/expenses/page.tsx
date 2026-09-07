@@ -3,6 +3,8 @@
 import { Suspense, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
+import Notice from "@/components/Notice";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import PageLoading from "@/components/PageLoading";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import FinanceTagManager from "@/components/admin/FinanceTagManager";
@@ -55,6 +57,8 @@ function AdminExpensesPageInner() {
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [asking, setAsking] = useState<string | null>(null);
+  const [pageError, setPageError] = useState("");
   const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
@@ -62,11 +66,12 @@ function AdminExpensesPageInner() {
     const method = reassignValue[id];
     if (!method) return;
     setReassigningId(id);
+    setPageError("");
     try {
       await api.patch(`/api/admin/donations/${id}`, { paymentMethod: method });
       await reload();
     } catch (e) {
-      alert(errorMessage(e));
+      setPageError(errorMessage(e));
     } finally {
       setReassigningId(null);
     }
@@ -136,13 +141,14 @@ function AdminExpensesPageInner() {
   }
 
   async function deleteExpense(id: string) {
-    if (!confirm(expensesPage.confirmDelete)) return;
+    setAsking(null);
     setBusyId(id);
+    setPageError("");
     try {
       await api.del(`/api/admin/expenses/${id}`);
       await reload();
     } catch (e) {
-      alert(errorMessage(e));
+      setPageError(errorMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -184,6 +190,8 @@ function AdminExpensesPageInner() {
 
   return (
     <div className="admin-page space-y-5">
+      {pageError && <Notice tone="error">{pageError}</Notice>}
+
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="banknote">{expensesPage.title}</IconLabel>
@@ -303,7 +311,7 @@ function AdminExpensesPageInner() {
         filtered={isFiltered}
         busyId={busyId}
         onEdit={openEdit}
-        onDelete={deleteExpense}
+        onDelete={setAsking}
         pagination={{ page: currentPage, totalPages, onGo: goToPage }}
       />
 
@@ -320,6 +328,18 @@ function AdminExpensesPageInner() {
           onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}
           onSubmit={submitForm}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {asking && (
+        <ConfirmDialog
+          title={expensesPage.confirmDeleteTitle}
+          message={expensesPage.confirmDelete}
+          confirmLabel={expensesPage.delete}
+          danger
+          loading={busyId === asking}
+          onConfirm={() => deleteExpense(asking)}
+          onClose={() => setAsking(null)}
         />
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import Notice from "@/components/Notice";
 import PageLoading from "@/components/PageLoading";
 import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import IconLabel from "@/components/IconLabel";
@@ -20,20 +21,27 @@ interface DeletedRow {
 
 function Row({ row, onRestored }: { row: DeletedRow; onRestored: () => Promise<void> | void }) {
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   async function restore() {
     setBusy(true);
+    setError("");
     try {
       await api.post(`/api/admin/deleted/${row.id}/restore`, {});
       await onRestored();
     } catch (e) {
-      alert(errorMessage(e));
+      setError(errorMessage(e));
       setBusy(false);
     }
   }
 
   return (
     <div className="card p-3 flex items-center gap-2 flex-wrap">
+      {error && (
+        <div className="w-full">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold truncate">{row.label}</p>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>

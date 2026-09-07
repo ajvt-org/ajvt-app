@@ -6,7 +6,8 @@ import { loginPathWithNext } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import { counted } from "@/lib/arabicCount";
-import { ANSWER } from "@/lib/messages";
+import { ANSWER, quiz as quizMessages } from "@/lib/messages";
+import { quizAdminToast as toast } from "@/lib/texts";
 import { validateCurve } from "@/lib/competitionConfig";
 import type { MoveDirection } from "@/lib/quizQuestionOrder";
 import { emptySettingsForm } from "./types";
@@ -47,6 +48,7 @@ export function useQuizQuestions() {
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [askingDelete, setAskingDelete] = useState<string | null>(null);
 
   function load(bank: string | null = bankId) {
     const query = bank ? `?bank=${bank}` : "";
@@ -119,11 +121,7 @@ export function useQuizQuestions() {
         confirmAnswers: !settings.confirmAnswers,
       });
       setSettings(data.settings);
-      showToast(
-        data.settings.confirmAnswers
-          ? "أعيد زر تأكيد الإجابة، ويسري من الجولة القادمة"
-          : "أصبح اختيار الإجابة يرسلها مباشرة، ويسري من الجولة القادمة",
-      );
+      showToast(data.settings.confirmAnswers ? toast.confirmAnswersOn : toast.confirmAnswersOff);
     } catch (e) {
       showToast(errorMessage(e), "error");
     } finally {
@@ -139,13 +137,13 @@ export function useQuizQuestions() {
       const n = Number(val);
       const floor = ZERO_IS_ALLOWED.has(key) ? 0 : 1;
       if (!Number.isInteger(n) || n < floor) {
-        setSettingsError("كل القيم يجب أن تكون أرقاماً صحيحة موجبة");
+        setSettingsError(quizMessages.settingsNotPositive);
         return;
       }
       body[key] = n;
     }
     if (body.defaultCorrectCount > body.defaultAnswerCount) {
-      setSettingsError("عدد الإجابات الصحيحة لا يمكن أن يتجاوز عدد الإجابات");
+      setSettingsError(quizMessages.correctCountOverAnswers);
       return;
     }
     const curveProblem = validateCurve({
@@ -161,7 +159,7 @@ export function useQuizQuestions() {
     try {
       const data = await api.patch<{ settings: QuizSettings }>("/api/admin/quiz/settings", body);
       setSettings(data.settings);
-      showToast("تم حفظ الإعدادات");
+      showToast(toast.settingsSaved);
     } catch (e) {
       setSettingsError(errorMessage(e));
     } finally {
@@ -199,20 +197,20 @@ export function useQuizQuestions() {
   }
 
   function validateQuestion(): string | null {
-    if (!form.text.trim()) return "نص السؤال مطلوب";
-    if (!form.category.trim()) return "التصنيف مطلوب";
+    if (!form.text.trim()) return quizMessages.textRequired;
+    if (!form.category.trim()) return quizMessages.categoryRequired;
 
     const points = Number(form.points);
-    if (!Number.isInteger(points) || points <= 0) return "النقاط يجب أن تكون رقماً صحيحاً موجباً";
+    if (!Number.isInteger(points) || points <= 0) return quizMessages.pointsNotPositive;
 
     const correctCount = Number(form.correctCount);
     if (!Number.isInteger(correctCount) || correctCount <= 0)
-      return "عدد الإجابات الصحيحة غير صالح";
-    if (form.answers.length < 2) return "يجب إضافة إجابتين على الأقل";
-    if (form.answers.some((a) => !a.text.trim())) return "كل الإجابات يجب أن تحتوي على نص";
-    if (correctCount > form.answers.length) return "عدد الإجابات الصحيحة أكبر من عدد الإجابات";
+      return quizMessages.correctCountInvalid;
+    if (form.answers.length < 2) return quizMessages.twoAnswersMinimum;
+    if (form.answers.some((a) => !a.text.trim())) return quizMessages.answersNeedText;
+    if (correctCount > form.answers.length) return quizMessages.tooManyCorrect;
     if (form.answers.filter((a) => a.isCorrect).length !== correctCount) {
-      return `يجب تحديد ${counted(correctCount, ANSWER)} صحيحة بالضبط`;
+      return quizMessages.correctCountExact(counted(correctCount, ANSWER));
     }
     return null;
   }
@@ -238,7 +236,7 @@ export function useQuizQuestions() {
         await api.post("/api/admin/quiz/questions", { ...body, bankId });
       }
       setShowForm(false);
-      showToast(editingId ? "تم حفظ التعديل" : "تمت إضافة السؤال");
+      showToast(editingId ? toast.questionSaved : toast.questionAdded);
       await load();
     } catch (e) {
       setFormError(errorMessage(e));
@@ -272,11 +270,11 @@ export function useQuizQuestions() {
   }
 
   async function deleteQuestion(id: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا السؤال؟ سيتم حذف كل الإجابات المرتبطة به.")) return;
+    setAskingDelete(null);
     setBusyId(id);
     try {
       await api.del(`/api/admin/quiz/questions/${id}`);
-      showToast("تم حذف السؤال");
+      showToast(toast.questionDeleted);
       await load();
     } catch (e) {
       showToast(errorMessage(e), "error");
@@ -319,6 +317,8 @@ export function useQuizQuestions() {
     submitQuestionForm,
     toggleActive,
     moveQuestion,
+    askingDelete,
+    askDeleteQuestion: setAskingDelete,
     deleteQuestion,
   };
 }

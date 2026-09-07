@@ -21,7 +21,9 @@ export const expenseForm = {
 export const expensesPage = {
   labelRequired: "الوصف مطلوب",
   amountInvalid: "المبلغ يجب أن يكون رقماً صحيحاً موجباً",
+  confirmDeleteTitle: "حذف مصروف",
   confirmDelete: "هل أنت متأكد من حذف هذا المصروف؟",
+  delete: "حذف المصروف",
   title: "المصاريف والإيرادات",
   exportAction: "تصدير",
   ledger: (count: number) => `سجل المصاريف (${count})`,
