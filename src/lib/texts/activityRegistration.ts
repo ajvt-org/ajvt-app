@@ -1,5 +1,5 @@
 export const activityRegistration = {
-  joinRequested: "تم إرسال طلب الانضمام — بانتظار موافقة المشرف",
+  joinRequested: "تم إرسال طلب الانضمام — بانتظار رد قائد الفريق",
   requestCancelled: "تم إلغاء الطلب",
   volunteered: "تم تسجيلك كمتطوع",
   registered: "تم التسجيل في النشاط",
