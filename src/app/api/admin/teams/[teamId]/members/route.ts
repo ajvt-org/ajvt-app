@@ -10,6 +10,7 @@ import { entrantWording, members, tournament } from "@/lib/messages";
 import { entrantOf } from "@/lib/entrantServer";
 import { nameOf } from "@/lib/person";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { clearOtherSeats } from "@/lib/teamBuildingServer";
 
 export const POST = withRoute(
   "POST /api/admin/teams/[teamId]/members",
@@ -22,7 +23,7 @@ export const POST = withRoute(
       where: { id: teamId },
       include: {
         activity: { select: { minTeamSize: true, maxTeamSize: true } },
-        _count: { select: { members: true } },
+        _count: { select: { members: { where: { status: "ACTIVE" } } } },
       },
     });
     if (!team) {
@@ -50,23 +51,29 @@ export const POST = withRoute(
       return NextResponse.json({ error: tournament.playerNotRegistered }, { status: 400 });
     }
 
-    const existingMembership = await prisma.teamMember.findFirst({
-      where: { userId, team: { activityId: team.activityId } },
+    const seated = await prisma.teamMember.findFirst({
+      where: { userId, status: "ACTIVE", team: { activityId: team.activityId } },
       select: { team: { select: { name: true } } },
     });
-    if (existingMembership) {
+    if (seated) {
       return NextResponse.json(
-        { error: words.memberAlreadyEntered(existingMembership.team.name) },
+        { error: words.memberAlreadyEntered(seated.team.name) },
         { status: 409 },
       );
     }
 
-    const teamMember = await prisma.teamMember.create({
-      data: { teamId, userId },
-      select: {
-        id: true,
-        user: { select: { phone: true, fullName: true, age: true } },
-      },
+    const teamMember = await prisma.$transaction(async (tx) => {
+      const created = await tx.teamMember.upsert({
+        where: { teamId_userId: { teamId, userId } },
+        create: { teamId, userId, status: "ACTIVE" },
+        update: { status: "ACTIVE" },
+        select: {
+          id: true,
+          user: { select: { phone: true, fullName: true, age: true } },
+        },
+      });
+      await clearOtherSeats(tx, team.activityId, userId, teamId);
+      return created;
     });
 
     await logAction(
