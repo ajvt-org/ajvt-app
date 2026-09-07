@@ -4,7 +4,7 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import FinanceTagChips, { type FinanceTag } from "@/components/admin/FinanceTagChips";
 import { donationActions, donationEdit } from "@/lib/texts";
-import { DANGER_BOX, PRIMARY, QUIET } from "./donationTones";
+import { DANGER, PRIMARY, QUIET } from "./donationTones";
 
 export default function DonationTags({
   donationId,
@@ -46,7 +46,7 @@ export default function DonationTags({
       style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
     >
       {error && (
-        <div className="p-2 rounded-lg text-xs font-semibold" style={DANGER_BOX}>
+        <div className="p-2 rounded-lg text-xs font-semibold" style={DANGER}>
           {error}
         </div>
       )}

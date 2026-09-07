@@ -81,7 +81,9 @@ describe("a donation being reviewed", () => {
     mockFetch();
     show();
 
-    expect(await screen.findByText(new RegExp(proofReuse.title))).toBeTruthy();
+    const warning = await screen.findByText(new RegExp(proofReuse.title));
+    await userEvent.click(warning.closest("button")!);
+
     expect(screen.getByText("أحمد")).toBeTruthy();
   });
 
@@ -89,11 +91,11 @@ describe("a donation being reviewed", () => {
     mockFetch();
     show();
 
-    const summary = await screen.findByText(new RegExp(proofReuse.title));
-    const block = summary.closest("details");
-    expect(block).not.toBeNull();
-    expect(block!.open).toBe(false);
-    expect(block!.contains(screen.getByText("أحمد"))).toBe(true);
+    const warning = await screen.findByText(new RegExp(proofReuse.title));
+    const control = warning.closest("button")!;
+
+    expect(control.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("أحمد")).toBeNull();
   });
 
   it("asks about the donation itself, so it is left out of its own answer", async () => {
@@ -331,12 +333,13 @@ describe("a membership payment carries its own controls", () => {
     expect(screen.getByRole("button", { name: new RegExp(deleteMember.payment) })).toBeTruthy();
   });
 
-  it("drops the accept once the payment is accepted", () => {
+  it("turns the verdict into undoing it once the payment is accepted", () => {
     mockFetch([]);
     show({ ...membership, status: "ACTIVE" });
 
-    expect(screen.queryByRole("button", { name: new RegExp(memberDecision.accept) })).toBeNull();
-    expect(screen.getByRole("button", { name: new RegExp(memberDecision.refuse) })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: memberDecision.accept })).toBeNull();
+    expect(screen.queryByRole("button", { name: memberDecision.refuse })).toBeNull();
+    expect(screen.getByRole("button", { name: memberDecision.revoke })).toBeTruthy();
   });
 
   it("offers none of it on a donation", () => {

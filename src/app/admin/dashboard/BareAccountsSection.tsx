@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
-import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
+import VerbButton from "@/components/admin/VerbButton";
+import { GRAVE, LEAD, SAFE } from "@/components/admin/verbTones";
 import { push } from "@/lib/messages";
 import { daysWaiting } from "@/lib/waitingRequests";
 import { personDetails } from "@/lib/personDetails";
 import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
-import TempPasswordBox from "./TempPasswordBox";
+import TempPasswordBox from "@/components/admin/TempPasswordBox";
 import { bareAccounts as texts, confirmDelete as confirmDeleteTexts } from "@/lib/texts";
 import type { BareAccount } from "./types";
 
@@ -56,14 +57,9 @@ function NudgeButton({ user }: { user: BareAccount }) {
     );
   }
   return (
-    <button
-      onClick={nudge}
-      disabled={busy}
-      className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-      style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-    >
-      <IconLabel name="bell">{texts.nudge}</IconLabel>
-    </button>
+    <VerbButton icon="bell" label={texts.nudge} tone={SAFE} disabled={busy} onClick={nudge}>
+      {texts.nudge}
+    </VerbButton>
   );
 }
 
@@ -136,31 +132,24 @@ function Row({
       <div className="flex items-center gap-2 mt-2 flex-wrap" style={{ paddingRight: "52px" }}>
         {user.phone && (
           <>
-            <button
-              onClick={resetPassword}
+            <VerbButton
+              icon="lock"
+              label={texts.resetPassword}
+              tone={SAFE}
               disabled={resetBusy}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+              onClick={resetPassword}
             >
-              {resetBusy ? "..." : <IconLabel name="lock">{texts.resetPassword}</IconLabel>}
-            </button>
-            <button
-              onClick={onFill}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-              style={{ background: "var(--mint-700)", color: "white" }}
-            >
-              <IconLabel name="plus">{texts.addRequest}</IconLabel>
-            </button>
+              {resetBusy ? texts.busy : texts.resetPassword}
+            </VerbButton>
+            <VerbButton icon="plus" label={texts.addRequest} tone={LEAD} onClick={onFill}>
+              {texts.addRequest}
+            </VerbButton>
           </>
         )}
         <span className="flex-1" aria-hidden />
-        <button
-          onClick={onDelete}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
-        >
-          <IconLabel name="trash">{texts.remove}</IconLabel>
-        </button>
+        <VerbButton icon="trash" label={texts.remove} tone={GRAVE} onClick={onDelete}>
+          {texts.remove}
+        </VerbButton>
       </div>
       {temp && <TempPasswordBox value={temp.password} hours={temp.hours} />}
     </div>

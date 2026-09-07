@@ -5,7 +5,7 @@ import { receiptAdmin } from "@/lib/texts/receipt";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
 
-export default function ReceiptRow({
+export default function ReceiptListRow({
   receipt,
   busy,
   onPrint,

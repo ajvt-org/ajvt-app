@@ -18,7 +18,7 @@ import DestinationSelect from "@/components/admin/DestinationSelect";
 import LinkMemberPanel from "./LinkMemberPanel";
 import MemberIdentity from "./MemberIdentity";
 import { proofFromDonation } from "./donationProof";
-import { DANGER_BOX, QUIET } from "./donationTones";
+import { DANGER, QUIET } from "./donationTones";
 import { destinationOf, type DestinationOption } from "@/lib/moneyDestination";
 import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
@@ -277,7 +277,7 @@ export default function ManualDonationDialog({
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl text-sm font-semibold" style={DANGER_BOX}>
+          <div className="p-3 rounded-xl text-sm font-semibold" style={DANGER}>
             <Icon name="warning" size={13} className="icon-inline" /> {error}
           </div>
         )}

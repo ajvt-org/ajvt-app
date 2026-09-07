@@ -15,7 +15,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import DestinationSelect from "@/components/admin/DestinationSelect";
 import DonationShownAs from "./DonationShownAs";
 import { proofFromDonation } from "./donationProof";
-import { DANGER_BOX, FIELD, PRIMARY, QUIET } from "./donationTones";
+import { DANGER, FIELD, PRIMARY, QUIET } from "./donationTones";
 import { destinationOf, destinationValue, type DestinationOption } from "@/lib/moneyDestination";
 import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
@@ -229,7 +229,7 @@ export default function DonationEditForm({
       </div>
 
       {error && (
-        <div className="p-2 rounded-lg text-xs font-semibold" style={DANGER_BOX}>
+        <div className="p-2 rounded-lg text-xs font-semibold" style={DANGER}>
           <Icon name="warning" size={13} className="icon-inline" /> {error}
         </div>
       )}

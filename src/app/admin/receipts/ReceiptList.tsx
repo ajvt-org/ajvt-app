@@ -2,7 +2,7 @@
 
 import { type OfficialReceiptView } from "@/lib/officialReceipt";
 import { receiptAdmin } from "@/lib/texts/receipt";
-import ReceiptRow from "./ReceiptRow";
+import ReceiptListRow from "./ReceiptListRow";
 
 export default function ReceiptList({
   receipts,
@@ -26,7 +26,7 @@ export default function ReceiptList({
   return (
     <ul className="flex flex-col gap-2">
       {receipts.map((receipt) => (
-        <ReceiptRow
+        <ReceiptListRow
           key={receipt.number}
           receipt={receipt}
           busy={busyId === receipt.number}

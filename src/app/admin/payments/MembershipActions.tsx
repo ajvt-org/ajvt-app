@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Notice from "@/components/Notice";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
-import MemberProofForm from "@/components/admin/MemberProofForm";
+import MemberProofButton from "@/components/admin/MemberProofButton";
+import MemberProofPanel from "@/components/admin/MemberProofPanel";
 import VerbButton from "@/components/admin/VerbButton";
 import { GRAVE, LEAD, RISKY } from "@/components/admin/verbTones";
 import { api, errorMessage } from "@/lib/api";
-import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { deleteMember, memberDecision as texts } from "@/lib/texts";
 import PaymentActions from "./PaymentActions";
-import { DANGER, QUIET } from "./donationTones";
+import RefusalPicker, { type RefusalMode } from "./RefusalPicker";
 
 export default function MembershipActions({
   userId,
@@ -25,9 +25,8 @@ export default function MembershipActions({
   status: string;
   onChanged: () => void;
 }) {
-  const [picking, setPicking] = useState(false);
-  const [replacing, setReplacing] = useState(false);
-  const [reason, setReason] = useState<string>(REJECTION_REASONS[0]);
+  const [picking, setPicking] = useState<RefusalMode | null>(null);
+  const [editingProof, setEditingProof] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -37,7 +36,7 @@ export default function MembershipActions({
     setError("");
     try {
       await call;
-      setPicking(false);
+      setPicking(null);
       setConfirming(false);
       onChanged();
     } catch (e) {
@@ -61,75 +60,67 @@ export default function MembershipActions({
   return (
     <div className="space-y-2">
       {picking ? (
-        <div className="space-y-2 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
-          <label className="block text-xs font-bold" htmlFor={`refuse-reason-${userId}`}>
-            {texts.reasonLabel}
-          </label>
-          <select
-            id={`refuse-reason-${userId}`}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="input text-sm"
-          >
-            {REJECTION_REASONS.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => decide("REJECTED", reason)}
-              disabled={busy}
-              className="btn btn-sm font-bold"
-              style={DANGER}
-            >
-              {busy ? texts.busy : texts.confirmRefuse}
-            </button>
-            <button onClick={() => setPicking(false)} className="btn btn-sm" style={QUIET}>
-              {texts.cancel}
-            </button>
-          </div>
-        </div>
+        <RefusalPicker
+          id={userId}
+          mode={picking}
+          busy={busy}
+          onConfirm={(reason) => decide("REJECTED", reason)}
+          onCancel={() => setPicking(null)}
+        />
       ) : (
-        <PaymentActions
-          stacked={replacing}
-          danger={
-            <VerbButton
-              icon="trash"
-              label={deleteMember.payment}
-              tone={GRAVE}
-              disabled={busy}
-              onClick={() => setConfirming(true)}
-            />
-          }
-        >
-          {status !== "ACTIVE" && (
-            <VerbButton
-              icon="check"
-              label={texts.accept}
-              tone={LEAD}
-              disabled={busy}
-              onClick={() => decide("ACTIVE")}
+        <>
+          <PaymentActions
+            danger={
+              <>
+                {status === "ACTIVE" && (
+                  <VerbButton
+                    icon="ban"
+                    label={texts.revoke}
+                    tone={RISKY}
+                    disabled={busy}
+                    onClick={() => setPicking("revoke")}
+                  />
+                )}
+                <VerbButton
+                  icon="trash"
+                  label={deleteMember.payment}
+                  tone={GRAVE}
+                  disabled={busy}
+                  onClick={() => setConfirming(true)}
+                />
+              </>
+            }
+          >
+            {status !== "ACTIVE" && (
+              <VerbButton
+                icon="check"
+                label={texts.accept}
+                tone={LEAD}
+                disabled={busy}
+                onClick={() => decide("ACTIVE")}
+              />
+            )}
+            {status === "PENDING" && (
+              <VerbButton
+                icon="close"
+                label={texts.refuse}
+                tone={RISKY}
+                disabled={busy}
+                onClick={() => setPicking("refuse")}
+              />
+            )}
+            <MemberProofButton proof={proof} onClick={() => setEditingProof(true)} />
+          </PaymentActions>
+
+          {editingProof && (
+            <MemberProofPanel
+              memberId={userId}
+              proof={proof}
+              onSaved={onChanged}
+              onClose={() => setEditingProof(false)}
             />
           )}
-          {status !== "REJECTED" && (
-            <VerbButton
-              icon="close"
-              label={texts.refuse}
-              tone={RISKY}
-              disabled={busy}
-              onClick={() => setPicking(true)}
-            />
-          )}
-          <MemberProofForm
-            memberId={userId}
-            proof={proof}
-            onSaved={onChanged}
-            onOpenChange={setReplacing}
-            compact
-          />
-        </PaymentActions>
+        </>
       )}
 
       {error && <Notice tone="error">{error}</Notice>}
