@@ -8,6 +8,11 @@ import MemberProofForm from "@/components/admin/MemberProofForm";
 import { api, errorMessage } from "@/lib/api";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { deleteMember, memberDecision as texts } from "@/lib/texts";
+import PaymentActions from "./PaymentActions";
+
+const DANGER = { background: "#fee2e2", color: "#991b1b" };
+const DANGER_OUTLINE = { background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" };
+const QUIET = { background: "var(--mint-100)", color: "var(--mint-700)" };
 
 export default function MembershipActions({
   userId,
@@ -55,9 +60,9 @@ export default function MembershipActions({
   }
 
   return (
-    <div className="mt-2 space-y-2">
+    <div className="space-y-2">
       {picking ? (
-        <>
+        <div className="space-y-2 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
           <label className="block text-xs font-bold" htmlFor={`refuse-reason-${userId}`}>
             {texts.reasonLabel}
           </label>
@@ -73,26 +78,33 @@ export default function MembershipActions({
               </option>
             ))}
           </select>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => decide("REJECTED", reason)}
               disabled={busy}
-              className="btn text-sm flex-1"
-              style={{ background: "#fee2e2", color: "#991b1b" }}
+              className="btn btn-sm font-bold"
+              style={DANGER}
             >
               {busy ? texts.busy : texts.confirmRefuse}
             </button>
-            <button
-              onClick={() => setPicking(false)}
-              className="btn text-sm"
-              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-            >
+            <button onClick={() => setPicking(false)} className="btn btn-sm" style={QUIET}>
               {texts.cancel}
             </button>
           </div>
-        </>
+        </div>
       ) : (
-        <div className="flex gap-2 flex-wrap">
+        <PaymentActions
+          danger={
+            <button
+              onClick={() => setConfirming(true)}
+              disabled={busy}
+              className="btn btn-sm font-bold"
+              style={DANGER_OUTLINE}
+            >
+              <IconLabel name="trash">{deleteMember.payment}</IconLabel>
+            </button>
+          }
+        >
           {status !== "ACTIVE" && (
             <button
               onClick={() => decide("ACTIVE")}
@@ -107,21 +119,13 @@ export default function MembershipActions({
               onClick={() => setPicking(true)}
               disabled={busy}
               className="btn btn-sm font-bold"
-              style={{ background: "#fee2e2", color: "#991b1b" }}
+              style={DANGER}
             >
               <IconLabel name="close">{texts.refuse}</IconLabel>
             </button>
           )}
           <MemberProofForm memberId={userId} proof={proof} onSaved={onChanged} />
-          <button
-            onClick={() => setConfirming(true)}
-            disabled={busy}
-            className="btn btn-sm font-bold"
-            style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
-          >
-            <IconLabel name="trash">{deleteMember.payment}</IconLabel>
-          </button>
-        </div>
+        </PaymentActions>
       )}
 
       {error && <Notice tone="error">{error}</Notice>}
