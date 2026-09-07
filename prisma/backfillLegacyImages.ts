@@ -2,25 +2,15 @@ import "dotenv/config";
 import { readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { prisma } from "../src/lib/prisma";
+import { getUploadDir } from "../src/lib/uploadDir";
 import { processImage } from "../src/lib/imageProcessing";
 import { proofHash } from "../src/lib/proofHash";
 import { planFor } from "../src/lib/legacyImages";
 import { renameUpload, UPLOAD_FIELDS } from "../src/lib/uploadFields";
 import { completeFiles, writeWhole } from "../src/lib/wholeFiles";
 
-// Re-encodes the uploads compression never touched. Non-webp original: write
-// the webp pair, rename every reference, rehash the fingerprint on the webp
-// bytes so both eras compare. Raw webp without a thumbnail: write the
-// thumbnail. Renames run per file, the original is deleted last, so an
-// interrupted run converges on the next boot. Spawned in the background by
-// start.mjs since the app serves the old files fine meanwhile.
-
-function uploadDir(): string {
-  return process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
-}
-
 async function main() {
-  const dir = uploadDir();
+  const dir = getUploadDir();
   const onDisk = await completeFiles(dir);
 
   const referenced = new Set<string>();

@@ -153,11 +153,13 @@ The rest are optional and the app works without them:
 - `NEXT_PUBLIC_WHATSAPP_LINK` is the group invite shown to members
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` turn on push notifications. Without both, the notifications switch on the profile is hidden and nothing breaks. Generate a pair with `npx web-push generate-vapid-keys`
 - `VAPID_SUBJECT` is the contact the push services see, an `https://` or `mailto:` URL. Left empty it uses `NEXT_PUBLIC_BASE_URL` when that is https, and the Render URL otherwise
-- `UPLOAD_DIR` is where uploaded images are written, defaults to `public/uploads`
+- `UPLOAD_DIR` is where uploaded images are written. `.env.example` points it at `./uploads`. Left empty it falls back to `public/uploads`, and boot refuses to start on that fallback unless the database is local
 
 ## Uploads
 
-Member photos and payment proofs are written to disk, not to the database. Locally they land in `public/uploads`, which is ignored by git. In production `UPLOAD_DIR` points at a mounted Render disk, so the files survive a redeploy.
+Member photos and payment proofs are written to disk, not to the database. Locally they land in `./uploads`, which is ignored by git. In production `UPLOAD_DIR` points at a mounted Render disk, so the files survive a redeploy.
+
+`public/` is served as static files, which answer before any route does, so anything written there is readable with no session from the next build onwards. Boot therefore refuses to start when `UPLOAD_DIR` resolves inside `public/` and the database is not local. The fallback still works against a local database, which is how development runs.
 
 ## Database
 

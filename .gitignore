@@ -51,6 +51,7 @@ next-env.d.ts
 # user-uploaded content (member photos, payment proofs) — not source
 /public/uploads/*
 !/public/uploads/.gitkeep
+/uploads/
 
 # playwright
 /test-results/
