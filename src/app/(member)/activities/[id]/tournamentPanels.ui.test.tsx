@@ -61,7 +61,7 @@ describe("tournamentPanels", () => {
           bookings: [],
           penaltyKicks: [],
           adjustments: [],
-          parts: [],
+          units: [],
           firstTeam: null,
           secondTeam: null,
           series: null,

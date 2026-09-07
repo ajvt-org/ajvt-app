@@ -100,7 +100,7 @@ export default function MatchResult({
       {match.series && (
         <div className="flex justify-center">
           <SeriesScoreline
-            parts={match.parts}
+            units={match.units}
             standing={match.series}
             unitWord={unitLevel?.singular ?? ""}
             extensionUnits={unitLevel ? countedUnits(ladder[0].extensionUnits, unitLevel) : ""}

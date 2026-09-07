@@ -16,7 +16,7 @@ export const POST = withRoute(
     const { matchId } = await params;
     const session = await requireMatchAccess(matchId);
 
-    let body: { ruleId?: unknown; side?: unknown };
+    let body: { ruleId?: unknown; side?: unknown; unitId?: unknown };
     try {
       body = await req.json();
     } catch {
@@ -25,9 +25,17 @@ export const POST = withRoute(
     if (typeof body.ruleId !== "string" || typeof body.side !== "string" || !SIDES.has(body.side)) {
       throw new ValidationError(tournament.adjustmentRuleNotFound);
     }
+    if (typeof body.unitId !== "string" || !body.unitId) {
+      throw new ValidationError(tournament.adjustmentWantsAUnit);
+    }
 
-    const recorded = await recordAdjustment(matchId, body.ruleId, body.side as "SIDE_A" | "SIDE_B");
-    await logAction(session.username, "RECORD_MATCH_ADJUSTMENT", String(recorded.order));
+    const recorded = await recordAdjustment(
+      matchId,
+      body.ruleId,
+      body.side as "SIDE_A" | "SIDE_B",
+      body.unitId,
+    );
+    await logAction(session.username, "RECORD_MATCH_ADJUSTMENT", recorded.unitId);
 
     return NextResponse.json(seriesStateOf(await loadSeriesMatch(matchId)), { status: 201 });
   },

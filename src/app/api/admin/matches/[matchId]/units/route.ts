@@ -4,12 +4,12 @@ import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { common } from "@/lib/messages";
-import { addPart, loadSeriesMatch, seriesStateOf } from "@/lib/matchSeriesServer";
+import { addUnit, loadSeriesMatch, seriesStateOf } from "@/lib/matchSeriesServer";
 
 type Params = { params: Promise<{ matchId: string }> };
 
 export const GET = withRoute(
-  "GET /api/admin/matches/[matchId]/parts",
+  "GET /api/admin/matches/[matchId]/units",
   async (_req: NextRequest, { params }: Params) => {
     const { matchId } = await params;
     await requireMatchAccess(matchId);
@@ -20,7 +20,7 @@ export const GET = withRoute(
 );
 
 export const POST = withRoute(
-  "POST /api/admin/matches/[matchId]/parts",
+  "POST /api/admin/matches/[matchId]/units",
   async (req: NextRequest, { params }: Params) => {
     const { matchId } = await params;
     const session = await requireMatchAccess(matchId);
@@ -32,10 +32,10 @@ export const POST = withRoute(
       throw new ValidationError(common.invalidBody);
     }
 
-    const part = await addPart(matchId, body);
-    await logAction(session.username, "ADD_MATCH_PART", String(part.order));
+    const unit = await addUnit(matchId, body);
+    await logAction(session.username, "ADD_MATCH_PART", String(unit.order));
 
     const match = await loadSeriesMatch(matchId);
-    return NextResponse.json({ part, ...seriesStateOf(match) }, { status: 201 });
+    return NextResponse.json({ unit, ...seriesStateOf(match) }, { status: 201 });
   },
 );

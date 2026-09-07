@@ -41,7 +41,7 @@ function match(): DecidedMatch {
         member: { id: "p2", fullName: "سالم ولد علي", photo: null },
       },
     ],
-    parts: [],
+    units: [],
     adjustments: [],
     series: null,
     mvpVote: null,

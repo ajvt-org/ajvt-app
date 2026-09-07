@@ -5,7 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
 import PartEditor, { EMPTY_DRAFT, bodyOf, draftOf, type PartDraft } from "./PartEditor";
-import PartLine, { PartsEmpty } from "./PartRow";
+import UnitLine, { UnitsEmpty } from "./UnitRow";
 import SeriesStanding from "./SeriesStanding";
 import type { SeriesConfig } from "./seriesConfig";
 import MatchAdjustments from "./MatchAdjustments";
@@ -31,7 +31,7 @@ export default function SeriesResultForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const base = `/api/admin/matches/${matchId}/parts`;
+  const base = `/api/admin/matches/${matchId}/units`;
 
   const load = useCallback(async () => {
     try {
@@ -101,23 +101,23 @@ export default function SeriesResultForm({
 
       <SeriesStanding standing={state.standing} config={config} sides={sides} />
 
-      {state.parts.length === 0 ? (
-        <PartsEmpty config={config} />
+      {state.units.length === 0 ? (
+        <UnitsEmpty config={config} />
       ) : (
         <div className="space-y-1.5">
-          {state.parts.map((part) => (
-            <PartLine
-              key={part.id}
-              part={part}
+          {state.units.map((unit) => (
+            <UnitLine
+              key={unit.id}
+              unit={unit}
               config={config}
               sides={sides}
               busy={busy}
               editable={open}
               onEdit={() => {
-                setEditingId(part.id);
-                setDraft(draftOf(part));
+                setEditingId(unit.id);
+                setDraft(draftOf(unit));
               }}
-              onRemove={() => run(() => api.del<SeriesState>(`${base}/${part.id}`))}
+              onRemove={() => run(() => api.del<SeriesState>(`${base}/${unit.id}`))}
             />
           ))}
         </div>
@@ -128,11 +128,16 @@ export default function SeriesResultForm({
         recorded={state.adjustments}
         sides={sides}
         unit={config.unit}
+        units={state.units}
         busy={busy}
         open={open}
-        onRecord={(ruleId, side) =>
+        onRecord={(ruleId, side, unitId) =>
           run(() =>
-            api.post<SeriesState>(`/api/admin/matches/${matchId}/adjustments`, { ruleId, side }),
+            api.post<SeriesState>(`/api/admin/matches/${matchId}/adjustments`, {
+              ruleId,
+              side,
+              unitId,
+            }),
           )
         }
         onUndo={(id) =>

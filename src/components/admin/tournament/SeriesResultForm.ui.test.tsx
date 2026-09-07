@@ -5,7 +5,7 @@ import { CHESS_CONFIG, SCORED_CONFIG, standingRow } from "@tests/ui/ladders";
 import type { SeriesConfig } from "./seriesConfig";
 import type {
   AdjustmentRuleRow,
-  PartRow,
+  UnitRow,
   RecordedAdjustmentRow,
   SeriesStandingRow,
 } from "./seriesTypes";
@@ -33,15 +33,21 @@ function standing(over: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
   return standingRow(over);
 }
 
-function part(id: string, order: number, extra: Partial<PartRow> = {}): PartRow {
+function part(id: string, order: number, extra: Partial<UnitRow> = {}): UnitRow {
   return {
     id,
+    levelId: "unit",
     order,
     abandoned: false,
     outcome: null,
     sideAPoints: null,
     sideBPoints: null,
     sideAColour: null,
+    worth: null,
+    sideALostCredit: false,
+    sideBLostCredit: false,
+    children: [],
+    standing: null,
     ...extra,
   };
 }
@@ -49,7 +55,7 @@ function part(id: string, order: number, extra: Partial<PartRow> = {}): PartRow 
 const SIDES = ["أحمد", "محمد"];
 
 function mockSeries(state: {
-  parts: PartRow[];
+  units: UnitRow[];
   standing: SeriesStandingRow;
   adjustments?: RecordedAdjustmentRow[];
   rules?: AdjustmentRuleRow[];
@@ -57,7 +63,7 @@ function mockSeries(state: {
   getMock.mockImplementation(async (url: string) =>
     String(url).includes("adjustment-rules")
       ? { rules: state.rules ?? [] }
-      : { parts: state.parts, adjustments: state.adjustments ?? [], standing: state.standing },
+      : { units: state.units, adjustments: state.adjustments ?? [], standing: state.standing },
   );
 }
 
@@ -81,7 +87,7 @@ beforeEach(() => {
   getMock.mockImplementation(async (url: string) =>
     String(url).includes("adjustment-rules")
       ? { rules: [] }
-      : { parts: [], adjustments: [], standing: standing() },
+      : { units: [], adjustments: [], standing: standing() },
   );
 });
 
@@ -99,15 +105,15 @@ describe("the series result form", () => {
   });
 
   it("says the number that ends a match played to a target", async () => {
-    mockSeries({ parts: [], standing: standing({ unitsLeft: 3 }) });
+    mockSeries({ units: [], standing: standing({ unitsLeft: 3 }) });
     show(MARYASS);
 
     expect(await screen.findByText(/تنتهي المباراة عند/)).toBeDefined();
   });
 
-  it("shows the parts already recorded and who took each", async () => {
+  it("shows the units already recorded and who took each", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "DRAW" })],
+      units: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "DRAW" })],
       standing: standing({ sideATotal: 3, sideBTotal: 1, over: true, winner: "SIDE_A" }),
     });
     show();
@@ -119,7 +125,7 @@ describe("the series result form", () => {
 
   it("renders a half as a half rather than a decimal", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "DRAW" })],
+      units: [part("p1", 1, { outcome: "DRAW" })],
       standing: standing({ sideATotal: 1, sideBTotal: 1 }),
     });
     const { container } = show();
@@ -129,9 +135,9 @@ describe("the series result form", () => {
     expect(container.textContent).not.toContain("0.5");
   });
 
-  it("shows a side that owes parts as a negative", async () => {
+  it("shows a side that owes units as a negative", async () => {
     mockSeries({
-      parts: [],
+      units: [],
       standing: standing({ sideATotal: 4, sideBTotal: -4 }),
     });
     const { container } = show();
@@ -141,14 +147,14 @@ describe("the series result form", () => {
     expect(container.textContent).toContain("2");
   });
 
-  it("asks for an outcome where the parts are decided by one", async () => {
+  it("asks for an outcome where the units are decided by one", async () => {
     show();
 
     expect(await screen.findByLabelText("نتيجة الوحدة")).toBeDefined();
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
   });
 
-  it("asks for two scores where the parts are played to a target", async () => {
+  it("asks for two scores where the units are played to a target", async () => {
     show(MARYASS);
 
     await waitFor(() => expect(screen.queryAllByRole("spinbutton")).toHaveLength(2));
@@ -156,7 +162,7 @@ describe("the series result form", () => {
   });
 
   it("sends the outcome it was given", async () => {
-    postMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
+    postMock.mockResolvedValue({ units: [], adjustments: [], standing: standing() });
     show();
 
     fireEvent.change(await screen.findByLabelText("نتيجة الوحدة"), {
@@ -177,7 +183,7 @@ describe("the series result form", () => {
 
   it("says which side had which colour", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A", sideAColour: "FIRST" })],
+      units: [part("p1", 1, { outcome: "SIDE_A", sideAColour: "FIRST" })],
       standing: standing({ sideATotal: 2 }),
     });
     show();
@@ -187,7 +193,7 @@ describe("the series result form", () => {
 
   it("says a knockout match is being extended rather than finished", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "DRAW" }), part("p2", 2, { outcome: "DRAW" })],
+      units: [part("p1", 1, { outcome: "DRAW" }), part("p2", 2, { outcome: "DRAW" })],
       standing: standing({
         sideATotal: 2,
         sideBTotal: 2,
@@ -204,7 +210,7 @@ describe("the series result form", () => {
 
   it("offers no entry once the match is over", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "SIDE_A" })],
+      units: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "SIDE_A" })],
       standing: standing({
         sideATotal: 4,
         over: true,
@@ -222,10 +228,10 @@ describe("the series result form", () => {
 
   it("corrects a part while the match is unfinished", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" })],
+      units: [part("p1", 1, { outcome: "SIDE_A" })],
       standing: standing({ sideATotal: 2, unitsLeft: 1 }),
     });
-    patchMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
+    patchMock.mockResolvedValue({ units: [], adjustments: [], standing: standing() });
     show();
 
     fireEvent.click(await screen.findByLabelText("تعديل لعبة 1"));
@@ -233,15 +239,15 @@ describe("the series result form", () => {
     fireEvent.click(screen.getByText("حفظ"));
 
     await waitFor(() => expect(patchMock).toHaveBeenCalled());
-    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/parts/p1");
+    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/units/p1");
   });
 
   it("removes a part", async () => {
     mockSeries({
-      parts: [part("p1", 1, { outcome: "SIDE_A" })],
+      units: [part("p1", 1, { outcome: "SIDE_A" })],
       standing: standing({ sideATotal: 2, unitsLeft: 1 }),
     });
-    delMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
+    delMock.mockResolvedValue({ units: [], adjustments: [], standing: standing() });
     show();
 
     fireEvent.click(await screen.findByLabelText("حذف لعبة 1"));
@@ -251,7 +257,7 @@ describe("the series result form", () => {
 
   it("says an abandoned part scored nothing", async () => {
     mockSeries({
-      parts: [part("p1", 1, { abandoned: true })],
+      units: [part("p1", 1, { abandoned: true })],
       standing: standing({ unitsRecorded: 1, unitsLeft: 1 }),
     });
     show();

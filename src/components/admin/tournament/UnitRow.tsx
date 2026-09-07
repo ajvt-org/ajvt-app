@@ -4,25 +4,30 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
 import type { SeriesConfig } from "./seriesConfig";
-import type { PartRow as Part } from "./seriesTypes";
+import type { UnitRow as Unit } from "./seriesTypes";
 
-export function outcomeText(part: Part, sides: string[]): string {
-  if (part.abandoned) return texts.abandoned;
-  if (part.outcome === "DRAW") return texts.drawn;
-  if (part.outcome === "SIDE_A") return texts.wonBy(sides[0]);
-  if (part.outcome === "SIDE_B") return texts.wonBy(sides[1]);
-  if (part.sideAPoints === null || part.sideBPoints === null) return texts.abandoned;
-  return `${part.sideAPoints} — ${part.sideBPoints}`;
+export function scoreText(unit: Unit, sides: string[]): string {
+  if (unit.abandoned) return texts.abandoned;
+  if (unit.standing) {
+    if (unit.standing.winner === "SIDE_A") return texts.wonBy(sides[0]);
+    if (unit.standing.winner === "SIDE_B") return texts.wonBy(sides[1]);
+    return `${unit.standing.sideATotal} — ${unit.standing.sideBTotal}`;
+  }
+  if (unit.outcome === "DRAW") return texts.drawn;
+  if (unit.outcome === "SIDE_A") return texts.wonBy(sides[0]);
+  if (unit.outcome === "SIDE_B") return texts.wonBy(sides[1]);
+  if (unit.sideAPoints === null || unit.sideBPoints === null) return texts.abandoned;
+  return `${unit.sideAPoints} — ${unit.sideBPoints}`;
 }
 
-export function colourText(part: Part, config: SeriesConfig, sides: string[]): string | null {
-  if (!config.hasColours || part.sideAColour === null) return null;
-  const opener = part.sideAColour === "FIRST" ? sides[0] : sides[1];
+export function colourText(unit: Unit, config: SeriesConfig, sides: string[]): string | null {
+  if (!config.hasColours || unit.sideAColour === null) return null;
+  const opener = unit.sideAColour === "FIRST" ? sides[0] : sides[1];
   return config.firstColourWord ? texts.colourOf(opener, config.firstColourWord) : null;
 }
 
-export default function PartLine({
-  part,
+export default function UnitLine({
+  unit,
   config,
   sides,
   busy,
@@ -30,7 +35,7 @@ export default function PartLine({
   onEdit,
   onRemove,
 }: {
-  part: Part;
+  unit: Unit;
   config: SeriesConfig;
   sides: string[];
   busy: boolean;
@@ -38,17 +43,18 @@ export default function PartLine({
   onEdit: () => void;
   onRemove: () => void;
 }) {
-  const colour = colourText(part, config, sides);
+  const colour = colourText(unit, config, sides);
+  const name = texts.unitNumber(config.unit.singular, unit.order);
   return (
     <div
       className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
-      style={{ background: "var(--surface-2)", opacity: part.abandoned ? 0.65 : 1 }}
+      style={{ background: "var(--surface-2)", opacity: unit.abandoned ? 0.65 : 1 }}
     >
       <span className="text-xs font-bold shrink-0" style={{ color: "var(--mint-700)" }}>
-        {texts.unitNumber(config.unit.singular, part.order)}
+        {name}
       </span>
       <span className="min-w-0 flex-1 text-xs" style={{ color: "var(--text-main)" }}>
-        <bdi>{outcomeText(part, sides)}</bdi>
+        <bdi>{scoreText(unit, sides)}</bdi>
         {colour && (
           <span className="ms-2" style={{ color: "var(--text-muted)" }}>
             <bdi>{colour}</bdi>
@@ -58,15 +64,15 @@ export default function PartLine({
       {editable && (
         <>
           <button
-            aria-label={`${texts.edit} ${texts.unitNumber(config.unit.singular, part.order)}`}
+            aria-label={`${texts.edit} ${name}`}
             onClick={onEdit}
-            disabled={busy}
+            disabled={busy || unit.children.length > 0}
             className="btn btn-icon btn-sm"
           >
             <Icon name="pencil" size={13} />
           </button>
           <button
-            aria-label={`${texts.remove} ${texts.unitNumber(config.unit.singular, part.order)}`}
+            aria-label={`${texts.remove} ${name}`}
             onClick={onRemove}
             disabled={busy}
             className="btn btn-icon btn-sm"
@@ -80,7 +86,7 @@ export default function PartLine({
   );
 }
 
-export function PartsEmpty({ config }: { config: SeriesConfig }) {
+export function UnitsEmpty({ config }: { config: SeriesConfig }) {
   return (
     <p className="text-xs" style={{ color: "var(--text-muted)" }}>
       <IconLabel name="list">{texts.none(config.unit.plural)}</IconLabel>

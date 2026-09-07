@@ -5,7 +5,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { countedUnits, type LevelRow } from "@/lib/matchLevels";
 import { seriesResult as texts } from "@/lib/texts";
-import type { AdjustmentRuleRow, RecordedAdjustmentRow } from "./seriesTypes";
+import type { AdjustmentRuleRow, RecordedAdjustmentRow, UnitRow } from "./seriesTypes";
 
 export function effectOf(rule: AdjustmentRuleRow, unit: LevelRow): string {
   return texts.moveEffect(
@@ -20,6 +20,7 @@ export default function MatchAdjustments({
   recorded,
   sides,
   unit,
+  units,
   busy,
   open,
   onRecord,
@@ -29,15 +30,19 @@ export default function MatchAdjustments({
   recorded: RecordedAdjustmentRow[];
   sides: string[];
   unit: LevelRow;
+  units: UnitRow[];
   busy: boolean;
   open: boolean;
-  onRecord: (ruleId: string, side: "SIDE_A" | "SIDE_B") => void;
+  onRecord: (ruleId: string, side: "SIDE_A" | "SIDE_B", unitId: string) => void;
   onUndo: (id: string) => void;
 }) {
   const [ruleId, setRuleId] = useState("");
   const [side, setSide] = useState<"" | "SIDE_A" | "SIDE_B">("");
+  const [unitId, setUnitId] = useState("");
 
   if (rules.length === 0 && recorded.length === 0) return null;
+
+  const orderOf = new Map(units.map((row) => [row.id, row.order]));
 
   return (
     <div className="space-y-2">
@@ -58,7 +63,7 @@ export default function MatchAdjustments({
                   {texts.moveOf(row.rule.name, row.side === "SIDE_A" ? sides[0] : sides[1])}
                 </bdi>
                 <span className="ms-2" style={{ color: "var(--text-muted)" }}>
-                  {texts.unitNumber(unit.singular, row.order)}
+                  {texts.unitNumber(unit.singular, orderOf.get(row.unitId) ?? 0)}
                 </span>
               </span>
               {open && (
@@ -76,7 +81,7 @@ export default function MatchAdjustments({
         </div>
       )}
 
-      {open && rules.length > 0 && (
+      {open && rules.length > 0 && units.length > 0 && (
         <div className="space-y-2">
           <select
             aria-label={texts.recordMove}
@@ -89,6 +94,20 @@ export default function MatchAdjustments({
             {rules.map((rule) => (
               <option key={rule.id} value={rule.id}>
                 {effectOf(rule, unit)}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label={texts.pickUnit}
+            value={unitId}
+            disabled={busy}
+            onChange={(e) => setUnitId(e.target.value)}
+            className="input input-sm"
+          >
+            <option value="">{texts.pickUnitPrompt}</option>
+            {units.map((row) => (
+              <option key={row.id} value={row.id}>
+                {texts.unitNumber(unit.singular, row.order)}
               </option>
             ))}
           </select>
@@ -106,12 +125,13 @@ export default function MatchAdjustments({
             </select>
             <button
               onClick={() => {
-                if (!ruleId || !side) return;
-                onRecord(ruleId, side);
+                if (!ruleId || !side || !unitId) return;
+                onRecord(ruleId, side, unitId);
                 setRuleId("");
                 setSide("");
+                setUnitId("");
               }}
-              disabled={busy || !ruleId || !side}
+              disabled={busy || !ruleId || !side || !unitId}
               className="btn btn-primary btn-sm shrink-0"
             >
               {texts.add}

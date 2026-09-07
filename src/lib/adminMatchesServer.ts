@@ -5,7 +5,8 @@ import { settleMvpVotes } from "./mvpVoteServer";
 import { DEFAULT_MVP_VOTE_MINUTES } from "./mvpVote";
 import { matchSideTeams } from "./matchSides";
 import { isFootball } from "./matchShape";
-import { LEVELS_SELECT, standingOf } from "./matchSeriesServer";
+import { LEVELS_SELECT, UNITS_SELECT } from "./matchSeriesServer";
+import { resolveMatch, toNodes, type AdjustmentRow, type UnitRow } from "./seriesTree";
 import type { LevelRow } from "./matchLevels";
 
 interface SeriesActivity {
@@ -56,19 +57,8 @@ export const MATCH_INCLUDE = {
       user: { select: { fullName: true, photo: true } },
     },
   },
-  parts: {
-    orderBy: { order: "asc" },
-    select: {
-      id: true,
-      order: true,
-      abandoned: true,
-      outcome: true,
-      sideAPoints: true,
-      sideBPoints: true,
-      sideAColour: true,
-    },
-  },
-  adjustments: { orderBy: { order: "asc" }, include: { rule: true } },
+  units: UNITS_SELECT,
+  adjustments: { orderBy: { createdAt: "asc" }, include: { rule: true } },
   mvpVote: {
     select: {
       id: true,
@@ -88,15 +78,22 @@ export const MATCH_INCLUDE = {
 
 export type LoadedMatch = Prisma.MatchGetPayload<{ include: typeof MATCH_INCLUDE }>;
 
+function seriesOf(
+  match: { units: UnitRow[]; adjustments: AdjustmentRow[] },
+  activity: SeriesActivity,
+) {
+  if (isFootball(activity.matchShape)) return { units: [], series: null };
+  const resolved = resolveMatch(activity.levels, match.units, match.adjustments);
+  return { units: toNodes(resolved.units), series: resolved.standing };
+}
+
 export function flatMatch(match: LoadedMatch, activity: SeriesActivity) {
   const sides = matchSideTeams(match, activity.matchShape);
   return {
     ...match,
     firstTeam: sides.first,
     secondTeam: sides.second,
-    series: isFootball(activity.matchShape)
-      ? null
-      : standingOf(activity, match.parts, match.adjustments),
+    ...seriesOf(match, activity),
     manOfTheMatch: match.manOfTheMatchUser
       ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
       : null,

@@ -11,7 +11,7 @@ vi.mock("@/lib/api", () => ({
   api: {
     patch: (...args: unknown[]) => patchMock(...args),
     get: async () => ({
-      parts: [],
+      units: [],
       standing: {
         sideATotal: 0,
         sideBTotal: 0,
@@ -52,7 +52,7 @@ const MATCH: DecidedMatch = {
   goals: [],
   penaltyKicks: [],
   bookings: [],
-  parts: [],
+  units: [],
   adjustments: [],
   series: null,
   mvpVote: null,

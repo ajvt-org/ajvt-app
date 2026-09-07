@@ -114,7 +114,12 @@ async function seed(): Promise<Fixture> {
   const match = await prisma.match.create({
     data: { activityId: tournament.id, sideATeamId: one.id, sideBTeamId: two.id },
   });
-  await prisma.matchPart.create({ data: { matchId: match.id, order: 1, outcome: "SIDE_A" } });
+  const level = await prisma.matchLevel.findFirstOrThrow({
+    where: { activityId: tournament.id, order: 1 },
+  });
+  await prisma.matchUnit.create({
+    data: { matchId: match.id, levelId: level.id, order: 1, outcome: "SIDE_A" },
+  });
 
   return {
     activityId: activity.id,

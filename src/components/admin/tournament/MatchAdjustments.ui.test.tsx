@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import MatchAdjustments, { effectOf } from "./MatchAdjustments";
 import { CHESS_CONFIG } from "@tests/ui/ladders";
-import type { AdjustmentRuleRow, RecordedAdjustmentRow } from "./seriesTypes";
+import type { AdjustmentRuleRow, RecordedAdjustmentRow, UnitRow } from "./seriesTypes";
 
 const UNIT = CHESS_CONFIG.unit;
 
@@ -15,9 +15,27 @@ const TEYSSE: AdjustmentRuleRow = {
   endsUnit: false,
 };
 
+const UNITS: UnitRow[] = [
+  {
+    id: "u1",
+    levelId: "unit",
+    order: 2,
+    abandoned: false,
+    outcome: null,
+    sideAPoints: null,
+    sideBPoints: null,
+    sideAColour: null,
+    worth: null,
+    sideALostCredit: false,
+    sideBLostCredit: false,
+    children: [],
+    standing: null,
+  },
+];
+
 const RECORDED: RecordedAdjustmentRow = {
   id: "a1",
-  order: 2,
+  unitId: "u1",
   side: "SIDE_A",
   rule: TEYSSE,
 };
@@ -33,6 +51,7 @@ function show(props: Partial<Parameters<typeof MatchAdjustments>[0]> = {}) {
       recorded={[]}
       sides={SIDES}
       unit={UNIT}
+      units={UNITS}
       busy={false}
       open
       onRecord={onRecord}
@@ -62,17 +81,26 @@ describe("the moves of a match", () => {
     expect(screen.getByText(/تيس من فريق القرية/)).toBeDefined();
   });
 
-  it("records the move and the side it was given", () => {
+  it("records the move, the side it was given and the unit it happened in", () => {
     const { onRecord } = show();
 
     fireEvent.change(screen.getByLabelText("تسجيل حركة"), { target: { value: "r1" } });
+    fireEvent.change(screen.getByLabelText("الوحدة التي وقعت فيها الحركة"), {
+      target: { value: "u1" },
+    });
     fireEvent.change(screen.getByLabelText("اختر الطرف..."), { target: { value: "SIDE_B" } });
     fireEvent.click(screen.getByText("إضافة"));
 
-    expect(onRecord).toHaveBeenCalledWith("r1", "SIDE_B");
+    expect(onRecord).toHaveBeenCalledWith("r1", "SIDE_B", "u1");
   });
 
-  it("will not record until both the move and the side are given", () => {
+  it("offers nothing to record against until a unit exists", () => {
+    show({ units: [] });
+
+    expect(screen.queryByLabelText("تسجيل حركة")).toBeNull();
+  });
+
+  it("will not record until the move, the side and the unit are given", () => {
     show();
 
     expect(screen.getByRole("button", { name: "إضافة" }).hasAttribute("disabled")).toBe(true);
