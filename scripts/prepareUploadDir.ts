@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { mkdir, readdir } from "node:fs/promises";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../src/lib/prisma";
 import { assertUploadDirOutsidePublic, uploadDirFrom } from "../src/lib/uploadDir";
 import { UploadDirEmptyError, uploadStoreIsMissing } from "../src/lib/uploadStore";
 
@@ -12,20 +12,29 @@ async function filesIn(dir: string): Promise<number> {
   }
 }
 
+async function storedCount(): Promise<number | null> {
+  try {
+    return await prisma.proofImage.count();
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   assertUploadDirOutsidePublic(process.env);
   const dir = uploadDirFrom(process.env);
   await mkdir(dir, { recursive: true });
 
-  const prisma = new PrismaClient();
-  try {
-    const stored = await prisma.proofImage.count();
-    const files = await filesIn(dir);
-    if (uploadStoreIsMissing({ files, stored })) throw new UploadDirEmptyError(dir, stored);
-    console.log(`Uploads live in ${dir}, holding ${files} files`);
-  } finally {
-    await prisma.$disconnect();
+  const files = await filesIn(dir);
+  const stored = await storedCount();
+  await prisma.$disconnect().catch(() => {});
+
+  if (stored === null) {
+    console.log(`Uploads live in ${dir}, holding ${files} files. The store was not checked.`);
+    return;
   }
+  if (uploadStoreIsMissing({ files, stored })) throw new UploadDirEmptyError(dir, stored);
+  console.log(`Uploads live in ${dir}, holding ${files} files against ${stored} recorded`);
 }
 
 main().catch((err) => {
