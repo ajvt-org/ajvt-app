@@ -35,6 +35,7 @@ export { confirmDelete, deleteMember } from "./deleteRecords";
 export { reviewQueue } from "./reviewQueue";
 export { memberDecision } from "./memberDecision";
 export { memberRejected } from "./memberRejected";
+export { membershipSummary } from "./membershipSummary";
 export { ouguiya } from "./currency";
 export { paidAmount } from "./paidAmount";
 export { stepPayment } from "./stepPayment";

@@ -42,6 +42,7 @@ export type MemberProfile = {
     }[];
   };
   supportPrivacy: { confidential: boolean; namedEntries: number } | null;
+  currentYear: number;
   history: {
     id: string;
     action: string;
