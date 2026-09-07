@@ -15,6 +15,10 @@ export type MemberProfile = {
     accountId: string | null;
     account: { id: string; code: string; label: string | null } | null;
     paymentProof: string | null;
+    membershipYear: number;
+    endedAt: string | null;
+    endedReason: string | null;
+    endedBy: string | null;
     createdAt: string;
     user: { id: string; phone: string | null; createdAt: string } | null;
     registrations: {

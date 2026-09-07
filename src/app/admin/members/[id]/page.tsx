@@ -18,6 +18,7 @@ import MemberDecision from "./MemberDecision";
 import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
 import MemberPhotoCard from "./MemberPhotoCard";
+import MembershipEndingCard from "./MembershipEndingCard";
 import SupportPrivacyCard from "./SupportPrivacyCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
@@ -153,6 +154,16 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
         memberId={member.id}
         photo={member.photo}
         locked={member.photoLocked}
+        onChanged={load}
+      />
+
+      <MembershipEndingCard
+        memberId={member.id}
+        status={member.status}
+        membershipYear={member.membershipYear}
+        endedAt={member.endedAt}
+        endedReason={member.endedReason}
+        endedBy={member.endedBy}
         onChanged={load}
       />
 

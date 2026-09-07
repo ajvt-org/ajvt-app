@@ -239,6 +239,11 @@ const KEPT_CLEAN = [
   "src/lib/ageStandings.ts",
   "src/app/(member)/ages/page.tsx",
   "src/components/MyActivities.tsx",
+  "src/app/admin/members/[id]/MembershipEndingCard.tsx",
+  "src/app/api/admin/members/[id]/end-membership",
+  "src/lib/membershipEnding.ts",
+  "src/lib/membershipEndingServer.ts",
+  "src/lib/membershipEndingMessages.ts",
 ];
 
 function sourceFiles(path: string): string[] {
