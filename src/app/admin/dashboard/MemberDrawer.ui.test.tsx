@@ -39,12 +39,13 @@ function member(over: Partial<Member> = {}): Member {
   };
 }
 
-function show(m: Member) {
+function show(m: Member, error = "") {
   cleanup();
   render(
     <MemberDrawer
       member={m}
       actionLoading={false}
+      error={error}
       showRejectPicker={false}
       rejectReason=""
       onClose={() => {}}

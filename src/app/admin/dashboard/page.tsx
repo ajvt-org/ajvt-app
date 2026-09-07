@@ -46,7 +46,10 @@ import { useBareAccounts } from "./useBareAccounts";
 import { OTHER_VILLAGE } from "@/lib/villages";
 import PageLoading from "@/components/PageLoading";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import Notice from "@/components/Notice";
 import MemberDrawer from "./MemberDrawer";
+import { useBulkActions } from "./useBulkActions";
 import ProofZoom from "./ProofZoom";
 
 function AdminDashboardInner() {
@@ -71,7 +74,17 @@ function AdminDashboardInner() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkReason, setBulkReason] = useState<string>(REJECTION_REASONS[0]);
   const [bulkAge, setBulkAge] = useState("");
-  const [bulkLoading, setBulkLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
+  const clearSelection = () => setSelectedIds(new Set());
+  const bulk = useBulkActions({
+    selectedIds,
+    onCleared: () => {
+      clearSelection();
+      setBulkAge("");
+    },
+    onDone: () => fetchMembers(),
+  });
 
   const [page, setPage] = useState(1);
   const [lastFilterKey, setLastFilterKey] = useState("PENDING|");
@@ -164,6 +177,7 @@ function AdminDashboardInner() {
 
   async function validate(id: string, action: "ACTIVE" | "REJECTED", reason?: string) {
     setActionLoading(true);
+    setReviewError("");
     try {
       await api.post("/api/admin/validate", {
         id,
@@ -176,7 +190,7 @@ function AdminDashboardInner() {
       setShowRejectPicker(false);
       setProofZoom(false);
     } catch (e) {
-      alert(errorMessage(e));
+      setReviewError(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -189,53 +203,6 @@ function AdminDashboardInner() {
       else next.add(id);
       return next;
     });
-  }
-
-  async function runOnSelection(action: "ACTIVE" | "REJECTED", reason: string | null, ask: string) {
-    if (selectedIds.size === 0) return;
-    if (!confirm(ask)) return;
-    setBulkLoading(true);
-    try {
-      const results = await Promise.allSettled(
-        Array.from(selectedIds).map((id) =>
-          api.post("/api/admin/validate", {
-            id,
-            action,
-            ...(reason ? { rejectionReason: reason } : {}),
-          }),
-        ),
-      );
-      const failed = results.filter((r) => r.status === "rejected").length;
-      setSelectedIds(new Set());
-      await fetchMembers();
-      if (failed > 0) alert(`تعذّر تنفيذ ${failed} من الطلبات`);
-    } catch {
-      alert("حدث خطأ أثناء التنفيذ الجماعي");
-    } finally {
-      setBulkLoading(false);
-    }
-  }
-
-  async function bulkMoveAge() {
-    if (selectedIds.size === 0 || !bulkAge) return;
-    if (!confirm(`نقل ${selectedIds.size} عضو إلى عصر ${bulkAge}؟`)) return;
-    setBulkLoading(true);
-    try {
-      const results = await Promise.allSettled(
-        Array.from(selectedIds).map((id) =>
-          api.patch(`/api/admin/members/${id}`, { age: bulkAge }),
-        ),
-      );
-      const failed = results.filter((r) => r.status === "rejected").length;
-      setSelectedIds(new Set());
-      setBulkAge("");
-      await fetchMembers();
-      if (failed > 0) alert(`تعذّر نقل ${failed} من الأعضاء`);
-    } catch {
-      alert("حدث خطأ أثناء التنفيذ الجماعي");
-    } finally {
-      setBulkLoading(false);
-    }
   }
 
   const counts = statusCounts(members);
@@ -356,26 +323,22 @@ function AdminDashboardInner() {
             onChange={setFilters}
           />
 
+          {bulk.error && <Notice tone="error">{bulk.error}</Notice>}
+
           {selectedIds.size > 0 && (
             <BulkActionsBar
               count={selectedIds.size}
               pending={filter === "PENDING"}
-              loading={bulkLoading}
+              loading={bulk.loading}
               reason={bulkReason}
               age={bulkAge}
               ageGroups={ageGroups}
               onReason={setBulkReason}
               onAge={setBulkAge}
-              onClear={() => setSelectedIds(new Set())}
-              onApprove={() => runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفع؟`)}
-              onReject={() =>
-                runOnSelection(
-                  "REJECTED",
-                  bulkReason,
-                  `رفض ${selectedIds.size} طلب دفع بسبب: ${bulkReason}؟`,
-                )
-              }
-              onMoveAge={bulkMoveAge}
+              onClear={clearSelection}
+              onApprove={bulk.askApprove}
+              onReject={() => bulk.askRefuse(bulkReason)}
+              onMoveAge={() => bulk.askMoveToAge(bulkAge)}
             />
           )}
 
@@ -417,8 +380,21 @@ function AdminDashboardInner() {
           onRejectReason={setRejectReason}
           onOpenRejectPicker={() => setShowRejectPicker(true)}
           onCloseRejectPicker={() => setShowRejectPicker(false)}
+          error={reviewError}
           onApprove={() => validate(selected.id, "ACTIVE")}
           onReject={() => validate(selected.id, "REJECTED", rejectReason)}
+        />
+      )}
+
+      {bulk.asking && (
+        <ConfirmDialog
+          title={bulk.asking.title}
+          message={bulk.asking.message}
+          confirmLabel={bulk.asking.confirmLabel}
+          danger={bulk.asking.danger}
+          loading={bulk.loading}
+          onConfirm={bulk.asking.run}
+          onClose={bulk.stopAsking}
         />
       )}
 

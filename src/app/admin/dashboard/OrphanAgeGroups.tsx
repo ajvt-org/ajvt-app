@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Notice from "@/components/Notice";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup, OrphanAge } from "./types";
 import { counted } from "@/lib/arabicCount";
 import { MEMBER } from "@/lib/messages";
+import { moveAgeGroup, orphanAgeGroups as texts } from "@/lib/texts";
 
 export default function OrphanAgeGroups({
   orphans,
@@ -18,11 +21,12 @@ export default function OrphanAgeGroups({
   const [targets, setTargets] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [asking, setAsking] = useState<string | null>(null);
 
   async function reassign(from: string) {
     const to = targets[from];
+    setAsking(null);
     if (!to) return;
-    if (!confirm(`نقل كل الأعضاء من "${from}" إلى "${to}"؟`)) return;
     setBusy(from);
     setError("");
     try {
@@ -40,20 +44,13 @@ export default function OrphanAgeGroups({
   return (
     <div className="space-y-2">
       <p className="text-xs font-bold" style={{ color: "#991b1b" }}>
-        أعصار لدى أعضاء ولا توجد في القائمة
+        {texts.title}
       </p>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        اختر العصر الصحيح لكل واحد منها لنقل أعضائه إليه.
+        {texts.intro}
       </p>
 
-      {error && (
-        <div
-          className="p-2.5 rounded-lg text-xs font-semibold"
-          style={{ background: "#fee2e2", color: "#991b1b" }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <Notice tone="error">{error}</Notice>}
 
       {orphans.map((orphan) => (
         <div key={orphan.name} className="card p-3 space-y-2">
@@ -71,7 +68,7 @@ export default function OrphanAgeGroups({
               onChange={(e) => setTargets({ ...targets, [orphan.name]: e.target.value })}
               className="input text-sm"
             >
-              <option value="">اختر العصر الصحيح...</option>
+              <option value="">{texts.pick}</option>
               {ageGroups.map((g) => (
                 <option key={g.id} value={g.name}>
                   {g.name}
@@ -79,16 +76,27 @@ export default function OrphanAgeGroups({
               ))}
             </select>
             <button
-              onClick={() => reassign(orphan.name)}
+              onClick={() => setAsking(orphan.name)}
               disabled={busy === orphan.name || !targets[orphan.name]}
               className="text-xs px-3 py-2.5 rounded-lg font-bold shrink-0"
               style={{ background: "var(--mint-600)", color: "white" }}
             >
-              {busy === orphan.name ? "..." : "نقل"}
+              {busy === orphan.name ? "..." : texts.move}
             </button>
           </div>
         </div>
       ))}
+
+      {asking && (
+        <ConfirmDialog
+          title={moveAgeGroup.confirmTitle}
+          message={moveAgeGroup.confirmMove(asking, targets[asking] ?? "")}
+          confirmLabel={moveAgeGroup.move}
+          loading={busy !== null}
+          onConfirm={() => reassign(asking)}
+          onClose={() => setAsking(null)}
+        />
+      )}
     </div>
   );
 }
