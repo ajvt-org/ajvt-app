@@ -73,7 +73,7 @@ export { proofReuse } from "./proofReuse";
 export { quizBoard, quizPicker } from "./quizBoard";
 export { quizCompetition } from "./quizCompetition";
 export { quizScores } from "./quizScores";
-export { quizStandings, quizWorkspace } from "./quizWorkspace";
+export { quizBankCoverage, quizStandings, quizWorkspace } from "./quizWorkspace";
 export { settingsForm, settingsPage } from "./settings";
 export {
   bankReference,

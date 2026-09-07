@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import WorkspaceTabs from "@/components/admin/WorkspaceTabs";
+import BankCoverage from "./BankCoverage";
 import CompetitionPanel from "./CompetitionPanel";
 import ParticipantsPanel from "./ParticipantsPanel";
-import RoundsPanel from "./RoundsPanel";
 import ScoresPanel from "./ScoresPanel";
 import StandingsPanel from "./StandingsPanel";
 import { competitionTabSections, openingTab } from "./competitionTabs";
@@ -50,20 +50,21 @@ export default function CompetitionWorkspace({
       {tabs.length > 1 && <WorkspaceTabs sections={sections} active={active} onPick={setPicked} />}
 
       {active === "settings" && (
-        <CompetitionPanel
-          banks={banks}
-          competitionId={competitionId}
-          onSaved={onSaved}
-          onChanged={onChanged}
-          onDeleted={onDeleted}
-        />
+        <>
+          <CompetitionPanel
+            banks={banks}
+            competitionId={competitionId}
+            onSaved={onSaved}
+            onChanged={onChanged}
+            onDeleted={onDeleted}
+          />
+          {competitionId && <BankCoverage competitionId={competitionId} />}
+        </>
       )}
 
       {active === "participants" && competitionId && shape && (
         <ParticipantsPanel competitionId={competitionId} locked={shape.startedAt !== null} />
       )}
-
-      {active === "rounds" && competitionId && <RoundsPanel competitionId={competitionId} />}
 
       {active === "standings" && competitionId && <StandingsPanel competitionId={competitionId} />}
 
