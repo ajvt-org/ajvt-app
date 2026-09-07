@@ -33,7 +33,7 @@ function activity(over: Partial<Activity> = {}): Activity {
 }
 
 function view(over: Partial<ActivitiesView> = {}): ActivitiesView {
-  return { q: "", type: "", state: "", stage: "all", waiting: "", ...over };
+  return { q: "", type: "", state: "", stage: "current", waiting: "", ...over };
 }
 
 function show(activities: Activity[], filters = view(), selecting = false) {
@@ -57,157 +57,65 @@ const mixed = () => [
   activity({ id: "f1", ...FINISHED }),
 ];
 
+const filterButton = () => screen.getByRole("button", { name: /تصفية/ });
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("the one bar the activities are filtered from", () => {
-  it("uses one word for the rows that are not filtered to begin with", () => {
-    show(mixed());
-
-    expect(screen.getAllByLabelText(/: الكل$/).map((b) => b.getAttribute("aria-label"))).toEqual([
-      "النوع: الكل",
-      "التسجيل: الكل",
-    ]);
-  });
-
-  it("says what the stage row offers rather than calling it the same word", () => {
-    show(mixed());
-
-    expect(screen.getByLabelText("المرحلة: كل المراحل")).toBeTruthy();
-    expect(screen.queryByLabelText("المرحلة: الكل")).toBeNull();
-  });
-
-  it("counts the stage chip against the finished the page hides by default", () => {
-    show(
-      [
-        activity({
-          id: "a1",
-          startsAt: "2020-01-01T00:00:00.000Z",
-          endsAt: "2020-01-02T00:00:00.000Z",
-        }),
-        activity({ id: "a2" }),
-      ],
-      view({ stage: "current" }),
-    );
-
-    expect(screen.getByLabelText("المرحلة: كل المراحل").textContent).toContain("2");
-    expect(screen.getByLabelText("المرحلة: جارية وقادمة").textContent).toContain("1");
-  });
-
-  it("says how many each chip would show", () => {
-    show([
-      activity({ id: "t1", isTournament: true }),
-      activity({ id: "t2", isTournament: true }),
-      activity({ id: "v1", isVolunteer: true }),
-    ]);
-
-    expect(screen.getByLabelText("النوع: بطولات").textContent).toContain("2");
-    expect(screen.getByLabelText("النوع: حملات").textContent).toContain("1");
-    expect(screen.getByLabelText("النوع: عادية").textContent).toContain("0");
-  });
-
-  it("leaves an option that would show nothing where it is, and not pressable", () => {
-    show([
-      activity({ id: "t1", isTournament: true }),
-      activity({ id: "t2", isTournament: true }),
-      activity({ id: "v1", isVolunteer: true }),
-    ]);
-
-    expect(screen.getByLabelText("النوع: عادية")).toHaveProperty("disabled", true);
-    expect(screen.getByLabelText("النوع: حملات")).toHaveProperty("disabled", false);
-  });
-
-  it("keeps a row that cannot change the list where it is, and does not offer it", () => {
-    show([activity({ id: "t1", isTournament: true }), activity({ id: "t2", isTournament: true })]);
-
-    expect(screen.getByLabelText("النوع: بطولات")).toHaveProperty("disabled", true);
-    expect(screen.getByLabelText("التسجيل: مفتوح")).toHaveProperty("disabled", true);
-    expect(screen.getByLabelText("المرحلة: منتهية")).toHaveProperty("disabled", true);
-  });
-
-  it("holds the same rows before and after a chip is pressed", async () => {
-    const rows = mixed();
-    const { unmount } = render(
-      <ActivitiesFilters
-        activities={rows}
-        filters={view()}
-        selecting={false}
-        onChange={onChange}
-        onSelectingChange={onSelectingChange}
-      />,
-    );
-    const before = screen.getAllByRole("group").map((g) => g.getAttribute("aria-label"));
-    unmount();
-
-    show(rows, view({ type: "tournament" }));
-
-    expect(screen.getAllByRole("group").map((g) => g.getAttribute("aria-label"))).toEqual(before);
-  });
-
-  it("holds its rows while the search box empties the list under them", () => {
-    show(mixed(), view({ q: "لا شيء" }));
-
-    expect(screen.getAllByRole("group").map((g) => g.getAttribute("aria-label"))).toEqual([
-      "النوع",
-      "التسجيل",
-      "المرحلة",
-    ]);
-  });
-
-  it("offers no filter at all before there is a single activity", () => {
-    show([]);
-
-    expect(screen.queryAllByRole("group")).toEqual([]);
-    expect(screen.getByPlaceholderText("بحث باسم النشاط...")).toBeTruthy();
-  });
-
-  it("keeps the row a reader is inside even when it empties the list", () => {
-    show([activity({ id: "t1", isTournament: true })], view({ type: "volunteer" }));
-
-    expect(screen.getByLabelText("النوع: حملات").getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByLabelText("النوع: الكل")).toHaveProperty("disabled", false);
-  });
-
-  it("counts against what is already chosen", () => {
-    show(
-      [
-        activity({ id: "t1", isTournament: true, isOpen: true }),
-        activity({ id: "t2", isTournament: true, isOpen: false }),
-        activity({ id: "p1", isOpen: true }),
-      ],
-      view({ state: "open" }),
-    );
-
-    expect(screen.getByLabelText("النوع: بطولات").textContent).toContain("1");
-  });
-
-  it("carries the stage alongside the other filters", async () => {
-    show(mixed());
-
-    await userEvent.click(screen.getByLabelText("المرحلة: منتهية"));
-
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ stage: "finished" }));
-  });
-
-  it("marks the chip that is on", () => {
-    show(mixed(), view({ type: "tournament" }));
-
-    expect(screen.getByLabelText("النوع: بطولات").getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByLabelText("النوع: الكل").getAttribute("aria-pressed")).toBe("false");
-  });
-
-  it("searches by title from the same bar", async () => {
+describe("the bar the activities are narrowed from", () => {
+  it("searches by title from the bar itself", async () => {
     show(mixed());
 
     await userEvent.type(screen.getByPlaceholderText("بحث باسم النشاط..."), "د");
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ q: "د" }));
   });
+
+  it("leaves the list its height until the reader asks to filter", () => {
+    show(mixed());
+
+    expect(screen.queryByLabelText(/^النوع/)).toBeNull();
+    expect(filterButton()).toBeTruthy();
+  });
+
+  it("opens the axes over the list", async () => {
+    show(mixed());
+
+    await userEvent.click(filterButton());
+
+    expect(screen.getByLabelText("النوع: بطولات")).toBeTruthy();
+    expect(screen.getByLabelText("المرحلة: كل المراحل")).toBeTruthy();
+  });
+
+  it("says on arrival how many filters the address already carries", () => {
+    show(mixed(), view({ type: "tournament", stage: "finished" }));
+
+    expect(filterButton().textContent).toContain("2");
+  });
+
+  it("counts nothing when the address carries nothing", () => {
+    show(mixed());
+
+    expect(filterButton().textContent).not.toMatch(/[0-9]/);
+  });
+
+  it("keeps the way in where it is even when no axis can narrow", () => {
+    show([activity({ id: "t1", isTournament: true }), activity({ id: "t2", isTournament: true })]);
+
+    expect(filterButton()).toBeTruthy();
+  });
+
+  it("offers no filtering at all before there is a single activity", () => {
+    show([]);
+
+    expect(screen.queryByRole("button", { name: /تصفية/ })).toBeNull();
+    expect(screen.getByPlaceholderText("بحث باسم النشاط...")).toBeTruthy();
+  });
 });
 
 describe("starting a selection", () => {
-  it("offers the mode from the filter bar", async () => {
+  it("offers the mode from the same bar as the search", async () => {
     show([activity()]);
 
     await userEvent.click(screen.getByRole("button", { name: /تحديد/ }));
@@ -223,5 +131,12 @@ describe("starting a selection", () => {
     await userEvent.click(screen.getByRole("button", { name: /تحديد/ }));
 
     expect(onSelectingChange).toHaveBeenCalledWith(false);
+  });
+
+  it("keeps the way into a selection out of the filters", () => {
+    show([activity()]);
+
+    expect(screen.getByRole("button", { name: /تحديد/ })).toBeTruthy();
+    expect(screen.queryByLabelText(/^النوع/)).toBeNull();
   });
 });

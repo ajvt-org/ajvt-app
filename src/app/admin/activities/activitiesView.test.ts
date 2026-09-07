@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   ACTIVITIES_VIEW_KEYS,
   DEFAULT_STAGE,
+  activeFilterCount,
   axisViews,
+  clearedActivitiesView,
   matchesActivitiesView,
   readActivitiesView,
   writeActivitiesView,
@@ -291,5 +293,43 @@ describe("which filters can narrow the list", () => {
 
     expect(optionOf(mixed, view(), "type", "volunteer")?.usable).toBe(false);
     expect(optionOf(mixed, view(), "type", "tournament")?.usable).toBe(true);
+  });
+});
+
+describe("how many filters the address is carrying", () => {
+  const view = (over: Partial<ActivitiesView> = {}): ActivitiesView => ({
+    q: "",
+    type: "",
+    state: "",
+    stage: DEFAULT_STAGE,
+    waiting: "",
+    ...over,
+  });
+
+  it("counts nothing on the view a bare address gives", () => {
+    expect(activeFilterCount(view())).toBe(0);
+  });
+
+  it("counts each axis a reader has moved off what it starts on", () => {
+    expect(activeFilterCount(view({ type: "tournament" }))).toBe(1);
+    expect(activeFilterCount(view({ type: "tournament", stage: "finished" }))).toBe(2);
+    expect(activeFilterCount(view({ type: "tournament", state: "open", stage: "all" }))).toBe(3);
+  });
+
+  it("leaves the search out of the count, since it has its own box", () => {
+    expect(activeFilterCount(view({ q: "دوري" }))).toBe(0);
+  });
+
+  it("gives back the view a bare address would give, and keeps the search", () => {
+    expect(clearedActivitiesView(view({ q: "دوري", type: "tournament", stage: "all" }))).toEqual(
+      view({ q: "دوري" }),
+    );
+  });
+
+  it("clears to something the address writes as nothing", () => {
+    const cleared = clearedActivitiesView(view({ type: "tournament", state: "open" }));
+
+    expect(writeActivitiesView(cleared).toString()).toBe("");
+    expect(activeFilterCount(cleared)).toBe(0);
   });
 });

@@ -173,6 +173,15 @@ function canNarrow(options: AxisOption[], value: string, anyValue: string): bool
   return options.some((option) => option.count > 0 && option.count < whole);
 }
 
+export function activeFilterCount(view: ActivitiesView): number {
+  return [view.type, view.state, view.stage === DEFAULT_STAGE ? "" : view.stage].filter(Boolean)
+    .length;
+}
+
+export function clearedActivitiesView(view: ActivitiesView): ActivitiesView {
+  return { ...view, type: "", state: "", stage: DEFAULT_STAGE };
+}
+
 export function axisViews(
   activities: Activity[],
   view: ActivitiesView,

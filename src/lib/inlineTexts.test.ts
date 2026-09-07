@@ -43,6 +43,7 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/ActivitiesFilters.tsx",
   "src/app/admin/activities/FilterAxisRow.tsx",
   "src/app/admin/activities/ActivityChips.tsx",
+  "src/app/admin/activities/ActivitiesFilterSheet.tsx",
   "src/components/ActivityRowBody.tsx",
   "src/components/tournament/StandingsTable.tsx",
   "src/components/tournament/FollowTeamButton.tsx",
