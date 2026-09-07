@@ -1,7 +1,4 @@
-export interface StandingMember {
-  status: string;
-  membershipYear: number;
-}
+import { membershipState, type StatefulMembership } from "./membershipState";
 
 export interface HomeCounts {
   pendingMembers: number;
@@ -9,14 +6,12 @@ export interface HomeCounts {
   pendingPayments: number;
 }
 
-export function membershipStanding(members: StandingMember[], year: number) {
-  const active = members.filter((m) => m.status === "ACTIVE");
-  const current = active.filter((m) => m.membershipYear === year);
-  return {
-    current: current.length,
-    active: active.length,
-    former: active.length - current.length,
-  };
+export function membershipStanding(members: StatefulMembership[], year: number) {
+  const states = members.map((member) => membershipState(member, year));
+  const current = states.filter((state) => state === "UP_TO_DATE").length;
+  const former = states.filter((state) => state === "BEHIND").length;
+
+  return { current, active: current + former, former };
 }
 
 export function needsHandling(counts: HomeCounts): number {

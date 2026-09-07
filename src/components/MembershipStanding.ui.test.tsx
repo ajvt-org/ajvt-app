@@ -17,6 +17,7 @@ function member(overrides: Partial<MemberData> = {}): MemberData {
     status: "ACTIVE",
     membershipYear: YEAR,
     rejectionReason: null,
+    endedAt: null,
     ...overrides,
   } as MemberData;
 }
@@ -108,6 +109,18 @@ describe("MembershipStanding", () => {
     );
 
     expect(screen.queryByRole("link", { name: /جدّد اشتراكك/ })).toBeNull();
+  });
+
+  it("says a membership an admin ended is over, and offers nothing to send", () => {
+    render(
+      <MembershipStanding
+        member={member({ endedAt: "2026-06-01T00:00:00.000Z" })}
+        currentYear={YEAR}
+      />,
+    );
+
+    expect(screen.getByText("انتهت عضويتك")).toBeDefined();
+    expect(screen.queryAllByRole("link")).toEqual([]);
   });
 
   it("holds its tongue until it knows the year being collected", () => {
