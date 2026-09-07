@@ -170,6 +170,7 @@ const KEPT_CLEAN = [
   "src/components/tournament/MatchResult.tsx",
   "src/components/tournament/matchCard/MatchEvents.tsx",
   "src/components/PaymentReceipts.tsx",
+  "src/components/ReceiptRow.tsx",
   "src/components/admin/shell/navTabs.ts",
   "src/components/admin/StatTile.tsx",
   "src/app/admin/supporters",
