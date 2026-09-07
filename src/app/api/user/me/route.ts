@@ -15,9 +15,6 @@ const MEMBERSHIP_SELECT = {
   year: true,
   status: true,
   rejectionReason: true,
-  paymentMethod: true,
-  paymentProof: true,
-  referenceCode: true,
   endedAt: true,
   createdAt: true,
   updatedAt: true,
@@ -26,7 +23,15 @@ const MEMBERSHIP_SELECT = {
 const ACCOUNT_SELECT = {
   payments: {
     where: { purpose: "MEMBERSHIP" },
-    select: { amount: true, feeApplied: true, year: true, anonymous: true },
+    select: {
+      amount: true,
+      feeApplied: true,
+      year: true,
+      anonymous: true,
+      method: true,
+      proof: true,
+      referenceCode: true,
+    },
   },
   registrations: {
     select: {
@@ -46,17 +51,21 @@ type Membership = {
   year: number;
   status: string;
   rejectionReason: string | null;
-  paymentMethod: string | null;
-  paymentProof: string | null;
-  referenceCode: string | null;
   endedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
+type MembershipMoney = MembershipPaymentRow & {
+  anonymous: boolean;
+  method: string | null;
+  proof: string | null;
+  referenceCode: string | null;
+};
+
 type Account = {
   phone: string | null;
-  payments: (MembershipPaymentRow & { anonymous: boolean })[];
+  payments: MembershipMoney[];
   registrations: unknown[];
   teamMemberships: unknown[];
 };
@@ -64,9 +73,13 @@ type Account = {
 function membershipView(id: string, membership: Membership, account: Account, person: object) {
   const { year, ...rest } = membership;
   const paid = paidForYear(account.payments, year);
+  const payment = account.payments.find((row) => row.year === year);
   return {
     ...rest,
     ...person,
+    paymentMethod: payment?.method ?? null,
+    paymentProof: payment?.proof ?? null,
+    referenceCode: payment?.referenceCode ?? null,
     id,
     membershipYear: year,
     surplusAnonymous: anonymousForYear(account.payments, year),
