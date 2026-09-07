@@ -70,6 +70,7 @@ model User {
   currentStreak           Int                      @default(0) // consecutive days of app activity ("flame")
   longestStreak           Int                      @default(0)
   lastActiveDate          DateTime? // calendar day (UTC) of the last streak-qualifying visit
+  uploads                 ProofImage[]
 }
 
 model Membership {
@@ -461,6 +462,7 @@ model Admin {
   lastLoginIp  String?
   createdAt    DateTime        @default(now())
   activities   AdminActivity[]
+  uploads      ProofImage[]
 }
 
 model AdminActivity {
@@ -645,11 +647,17 @@ model PaymentAccount {
 // Donation.proof and Expense.proof all hold a filename, so "who else sent
 // this exact image" is one query instead of three.
 model ProofImage {
-  filename  String   @id
-  sha256    String
-  createdAt DateTime @default(now())
+  filename          String   @id
+  sha256            String
+  createdAt         DateTime @default(now())
+  uploadedByUserId  String?
+  uploadedByUser    User?    @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  uploadedByAdminId String?
+  uploadedByAdmin   Admin?   @relation(fields: [uploadedByAdminId], references: [id], onDelete: SetNull)
 
   @@index([sha256])
+  @@index([uploadedByUserId])
+  @@index([uploadedByAdminId])
 }
 
 model SiteVisit {
