@@ -26,6 +26,11 @@ import {
   type Dataset,
 } from "@/lib/exportRows";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
+import {
+  MEMBERSHIP_PAYMENT_SELECT,
+  mirroredColumns,
+  paymentOfYear,
+} from "@/lib/membershipPaymentFields";
 import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
 import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
@@ -42,8 +47,6 @@ async function buildCsv(
         userId: true,
         year: true,
         status: true,
-        paymentMethod: true,
-        referenceCode: true,
         createdAt: true,
         user: {
           select: {
@@ -51,7 +54,7 @@ async function buildCsv(
             ...CONFIDENTIAL_SELECT,
             payments: {
               where: { purpose: "MEMBERSHIP" },
-              select: { amount: true, feeApplied: true, year: true },
+              select: MEMBERSHIP_PAYMENT_SELECT,
             },
           },
         },
@@ -67,10 +70,15 @@ async function buildCsv(
           const { year, user, userId, ...rest } = membership;
           const { supportNameConfidential, ...account } = user;
           const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
-          const paid = account.payments.find((p) => p.year === year);
+          const paid = paymentOfYear(account.payments, year);
           const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
           return {
-            ...withPerson({ ...rest, membershipYear: year, user: account }),
+            ...withPerson({
+              ...rest,
+              ...mirroredColumns(paid),
+              membershipYear: year,
+              user: account,
+            }),
             paidAmount: split ? split.fee : null,
             supportAmount: named && split ? split.surplus : 0,
           };

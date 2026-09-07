@@ -123,6 +123,7 @@ describe("the admin member list", () => {
       paymentProof: "proof.jpg",
       referenceCode: "AJ-PAID2",
     });
+    expect(await exported()).toContain("AJ-PAID2");
   });
 
   it("leaves the method and the reference code empty when no payment carries them", async () => {
@@ -135,6 +136,7 @@ describe("the admin member list", () => {
     const [row] = await listed();
 
     expect(row).toMatchObject({ paymentMethod: null, referenceCode: null });
+    expect(await exported()).not.toContain("AJ-NOPAY");
   });
 });
 
