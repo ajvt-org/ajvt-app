@@ -1,60 +1,60 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import IconLabel from "@/components/IconLabel";
 import MemberCard from "@/components/MemberCard";
 import MemberIdentity from "@/components/MemberIdentity";
-import MemberInfoCard from "@/components/MemberInfoCard";
 import MemberRejected from "@/components/MemberRejected";
 import MemberStatusCard from "@/components/MemberStatusCard";
 import MembershipStanding from "@/components/MembershipStanding";
+import NoMembershipCard from "@/components/NoMembershipCard";
+import ProfileSection from "@/components/ProfileSection";
 import StatusTimeline from "@/components/StatusTimeline";
+import { withFrom } from "@/lib/backLink";
+import { myProfile as texts } from "@/lib/texts";
 import type { MemberData } from "@/lib/useMember";
 
 export default function MemberProfile({
   member,
   currentYear,
-  whatsappLink,
-  delayIndex,
   onPhotoUpdated,
   onReload,
   nameRef,
 }: {
-  member: MemberData;
+  member: MemberData | null;
   currentYear: number | null;
-  whatsappLink: string;
-  delayIndex: number;
   onPhotoUpdated: (photo: string | null) => void;
   onReload: () => void;
   nameRef?: (el: HTMLElement | null) => void;
 }) {
   const router = useRouter();
-  const delayClass = delayIndex === 0 ? "" : "delay-1";
-  const active = member.status === "ACTIVE";
+  const active = member?.status === "ACTIVE";
 
   return (
-    <div className={`fade-up ${delayClass} space-y-4`}>
-      <MemberIdentity member={member} onPhotoUpdated={onPhotoUpdated} nameRef={nameRef} />
-
-      {!active && (
-        <>
-          <MemberStatusCard status={member.status} />
-          {member.status === "REJECTED" && <MemberRejected member={member} onReload={onReload} />}
-          <StatusTimeline
-            status={member.status}
-            createdAt={member.createdAt}
-            updatedAt={member.updatedAt}
-          />
-        </>
+    <div className="fade-up space-y-6">
+      {member && (
+        <MemberIdentity member={member} onPhotoUpdated={onPhotoUpdated} nameRef={nameRef} />
       )}
 
-      {/* An accepted payment for an earlier year still reads as "you are a
-          member" above. The standing card is what says the year has moved on,
-          and it draws nothing for a member who is paid up. */}
-      {active && <MembershipStanding member={member} currentYear={currentYear} />}
+      <ProfileSection title={texts.groups.membership}>
+        {!member && (
+          <NoMembershipCard onStart={() => router.push(withFrom("/membership", "/profile"))} />
+        )}
 
-      {active && (
-        <>
+        {member && !active && (
+          <>
+            <MemberStatusCard status={member.status} />
+            {member.status === "REJECTED" && <MemberRejected member={member} onReload={onReload} />}
+            <StatusTimeline
+              status={member.status}
+              createdAt={member.createdAt}
+              updatedAt={member.updatedAt}
+            />
+          </>
+        )}
+
+        {member && active && <MembershipStanding member={member} currentYear={currentYear} />}
+
+        {member && active && (
           <MemberCard
             fullName={member.fullName}
             village={member.village}
@@ -64,22 +64,8 @@ export default function MemberProfile({
             createdAt={member.createdAt}
             photo={member.photo}
           />
-
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-whatsapp"
-          >
-            <IconLabel name="whatsapp">انضم إلى مجموعة الواتساب</IconLabel>
-          </a>
-        </>
-      )}
-
-      <MemberInfoCard
-        member={member}
-        onEdit={active ? undefined : () => router.push(`/membership?id=${member.id}`)}
-      />
+        )}
+      </ProfileSection>
     </div>
   );
 }

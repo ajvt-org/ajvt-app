@@ -22,6 +22,8 @@ export const donationActions = {
   revoke: "إبطال التبرع",
   restore: "إعادة تفعيل",
   edit: "تعديل",
+  classify: "تصنيف",
+  noTags: "لا توجد تصنيفات بعد",
   remove: "حذف نهائياً",
   confirmRemove: "هل أنت متأكد من حذف هذا التبرع نهائياً؟ لا يمكن التراجع عن هذا الإجراء.",
 } as const;

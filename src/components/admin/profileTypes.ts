@@ -20,6 +20,7 @@ export type MemberProfile = {
     endedReason: string | null;
     endedBy: string | null;
     createdAt: string;
+    updatedAt: string;
     user: { id: string; phone: string | null; createdAt: string } | null;
     registrations: {
       id: string;

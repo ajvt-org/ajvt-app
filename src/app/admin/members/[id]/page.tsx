@@ -14,10 +14,9 @@ import MemberEditForm from "./MemberEditForm";
 import MemberHeader from "./MemberHeader";
 import DeleteMemberCard from "./DeleteMemberCard";
 import MemberAccountCard from "./MemberAccountCard";
-import MemberPhotoCard from "./MemberPhotoCard";
-import MembershipEndingCard from "./MembershipEndingCard";
+import MemberPhotoRow from "./MemberPhotoRow";
 import MembershipPanel from "@/app/admin/dashboard/MembershipPanel";
-import MembershipSummary from "./MembershipSummary";
+import MembershipCard from "./MembershipCard";
 import ProfileGroup from "./ProfileGroup";
 import ProfileList from "./ProfileList";
 import SupportPrivacyCard from "./SupportPrivacyCard";
@@ -114,44 +113,26 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
 
       <ProfileGroup title={texts.groupPerson}>
         <ProfileSection icon="user" title={texts.account}>
-          <div className="text-sm">
-            <MemberAccountCard
-              memberId={member.id}
-              userId={member.user?.id ?? null}
-              phone={member.user?.phone ?? null}
-              onChanged={load}
-            />
-          </div>
-        </ProfileSection>
+          <MemberAccountCard
+            memberId={member.id}
+            userId={member.user?.id ?? null}
+            phone={member.user?.phone ?? null}
+            onChanged={load}
+          />
 
-        <MemberPhotoCard
-          memberId={member.id}
-          photo={member.photo}
-          locked={member.photoLocked}
-          onChanged={load}
-        />
+          <MemberPhotoRow
+            memberId={member.id}
+            photo={member.photo}
+            locked={member.photoLocked}
+            onChanged={load}
+          />
+        </ProfileSection>
       </ProfileGroup>
 
       <ProfileGroup title={texts.groupMembership}>
-        <MembershipSummary
-          userId={member.id}
-          membershipYear={member.membershipYear}
-          status={member.status as "PENDING" | "ACTIVE" | "REJECTED"}
-          endedAt={member.endedAt}
-          currentYear={currentYear}
-        />
+        <MembershipCard member={member} currentYear={currentYear} onChanged={load} />
 
         <MembershipPanel memberId={member.id} />
-
-        <MembershipEndingCard
-          memberId={member.id}
-          status={member.status}
-          membershipYear={member.membershipYear}
-          endedAt={member.endedAt}
-          endedReason={member.endedReason}
-          endedBy={member.endedBy}
-          onChanged={load}
-        />
 
         <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
 

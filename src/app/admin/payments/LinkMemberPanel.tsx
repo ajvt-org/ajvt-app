@@ -27,7 +27,7 @@ export default function LinkMemberPanel({
 
   return (
     <div
-      className="mt-2 p-2 rounded-lg"
+      className="p-2 rounded-lg"
       style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
     >
       <input
@@ -39,7 +39,7 @@ export default function LinkMemberPanel({
         className="input text-xs"
         style={{ background: "white" }}
       />
-      <div className="mt-1.5 space-y-1 max-h-52 overflow-y-auto">
+      <div className="mt-1.5 grid gap-1 sm:grid-cols-2 lg:grid-cols-3 max-h-52 overflow-y-auto">
         {results.length === 0 ? (
           <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
             {memberPicker.noMatch}

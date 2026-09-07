@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import ReceiptCard from "@/components/receipt/ReceiptCard";
-import ReceiptFit from "@/components/receipt/ReceiptFit";
+import ReceiptRow from "@/components/ReceiptRow";
 import { sharePng } from "@/components/pdf/renderPdf";
 import { saveReceiptPdf } from "@/components/pdf/receiptPdf";
 import { receiptFileName, type OfficialReceiptView } from "@/lib/officialReceipt";
@@ -14,6 +14,7 @@ type Pending = { receipt: OfficialReceiptView; action: "pdf" | "share" };
 
 export default function PaymentReceipts({ source = "/api/user/receipts" }: { source?: string }) {
   const [rows, setRows] = useState<OfficialReceiptView[] | null>(null);
+  const [openNumber, setOpenNumber] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const captureRef = useRef<HTMLDivElement | null>(null);
 
@@ -59,29 +60,19 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
       >
         <IconLabel name="receipt">{memberReceipts.title}</IconLabel>
       </h3>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         {rows.map((receipt) => (
-          <div key={receipt.number} className="rounded-xl overflow-hidden">
-            <ReceiptFit>
-              <ReceiptCard receipt={receipt} />
-            </ReceiptFit>
-            <div className="flex gap-2 mt-2">
-              <button
-                className="btn flex-1"
-                disabled={pending !== null}
-                onClick={() => setPending({ receipt, action: "pdf" })}
-              >
-                <IconLabel name="file">{memberReceipts.pdf}</IconLabel>
-              </button>
-              <button
-                className="btn flex-1"
-                disabled={pending !== null}
-                onClick={() => setPending({ receipt, action: "share" })}
-              >
-                <IconLabel name="upload">{memberReceipts.share}</IconLabel>
-              </button>
-            </div>
-          </div>
+          <ReceiptRow
+            key={receipt.number}
+            receipt={receipt}
+            open={openNumber === receipt.number}
+            busy={pending !== null}
+            onToggle={() =>
+              setOpenNumber((current) => (current === receipt.number ? null : receipt.number))
+            }
+            onPdf={() => setPending({ receipt, action: "pdf" })}
+            onShare={() => setPending({ receipt, action: "share" })}
+          />
         ))}
       </div>
 

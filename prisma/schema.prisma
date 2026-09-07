@@ -955,6 +955,7 @@ model Payment {
   recordedBy    String?
   reviewedBy    String?
   reviewedAt    DateTime?
+  referenceCode String?         @unique
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 

@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import ProofCard from "./ProofCard";
-import { deleteMember, memberDecision, paymentCard, proofReuse } from "@/lib/texts";
+import {
+  deleteMember,
+  donationActions,
+  donationEdit,
+  memberDecision,
+  paymentCard,
+  proofReuse,
+} from "@/lib/texts";
 import { money } from "@/lib/money";
 import type { MemberOption, Proof } from "./paymentTypes";
 
@@ -336,5 +344,91 @@ describe("a membership payment carries its own controls", () => {
     show();
 
     expect(screen.queryByRole("button", { name: new RegExp(deleteMember.payment) })).toBeNull();
+  });
+
+  it("reads from the decision on the proof towards the deletion of the payment", () => {
+    mockFetch([]);
+    const { container } = show(membership);
+    const text = container.textContent!;
+
+    expect(text.indexOf(memberDecision.accept)).toBeLessThan(text.indexOf(memberDecision.refuse));
+    expect(text.indexOf(memberDecision.refuse)).toBeLessThan(text.indexOf(deleteMember.payment));
+  });
+
+  it("keeps the deletion out of the group the decisions sit in", () => {
+    mockFetch([]);
+    show(membership);
+
+    const accept = screen.getByRole("button", { name: new RegExp(memberDecision.accept) });
+    const remove = screen.getByRole("button", { name: new RegExp(deleteMember.payment) });
+    expect(accept.parentElement!.contains(remove)).toBe(false);
+  });
+});
+
+describe("what a donation opens inside its own card", () => {
+  const TAGS = [{ id: "t1", name: "زكاة" }];
+
+  it("reads its classification with the facts rather than above the actions", () => {
+    mockFetch([]);
+    const { container } = show({ tags: TAGS });
+    const text = container.textContent!;
+
+    expect(text.indexOf("زكاة")).toBeGreaterThan(-1);
+    expect(text.indexOf("زكاة")).toBeLessThan(text.indexOf(donationActions.accept));
+  });
+
+  it("prints no line about a classification a donation does not carry", () => {
+    mockFetch([]);
+    const { container } = show();
+
+    expect(container.querySelector(".expense-tag")).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(donationActions.classify) })).toBeTruthy();
+  });
+
+  it("opens the classification under the actions, which stay where they are", async () => {
+    mockFetch([]);
+    show({ tags: TAGS });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: new RegExp(donationActions.classify) }),
+    );
+
+    const accept = screen.getByRole("button", { name: new RegExp(donationActions.accept) });
+    const save = screen.getByRole("button", { name: donationEdit.save });
+    expect(accept.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("leaves the actions in place when the edit form opens", async () => {
+    mockFetch([]);
+    show();
+
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(donationActions.edit) }));
+
+    const accept = screen.getByRole("button", { name: new RegExp(donationActions.accept) });
+    const shownAs = screen.getByText(donationEdit.shownAs);
+    expect(accept.compareDocumentPosition(shownAs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("holds one panel open at a time", async () => {
+    mockFetch([]);
+    show({ tags: TAGS });
+
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(donationActions.edit) }));
+    await userEvent.click(
+      screen.getByRole("button", { name: new RegExp(donationActions.classify) }),
+    );
+
+    expect(screen.queryByText(donationEdit.shownAs)).toBeNull();
+  });
+
+  it("keeps deleting a donation out of the group holding the routine verbs", () => {
+    mockFetch([]);
+    show({ status: "ACTIVE" });
+
+    const edit = screen.getByRole("button", { name: new RegExp(donationActions.edit) });
+    const remove = screen.getByRole("button", { name: new RegExp(donationActions.remove) });
+    const revoke = screen.getByRole("button", { name: new RegExp(donationActions.revoke) });
+    expect(edit.parentElement!.contains(remove)).toBe(false);
+    expect(remove.parentElement!.contains(revoke)).toBe(true);
   });
 });

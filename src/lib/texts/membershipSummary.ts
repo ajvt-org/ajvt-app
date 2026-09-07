@@ -3,6 +3,10 @@ export const membershipSummary = {
   year: "السنة",
   standing: "الحالة",
   toPayment: "افتح الدفعة",
+  paymentTitle: "دفعة العضوية",
+  noProof: "لا يوجد إثبات دفع على هذه العضوية",
+  amount: "المبلغ",
+  viewProof: "فتح الإثبات كاملاً",
   states: {
     NOT_A_MEMBER: "ليس عضواً",
     APPLIED: "طلب قيد المراجعة",

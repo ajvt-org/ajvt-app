@@ -4,16 +4,12 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
-import ProfileSection from "@/components/admin/ProfileSection";
 import { api, errorMessage } from "@/lib/api";
 import { memberPhoto as texts } from "@/lib/texts";
 
-const DANGER = { background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" } as const;
-const CALM = { background: "var(--mint-100)", color: "var(--mint-700)" } as const;
-
 type Asking = "remove" | "lock";
 
-export default function MemberPhotoCard({
+export default function MemberPhotoRow({
   memberId,
   photo,
   locked,
@@ -48,42 +44,43 @@ export default function MemberPhotoCard({
   }
 
   return (
-    <ProfileSection
-      icon="camera"
-      title={texts.title}
-      badge={locked && <span className="badge badge-rejected">{texts.lockedBadge}</span>}
-    >
-      {!photo && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.none}
-        </p>
-      )}
-      <div className="flex flex-wrap gap-2">
-        {photo && (
-          <button
-            onClick={() => setAsking("remove")}
-            disabled={busy !== ""}
-            className="btn text-sm font-bold"
-            style={DANGER}
-          >
-            {busy === "remove" ? texts.working : <IconLabel name="trash">{texts.remove}</IconLabel>}
-          </button>
-        )}
-        <button
-          onClick={toggleLock}
-          disabled={busy !== ""}
-          className="btn text-sm font-bold"
-          style={locked ? CALM : DANGER}
-        >
-          {busy === "lock" ? (
-            texts.working
-          ) : (
-            <IconLabel name={locked ? "check" : "ban"}>
-              {locked ? texts.unlock : texts.lock}
-            </IconLabel>
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm flex items-center gap-2" style={{ color: "var(--text-muted)" }}>
+          {texts.title}
+          {locked && <span className="badge badge-rejected">{texts.lockedBadge}</span>}
+          {!photo && <span className="text-xs">{texts.none}</span>}
+        </span>
+        <span className="flex flex-wrap items-center gap-2">
+          {photo && (
+            <button
+              onClick={() => setAsking("remove")}
+              disabled={busy !== ""}
+              className="btn btn-sm btn-danger font-bold"
+            >
+              {busy === "remove" ? (
+                texts.working
+              ) : (
+                <IconLabel name="trash">{texts.remove}</IconLabel>
+              )}
+            </button>
           )}
-        </button>
+          <button
+            onClick={toggleLock}
+            disabled={busy !== ""}
+            className={`btn btn-sm font-bold ${locked ? "btn-ghost" : "btn-danger"}`}
+          >
+            {busy === "lock" ? (
+              texts.working
+            ) : (
+              <IconLabel name={locked ? "check" : "ban"}>
+                {locked ? texts.unlock : texts.lock}
+              </IconLabel>
+            )}
+          </button>
+        </span>
       </div>
+
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
           <Icon name="warning" size={13} className="icon-inline" /> {error}
@@ -112,6 +109,6 @@ export default function MemberPhotoCard({
           onClose={() => setAsking(null)}
         />
       )}
-    </ProfileSection>
+    </div>
   );
 }
