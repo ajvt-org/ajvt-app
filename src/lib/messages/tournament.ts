@@ -16,6 +16,10 @@ export const tournament = {
   joinMembershipEnded: "عضويتك منتهية، راجع إدارة الرابطة قبل الانضمام إلى فريق",
   joinNeedsRegistration: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً",
   teamsArrangedByAdmin: "فرق هذه البطولة يرتّبها المشرف، لا يمكنك الانضمام بنفسك",
+  teamNameRequired: "اسم الفريق مطلوب",
+  teamNameTooLong: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)",
+  oneTeamPerRegistrant: (name: string) =>
+    `أنت في فريق «${name}» في هذه البطولة، غادره قبل إنشاء فريق آخر`,
   playerRejected: "لا يمكن إضافة لاعب طلبه مرفوض",
   playerNotRegistered: "هذا العضو غير مسجل في هذه البطولة",
   roundNameTooLong: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)",

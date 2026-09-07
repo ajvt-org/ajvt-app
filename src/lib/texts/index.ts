@@ -108,6 +108,7 @@ export { signUp } from "./signUp";
 export { supportPrivacy } from "./supportPrivacy";
 export { adminSupporters, supporters, surplusCard } from "./supporters";
 export { teamsTab } from "./teamsTab";
+export { teamBuilder } from "./teamBuilder";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";
