@@ -14,18 +14,19 @@ export default function FilterAxisRow({
     <div className="flex items-start gap-2">
       <span
         className="text-[11px] font-bold shrink-0 pt-1.5"
-        style={{ color: "var(--text-muted)", width: "2.75rem" }}
+        style={{ color: "var(--text-muted)", width: "2.75rem", opacity: axis.usable ? 1 : 0.45 }}
       >
         {axis.label}
       </span>
       <div className="flex gap-1.5 flex-wrap" role="group" aria-label={axis.label}>
         {axis.options.map((option) => {
           const on = axis.value === option.value;
+          const usable = axis.usable && option.usable;
           return (
             <button
               key={option.value}
               onClick={() => onPick(option.value)}
-              disabled={!option.usable}
+              disabled={!usable}
               aria-pressed={on}
               aria-label={texts.filters.pick(axis.label, option.label)}
               className="text-xs px-2 py-1 rounded-lg font-bold flex items-center gap-1"
@@ -33,8 +34,8 @@ export default function FilterAxisRow({
                 background: on ? "var(--mint-600)" : "var(--mint-50)",
                 color: on ? "white" : "var(--mint-700)",
                 border: on ? "none" : "1px solid var(--mint-100)",
-                opacity: option.usable ? 1 : 0.45,
-                cursor: option.usable ? "pointer" : "not-allowed",
+                opacity: usable ? 1 : 0.45,
+                cursor: usable ? "pointer" : "not-allowed",
               }}
             >
               {option.label}
