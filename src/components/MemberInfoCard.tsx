@@ -1,5 +1,5 @@
 import IconLabel from "@/components/IconLabel";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { MemberData } from "@/lib/useMember";
 import PaidAmountRows from "@/components/PaidAmountRows";
 import { myProfile, villageField } from "@/lib/texts";
@@ -15,6 +15,8 @@ export default function MemberInfoCard({
   onCard?: boolean;
   onEdit?: () => void;
 }) {
+  const granted = member.status === "ACTIVE";
+
   return (
     <div className="card p-5">
       <div
@@ -38,17 +40,18 @@ export default function MemberInfoCard({
         <InfoRow label={texts.phone} value={member.user?.phone ?? "—"} dir="ltr" />
         {!onCard && <InfoRow label={villageField.label} value={member.village} />}
         {!onCard && member.age && <InfoRow label={texts.age} value={member.age} />}
-        <InfoRow label={texts.paymentMethod} value={member.paymentMethod ?? "—"} />
-        <PaidAmountRows
-          paidAmount={member.paidAmount}
-          supportAmount={member.supportAmount}
-          Row={InfoRow}
-        />
-        <InfoRow label={texts.requestedOn} value={formatDate(member.createdAt)} />
-        <InfoRow label={texts.requestedAt} value={formatTime(member.createdAt)} dir="ltr" />
-        {member.status === "ACTIVE" && (
-          <InfoRow label={texts.acceptedOn} value={formatDate(member.updatedAt)} />
+        {!granted && (
+          <>
+            <InfoRow label={texts.paymentMethod} value={member.paymentMethod ?? "—"} />
+            <PaidAmountRows
+              paidAmount={member.paidAmount}
+              supportAmount={member.supportAmount}
+              Row={InfoRow}
+            />
+            <InfoRow label={texts.requestedOn} value={formatDate(member.createdAt)} />
+          </>
         )}
+        {granted && <InfoRow label={texts.acceptedOn} value={formatDate(member.updatedAt)} />}
       </div>
     </div>
   );

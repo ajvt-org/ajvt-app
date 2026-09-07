@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import MemberInfoCard from "./MemberInfoCard";
 import { HOME_VILLAGE } from "@/lib/villages";
-import { myProfile, villageField } from "@/lib/texts";
+import { myProfile, paidAmount, villageField } from "@/lib/texts";
 import type { MemberData } from "@/lib/useMember";
 
 const texts = myProfile.details;
@@ -19,14 +19,49 @@ function member(overrides: Partial<MemberData> = {}): MemberData {
     memberNumber: "AJVT-2026-0007",
     paymentMethod: "بنكيلي",
     paidAmount: 500,
-    supportAmount: 0,
+    supportAmount: 200,
     createdAt: "2026-08-11T09:00:00.000Z",
     updatedAt: "2026-08-13T09:00:00.000Z",
     ...overrides,
   } as MemberData;
 }
 
+const waiting = () => member({ status: "PENDING", memberNumber: null });
+
 describe("MemberInfoCard", () => {
+  it("is headed as the member's own record rather than as an application", () => {
+    render(<MemberInfoCard member={member()} onCard />);
+
+    expect(screen.getByText(texts.title)).toBeDefined();
+  });
+
+  it("never prints the minute a request was sent", () => {
+    const { container, unmount } = render(<MemberInfoCard member={waiting()} />);
+    expect(container.textContent).not.toMatch(/\d{2}:\d{2}/);
+    unmount();
+
+    const second = render(<MemberInfoCard member={member()} onCard />);
+    expect(second.container.textContent).not.toMatch(/\d{2}:\d{2}/);
+  });
+
+  it("leaves the money to the receipt once the membership is granted", () => {
+    render(<MemberInfoCard member={member()} onCard />);
+
+    expect(screen.queryByText(texts.paymentMethod)).toBeNull();
+    expect(screen.queryByText(paidAmount.fee)).toBeNull();
+    expect(screen.queryByText(paidAmount.support)).toBeNull();
+    expect(screen.queryByText(paidAmount.total)).toBeNull();
+  });
+
+  it("shows the payment while it is still waiting on a decision and has no receipt", () => {
+    render(<MemberInfoCard member={waiting()} />);
+
+    expect(screen.getByText(texts.paymentMethod)).toBeDefined();
+    expect(screen.getByText(paidAmount.fee)).toBeDefined();
+    expect(screen.getByText(paidAmount.support)).toBeDefined();
+    expect(screen.getByText(texts.requestedOn)).toBeDefined();
+  });
+
   it("drops the village and the age while the card beside it carries them", () => {
     render(<MemberInfoCard member={member()} onCard />);
 
@@ -35,7 +70,7 @@ describe("MemberInfoCard", () => {
   });
 
   it("keeps the village and the age for a member with no card to read them from", () => {
-    render(<MemberInfoCard member={member({ status: "PENDING", memberNumber: null })} />);
+    render(<MemberInfoCard member={waiting()} />);
 
     expect(screen.getByText(villageField.label)).toBeDefined();
     expect(screen.getByText(HOME_VILLAGE)).toBeDefined();
@@ -55,12 +90,7 @@ describe("MemberInfoCard", () => {
     expect(screen.queryByText(texts.edit)).toBeNull();
     unmount();
 
-    render(
-      <MemberInfoCard
-        member={member({ status: "REJECTED", memberNumber: null })}
-        onEdit={() => {}}
-      />,
-    );
+    render(<MemberInfoCard member={waiting()} onEdit={() => {}} />);
     expect(screen.getByText(texts.edit)).toBeDefined();
   });
 });
