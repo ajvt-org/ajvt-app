@@ -6,10 +6,10 @@ import { parse } from "@/lib/validation";
 import { pushUnsubscribeSchema } from "./schema";
 
 export const POST = withRoute("POST /api/push/unsubscribe", async (req: NextRequest) => {
-  await requireUser();
+  const session = await requireUser();
   const { endpoint } = parse(pushUnsubscribeSchema, await req.json());
 
-  await prisma.pushSubscription.deleteMany({ where: { endpoint } });
+  await prisma.pushSubscription.deleteMany({ where: { endpoint, userId: session.userId } });
 
   return NextResponse.json({ ok: true });
 });
