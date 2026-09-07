@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { uploads, tournament, common } from "@/lib/messages";
-import { resetDb, post, createUser, signInAs } from "./helpers";
+import { resetDb, post, createAdmin, createUser, signInAs, signInAsAdmin } from "./helpers";
 
 import { POST as USER_LOGOUT } from "@/app/api/auth/logout/route";
 import { POST as ADMIN_LOGOUT } from "@/app/api/admin/logout/route";
@@ -124,5 +124,31 @@ describe("the routes moved onto withRoute", () => {
     expect(res.status).toBe(200);
     expect(body.filename).toMatch(/\.webp$/);
     expect(await prisma.proofImage.count()).toBe(1);
+  });
+
+  it("names the member who made the upload", async () => {
+    const user = await createUser();
+    await signInAs(user);
+
+    const res = await UPLOAD(upload());
+    const { filename } = await res.json();
+
+    expect(await prisma.proofImage.findUnique({ where: { filename } })).toMatchObject({
+      uploadedByUserId: user.id,
+      uploadedByAdminId: null,
+    });
+  });
+
+  it("names the admin who made the upload", async () => {
+    const admin = await createAdmin();
+    await signInAsAdmin(admin);
+
+    const res = await UPLOAD(upload());
+    const { filename } = await res.json();
+
+    expect(await prisma.proofImage.findUnique({ where: { filename } })).toMatchObject({
+      uploadedByUserId: null,
+      uploadedByAdminId: admin.id,
+    });
   });
 });
