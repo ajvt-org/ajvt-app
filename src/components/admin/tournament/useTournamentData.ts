@@ -35,6 +35,7 @@ export interface TournamentInfo {
   minTeamSize: number | null;
   maxTeamSize: number | null;
   organisedByHomeVillage: boolean;
+  playersBuildTeams: boolean;
   outsidePlayerLimit: number | null;
   startsAt: string | null;
   endsAt: string | null;

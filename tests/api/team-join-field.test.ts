@@ -21,6 +21,7 @@ async function tournament() {
       title: "بطولة الحي",
       description: "بطولة فرق",
       isTournament: true,
+      playersBuildTeams: true,
       format: "KNOCKOUT",
       minTeamSize: null,
       maxTeamSize: null,

@@ -154,6 +154,7 @@ export const tournamentSetup = {
   minTeamSize: "الحد الأدنى",
   maxTeamSize: "الحد الأقصى",
   organisedByHomeVillage: "بطولة من تنظيم التاكلالت",
+  playersBuildTeams: "اللاعبون يكوّنون فرقهم بأنفسهم",
   outsidePlayerLimit: "الحد الأقصى للاعبين من خارج التاكلالت",
   shapeLocked: "النظام والنوع أُقفلا بعد إنشاء أول مباراة",
   squadLocked: "حجم الفريق أُقفل بعد انطلاق البطولة",

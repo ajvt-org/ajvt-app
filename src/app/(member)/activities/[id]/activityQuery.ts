@@ -42,6 +42,7 @@ async function loadActivity(id: string) {
       secondColourWord: true,
       minTeamSize: true,
       maxTeamSize: true,
+      playersBuildTeams: true,
       isTournament: true,
       format: true,
       showScorersAndCards: true,

@@ -20,6 +20,7 @@ const activity: Activity = {
   whatsappLink: null,
   registrantCount: 0,
   joinableTeams: [],
+  playersBuildTeams: false,
 };
 
 const member: EligibleMember = {
@@ -117,7 +118,11 @@ describe("ActivityRegistrations", () => {
   it("lets an approved registrant pick a team in a tournament", async () => {
     const fetchMock = mockFetch();
     setup({
-      activity: { isTournament: true, joinableTeams: [{ id: "t1", name: "الفريق الأول" }] },
+      activity: {
+        isTournament: true,
+        playersBuildTeams: true,
+        joinableTeams: [{ id: "t1", name: "الفريق الأول" }],
+      },
       member: { registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }] },
     });
 
@@ -129,7 +134,11 @@ describe("ActivityRegistrations", () => {
 
   it("locks the team once the admin has confirmed it", () => {
     setup({
-      activity: { isTournament: true, joinableTeams: [{ id: "t1", name: "الفريق الأول" }] },
+      activity: {
+        isTournament: true,
+        playersBuildTeams: true,
+        joinableTeams: [{ id: "t1", name: "الفريق الأول" }],
+      },
       member: {
         registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }],
         teamMemberships: [
@@ -140,6 +149,16 @@ describe("ActivityRegistrations", () => {
 
     expect(screen.getByText("تم التأكيد — لا يمكن تغييره")).toBeDefined();
     expect(screen.queryByRole("button", { name: "الفريق الأول" })).toBeNull();
+  });
+
+  it("offers no team to join on a tournament the admin arranges", () => {
+    setup({
+      activity: { isTournament: true, joinableTeams: [{ id: "t1", name: "الفريق الأول" }] },
+      member: { registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }] },
+    });
+
+    expect(screen.queryByRole("button", { name: "الفريق الأول" })).toBeNull();
+    expect(screen.queryByText(/اختر فريقك:/)).toBeNull();
   });
 });
 

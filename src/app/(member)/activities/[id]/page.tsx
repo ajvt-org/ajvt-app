@@ -13,6 +13,7 @@ import ActivityStatus from "./ActivityStatus";
 import { entrantKind } from "@/lib/entrant";
 import { squadOf } from "@/lib/squadSize";
 import { joinableTeams } from "@/lib/registrationTeamServer";
+import { playersMayBuildTeams } from "@/lib/teamBuilding";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
 import { parentFrom } from "@/lib/backLink";
@@ -123,6 +124,7 @@ export default async function ActivityPage({
                   id: t.id,
                   name: t.name,
                 })),
+                playersBuildTeams: playersMayBuildTeams(activity),
               }}
             />
           </div>

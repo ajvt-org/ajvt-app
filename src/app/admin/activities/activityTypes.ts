@@ -57,6 +57,7 @@ export interface NewActivityDraft {
   minTeamSize: string;
   maxTeamSize: string;
   organisedByHomeVillage: boolean;
+  playersBuildTeams: boolean;
   outsidePlayerLimit: string;
   isVolunteer: boolean;
   whatsappLink: string;
@@ -76,6 +77,7 @@ export function emptyNewActivity(): NewActivityDraft {
     minTeamSize: "",
     maxTeamSize: "",
     organisedByHomeVillage: false,
+    playersBuildTeams: false,
     outsidePlayerLimit: "",
     isVolunteer: false,
     whatsappLink: "",

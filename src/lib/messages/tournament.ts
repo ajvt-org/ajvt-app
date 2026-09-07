@@ -15,6 +15,7 @@ export const tournament = {
   joinNeedsMembership: "يجب أن تكون العضوية مقبولة أولاً",
   joinMembershipEnded: "عضويتك منتهية، راجع إدارة الرابطة قبل الانضمام إلى فريق",
   joinNeedsRegistration: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً",
+  teamsArrangedByAdmin: "فرق هذه البطولة يرتّبها المشرف، لا يمكنك الانضمام بنفسك",
   playerRejected: "لا يمكن إضافة لاعب طلبه مرفوض",
   playerNotRegistered: "هذا العضو غير مسجل في هذه البطولة",
   roundNameTooLong: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)",

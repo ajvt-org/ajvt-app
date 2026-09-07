@@ -86,6 +86,7 @@ export const activityCreateSchema = z
     minTeamSize: z.unknown().optional(),
     maxTeamSize: z.unknown().optional(),
     organisedByHomeVillage: z.boolean().optional(),
+    playersBuildTeams: z.boolean().optional(),
     outsidePlayerLimit: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
     whatsappLink: z.string(INVALID).nullish(),
