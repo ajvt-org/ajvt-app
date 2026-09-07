@@ -298,19 +298,13 @@ describe("a table ranked on parts", () => {
     { id: "c", name: "ج" },
   ];
 
-  function seriesMatch(
-    a: string,
-    b: string,
-    sideAHalves: number,
-    sideBHalves: number,
-    over = true,
-  ) {
+  function seriesMatch(a: string, b: string, sideATotal: number, sideBTotal: number, over = true) {
     return {
       firstTeam: { id: a },
       secondTeam: { id: b },
       homeScore: null,
       awayScore: null,
-      series: { sideAHalves, sideBHalves, over },
+      series: { sideATotal, sideBTotal, over },
       status: "PLAYED",
       isKnockout: false,
     };

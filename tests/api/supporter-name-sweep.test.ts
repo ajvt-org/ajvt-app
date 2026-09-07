@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { CHESS_LEVELS, ladderData } from "./ladders";
 import { OWNER_ROLE, SUPER_ROLE } from "@/lib/adminRoles";
 import { DATASETS } from "@/lib/exportRows";
 import { ensureReceiptsFor } from "@/lib/paymentReceiptServer";
@@ -105,11 +106,7 @@ async function seed(): Promise<Fixture> {
       description: "وصف",
       isTournament: true,
       matchShape: "SERIES",
-      partsPerMatch: 2,
-      matchEnding: "PLAY_ALL",
-      partDecision: "OUTCOME",
-      partWord: "لعبة",
-      partsWord: "ألعاب",
+      levels: ladderData(CHESS_LEVELS),
     },
   });
   const one = await prisma.team.create({ data: { activityId: tournament.id, name: "أ" } });
