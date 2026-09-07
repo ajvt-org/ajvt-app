@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import { donationActions } from "@/lib/texts";
 import type { DonationResponse, Proof } from "./paymentTypes";
 
 export function useDonationActions({
@@ -13,13 +12,15 @@ export function useDonationActions({
   remove: (id: string) => void;
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ id: string; message: string } | null>(null);
 
   async function run(id: string, action: () => Promise<void>) {
     setBusyId(id);
+    setFailure(null);
     try {
       await action();
     } catch (e) {
-      alert(errorMessage(e));
+      setFailure({ id, message: errorMessage(e) });
     } finally {
       setBusyId(null);
     }
@@ -28,13 +29,13 @@ export function useDonationActions({
   return {
     busyId,
 
-    destroy: (id: string) => {
-      if (!confirm(donationActions.confirmRemove)) return;
+    errorOn: (id: string) => (failure?.id === id ? failure.message : ""),
+
+    destroy: (id: string) =>
       run(id, async () => {
         await api.del(`/api/admin/donations/${id}`);
         remove(id);
-      });
-    },
+      }),
 
     review: (id: string, status: "ACTIVE" | "REJECTED") =>
       run(id, async () => {

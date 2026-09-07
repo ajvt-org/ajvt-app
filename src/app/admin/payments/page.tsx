@@ -118,6 +118,7 @@ function AdminPaymentsPageInner() {
         destinations={destinations}
         financeTags={tags}
         busyId={actions.busyId}
+        errorOn={actions.errorOn}
         onReview={(proof, status) => actions.review(proof.id, status)}
         onDelete={(proof) => actions.destroy(proof.id)}
         onLink={(proof, userId) => actions.link(proof.id, userId)}
