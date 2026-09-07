@@ -1,24 +1,36 @@
-import type { MatchEnding, PartDecision, PartOutcome } from "@prisma/client";
+import type { BothPastTarget, MatchEnding, PartDecision, PartOutcome } from "@prisma/client";
 
 export type SeriesSide = "SIDE_A" | "SIDE_B";
 
-export const HALVES_PER_PART = 2;
-export const PARTS_PER_EXTENSION = 2;
-
 export interface SeriesRules {
-  partsPerMatch: number;
-  matchEnding: MatchEnding;
-  partsToWin: number | null;
-  partDecision: PartDecision;
+  ending: MatchEnding;
+  unitsPerParent: number;
+  unitsToWin: number | null;
+  target: number | null;
+  deciderTarget: number | null;
+  bothPastTarget: BothPastTarget | null;
   extendsWhenLevel: boolean;
+  extensionUnits: number;
+  startingCredit: number;
+  creditWindow: number;
+  halvesPerUnit: number;
+  decision: PartDecision;
+  wonUnitWorth: number;
+  doubledWorth: number;
+  doublesOnBlankOpponent: boolean;
+  doublesOnRecoveredCredit: boolean;
 }
 
-export interface PlayedPart {
+export interface PlayedUnit {
   order: number;
   abandoned: boolean;
   outcome: PartOutcome | null;
   sideAPoints: number | null;
   sideBPoints: number | null;
+  worth?: number | null;
+  sideALostCredit?: boolean;
+  sideBLostCredit?: boolean;
+  endedByRule?: boolean;
 }
 
 export interface RecordedAdjustment {
@@ -29,12 +41,14 @@ export interface RecordedAdjustment {
 }
 
 export interface SeriesStanding {
-  sideAHalves: number;
-  sideBHalves: number;
-  partsRecorded: number;
-  partsScored: number;
-  partsLeft: number;
-  partsAllowed: number;
+  sideATotal: number;
+  sideBTotal: number;
+  scored: boolean;
+  perUnit: number;
+  unitsRecorded: number;
+  unitsScored: number;
+  unitsLeft: number;
+  unitsAllowed: number;
   target: number | null;
   over: boolean;
   level: boolean;
@@ -42,106 +56,201 @@ export interface SeriesStanding {
   winner: SeriesSide | null;
 }
 
-function halvesOf(part: PlayedPart, decision: PartDecision): { a: number; b: number } {
-  if (part.abandoned) return { a: 0, b: 0 };
-  if (decision === "OUTCOME") {
-    if (part.outcome === "SIDE_A") return { a: HALVES_PER_PART, b: 0 };
-    if (part.outcome === "SIDE_B") return { a: 0, b: HALVES_PER_PART };
-    if (part.outcome === "DRAW") return { a: 1, b: 1 };
+interface Tally {
+  a: number;
+  b: number;
+}
+
+export function countsAScore(rules: SeriesRules): boolean {
+  return rules.ending === "FIRST_PAST";
+}
+
+export function thresholdOf(rules: SeriesRules, decider = false): number | null {
+  if (decider && rules.deciderTarget !== null) return rules.deciderTarget;
+  if (rules.ending === "FIRST_PAST") return rules.target;
+  if (rules.ending === "FIRST_TO") return rules.unitsToWin;
+  return null;
+}
+
+export function targetHalves(rules: SeriesRules, decider = false): number | null {
+  const threshold = thresholdOf(rules, decider);
+  if (threshold === null || rules.ending !== "FIRST_TO") return null;
+  return threshold * rules.halvesPerUnit;
+}
+
+function skipped(unit: PlayedUnit): boolean {
+  return unit.abandoned || unit.endedByRule === true;
+}
+
+export function halvesOf(unit: PlayedUnit, rules: SeriesRules): Tally {
+  if (skipped(unit)) return { a: 0, b: 0 };
+  const won = (unit.worth ?? rules.wonUnitWorth) * rules.halvesPerUnit;
+  const drawn = rules.halvesPerUnit / 2;
+  if (rules.decision === "OUTCOME") {
+    if (unit.outcome === "SIDE_A") return { a: won, b: 0 };
+    if (unit.outcome === "SIDE_B") return { a: 0, b: won };
+    if (unit.outcome === "DRAW") return { a: drawn, b: drawn };
     return { a: 0, b: 0 };
   }
-  const a = part.sideAPoints;
-  const b = part.sideBPoints;
+  const a = unit.sideAPoints;
+  const b = unit.sideBPoints;
   if (a === null || b === null) return { a: 0, b: 0 };
-  if (a === b) return { a: 1, b: 1 };
-  return a > b ? { a: HALVES_PER_PART, b: 0 } : { a: 0, b: HALVES_PER_PART };
+  if (a === b) return { a: drawn, b: drawn };
+  return a > b ? { a: won, b: 0 } : { a: 0, b: won };
 }
 
-export function targetHalves(rules: SeriesRules): number | null {
-  if (rules.matchEnding !== "FIRST_TO" || rules.partsToWin === null) return null;
-  return rules.partsToWin * HALVES_PER_PART;
+function scoreOf(unit: PlayedUnit): Tally {
+  if (skipped(unit)) return { a: 0, b: 0 };
+  return { a: unit.sideAPoints ?? 0, b: unit.sideBPoints ?? 0 };
 }
 
-export function deriveSeries(
+function ordered(units: PlayedUnit[], adjustments: RecordedAdjustment[]): number[] {
+  const orders = [...units, ...adjustments].map((row) => row.order);
+  return [...new Set(orders)].sort((one, two) => one - two);
+}
+
+interface Verdict {
+  winner: SeriesSide | null;
+  over: boolean;
+}
+
+function pastTarget(totals: Tally, target: number | null, rules: SeriesRules): Verdict {
+  if (target === null) return { winner: null, over: false };
+  if (totals.a < target && totals.b < target) return { winner: null, over: false };
+  if (totals.a !== totals.b) {
+    return { winner: totals.a > totals.b ? "SIDE_A" : "SIDE_B", over: true };
+  }
+  return { winner: null, over: rules.bothPastTarget !== "PLAY_ON" };
+}
+
+function runHalves(
   rules: SeriesRules,
-  parts: PlayedPart[],
-  adjustments: RecordedAdjustment[] = [],
-): SeriesStanding {
-  const target = targetHalves(rules);
-  const byOrder = [...parts].sort((one, two) => one.order - two.order);
-  const steps = [...new Set([...byOrder, ...adjustments].map((row) => row.order))].sort(
-    (one, two) => one - two,
-  );
-
-  let sideAHalves = 0;
-  let sideBHalves = 0;
-  let partsRecorded = 0;
-  let partsScored = 0;
+  units: PlayedUnit[],
+  adjustments: RecordedAdjustment[],
+  target: number | null,
+) {
+  const totals: Tally = { a: rules.startingCredit, b: rules.startingCredit };
+  let unitsRecorded = 0;
+  let unitsScored = 0;
   let winner: SeriesSide | null = null;
 
   const reached = (): SeriesSide | null => {
     if (target === null) return null;
-    if (sideAHalves >= target) return "SIDE_A";
-    if (sideBHalves >= target) return "SIDE_B";
+    if (totals.a >= target) return "SIDE_A";
+    if (totals.b >= target) return "SIDE_B";
     return null;
   };
 
-  for (const step of steps) {
+  for (const step of ordered(units, adjustments)) {
     for (const move of adjustments.filter((row) => row.order === step)) {
       if (move.side === "SIDE_A") {
-        sideAHalves += move.selfHalves;
-        sideBHalves -= move.otherHalves;
+        totals.a += move.selfHalves;
+        totals.b -= move.otherHalves;
       } else {
-        sideBHalves += move.selfHalves;
-        sideAHalves -= move.otherHalves;
+        totals.b += move.selfHalves;
+        totals.a -= move.otherHalves;
       }
       winner = reached();
       if (winner) break;
     }
     if (winner) break;
 
-    const part = byOrder.find((row) => row.order === step);
-    if (part) {
-      partsRecorded += 1;
-      if (!part.abandoned) partsScored += 1;
-      const gained = halvesOf(part, rules.partDecision);
-      sideAHalves += gained.a;
-      sideBHalves += gained.b;
+    const unit = units.find((row) => row.order === step);
+    if (unit) {
+      unitsRecorded += 1;
+      if (!skipped(unit)) unitsScored += 1;
+      const gained = halvesOf(unit, rules);
+      totals.a += gained.a;
+      totals.b += gained.b;
       winner = reached();
       if (winner) break;
     }
   }
 
-  const level = sideAHalves === sideBHalves;
-  let partsAllowed = Math.max(rules.partsPerMatch, partsRecorded);
-  if (rules.extendsWhenLevel && winner === null) {
-    while (partsRecorded >= partsAllowed && level) partsAllowed += PARTS_PER_EXTENSION;
+  return { totals, unitsRecorded, unitsScored, winner, over: winner !== null };
+}
+
+function runScores(rules: SeriesRules, units: PlayedUnit[], target: number | null) {
+  const totals: Tally = { a: rules.startingCredit, b: rules.startingCredit };
+  let unitsRecorded = 0;
+  let unitsScored = 0;
+  let verdict: Verdict = { winner: null, over: false };
+
+  for (const unit of [...units].sort((one, two) => one.order - two.order)) {
+    unitsRecorded += 1;
+    if (!skipped(unit)) unitsScored += 1;
+    const gained = scoreOf(unit);
+    totals.a += gained.a;
+    totals.b += gained.b;
+    verdict = pastTarget(totals, target, rules);
+    if (verdict.over) break;
   }
-  const partsLeft = Math.max(partsAllowed - partsRecorded, 0);
-  const over = winner !== null || partsLeft === 0;
-  if (winner === null && partsLeft === 0 && !level) {
-    winner = sideAHalves > sideBHalves ? "SIDE_A" : "SIDE_B";
+
+  return { totals, unitsRecorded, unitsScored, winner: verdict.winner, over: verdict.over };
+}
+
+export function deriveSeries(
+  rules: SeriesRules,
+  units: PlayedUnit[],
+  adjustments: RecordedAdjustment[] = [],
+  decider = false,
+): SeriesStanding {
+  const scored = countsAScore(rules);
+  const target = scored ? thresholdOf(rules, decider) : targetHalves(rules, decider);
+  const run = scored
+    ? runScores(rules, units, target)
+    : runHalves(rules, units, adjustments, target);
+
+  const { totals, unitsRecorded, unitsScored } = run;
+  let winner = run.winner;
+  const level = totals.a === totals.b;
+
+  if (scored) {
+    const over = run.over;
+    return {
+      sideATotal: totals.a,
+      sideBTotal: totals.b,
+      scored,
+      perUnit: 1,
+      unitsRecorded,
+      unitsScored,
+      unitsLeft: over ? 0 : 1,
+      unitsAllowed: over ? unitsRecorded : unitsRecorded + 1,
+      target,
+      over,
+      level,
+      extending: false,
+      winner,
+    };
+  }
+
+  let unitsAllowed = Math.max(rules.unitsPerParent, unitsRecorded);
+  if (rules.extendsWhenLevel && rules.extensionUnits > 0 && winner === null) {
+    while (unitsRecorded >= unitsAllowed && level) unitsAllowed += rules.extensionUnits;
+  }
+  const unitsLeft = Math.max(unitsAllowed - unitsRecorded, 0);
+  const over = winner !== null || unitsLeft === 0;
+  if (winner === null && unitsLeft === 0 && !level) {
+    winner = totals.a > totals.b ? "SIDE_A" : "SIDE_B";
   }
 
   return {
-    sideAHalves,
-    sideBHalves,
-    partsRecorded,
-    partsScored,
-    partsLeft,
-    partsAllowed,
+    sideATotal: totals.a,
+    sideBTotal: totals.b,
+    scored,
+    perUnit: rules.halvesPerUnit,
+    unitsRecorded,
+    unitsScored,
+    unitsLeft,
+    unitsAllowed,
     target,
     over,
     level,
-    extending: partsAllowed > rules.partsPerMatch,
+    extending: unitsAllowed > rules.unitsPerParent,
     winner,
   };
 }
 
-export function acceptsAnotherPart(standing: SeriesStanding): boolean {
-  return !standing.over;
-}
-
-export function nextPartOrder(parts: PlayedPart[]): number {
-  return parts.reduce((highest, part) => Math.max(highest, part.order), 0) + 1;
+export function nextUnitOrder(units: PlayedUnit[]): number {
+  return units.reduce((highest, unit) => Math.max(highest, unit.order), 0) + 1;
 }

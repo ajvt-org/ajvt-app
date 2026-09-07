@@ -106,13 +106,7 @@ model Activity {
   isTournament           Boolean                @default(false)
   format                 TournamentFormat?
   matchShape             MatchShape             @default(FOOTBALL)
-  partsPerMatch          Int?
-  matchEnding            MatchEnding?
-  partsToWin             Int?
-  partDecision           PartDecision?
-  partTarget             Int?
-  partWord               String?
-  partsWord              String?
+  levels                 MatchLevel[]
   hasColours             Boolean                @default(false)
   firstColourWord        String?
   secondColourWord       String?
@@ -356,18 +350,52 @@ model MatchPart {
   @@index([matchId])
 }
 
+model MatchLevel {
+  id                       String           @id @default(cuid())
+  activityId               String
+  activity                 Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  order                    Int
+  singular                 String
+  plural                   String
+  ending                   MatchEnding?
+  unitsPerParent           Int?
+  unitsToWin               Int?
+  target                   Int?
+  deciderTarget            Int?
+  bothPastTarget           BothPastTarget?
+  extendsWhenLevel         Boolean          @default(false)
+  extensionUnits           Int              @default(0)
+  startingCredit           Int              @default(0)
+  creditWindow             Int              @default(0)
+  halvesPerUnit            Int              @default(2)
+  decision                 PartDecision?
+  wonUnitWorth             Int              @default(1)
+  doubledWorth             Int              @default(1)
+  doublesOnBlankOpponent   Boolean          @default(false)
+  doublesOnRecoveredCredit Boolean          @default(false)
+  createdAt                DateTime         @default(now())
+  rules                    AdjustmentRule[]
+
+  @@unique([activityId, order])
+  @@index([activityId])
+}
+
 model AdjustmentRule {
   id             String            @id @default(cuid())
   activityId     String
   activity       Activity          @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  levelId        String?
+  level          MatchLevel?       @relation(fields: [levelId], references: [id], onDelete: SetNull)
   name           String
-  partsToSelf    Int
-  partsFromOther Int
+  unitsToSelf    Int
+  unitsFromOther Int
+  endsUnit       Boolean           @default(false)
   createdAt      DateTime          @default(now())
   recorded       MatchAdjustment[]
 
   @@unique([activityId, name])
   @@index([activityId])
+  @@index([levelId])
 }
 
 model MatchAdjustment {
@@ -1017,11 +1045,16 @@ enum MatchShape {
 enum MatchEnding {
   PLAY_ALL
   FIRST_TO
+  FIRST_PAST
+}
+
+enum BothPastTarget {
+  HIGHER_TOTAL
+  PLAY_ON
 }
 
 enum PartDecision {
   OUTCOME
-  POINTS
   SCORE
 }
 

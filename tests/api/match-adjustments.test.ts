@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { resetDb, get, post, del, createAdmin, signInAsAdmin, withId } from "./helpers";
 import { tournament as messages } from "@/lib/messages";
 import { sideIdData } from "@/lib/matchSides";
+import { SCORED_LEVELS, ladderData } from "./ladders";
 
 import {
   GET as LIST_RULES,
@@ -13,17 +14,7 @@ import { POST as RECORD } from "@/app/api/admin/matches/[matchId]/adjustments/ro
 import { DELETE as UNDO } from "@/app/api/admin/matches/[matchId]/adjustments/[adjustmentId]/route";
 import { POST as ADD_PART, GET as PARTS } from "@/app/api/admin/matches/[matchId]/parts/route";
 
-const MARYASS = {
-  partsPerMatch: 3,
-  matchEnding: "FIRST_TO" as const,
-  partsToWin: 2,
-  partDecision: "POINTS" as const,
-  partTarget: 100,
-  partWord: "جولة",
-  partsWord: "جولات",
-};
-
-const TEYSSE = { name: "تيس", partsToSelf: 2, partsFromOther: 2 };
+const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2 };
 
 async function tournamentWithMatch() {
   const activity = await prisma.activity.create({
@@ -32,7 +23,7 @@ async function tournamentWithMatch() {
       description: "بطولة",
       isTournament: true,
       matchShape: "SERIES",
-      ...MARYASS,
+      levels: ladderData(SCORED_LEVELS),
     },
   });
   const one = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
@@ -95,7 +86,7 @@ describe("what a tournament declares", () => {
   it("refuses a move with no effect", async () => {
     const { activity } = await tournamentWithMatch();
 
-    const res = await declare(activity.id, { name: "لا شيء", partsToSelf: 0, partsFromOther: 0 });
+    const res = await declare(activity.id, { name: "لا شيء", unitsToSelf: 0, unitsFromOther: 0 });
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(messages.adjustmentRule.noEffect);
@@ -132,8 +123,8 @@ describe("what a match records", () => {
 
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.standing.sideAHalves).toBe(4);
-    expect(body.standing.sideBHalves).toBe(-4);
+    expect(body.standing.sideATotal).toBe(4);
+    expect(body.standing.sideBTotal).toBe(-4);
     expect(body.standing.over).toBe(true);
     expect(body.standing.winner).toBe("SIDE_A");
   });
@@ -145,8 +136,8 @@ describe("what a match records", () => {
 
     const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B" })).json();
 
-    expect(body.standing.sideAHalves).toBe(-2);
-    expect(body.standing.sideBHalves).toBe(4);
+    expect(body.standing.sideATotal).toBe(-2);
+    expect(body.standing.sideBTotal).toBe(4);
   });
 
   it("ends the part being played and leaves it scoring nothing", async () => {
@@ -174,17 +165,17 @@ describe("what a match records", () => {
 
   it("takes one from each side and leaves them where they started", async () => {
     const { activity, match } = await tournamentWithMatch();
-    await prisma.activity.update({
-      where: { id: activity.id },
-      data: { partsPerMatch: 5, partsToWin: 4 },
+    await prisma.matchLevel.updateMany({
+      where: { activityId: activity.id, order: 0 },
+      data: { unitsPerParent: 5, unitsToWin: 4 },
     });
     const rule = await ruleOf(activity.id);
     await record(match.id, { ruleId: rule.id, side: "SIDE_A" });
 
     const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B" })).json();
 
-    expect(body.standing.sideAHalves).toBe(0);
-    expect(body.standing.sideBHalves).toBe(0);
+    expect(body.standing.sideATotal).toBe(0);
+    expect(body.standing.sideBTotal).toBe(0);
     expect(body.adjustments).toHaveLength(2);
   });
 
@@ -196,7 +187,7 @@ describe("what a match records", () => {
     const body = await (await undo(match.id, recorded.adjustments[0].id)).json();
 
     expect(body.adjustments).toEqual([]);
-    expect(body.standing.sideAHalves).toBe(0);
+    expect(body.standing.sideATotal).toBe(0);
     expect(body.standing.over).toBe(false);
   });
 

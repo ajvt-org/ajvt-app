@@ -5,7 +5,7 @@ import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
 import { squadOf } from "@/lib/squadSize";
 import { matchSideTeams } from "@/lib/matchSides";
 import { isFootball } from "@/lib/matchShape";
-import { standingOf } from "@/lib/matchSeriesServer";
+import { LEVELS_SELECT, standingOf } from "@/lib/matchSeriesServer";
 
 const MATCH_SIDE = { select: { id: true, name: true, logo: true } } as const;
 
@@ -31,12 +31,7 @@ async function loadActivity(id: string) {
       endsAt: true,
       withTime: true,
       matchShape: true,
-      partsPerMatch: true,
-      matchEnding: true,
-      partsToWin: true,
-      partDecision: true,
-      partWord: true,
-      partsWord: true,
+      levels: LEVELS_SELECT,
       hasColours: true,
       firstColourWord: true,
       secondColourWord: true,
@@ -170,7 +165,7 @@ function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) 
         secondTeam: namedEntrant(sides.second, identities),
         series: isFootball(activity.matchShape)
           ? null
-          : standingOf(activity, match.parts, match.isKnockout, match.adjustments),
+          : standingOf(activity, match.parts, match.adjustments),
         manOfTheMatch: match.manOfTheMatchUser
           ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
           : null,

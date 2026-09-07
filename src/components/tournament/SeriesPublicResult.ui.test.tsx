@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import MatchResult from "./MatchResult";
 import Scoreline from "./Scoreline";
 import type { DecidedMatch } from "./publicTypes";
+import { CHESS_CONFIG } from "@tests/ui/ladders";
 
 vi.mock("./ShareResultButton", () => ({ default: () => null }));
 vi.mock("./MvpVoteWidget", () => ({ default: () => null }));
@@ -49,12 +50,14 @@ const MATCH: DecidedMatch = {
   ],
   adjustments: [],
   series: {
-    sideAHalves: 3,
-    sideBHalves: 1,
-    partsRecorded: 2,
-    partsScored: 2,
-    partsLeft: 0,
-    partsAllowed: 2,
+    sideATotal: 3,
+    sideBTotal: 1,
+    scored: false,
+    perUnit: 2,
+    unitsRecorded: 2,
+    unitsScored: 2,
+    unitsLeft: 0,
+    unitsAllowed: 2,
     target: null,
     over: true,
     level: false,
@@ -71,7 +74,7 @@ function show(match: DecidedMatch = MATCH) {
       day={{ round: null, venue: null }}
       allMatches={[match]}
       football={false}
-      partWord="لعبة"
+      levels={CHESS_CONFIG.ladder}
       showScorersAndCards={false}
       tournamentTitle="بطولة الشطرنج"
       loggedIn={false}
@@ -99,7 +102,7 @@ describe("a series result on the public card", () => {
   it("says a match still being played is not finished", () => {
     show({
       ...MATCH,
-      series: { ...MATCH.series!, over: false, partsLeft: 1, winner: null },
+      series: { ...MATCH.series!, over: false, unitsLeft: 1, winner: null },
     });
 
     expect(screen.getByText("قيد اللعب")).toBeDefined();

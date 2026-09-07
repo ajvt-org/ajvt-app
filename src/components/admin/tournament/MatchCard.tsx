@@ -18,6 +18,7 @@ import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
 import SeriesScoreline from "./SeriesScoreline";
 import type { SeriesConfig } from "./seriesConfig";
+import { countedUnits } from "@/lib/matchLevels";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts, lists } from "@/lib/texts";
@@ -119,7 +120,8 @@ export default function MatchCard({
             <SeriesScoreline
               parts={match.parts}
               standing={match.series}
-              partWord={series.partWord}
+              unitWord={series.unit.singular}
+              extensionUnits={countedUnits(series.match.extensionUnits, series.unit)}
               adjustments={match.adjustments}
               sides={[teamName(match.firstTeam), teamName(match.secondTeam)]}
             />

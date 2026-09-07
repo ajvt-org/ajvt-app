@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SeriesResultForm from "./SeriesResultForm";
+import { CHESS_CONFIG, SCORED_CONFIG, standingRow } from "@tests/ui/ladders";
 import type { SeriesConfig } from "./seriesConfig";
 import type {
   AdjustmentRuleRow,
@@ -24,47 +25,12 @@ vi.mock("@/lib/api", () => ({
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-const CHESS: SeriesConfig = {
-  partsPerMatch: 2,
-  matchEnding: "PLAY_ALL",
-  partsToWin: null,
-  partDecision: "OUTCOME",
-  partTarget: null,
-  partWord: "لعبة",
-  partsWord: "ألعاب",
-  hasColours: true,
-  firstColourWord: "أبيض",
-  secondColourWord: "أسود",
-};
+const CHESS = CHESS_CONFIG;
 
-const MARYASS: SeriesConfig = {
-  partsPerMatch: 3,
-  matchEnding: "FIRST_TO",
-  partsToWin: 2,
-  partDecision: "POINTS",
-  partTarget: 100,
-  partWord: "جولة",
-  partsWord: "جولات",
-  hasColours: false,
-  firstColourWord: null,
-  secondColourWord: null,
-};
+const MARYASS = SCORED_CONFIG;
 
 function standing(over: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
-  return {
-    sideAHalves: 0,
-    sideBHalves: 0,
-    partsRecorded: 0,
-    partsScored: 0,
-    partsLeft: 2,
-    partsAllowed: 2,
-    target: null,
-    over: false,
-    level: true,
-    extending: false,
-    winner: null,
-    ...over,
-  };
+  return standingRow(over);
 }
 
 function part(id: string, order: number, extra: Partial<PartRow> = {}): PartRow {
@@ -129,11 +95,11 @@ describe("the series result form", () => {
   it("says what would end the match while it is still open", async () => {
     show();
 
-    expect(await screen.findByText("تنتهي المباراة بلعب كل الجولات")).toBeDefined();
+    expect(await screen.findByText("تنتهي المباراة بلعب كل الألعاب")).toBeDefined();
   });
 
   it("says the number that ends a match played to a target", async () => {
-    mockSeries({ parts: [], standing: standing({ partsLeft: 3 }) });
+    mockSeries({ parts: [], standing: standing({ unitsLeft: 3 }) });
     show(MARYASS);
 
     expect(await screen.findByText(/تنتهي المباراة عند/)).toBeDefined();
@@ -142,7 +108,7 @@ describe("the series result form", () => {
   it("shows the parts already recorded and who took each", async () => {
     mockSeries({
       parts: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "DRAW" })],
-      standing: standing({ sideAHalves: 3, sideBHalves: 1, over: true, winner: "SIDE_A" }),
+      standing: standing({ sideATotal: 3, sideBTotal: 1, over: true, winner: "SIDE_A" }),
     });
     show();
 
@@ -154,7 +120,7 @@ describe("the series result form", () => {
   it("renders a half as a half rather than a decimal", async () => {
     mockSeries({
       parts: [part("p1", 1, { outcome: "DRAW" })],
-      standing: standing({ sideAHalves: 1, sideBHalves: 1 }),
+      standing: standing({ sideATotal: 1, sideBTotal: 1 }),
     });
     const { container } = show();
 
@@ -166,7 +132,7 @@ describe("the series result form", () => {
   it("shows a side that owes parts as a negative", async () => {
     mockSeries({
       parts: [],
-      standing: standing({ sideAHalves: 4, sideBHalves: -4 }),
+      standing: standing({ sideATotal: 4, sideBTotal: -4 }),
     });
     const { container } = show();
 
@@ -178,7 +144,7 @@ describe("the series result form", () => {
   it("asks for an outcome where the parts are decided by one", async () => {
     show();
 
-    expect(await screen.findByLabelText("نتيجة الجولة")).toBeDefined();
+    expect(await screen.findByLabelText("نتيجة الوحدة")).toBeDefined();
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
   });
 
@@ -186,14 +152,14 @@ describe("the series result form", () => {
     show(MARYASS);
 
     await waitFor(() => expect(screen.queryAllByRole("spinbutton")).toHaveLength(2));
-    expect(screen.queryByLabelText("نتيجة الجولة")).toBeNull();
+    expect(screen.queryByLabelText("نتيجة الوحدة")).toBeNull();
   });
 
   it("sends the outcome it was given", async () => {
     postMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
     show();
 
-    fireEvent.change(await screen.findByLabelText("نتيجة الجولة"), {
+    fireEvent.change(await screen.findByLabelText("نتيجة الوحدة"), {
       target: { value: "SIDE_B" },
     });
     fireEvent.click(screen.getByText("إضافة"));
@@ -212,7 +178,7 @@ describe("the series result form", () => {
   it("says which side had which colour", async () => {
     mockSeries({
       parts: [part("p1", 1, { outcome: "SIDE_A", sideAColour: "FIRST" })],
-      standing: standing({ sideAHalves: 2 }),
+      standing: standing({ sideATotal: 2 }),
     });
     show();
 
@@ -223,47 +189,47 @@ describe("the series result form", () => {
     mockSeries({
       parts: [part("p1", 1, { outcome: "DRAW" }), part("p2", 2, { outcome: "DRAW" })],
       standing: standing({
-        sideAHalves: 2,
-        sideBHalves: 2,
-        partsRecorded: 2,
-        partsAllowed: 4,
-        partsLeft: 2,
+        sideATotal: 2,
+        sideBTotal: 2,
+        unitsRecorded: 2,
+        unitsAllowed: 4,
+        unitsLeft: 2,
         extending: true,
       }),
     });
     show();
 
-    expect(await screen.findByText("تعادلت، وتُمدَّد بجولتين")).toBeDefined();
+    expect(await screen.findByText("تعادلت، وتُمدَّد ب2 ألعاب")).toBeDefined();
   });
 
   it("offers no entry once the match is over", async () => {
     mockSeries({
       parts: [part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "SIDE_A" })],
       standing: standing({
-        sideAHalves: 4,
+        sideATotal: 4,
         over: true,
         level: false,
         winner: "SIDE_A",
-        partsLeft: 0,
+        unitsLeft: 0,
       }),
     });
     show();
 
     await screen.findByText("فازت أحمد");
-    expect(screen.queryByLabelText("نتيجة الجولة")).toBeNull();
+    expect(screen.queryByLabelText("نتيجة الوحدة")).toBeNull();
     expect(screen.queryByText("إضافة")).toBeNull();
   });
 
   it("corrects a part while the match is unfinished", async () => {
     mockSeries({
       parts: [part("p1", 1, { outcome: "SIDE_A" })],
-      standing: standing({ sideAHalves: 2, partsLeft: 1 }),
+      standing: standing({ sideATotal: 2, unitsLeft: 1 }),
     });
     patchMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
     show();
 
     fireEvent.click(await screen.findByLabelText("تعديل لعبة 1"));
-    fireEvent.change(screen.getByLabelText("نتيجة الجولة"), { target: { value: "DRAW" } });
+    fireEvent.change(screen.getByLabelText("نتيجة الوحدة"), { target: { value: "DRAW" } });
     fireEvent.click(screen.getByText("حفظ"));
 
     await waitFor(() => expect(patchMock).toHaveBeenCalled());
@@ -273,7 +239,7 @@ describe("the series result form", () => {
   it("removes a part", async () => {
     mockSeries({
       parts: [part("p1", 1, { outcome: "SIDE_A" })],
-      standing: standing({ sideAHalves: 2, partsLeft: 1 }),
+      standing: standing({ sideATotal: 2, unitsLeft: 1 }),
     });
     delMock.mockResolvedValue({ parts: [], adjustments: [], standing: standing() });
     show();
@@ -286,7 +252,7 @@ describe("the series result form", () => {
   it("says an abandoned part scored nothing", async () => {
     mockSeries({
       parts: [part("p1", 1, { abandoned: true })],
-      standing: standing({ partsRecorded: 1, partsLeft: 1 }),
+      standing: standing({ unitsRecorded: 1, unitsLeft: 1 }),
     });
     show();
 

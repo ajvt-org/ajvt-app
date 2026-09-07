@@ -1,61 +1,128 @@
-import type { MatchEnding, PartDecision } from "@prisma/client";
+import type { Ladder, LevelRow } from "./matchLevels";
+import { isLastLevel, scoredLevel } from "./matchLevels";
 
-export interface SeriesSetup {
-  partsPerMatch: number | null;
-  matchEnding: MatchEnding | null;
-  partsToWin: number | null;
-  partDecision: PartDecision | null;
-  partTarget: number | null;
-  partWord: string | null;
-  partsWord: string | null;
+export interface ColourSetup {
   hasColours: boolean;
   firstColourWord: string | null;
   secondColourWord: string | null;
 }
 
-export const MAX_PARTS_PER_MATCH = 25;
+export const MAX_UNITS_PER_PARENT = 99;
+export const MAX_LEVELS = 4;
 
-export type SeriesSetupProblem =
-  | "partsPerMatch"
-  | "matchEnding"
-  | "partDecision"
-  | "partWords"
-  | "targetOnAnOutcome"
-  | "targetOnAFreeScore"
+export type LevelProblem =
+  | "words"
+  | "unitsPerParent"
+  | "ending"
+  | "decision"
+  | "endingOnTheLastLevel"
+  | "unitsToWinUnused"
+  | "unitsToWinMissing"
+  | "unitsToWinUnreachable"
+  | "targetUnused"
   | "targetMissing"
-  | "partsToWinUnused"
-  | "partsToWinMissing"
-  | "partsToWinUnreachable"
-  | "colourWords";
+  | "targetWithoutAScoredLevel"
+  | "bothPastTargetUnused"
+  | "deciderTargetOnPlayAll"
+  | "creditWithoutAWindow"
+  | "creditWindowTooWide"
+  | "halvesPerUnit"
+  | "worth"
+  | "extensionUnits";
 
-export function seriesSetupProblem(setup: SeriesSetup): SeriesSetupProblem | null {
-  const parts = setup.partsPerMatch;
-  if (!Number.isInteger(parts) || parts === null || parts < 1 || parts > MAX_PARTS_PER_MATCH) {
-    return "partsPerMatch";
+export type LadderProblem = "noLevels" | "tooManyLevels" | "colourWords";
+
+export interface LevelFault {
+  order: number;
+  problem: LevelProblem;
+}
+
+function numberIn(value: number | null, low: number, high: number): boolean {
+  return value !== null && Number.isInteger(value) && value >= low && value <= high;
+}
+
+function endingFault(level: LevelRow, last: boolean): LevelProblem | null {
+  if (last) {
+    return level.ending === null && level.unitsPerParent === null ? null : "endingOnTheLastLevel";
   }
-  if (setup.matchEnding === null) return "matchEnding";
-  if (setup.partDecision === null) return "partDecision";
-  if (!setup.partWord?.trim() || !setup.partsWord?.trim()) return "partWords";
+  if (level.ending === null) return "ending";
+  if (!numberIn(level.unitsPerParent, 1, MAX_UNITS_PER_PARENT)) return "unitsPerParent";
+  return null;
+}
 
-  if (setup.partDecision === "OUTCOME" && setup.partTarget !== null) return "targetOnAnOutcome";
-  if (setup.partDecision === "SCORE" && setup.partTarget !== null) return "targetOnAFreeScore";
-  if (setup.partDecision === "POINTS") {
-    if (!Number.isInteger(setup.partTarget) || (setup.partTarget ?? 0) < 1) return "targetMissing";
+function thresholdFault(level: LevelRow): LevelProblem | null {
+  if (level.ending === "FIRST_TO") {
+    if (level.target !== null) return "targetUnused";
+    if (!numberIn(level.unitsToWin, 1, MAX_UNITS_PER_PARENT)) return "unitsToWinMissing";
+    if ((level.unitsToWin ?? 0) > (level.unitsPerParent ?? 0)) return "unitsToWinUnreachable";
+    return null;
   }
-
-  if (setup.hasColours && (!setup.firstColourWord?.trim() || !setup.secondColourWord?.trim())) {
-    return "colourWords";
+  if (level.ending === "FIRST_PAST") {
+    if (level.unitsToWin !== null) return "unitsToWinUnused";
+    if (!numberIn(level.target, 1, Number.MAX_SAFE_INTEGER)) return "targetMissing";
+    if (level.bothPastTarget === null) return "bothPastTargetUnused";
+    return null;
   }
+  if (level.unitsToWin !== null) return "unitsToWinUnused";
+  if (level.target !== null) return "targetUnused";
+  if (level.deciderTarget !== null) return "deciderTargetOnPlayAll";
+  return null;
+}
 
-  if (setup.matchEnding === "PLAY_ALL" && setup.partsToWin !== null) return "partsToWinUnused";
-  if (setup.matchEnding === "FIRST_TO") {
-    const toWin = setup.partsToWin;
-    if (!Number.isInteger(toWin) || toWin === null || toWin < 1) return "partsToWinMissing";
-    if (toWin > parts) return "partsToWinUnreachable";
+function creditFault(level: LevelRow): LevelProblem | null {
+  if (level.startingCredit < 0 || level.creditWindow < 0) return "creditWithoutAWindow";
+  if (level.startingCredit > 0 && level.creditWindow < 1) return "creditWithoutAWindow";
+  if (level.creditWindow > (level.unitsPerParent ?? 0)) return "creditWindowTooWide";
+  return null;
+}
+
+function unitFault(level: LevelRow, first: boolean): LevelProblem | null {
+  if (!level.singular.trim() || !level.plural.trim()) return "words";
+  if (first === (level.decision !== null)) return "decision";
+  if (level.halvesPerUnit < 1) return "halvesPerUnit";
+  if (level.wonUnitWorth < 1 || level.doubledWorth < level.wonUnitWorth) return "worth";
+  if (level.extendsWhenLevel && level.extensionUnits < 1) return "extensionUnits";
+  return null;
+}
+
+export function levelProblem(level: LevelRow, first: boolean, last: boolean): LevelProblem | null {
+  const words = unitFault(level, first);
+  if (words) return words;
+  const ending = endingFault(level, last);
+  if (ending) return ending;
+  if (last) return null;
+  const threshold = thresholdFault(level);
+  if (threshold) return threshold;
+  return creditFault(level);
+}
+
+export function scoredChildFault(ladder: Ladder, depth: number): LevelProblem | null {
+  const level = ladder[depth];
+  if (!scoredLevel(level)) return null;
+  const child = ladder[depth + 1];
+  if (!child || child.decision !== "SCORE") return "targetWithoutAScoredLevel";
+  return null;
+}
+
+export function ladderProblem(ladder: Ladder): LadderProblem | LevelFault | null {
+  if (ladder.length === 0) return "noLevels";
+  if (ladder.length > MAX_LEVELS) return "tooManyLevels";
+  for (let depth = 0; depth < ladder.length; depth += 1) {
+    const problem =
+      levelProblem(ladder[depth], depth === 0, isLastLevel(ladder, depth)) ??
+      scoredChildFault(ladder, depth);
+    if (problem) return { order: ladder[depth].order, problem };
   }
   return null;
 }
 
-export function isSeriesConfigured(setup: SeriesSetup): boolean {
-  return seriesSetupProblem(setup) === null;
+export function colourProblem(setup: ColourSetup): LadderProblem | null {
+  if (setup.hasColours && (!setup.firstColourWord?.trim() || !setup.secondColourWord?.trim())) {
+    return "colourWords";
+  }
+  return null;
+}
+
+export function isSeriesConfigured(levels: Ladder, colours: ColourSetup): boolean {
+  return ladderProblem(levels) === null && colourProblem(colours) === null;
 }

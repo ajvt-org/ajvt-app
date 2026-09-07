@@ -5,14 +5,12 @@ import { settleMvpVotes } from "./mvpVoteServer";
 import { DEFAULT_MVP_VOTE_MINUTES } from "./mvpVote";
 import { matchSideTeams } from "./matchSides";
 import { isFootball } from "./matchShape";
-import { standingOf } from "./matchSeriesServer";
+import { LEVELS_SELECT, standingOf } from "./matchSeriesServer";
+import type { LevelRow } from "./matchLevels";
 
 interface SeriesActivity {
   matchShape: MatchShape;
-  partsPerMatch: number | null;
-  matchEnding: "PLAY_ALL" | "FIRST_TO" | null;
-  partsToWin: number | null;
-  partDecision: "OUTCOME" | "POINTS" | "SCORE" | null;
+  levels: LevelRow[];
 }
 
 const TEAM_SIDE = { select: { id: true, name: true, logo: true } } as const;
@@ -98,7 +96,7 @@ export function flatMatch(match: LoadedMatch, activity: SeriesActivity) {
     secondTeam: sides.second,
     series: isFootball(activity.matchShape)
       ? null
-      : standingOf(activity, match.parts, match.isKnockout, match.adjustments),
+      : standingOf(activity, match.parts, match.adjustments),
     manOfTheMatch: match.manOfTheMatchUser
       ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
       : null,
@@ -136,21 +134,12 @@ export async function listMatches(activityId: string) {
       select: {
         mvpVoteMinutes: true,
         matchShape: true,
-        partsPerMatch: true,
-        matchEnding: true,
-        partsToWin: true,
-        partDecision: true,
+        levels: LEVELS_SELECT,
       },
     }),
   ]);
   const applied = await settleMvpVotes(matches);
-  const series: SeriesActivity = activity ?? {
-    matchShape: "FOOTBALL",
-    partsPerMatch: null,
-    matchEnding: null,
-    partsToWin: null,
-    partDecision: null,
-  };
+  const series: SeriesActivity = activity ?? { matchShape: "FOOTBALL", levels: [] };
 
   return {
     matches: (applied.size > 0 ? await read() : matches).map((match) => flatMatch(match, series)),

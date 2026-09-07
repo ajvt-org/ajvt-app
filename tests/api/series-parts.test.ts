@@ -3,6 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin } from "./helpers";
 import { tournament as messages } from "@/lib/messages";
 import { sideIdData } from "@/lib/matchSides";
+import type { Prisma } from "@prisma/client";
+import {
+  CHESS_LEVELS,
+  KNOCKOUT_LEVELS,
+  SCORED_LEVELS,
+  ladderData,
+  MATCH_LEVEL,
+  type LevelFixture,
+} from "./ladders";
 
 import { GET as LIST, POST as ADD } from "@/app/api/admin/matches/[matchId]/parts/route";
 import {
@@ -12,32 +21,23 @@ import {
 import { POST as DRAW } from "@/app/api/admin/activities/[id]/bracket/draw/route";
 import { POST as NEXT_ROUND } from "@/app/api/admin/activities/[id]/bracket/next-round/route";
 
-const CHESS = {
-  partsPerMatch: 2,
-  matchEnding: "PLAY_ALL" as const,
-  partDecision: "OUTCOME" as const,
-  partWord: "لعبة",
-  partsWord: "ألعاب",
-};
+const CHESS = CHESS_LEVELS;
 
-const MARYASS = {
-  partsPerMatch: 3,
-  matchEnding: "FIRST_TO" as const,
-  partsToWin: 2,
-  partDecision: "POINTS" as const,
-  partTarget: 100,
-  partWord: "جولة",
-  partsWord: "جولات",
-};
+const COUNTED = SCORED_LEVELS;
 
-async function matchOf(setup: object, matchShape: "FOOTBALL" | "SERIES" = "SERIES") {
+async function matchOf(
+  levels: LevelFixture[],
+  matchShape: "FOOTBALL" | "SERIES" = "SERIES",
+  colours: Prisma.ActivityCreateInput | object = {},
+) {
   const activity = await prisma.activity.create({
     data: {
       title: "بطولة",
       description: "بطولة",
       isTournament: true,
       matchShape,
-      ...setup,
+      levels: ladderData(levels),
+      ...colours,
     },
   });
   const one = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
@@ -74,8 +74,8 @@ describe("recording the parts of a series match", () => {
     const body = await (await list(match.id)).json();
 
     expect(body.parts).toEqual([]);
-    expect(body.standing.sideAHalves).toBe(0);
-    expect(body.standing.partsLeft).toBe(2);
+    expect(body.standing.sideATotal).toBe(0);
+    expect(body.standing.unitsLeft).toBe(2);
     expect(body.standing.over).toBe(false);
   });
 
@@ -88,7 +88,7 @@ describe("recording the parts of a series match", () => {
     const body = await res.json();
     expect(body.parts).toHaveLength(1);
     expect(body.parts[0].order).toBe(1);
-    expect(body.standing.sideAHalves).toBe(2);
+    expect(body.standing.sideATotal).toBe(2);
   });
 
   it("splits a drawn part", async () => {
@@ -96,8 +96,8 @@ describe("recording the parts of a series match", () => {
 
     const body = await (await add(match.id, { outcome: "DRAW" })).json();
 
-    expect(body.standing.sideAHalves).toBe(1);
-    expect(body.standing.sideBHalves).toBe(1);
+    expect(body.standing.sideATotal).toBe(1);
+    expect(body.standing.sideBTotal).toBe(1);
   });
 
   it("refuses an outcome the mode does not know", async () => {
@@ -119,25 +119,16 @@ describe("recording the parts of a series match", () => {
   });
 
   it("records a part played to a target", async () => {
-    const { match } = await matchOf(MARYASS);
+    const { match } = await matchOf(COUNTED);
 
     const body = await (await add(match.id, { sideAPoints: 101, sideBPoints: 74 })).json();
 
-    expect(body.standing.sideAHalves).toBe(2);
+    expect(body.standing.sideATotal).toBe(2);
     expect(body.parts[0].sideAPoints).toBe(101);
   });
 
-  it("refuses a part that never reached its target", async () => {
-    const { match } = await matchOf(MARYASS);
-
-    const res = await add(match.id, { sideAPoints: 40, sideBPoints: 30 });
-
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(messages.partBelowItsTarget(100));
-  });
-
   it("refuses a part with a missing score", async () => {
-    const { match } = await matchOf(MARYASS);
+    const { match } = await matchOf(COUNTED);
 
     const res = await add(match.id, { sideAPoints: 101 });
 
@@ -146,13 +137,10 @@ describe("recording the parts of a series match", () => {
   });
 
   it("takes a free score with no target", async () => {
-    const { match } = await matchOf({
-      partsPerMatch: 1,
-      matchEnding: "PLAY_ALL",
-      partDecision: "SCORE",
-      partWord: "شوط",
-      partsWord: "أشواط",
-    });
+    const { match } = await matchOf([
+      { ...MATCH_LEVEL, unitsPerParent: 1 },
+      { singular: "شوط", plural: "أشواط", decision: "SCORE" },
+    ]);
 
     const res = await add(match.id, { sideAPoints: 3, sideBPoints: 1 });
 
@@ -172,7 +160,7 @@ describe("recording the parts of a series match", () => {
   });
 
   it("stops accepting parts once a side has reached the target", async () => {
-    const { match } = await matchOf(MARYASS);
+    const { match } = await matchOf(COUNTED);
     await add(match.id, { sideAPoints: 101, sideBPoints: 20 });
     await add(match.id, { sideAPoints: 101, sideBPoints: 30 });
 
@@ -187,8 +175,8 @@ describe("recording the parts of a series match", () => {
 
     const body = await (await correct(match.id, added.part.id, { outcome: "SIDE_B" })).json();
 
-    expect(body.standing.sideAHalves).toBe(0);
-    expect(body.standing.sideBHalves).toBe(2);
+    expect(body.standing.sideATotal).toBe(0);
+    expect(body.standing.sideBTotal).toBe(2);
   });
 
   it("removes a part and gives its total back", async () => {
@@ -198,7 +186,7 @@ describe("recording the parts of a series match", () => {
     const body = await (await remove(match.id, added.part.id)).json();
 
     expect(body.parts).toEqual([]);
-    expect(body.standing.sideAHalves).toBe(0);
+    expect(body.standing.sideATotal).toBe(0);
   });
 
   it("says nothing found for a part of another match", async () => {
@@ -208,7 +196,7 @@ describe("recording the parts of a series match", () => {
   });
 
   it("refuses parts on a football match", async () => {
-    const { match } = await matchOf({}, "FOOTBALL");
+    const { match } = await matchOf([], "FOOTBALL");
 
     const res = await add(match.id, { outcome: "SIDE_A" });
 
@@ -217,7 +205,7 @@ describe("recording the parts of a series match", () => {
   });
 
   it("refuses parts before the tournament says what a match is made of", async () => {
-    const { match } = await matchOf({});
+    const { match } = await matchOf([]);
 
     const res = await add(match.id, { outcome: "SIDE_A" });
 
@@ -240,7 +228,7 @@ describe("a series knockout that advances on its parts", () => {
         isTournament: true,
         format: "KNOCKOUT",
         matchShape: "SERIES",
-        ...CHESS,
+        levels: ladderData(CHESS),
       },
     });
     for (const name of ["أ", "ب", "ج", "د"]) {
@@ -284,8 +272,7 @@ describe("the colours of a series match", () => {
   });
 
   async function colouredMatch(opensAs: "FIRST" | "SECOND" | null) {
-    const { match } = await matchOf({
-      ...CHESS,
+    const { match } = await matchOf(CHESS, "SERIES", {
       hasColours: true,
       firstColourWord: "أبيض",
       secondColourWord: "أسود",
@@ -333,26 +320,25 @@ describe("the colours of a series match", () => {
   });
 });
 
-describe("a level knockout match", () => {
+describe("a level match on a level that extends", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin());
   });
 
   it("takes another pair of parts rather than standing level", async () => {
-    const { match } = await matchOf(CHESS);
-    await prisma.match.update({ where: { id: match.id }, data: { isKnockout: true } });
+    const { match } = await matchOf(KNOCKOUT_LEVELS);
     await add(match.id, { outcome: "DRAW" });
 
     const body = await (await add(match.id, { outcome: "DRAW" })).json();
 
     expect(body.standing.over).toBe(false);
     expect(body.standing.extending).toBe(true);
-    expect(body.standing.partsLeft).toBe(2);
+    expect(body.standing.unitsLeft).toBe(2);
     expect((await add(match.id, { outcome: "SIDE_A" })).status).toBe(201);
   });
 
-  it("stands level in a group stage instead", async () => {
+  it("stands level when the level does not extend", async () => {
     const { match } = await matchOf(CHESS);
     await add(match.id, { outcome: "DRAW" });
 
@@ -364,8 +350,7 @@ describe("a level knockout match", () => {
   });
 
   it("keeps the colours level across the pair it is extended by", async () => {
-    const { match } = await matchOf({
-      ...CHESS,
+    const { match } = await matchOf(KNOCKOUT_LEVELS, "SERIES", {
       hasColours: true,
       firstColourWord: "أبيض",
       secondColourWord: "أسود",

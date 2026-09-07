@@ -1,3 +1,7 @@
+import type { LevelRow } from "@/lib/matchLevels";
+
+export type { LevelRow };
+
 export interface PartRow {
   id: string;
   order: number;
@@ -9,12 +13,14 @@ export interface PartRow {
 }
 
 export interface SeriesStandingRow {
-  sideAHalves: number;
-  sideBHalves: number;
-  partsRecorded: number;
-  partsScored: number;
-  partsLeft: number;
-  partsAllowed: number;
+  sideATotal: number;
+  sideBTotal: number;
+  scored: boolean;
+  perUnit: number;
+  unitsRecorded: number;
+  unitsScored: number;
+  unitsLeft: number;
+  unitsAllowed: number;
   target: number | null;
   over: boolean;
   level: boolean;
@@ -25,8 +31,10 @@ export interface SeriesStandingRow {
 export interface AdjustmentRuleRow {
   id: string;
   name: string;
-  partsToSelf: number;
-  partsFromOther: number;
+  unitsToSelf: number;
+  unitsFromOther: number;
+  levelId: string | null;
+  endsUnit: boolean;
 }
 
 export interface RecordedAdjustmentRow {
@@ -39,5 +47,6 @@ export interface RecordedAdjustmentRow {
 export interface SeriesState {
   parts: PartRow[];
   adjustments: RecordedAdjustmentRow[];
+  levels: LevelRow[];
   standing: SeriesStandingRow;
 }

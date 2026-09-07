@@ -3,15 +3,15 @@
 import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
+import { countedUnits, type LevelRow } from "@/lib/matchLevels";
 import { seriesResult as texts } from "@/lib/texts";
 import type { AdjustmentRuleRow, RecordedAdjustmentRow } from "./seriesTypes";
 
-export function effectOf(rule: AdjustmentRuleRow): string {
+export function effectOf(rule: AdjustmentRuleRow, unit: LevelRow): string {
   return texts.moveEffect(
     rule.name,
-    countedNoun(rule.partsToSelf, ROUNDS),
-    countedNoun(rule.partsFromOther, ROUNDS),
+    countedUnits(rule.unitsToSelf, unit),
+    countedUnits(rule.unitsFromOther, unit),
   );
 }
 
@@ -19,7 +19,7 @@ export default function MatchAdjustments({
   rules,
   recorded,
   sides,
-  partWord,
+  unit,
   busy,
   open,
   onRecord,
@@ -28,7 +28,7 @@ export default function MatchAdjustments({
   rules: AdjustmentRuleRow[];
   recorded: RecordedAdjustmentRow[];
   sides: string[];
-  partWord: string;
+  unit: LevelRow;
   busy: boolean;
   open: boolean;
   onRecord: (ruleId: string, side: "SIDE_A" | "SIDE_B") => void;
@@ -58,7 +58,7 @@ export default function MatchAdjustments({
                   {texts.moveOf(row.rule.name, row.side === "SIDE_A" ? sides[0] : sides[1])}
                 </bdi>
                 <span className="ms-2" style={{ color: "var(--text-muted)" }}>
-                  {texts.partNumber(partWord, row.order)}
+                  {texts.unitNumber(unit.singular, row.order)}
                 </span>
               </span>
               {open && (
@@ -88,7 +88,7 @@ export default function MatchAdjustments({
             <option value="">{texts.pickMove}</option>
             {rules.map((rule) => (
               <option key={rule.id} value={rule.id}>
-                {effectOf(rule)}
+                {effectOf(rule, unit)}
               </option>
             ))}
           </select>
