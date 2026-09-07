@@ -271,6 +271,9 @@ export async function recordAdjustment(
     where: { id: ruleId, activityId: match.activityId },
   });
   if (!rule) throw new NotFoundError(messages.adjustmentRuleNotFound);
+  if (rule.levelId !== null && rule.levelId !== unit.levelId) {
+    throw new ValidationError(messages.moveWantsItsOwnLevel);
+  }
 
   return prisma.matchAdjustment.create({ data: { matchId, ruleId, side, unitId } });
 }

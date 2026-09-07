@@ -14,6 +14,8 @@ export interface UnitRow {
   worth: number | null;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
+  decider: boolean;
+  endedBy: AdjustmentRuleRow | null;
   children: UnitRow[];
   standing: SeriesStandingRow | null;
 }

@@ -29,6 +29,14 @@ export interface RecordedInstance {
   rule: { unitsToSelf: number; unitsFromOther: number };
 }
 
+export function offerableRules<T extends { levelId?: string | null }>(
+  rules: T[],
+  levelIds: (string | null)[],
+): T[] {
+  const declared = new Set(levelIds.filter((id): id is string => id !== null));
+  return rules.filter((rule) => !rule.levelId || declared.has(rule.levelId));
+}
+
 export function asAdjustments(
   recorded: RecordedInstance[],
   halvesPerUnit: number,

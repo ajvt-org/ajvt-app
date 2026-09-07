@@ -85,6 +85,7 @@ export const tournament = {
   partNotFound: "الجولة غير موجودة",
   adjustmentRuleNotFound: "هذه الحركة غير معرّفة في البطولة",
   adjustmentNotFound: "الحركة المسجّلة غير موجودة",
+  moveWantsItsOwnLevel: "هذه الحركة تُسجَّل في مستوى آخر من مستويات المباراة",
   adjustmentWantsAUnit: "حدد الوحدة التي وقعت فيها الحركة",
   adjustmentRule: {
     name: "اسم الحركة مطلوب باسمها في اللعبة",
