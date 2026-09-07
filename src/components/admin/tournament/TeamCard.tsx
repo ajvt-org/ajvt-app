@@ -4,6 +4,7 @@ import AddPlayerRow from "./AddPlayerRow";
 import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
 import { teamsTab } from "@/lib/texts";
+import { isMember } from "@/lib/teamInvites";
 import type { RosterMember, Team, TeamMemberEntry } from "./types";
 import {
   outsideShare,
@@ -58,7 +59,9 @@ export default function TeamCard({
         shownName={shownName}
         squad={settings.squad}
         outside={outsideShare(
-          members.map((entry) => ({ id: entry.member.id, village: entry.member.village })),
+          members
+            .filter(isMember)
+            .map((entry) => ({ id: entry.member.id, village: entry.member.village })),
           team,
           settings,
         )}

@@ -6,6 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { TeamMemberEntry } from "./types";
 import { discipline, teamsTab } from "@/lib/texts";
+import { seatKind } from "@/lib/teamInvites";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
@@ -41,18 +42,29 @@ export default function RosterRow({
   onApprove: () => void;
   onRemove: () => void;
 }) {
-  const { member, status } = entry;
-  const pending = status === "PENDING";
+  const { member } = entry;
+  const kind = seatKind(entry);
+  const pending = kind !== "member";
+  const invited = kind === "invitation";
   const from = useAdminOrigin();
   const captainAction = captain
     ? teamsTab.clearCaptain(member.fullName)
     : teamsTab.makeCaptain(member.fullName);
 
-  function confirmThenRemove() {
-    const question = pending
+  const removeQuestion = invited
+    ? teamsTab.confirmWithdraw(member.fullName)
+    : pending
       ? teamsTab.confirmReject(member.fullName)
       : teamsTab.confirmRemove(member.fullName);
-    if (confirm(question)) onRemove();
+
+  const removeLabel = invited
+    ? teamsTab.withdrawOf(member.fullName)
+    : pending
+      ? teamsTab.rejectOf(member.fullName)
+      : teamsTab.removeOf(member.fullName);
+
+  function confirmThenRemove() {
+    if (confirm(removeQuestion)) onRemove();
   }
 
   return (
@@ -81,7 +93,9 @@ export default function RosterRow({
         </Link>
         {pending && (
           <span className="badge badge-pending">
-            <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
+            <IconLabel name={invited ? "bell" : "clock"}>
+              {invited ? teamsTab.captainInvitation : teamsTab.joinRequest}
+            </IconLabel>
           </span>
         )}
         {suspended && (
@@ -100,7 +114,9 @@ export default function RosterRow({
           <button
             onClick={onApprove}
             disabled={busy}
-            aria-label={teamsTab.acceptOf(member.fullName)}
+            aria-label={
+              invited ? teamsTab.seatOf(member.fullName) : teamsTab.acceptOf(member.fullName)
+            }
             className={ACTION}
             style={{ ...ACTION_SIZE, ...MINT_ON }}
           >
@@ -121,9 +137,7 @@ export default function RosterRow({
         <button
           onClick={confirmThenRemove}
           disabled={busy}
-          aria-label={
-            pending ? teamsTab.rejectOf(member.fullName) : teamsTab.removeOf(member.fullName)
-          }
+          aria-label={removeLabel}
           className={ICON_ACTION}
           style={DESTRUCTIVE}
         >

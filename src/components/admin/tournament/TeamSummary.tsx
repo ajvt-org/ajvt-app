@@ -8,6 +8,7 @@ import type { OutsideShare } from "@/lib/squadBar";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
 import { rosterFault, squadIsBarred, type SquadSize } from "@/lib/squadSize";
+import { isInvitation, isMember, isRequest } from "@/lib/teamInvites";
 const COMPLETE = { background: "#d1fae5", color: "#065f46" };
 const SHORT = { background: "#fef3c7", color: "#92400e" };
 const OVER = { background: "#fee2e2", color: "#991b1b" };
@@ -39,8 +40,9 @@ export default function TeamSummary({
   onSetLogo: (filename: string) => Promise<void>;
   onDeleteTeam: () => void;
 }) {
-  const count = team.members.length;
-  const awaiting = team.members.filter((m) => m.status === "PENDING").length;
+  const count = team.members.filter(isMember).length;
+  const requests = team.members.filter(isRequest).length;
+  const invitations = team.members.filter(isInvitation).length;
   const tone = rosterTone(count, squad);
   const barred = squadIsBarred(squad);
 
@@ -97,11 +99,18 @@ export default function TeamSummary({
             </span>
           </div>
         )}
-        {awaiting > 0 && (
+        {(requests > 0 || invitations > 0) && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="badge badge-pending">
-              <IconLabel name="clock">{teamsTab.awaitingCount(awaiting)}</IconLabel>
-            </span>
+            {requests > 0 && (
+              <span className="badge badge-pending">
+                <IconLabel name="clock">{teamsTab.requestCount(requests)}</IconLabel>
+              </span>
+            )}
+            {invitations > 0 && (
+              <span className="badge badge-pending">
+                <IconLabel name="bell">{teamsTab.invitationCount(invitations)}</IconLabel>
+              </span>
+            )}
           </div>
         )}
       </TeamIdentityEditor>

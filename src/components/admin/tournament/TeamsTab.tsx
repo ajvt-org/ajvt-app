@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { RosterMember, Team } from "./types";
 import { displayTeamName, squadIsBarred, squadLabel } from "@/lib/squadSize";
 import { squadBreaches, type SquadSettings } from "@/lib/squadRules";
+import { isMember } from "@/lib/teamInvites";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
@@ -174,7 +175,7 @@ export default function TeamsTab({
           shownName={shownName(team)}
           settings={settings}
           breaches={squadBreaches(
-            (rosters.get(team.id) ?? team.members).map((m) => ({
+            (rosters.get(team.id) ?? team.members).filter(isMember).map((m) => ({
               id: m.member.id,
               village: m.member.village,
             })),
