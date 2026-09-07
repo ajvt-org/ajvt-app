@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { isQuizEligible, eligibleMembers } from "@/lib/quiz";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { endMembership } from "@/lib/membershipEndingServer";
+import { MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
 import { resetDb, makeMember, createUser } from "./helpers";
 import { runningYear } from "@/lib/membershipYear";
 
@@ -20,6 +22,14 @@ async function member(fullName: string, over: Record<string, unknown> = {}) {
     ...over,
   });
   return user;
+}
+
+function endFor(userId: string, year = YEAR) {
+  return endMembership(prisma, userId, year, {
+    reason: MEMBERSHIP_ENDING_REASONS[0],
+    by: "members-admin",
+    at: new Date(),
+  });
 }
 
 function renewInto(userId: string, year: number, status: "PENDING" | "ACTIVE" | "REJECTED") {
@@ -69,6 +79,27 @@ describe("who may sit the quiz", () => {
     await renewInto(user.id, YEAR, "PENDING");
 
     expect(await isQuizEligible(user.id)).toBe(false);
+  });
+
+  it("turns away a member whose membership an admin has ended", async () => {
+    const user = await member("منتهية عضويته");
+    await endFor(user.id);
+
+    expect(await isQuizEligible(user.id)).toBe(false);
+  });
+
+  it("keeps a member who is a year behind but has covered the fee", async () => {
+    const user = await member("متأخر", { membershipYear: YEAR - 1 });
+
+    expect(await isQuizEligible(user.id)).toBe(true);
+  });
+
+  it("leaves an ended membership out of the eligible list", async () => {
+    const kept = await member("أحمد");
+    const dropped = await member("باه");
+    await endFor(dropped.id);
+
+    expect((await eligibleMembers()).map((m) => m.userId)).toEqual([kept.id]);
   });
 
   it("lists an eligible member once however many years they hold", async () => {
