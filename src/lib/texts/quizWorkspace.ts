@@ -16,7 +16,6 @@ export const quizBankCoverage = {
 } as const;
 
 export const quizStandings = {
-  title: "ترتيب هذه المسابقة",
   block: "فترة الترتيب",
   empty: "لا ترتيب بعد",
 } as const;

@@ -73,10 +73,6 @@ export default function ParticipantsPanel({
 
   return (
     <div className="card p-4 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="users">المشاركون</IconLabel>
-      </p>
-
       {body.candidates.length === 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           لا يوجد منتسب مؤهل للمسابقة

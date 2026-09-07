@@ -18,10 +18,7 @@ export default function CompetitionList({
 }) {
   return (
     <div className="card p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="trophy">المسابقات</IconLabel>
-        </p>
+      <div className="flex justify-end">
         <button onClick={onCreate} className="btn btn-primary btn-sm">
           <IconLabel name="plus">مسابقة جديدة</IconLabel>
         </button>
