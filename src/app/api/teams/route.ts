@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { newTeamSchema } from "./schema";
-import { requireNoTeamYet, requireTeamBuilder } from "@/lib/teamBuildingServer";
+import { refuseSecondTeam, requireTeamBuilder } from "@/lib/teamBuildingServer";
 import { myTeamView } from "@/lib/myTeamServer";
 import { common } from "@/lib/messages";
 
@@ -20,7 +20,7 @@ export const GET = withRoute("GET /api/teams", async (req: NextRequest) => {
 export const POST = withRoute("POST /api/teams", async (req: NextRequest) => {
   const { activityId, name } = parse(newTeamSchema, await req.json());
   const { userId, activity } = await requireTeamBuilder(activityId);
-  await requireNoTeamYet(activityId, userId);
+  await refuseSecondTeam(activityId, userId);
 
   const team = await prisma.$transaction(async (tx) => {
     const created = await tx.team.create({

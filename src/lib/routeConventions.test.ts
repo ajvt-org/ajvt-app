@@ -15,7 +15,11 @@ const NOT_YET_WRAPPED = [
   "files/team/[filename]/route.ts GET",
 ];
 
-const GUARD_SOURCES = ["src/lib/auth.ts", "src/lib/activityAccessServer.ts"];
+const GUARD_SOURCES = [
+  "src/lib/auth.ts",
+  "src/lib/activityAccessServer.ts",
+  "src/lib/teamBuildingServer.ts",
+];
 
 const NO_GUARD: Record<string, string> = {
   "activities/route.ts GET": "the activities list every visitor sees",
@@ -115,7 +119,7 @@ describe("route conventions", () => {
 });
 
 describe("every route reaches a guard", () => {
-  it("finds the guards in the two files that hold them", () => {
+  it("finds the guards in the files that hold them", () => {
     expect(guards()).toEqual([
       "requireAdmin",
       "requireAdminRole",
@@ -129,6 +133,7 @@ describe("every route reaches a guard", () => {
       "requireTeamAccess",
       "requireGroupAccess",
       "requireBookingAccess",
+      "requireTeamBuilder",
     ]);
   });
 

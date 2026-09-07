@@ -61,7 +61,7 @@ export async function requireTeamBuilder(activityId: string): Promise<TeamBuilde
   return { userId: session.userId, activity };
 }
 
-export async function requireNoTeamYet(activityId: string, userId: string) {
+export async function refuseSecondTeam(activityId: string, userId: string) {
   const seat = await prisma.teamMember.findFirst({
     where: { userId, team: { activityId } },
     select: { team: { select: { name: true } } },
