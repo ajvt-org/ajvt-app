@@ -1,18 +1,18 @@
 import IconLabel from "@/components/IconLabel";
 import { PLAIN_DATASETS, type PlainDataset } from "@/lib/exportRows";
-import { settingsPage } from "@/lib/texts";
+import { dataExport as texts } from "@/lib/texts";
 
 const LABEL: Record<PlainDataset, string> = {
-  members: settingsPage.exportMembers,
-  donations: settingsPage.exportDonations,
-  ages: settingsPage.exportAges,
+  members: texts.members,
+  donations: texts.donations,
+  ages: texts.ages,
 };
 
 export default function DataExport() {
   return (
     <div className="card p-4 space-y-3">
       <p className="font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="download">{settingsPage.exportTitle}</IconLabel>
+        <IconLabel name="download">{texts.title}</IconLabel>
       </p>
 
       <div className="flex flex-wrap gap-2">

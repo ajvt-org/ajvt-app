@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import DataExport from "./DataExport";
 import PaymentMethodManager from "@/components/admin/PaymentMethodManager";
 import SettingsForm from "./SettingsForm";
 import WorkspaceTabs, { type WorkspaceSection } from "@/components/admin/WorkspaceTabs";
@@ -15,7 +14,6 @@ const SECTIONS: WorkspaceSection[] = [
     tabs: [
       { key: "settings", label: settingsPage.settingsTab, icon: "gear" },
       { key: "methods", label: paymentMethodManager.title, icon: "card" },
-      { key: "export", label: settingsPage.exportTab, icon: "download" },
     ],
   },
 ];
@@ -39,7 +37,6 @@ function AdminSettingsPageInner() {
 
       {tab === "settings" && <SettingsForm />}
       {tab === "methods" && <PaymentMethodManager />}
-      {tab === "export" && <DataExport />}
     </div>
   );
 }

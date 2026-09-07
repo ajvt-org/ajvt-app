@@ -103,6 +103,7 @@ const KEPT_CLEAN = [
   "src/app/api/admin/activities/[id]/suspensions/schema.ts",
   "src/app/admin/receipts",
   "src/app/admin/settings",
+  "src/app/admin/stats",
   "src/app/api/admin/receipts",
   "src/app/api/donations/route.ts",
   "src/app/api/admin/matches/[matchId]/bookings",

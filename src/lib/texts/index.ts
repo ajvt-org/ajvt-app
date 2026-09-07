@@ -44,6 +44,7 @@ export { lists } from "./lists";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { donationActions, donationEdit } from "./donationEdit";
+export { dataExport, dataPage, siteVisits } from "./dataPage";
 export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
