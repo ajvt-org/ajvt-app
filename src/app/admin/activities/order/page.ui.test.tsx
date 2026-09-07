@@ -64,10 +64,40 @@ beforeEach(() => {
 });
 
 describe("arranging how the activities show", () => {
-  it("says stage decides first and the arrows only decide inside it", () => {
+  it("says the one thing the arrows cannot say for themselves", () => {
     render(<ActivityOrderPage />);
 
-    expect(screen.getByText(/المرحلة تُقرَّر أولاً/)).toBeTruthy();
+    expect(screen.getByText("الأسهم ترتّب النشاط داخل مرحلته فقط.")).toBeTruthy();
+  });
+
+  it("does not name itself again under the link that named it", () => {
+    render(<ActivityOrderPage />);
+
+    expect(screen.queryByText("ترتيب ظهور الأنشطة")).toBeNull();
+  });
+
+  it("shows each activity the way the list does, so two names apart tell apart", () => {
+    load([
+      activity("a", "بطولة الشطرنج", 0, { isTournament: true, photo: "a.jpg" }),
+      activity("b", "حملة النظافة", 1, {
+        isVolunteer: true,
+        startsAt: "2026-09-10",
+        endsAt: "2026-09-12",
+      }),
+    ]);
+    render(<ActivityOrderPage />);
+
+    expect(screen.getByText("بطولة")).toBeTruthy();
+    expect(screen.getByText("حملة تطوعية")).toBeTruthy();
+    expect(document.querySelectorAll("img").length).toBe(1);
+    expect(document.querySelectorAll(".activity-thumb").length).toBe(2);
+  });
+
+  it("keeps the arrows at the end of a row that now carries more", () => {
+    render(<ActivityOrderPage />);
+
+    const row = screen.getByLabelText(/تقديم بطولة البلاي ستيشن/).closest("div");
+    expect(row?.textContent).toContain("بطولة البلاي ستيشن");
   });
 
   it("groups the finished ones apart from the rest", () => {

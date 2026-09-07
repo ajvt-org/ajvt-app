@@ -59,6 +59,7 @@ const KEPT_CLEAN = [
   "src/app/membership/AccountChoice.tsx",
   "src/components/PaymentMethodChoice.tsx",
   "src/app/admin/activities/ActivityRow.tsx",
+  "src/app/admin/activities/order/page.tsx",
   "src/app/admin/activities/ActivitiesList.tsx",
   "src/app/admin/activities/ActivitiesSkeleton.tsx",
   "src/app/admin/activities/AttentionPanel.tsx",
