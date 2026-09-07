@@ -40,6 +40,9 @@ export const quizQuestionList = {
   enable: "تفعيل",
   remove: "حذف",
   outOf: "من",
+  answerShape: (correct: number, total: number) => `${correct} من ${total}`,
+  answersMark: "شكل الإجابات",
+  noCorrect: "لا إجابة صحيحة محددة",
   play: (sent: number, answered: number, correct: number) =>
     `أُرسلت لـ ${sent} · أُجيبت ${answered} · صحيحة ${correct}`,
   moveUp: "تقديم السؤال",
