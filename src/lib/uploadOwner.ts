@@ -16,3 +16,14 @@ export function uploadOwnerOf(admin: unknown, user: unknown): UploadOwner {
 export function isAnonymousOwner(owner: UploadOwner): boolean {
   return owner.userId === null && owner.adminId === null;
 }
+
+export interface UploadRecord {
+  uploadedByUserId: string | null;
+  uploadedByAdminId: string | null;
+}
+
+export function ownsUpload(record: UploadRecord | null, owner: UploadOwner): boolean {
+  if (!record) return false;
+  if (owner.userId !== null && record.uploadedByUserId === owner.userId) return true;
+  return owner.adminId !== null && record.uploadedByAdminId === owner.adminId;
+}

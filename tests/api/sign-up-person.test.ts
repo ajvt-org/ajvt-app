@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST as REGISTER } from "@/app/api/auth/register/route";
 import { prisma } from "@/lib/prisma";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
+import { uploads } from "@/lib/messages";
 import { resetDb, post } from "./helpers";
 
 const signUp = {
@@ -37,10 +38,12 @@ describe("signing up creates the whole person", () => {
     expect(await prisma.membership.count()).toBe(0);
   });
 
-  it("takes a photo when one is offered", async () => {
-    await REGISTER(post("/api/auth/register", { ...signUp, photo: "face.webp" }));
+  it("refuses a photo, since a visitor signing up has uploaded nothing", async () => {
+    const res = await REGISTER(post("/api/auth/register", { ...signUp, photo: "face.webp" }));
 
-    expect((await prisma.user.findFirstOrThrow()).photo).toBe("face.webp");
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(uploads.notYourUpload);
+    expect(await prisma.user.count()).toBe(0);
   });
 
   it("drops the age group for a neighbouring village", async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isAnonymousOwner, uploadOwnerOf } from "./uploadOwner";
+import { isAnonymousOwner, ownsUpload, uploadOwnerOf } from "./uploadOwner";
 
 describe("uploadOwnerOf", () => {
   it("reads the member id from a member session", () => {
@@ -36,5 +36,42 @@ describe("uploadOwnerOf", () => {
 
   it("does not read a signed in caller as anonymous", () => {
     expect(isAnonymousOwner(uploadOwnerOf(null, { userId: "u1" }))).toBe(false);
+  });
+});
+
+describe("ownsUpload", () => {
+  const member = { userId: "u1", adminId: null };
+  const admin = { userId: null, adminId: "a1" };
+
+  it("holds for the member who made the upload", () => {
+    expect(ownsUpload({ uploadedByUserId: "u1", uploadedByAdminId: null }, member)).toBe(true);
+  });
+
+  it("holds for the admin who made the upload", () => {
+    expect(ownsUpload({ uploadedByUserId: null, uploadedByAdminId: "a1" }, admin)).toBe(true);
+  });
+
+  it("does not hold for another member", () => {
+    expect(ownsUpload({ uploadedByUserId: "u2", uploadedByAdminId: null }, member)).toBe(false);
+  });
+
+  it("does not hold for another admin", () => {
+    expect(ownsUpload({ uploadedByUserId: null, uploadedByAdminId: "a2" }, admin)).toBe(false);
+  });
+
+  it("does not let an admin claim a member upload, or a member an admin one", () => {
+    expect(ownsUpload({ uploadedByUserId: "u1", uploadedByAdminId: null }, admin)).toBe(false);
+    expect(ownsUpload({ uploadedByUserId: null, uploadedByAdminId: "a1" }, member)).toBe(false);
+  });
+
+  it("does not hold when there is no record of the upload", () => {
+    expect(ownsUpload(null, member)).toBe(false);
+  });
+
+  it("does not hold for a caller with no session, whatever the record says", () => {
+    const anonymous = { userId: null, adminId: null };
+
+    expect(ownsUpload({ uploadedByUserId: null, uploadedByAdminId: null }, anonymous)).toBe(false);
+    expect(ownsUpload({ uploadedByUserId: "u1", uploadedByAdminId: null }, anonymous)).toBe(false);
   });
 });

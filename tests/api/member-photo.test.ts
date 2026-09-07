@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { uploads } from "@/lib/messages";
 import { PATCH as SELF_PATCH } from "@/app/api/members/[id]/route";
-import { resetDb, patch, createUsers, signInAs, withId, makeMember } from "./helpers";
+import { resetDb, patch, createUsers, signInAs, uploadedBy, withId, makeMember } from "./helpers";
 
 async function member() {
   const [user] = await createUsers(1);
@@ -21,6 +22,7 @@ describe("a member changing their own picture", () => {
   it("writes the new picture to the account that carries it", async () => {
     const { user, member: row } = await member();
     await signInAs(user);
+    await uploadedBy("new.webp", { userId: user.id });
 
     const res = await SELF_PATCH(
       patch(`/api/members/${row.userId}`, { photo: "new.webp" }),
@@ -71,5 +73,38 @@ describe("a member changing their own picture", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  it("refuses a filename the member did not upload", async () => {
+    const { user, member: row } = await member();
+    const [other] = await createUsers(1);
+    await uploadedBy("theirs.webp", { userId: other.id });
+    await signInAs(user);
+
+    const res = await SELF_PATCH(
+      patch(`/api/members/${row.userId}`, { photo: "theirs.webp" }),
+      withId(row.userId),
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(uploads.notYourUpload);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).photo).toBe(
+      "old.webp",
+    );
+  });
+
+  it("refuses a filename with no upload behind it", async () => {
+    const { user, member: row } = await member();
+    await signInAs(user);
+
+    const res = await SELF_PATCH(
+      patch(`/api/members/${row.userId}`, { photo: "nowhere.webp" }),
+      withId(row.userId),
+    );
+
+    expect(res.status).toBe(400);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).photo).toBe(
+      "old.webp",
+    );
   });
 });
