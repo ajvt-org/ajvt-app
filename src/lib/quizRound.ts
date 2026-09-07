@@ -46,6 +46,10 @@ export function roundIndexAt(shape: RoundShape, now: Date): number {
   return Math.min(Math.max(0, shape.roundCount - 1), index);
 }
 
+export function roundInPlay(shape: RoundShape, now: Date): number {
+  return currentRound(shape, now)?.index ?? roundIndexAt(shape, now);
+}
+
 export function roundsBegun(shape: RoundShape, now: Date): number {
   if (now < shape.startsAt) return 0;
   const elapsed = now.getTime() - shape.startsAt.getTime();

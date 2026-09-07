@@ -69,14 +69,33 @@ beforeEach(() => {
 
 describe("ScoresPanel", () => {
   it("lists who played the round it opens on", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
 
     await waitFor(() => expect(screen.getByText("أحمد")).toBeDefined());
     expect(get).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/attempts?round=0");
   });
 
+  it("opens on the round it is handed rather than the first", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={2} />);
+
+    await waitFor(() => expect(screen.getByText("أحمد")).toBeDefined());
+    expect(get).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/attempts?round=2");
+    expect((screen.getByLabelText("الجولة") as HTMLSelectElement).value).toBe("2");
+  });
+
+  it("still reaches an earlier round from the select", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={2} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.selectOptions(screen.getByLabelText("الجولة"), "1");
+
+    await waitFor(() =>
+      expect(get).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/attempts?round=0"),
+    );
+  });
+
   it("reads another round when one is chosen", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
 
     await userEvent.selectOptions(screen.getByLabelText("الجولة"), "2");
@@ -87,7 +106,7 @@ describe("ScoresPanel", () => {
   });
 
   it("opens a member's breakdown", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
 
     await userEvent.click(screen.getByText("أحمد"));
@@ -97,7 +116,7 @@ describe("ScoresPanel", () => {
   });
 
   it("closes the breakdown again", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
@@ -108,7 +127,7 @@ describe("ScoresPanel", () => {
   });
 
   it("offers a SUPER admin the way to reopen what a member missed", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByRole("button", { name: /إعادة فتح/ }));
@@ -123,7 +142,7 @@ describe("ScoresPanel", () => {
 
   it("keeps that out of the hands of an admin who is not SUPER", async () => {
     answers("QUIZ");
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
@@ -133,7 +152,7 @@ describe("ScoresPanel", () => {
 
   it("shows what the server refused", async () => {
     post.mockRejectedValue(new Error("لا توجد أسئلة فائتة في هذه المحاولة"));
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByRole("button", { name: /إعادة فتح/ }));
@@ -145,21 +164,21 @@ describe("ScoresPanel", () => {
 
   it("says so when nobody played the round", async () => {
     get.mockResolvedValue({ attempts: [], opened: true });
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
 
     await waitFor(() => expect(screen.getByText(/لم يشارك أحد/)).toBeDefined());
   });
 
   it("tells a round that has not opened apart from an empty one", async () => {
     get.mockResolvedValue({ attempts: [], opened: false });
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
 
     await waitFor(() => expect(screen.getByText("لم تبدأ هذه الجولة بعد")).toBeDefined());
     expect(screen.queryByText(/لم يشارك أحد/)).toBeNull();
   });
 
   it("voids the round a member played", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByLabelText("إلغاء نقاط أحمد في هذه الجولة"));
@@ -177,7 +196,7 @@ describe("ScoresPanel", () => {
       if (url.includes("/attempts?round=")) return Promise.resolve({ attempts, opened: true });
       return Promise.resolve({ detail: { ...detail, attemptId: "a2", name: "محمد" } });
     });
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("محمد"));
     await userEvent.click(screen.getByText("محمد"));
     await waitFor(() => screen.getByLabelText("إرجاع نقاط محمد في هذه الجولة"));
@@ -190,7 +209,7 @@ describe("ScoresPanel", () => {
   });
 
   it("voids every round of the competition for one member", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByLabelText("إلغاء نقاط أحمد في كل الجولات"));
@@ -206,14 +225,14 @@ describe("ScoresPanel", () => {
   });
 
   it("marks a voided round in the list", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
 
     expect(await screen.findByText(/ملغاة/)).toBeDefined();
   });
 
   it("keeps voiding out of the hands of an admin who is not SUPER", async () => {
     answers("QUIZ");
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
@@ -222,7 +241,7 @@ describe("ScoresPanel", () => {
   });
 
   it("leaves a closed row with nothing but the name and the score", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
 
     expect(screen.queryByRole("button", { name: /إعادة فتح/ })).toBeNull();
@@ -232,7 +251,7 @@ describe("ScoresPanel", () => {
   });
 
   it("brings the actions out on the row that is open and no other", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
 
     await userEvent.click(screen.getByText("أحمد"));
@@ -243,7 +262,7 @@ describe("ScoresPanel", () => {
   });
 
   it("closes the row again when its name is tapped a second time", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
     await userEvent.click(screen.getByText("أحمد"));
     await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
@@ -254,7 +273,7 @@ describe("ScoresPanel", () => {
   });
 
   it("finds a participant whose name differs only by an alef form", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
 
     await userEvent.type(screen.getByLabelText(/ابحث عن مشارك/), "احمد");
@@ -265,7 +284,7 @@ describe("ScoresPanel", () => {
   });
 
   it("says so when the search matches nobody", async () => {
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
     await waitFor(() => screen.getByText("أحمد"));
 
     await userEvent.type(screen.getByLabelText(/ابحث عن مشارك/), "خديجة");
@@ -276,7 +295,7 @@ describe("ScoresPanel", () => {
 
   it("keeps the search out of the way while nobody has played", async () => {
     get.mockResolvedValue({ attempts: [], opened: true });
-    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    render(<ScoresPanel competitionId="c1" roundCount={3} startRound={0} />);
 
     await waitFor(() => screen.getByText(/لم يشارك أحد/));
     expect(screen.queryByLabelText(/ابحث عن مشارك/)).toBeNull();
