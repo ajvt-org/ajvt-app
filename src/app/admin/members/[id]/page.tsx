@@ -133,13 +133,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
       </ProfileGroup>
 
       <ProfileGroup title={texts.groupMembership}>
-        <MembershipSummary
-          userId={member.id}
-          membershipYear={member.membershipYear}
-          status={member.status as "PENDING" | "ACTIVE" | "REJECTED"}
-          endedAt={member.endedAt}
-          currentYear={currentYear}
-        />
+        <MembershipSummary member={member} currentYear={currentYear} onChanged={load} />
 
         <MembershipPanel memberId={member.id} />
 
