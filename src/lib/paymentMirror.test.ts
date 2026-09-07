@@ -10,7 +10,6 @@ import {
   donationMirrorOf,
   isPaidAmount,
   mirrorDonation,
-  mirrorMembershipStatus,
   removeMirroredDonation,
   stampRecordedBy,
   type MirroredDonation,
@@ -200,47 +199,8 @@ describe("writing the mirrored payment", () => {
   });
 });
 
-const REVIEWED_ON = new Date("2026-02-03T10:00:00.000Z");
-
-describe("the verdict a membership payment carries", () => {
-  it("moves the status of the year's membership payment", async () => {
-    const { db, calls } = fakeDb();
-
-    await mirrorMembershipStatus(db, "u1", 2026, { status: "REJECTED" }, REVIEWED_ON);
-
-    expect(only(calls, "updateMany")[0].args).toMatchObject({
-      where: { userId: "u1", year: 2026, purpose: "MEMBERSHIP" },
-      data: { status: "REJECTED" },
-    });
-  });
-
-  it("takes the reviewer with the verdict when one is named", async () => {
-    const { db, calls } = fakeDb();
-
-    await mirrorMembershipStatus(
-      db,
-      "u1",
-      2026,
-      { status: "ACTIVE", reviewedBy: "boss" },
-      REVIEWED_ON,
-    );
-
-    expect(only(calls, "updateMany")[0].args.data).toEqual({
-      status: "ACTIVE",
-      reviewedBy: "boss",
-      reviewedAt: REVIEWED_ON,
-    });
-  });
-
-  it("leaves the reviewer alone when the verdict names nobody", async () => {
-    const { db, calls } = fakeDb();
-
-    await mirrorMembershipStatus(db, "u1", 2026, { status: "PENDING" }, REVIEWED_ON);
-
-    expect(only(calls, "updateMany")[0].args.data).toEqual({ status: "PENDING" });
-  });
-
-  it("stamps who recorded it, and only where nobody is stamped yet", async () => {
+describe("who recorded a membership payment", () => {
+  it("is stamped only where nobody is stamped yet", async () => {
     const { db, calls } = fakeDb();
 
     await stampRecordedBy(db, "u1", 2026, "boss");
