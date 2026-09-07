@@ -4,21 +4,29 @@ import {
   PAYMENTS_FILTER_KEYS,
   accountOptionsOf,
   matchesAccount,
+  pageHolding,
   readPaymentsFilters,
   writePaymentsFilters,
 } from "./paymentsFilters";
 
 describe("carrying the payments filters in the address", () => {
   it("reads an empty query as no filter at all", () => {
-    expect(readPaymentsFilters(new URLSearchParams())).toEqual({ kind: "ALL", q: "", account: "" });
+    expect(readPaymentsFilters(new URLSearchParams())).toEqual({
+      kind: "ALL",
+      q: "",
+      account: "",
+      focus: "",
+    });
   });
 
   it("writes nothing for the default view", () => {
-    expect(writePaymentsFilters({ kind: "ALL", q: "", account: "" }).toString()).toBe("");
+    expect(writePaymentsFilters({ kind: "ALL", q: "", account: "", focus: "" }).toString()).toBe(
+      "",
+    );
   });
 
   it("survives a round trip, which is what a shared link is", () => {
-    const chosen = { kind: "DONATION" as const, q: "hello", account: "a1" };
+    const chosen = { kind: "DONATION" as const, q: "hello", account: "a1", focus: "p9" };
     expect(
       readPaymentsFilters(new URLSearchParams(writePaymentsFilters(chosen).toString())),
     ).toEqual(chosen);
@@ -37,7 +45,29 @@ describe("carrying the payments filters in the address", () => {
   });
 
   it("lists exactly the keys it owns in the address", () => {
-    expect(PAYMENTS_FILTER_KEYS).toEqual(["kind", "q", "account"]);
+    expect(PAYMENTS_FILTER_KEYS).toEqual(["kind", "q", "account", "focus"]);
+  });
+});
+
+describe("finding the page a single row is on", () => {
+  const ids = Array.from({ length: 7 }, (_, i) => `p${i}`);
+
+  it("has no page to go to when nothing is being pointed at", () => {
+    expect(pageHolding(ids, "", 3)).toBeNull();
+  });
+
+  it("finds the first page for a row near the top", () => {
+    expect(pageHolding(ids, "p0", 3)).toBe(1);
+    expect(pageHolding(ids, "p2", 3)).toBe(1);
+  });
+
+  it("finds a later page for a row further down", () => {
+    expect(pageHolding(ids, "p3", 3)).toBe(2);
+    expect(pageHolding(ids, "p6", 3)).toBe(3);
+  });
+
+  it("has no page for a row the filters have taken out", () => {
+    expect(pageHolding(ids, "gone", 3)).toBeNull();
   });
 });
 
