@@ -35,9 +35,9 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
   if (membership.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
 
   const { membershipYear } = await getAppSettings();
-  if (membershipState(asMembershipState(membership), membershipYear) === "BEHIND") {
-    throw new ForbiddenError(activities.membershipBehind);
-  }
+  const standing = membershipState(asMembershipState(membership), membershipYear);
+  if (standing === "ENDED") throw new ForbiddenError(activities.membershipEnded);
+  if (standing === "BEHIND") throw new ForbiddenError(activities.membershipBehind);
 
   const status = activity.isVolunteer || activity.autoApprove ? "ACTIVE" : "PENDING";
 
