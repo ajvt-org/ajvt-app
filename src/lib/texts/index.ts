@@ -117,4 +117,5 @@ export { proofUpload } from "./proofUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";
 export { seriesResult } from "./seriesResult";
 export { matchLevelsSetup } from "./matchLevelsSetup";
+export { matchUnitCard } from "./matchUnitCard";
 export { setupLabels, setupWizard } from "./setupWizard";

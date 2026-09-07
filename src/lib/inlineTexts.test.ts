@@ -271,6 +271,7 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/MatchLevelsCard.tsx",
   "src/components/admin/tournament/LevelFields.tsx",
   "src/components/admin/tournament/MoveRules.tsx",
+  "src/components/tournament/MatchUnits.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
