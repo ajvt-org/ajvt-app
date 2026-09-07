@@ -68,6 +68,7 @@ export { membershipStanding } from "./membershipStanding";
 export { membershipEnding, MEMBERSHIP_ENDING_REASONS } from "./membershipEnding";
 export { memberMatches } from "./memberMatches";
 export { myActivities } from "./myActivities";
+export { myProfile } from "./myProfile";
 export { mvpVote } from "./mvpVote";
 export { navigation } from "./navigation";
 export { notificationsToggle } from "./notifications";

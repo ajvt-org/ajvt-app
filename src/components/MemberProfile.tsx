@@ -31,6 +31,7 @@ export default function MemberProfile({
   const router = useRouter();
   const delayClass = delayIndex === 0 ? "" : "delay-1";
   const active = member.status === "ACTIVE";
+  const onCard = active && Boolean(member.memberNumber);
 
   return (
     <div className={`fade-up ${delayClass} space-y-4`}>
@@ -48,9 +49,6 @@ export default function MemberProfile({
         </>
       )}
 
-      {/* An accepted payment for an earlier year still reads as "you are a
-          member" above. The standing card is what says the year has moved on,
-          and it draws nothing for a member who is paid up. */}
       {active && <MembershipStanding member={member} currentYear={currentYear} />}
 
       {active && (
@@ -78,6 +76,7 @@ export default function MemberProfile({
 
       <MemberInfoCard
         member={member}
+        onCard={onCard}
         onEdit={active ? undefined : () => router.push(`/membership?id=${member.id}`)}
       />
     </div>

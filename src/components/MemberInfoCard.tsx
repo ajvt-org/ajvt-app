@@ -2,13 +2,17 @@ import IconLabel from "@/components/IconLabel";
 import { formatDate, formatTime } from "@/lib/utils";
 import type { MemberData } from "@/lib/useMember";
 import PaidAmountRows from "@/components/PaidAmountRows";
-import { villageField } from "@/lib/texts";
+import { myProfile, villageField } from "@/lib/texts";
+
+const texts = myProfile.details;
 
 export default function MemberInfoCard({
   member,
+  onCard = false,
   onEdit,
 }: {
   member: MemberData;
+  onCard?: boolean;
   onEdit?: () => void;
 }) {
   return (
@@ -18,7 +22,7 @@ export default function MemberInfoCard({
         style={{ borderBottom: "1px solid var(--mint-100)" }}
       >
         <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
-          بيانات الطلب
+          {texts.title}
         </h3>
         {onEdit && (
           <button
@@ -26,24 +30,24 @@ export default function MemberInfoCard({
             className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <IconLabel name="pencil">تعديل الدفع</IconLabel>
+            <IconLabel name="pencil">{texts.edit}</IconLabel>
           </button>
         )}
       </div>
       <div className="space-y-2.5">
-        <InfoRow label="رقم الهاتف" value={member.user?.phone ?? "—"} dir="ltr" />
-        <InfoRow label={villageField.label} value={member.village} />
-        {member.age && <InfoRow label="العصر" value={member.age} />}
-        <InfoRow label="طريقة الدفع" value={member.paymentMethod ?? "—"} />
+        <InfoRow label={texts.phone} value={member.user?.phone ?? "—"} dir="ltr" />
+        {!onCard && <InfoRow label={villageField.label} value={member.village} />}
+        {!onCard && member.age && <InfoRow label={texts.age} value={member.age} />}
+        <InfoRow label={texts.paymentMethod} value={member.paymentMethod ?? "—"} />
         <PaidAmountRows
           paidAmount={member.paidAmount}
           supportAmount={member.supportAmount}
           Row={InfoRow}
         />
-        <InfoRow label="تاريخ الطلب" value={formatDate(member.createdAt)} />
-        <InfoRow label="وقت الطلب" value={formatTime(member.createdAt)} dir="ltr" />
+        <InfoRow label={texts.requestedOn} value={formatDate(member.createdAt)} />
+        <InfoRow label={texts.requestedAt} value={formatTime(member.createdAt)} dir="ltr" />
         {member.status === "ACTIVE" && (
-          <InfoRow label="تاريخ القبول" value={formatDate(member.updatedAt)} />
+          <InfoRow label={texts.acceptedOn} value={formatDate(member.updatedAt)} />
         )}
       </div>
     </div>
