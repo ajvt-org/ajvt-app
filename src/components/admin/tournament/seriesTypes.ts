@@ -2,14 +2,20 @@ import type { LevelRow } from "@/lib/matchLevels";
 
 export type { LevelRow };
 
-export interface PartRow {
+export interface UnitRow {
   id: string;
+  levelId: string;
   order: number;
   abandoned: boolean;
   outcome: "SIDE_A" | "SIDE_B" | "DRAW" | null;
   sideAPoints: number | null;
   sideBPoints: number | null;
   sideAColour: "FIRST" | "SECOND" | null;
+  worth: number | null;
+  sideALostCredit: boolean;
+  sideBLostCredit: boolean;
+  children: UnitRow[];
+  standing: SeriesStandingRow | null;
 }
 
 export interface SeriesStandingRow {
@@ -39,13 +45,13 @@ export interface AdjustmentRuleRow {
 
 export interface RecordedAdjustmentRow {
   id: string;
-  order: number;
+  unitId: string;
   side: "SIDE_A" | "SIDE_B";
   rule: AdjustmentRuleRow;
 }
 
 export interface SeriesState {
-  parts: PartRow[];
+  units: UnitRow[];
   adjustments: RecordedAdjustmentRow[];
   levels: LevelRow[];
   standing: SeriesStandingRow;

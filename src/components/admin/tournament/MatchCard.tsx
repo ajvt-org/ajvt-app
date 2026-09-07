@@ -118,7 +118,7 @@ export default function MatchCard({
         {series && match.series && (
           <div className="mt-1.5">
             <SeriesScoreline
-              parts={match.parts}
+              units={match.units}
               standing={match.series}
               unitWord={series.unit.singular}
               extensionUnits={countedUnits(series.match.extensionUnits, series.unit)}

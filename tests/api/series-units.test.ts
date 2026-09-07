@@ -13,11 +13,11 @@ import {
   type LevelFixture,
 } from "./ladders";
 
-import { GET as LIST, POST as ADD } from "@/app/api/admin/matches/[matchId]/parts/route";
+import { GET as LIST, POST as ADD } from "@/app/api/admin/matches/[matchId]/units/route";
 import {
   PATCH as CORRECT,
   DELETE as REMOVE,
-} from "@/app/api/admin/matches/[matchId]/parts/[partId]/route";
+} from "@/app/api/admin/matches/[matchId]/units/[unitId]/route";
 import { POST as DRAW } from "@/app/api/admin/activities/[id]/bracket/draw/route";
 import { POST as NEXT_ROUND } from "@/app/api/admin/activities/[id]/bracket/next-round/route";
 
@@ -49,49 +49,49 @@ async function matchOf(
 }
 
 const withMatch = (matchId: string) => ({ params: Promise.resolve({ matchId }) });
-const withPart = (matchId: string, partId: string) => ({
-  params: Promise.resolve({ matchId, partId }),
+const withUnit = (matchId: string, unitId: string) => ({
+  params: Promise.resolve({ matchId, unitId }),
 });
 
 const list = (matchId: string) =>
-  LIST(get(`/api/admin/matches/${matchId}/parts`), withMatch(matchId));
+  LIST(get(`/api/admin/matches/${matchId}/units`), withMatch(matchId));
 const add = (matchId: string, body: object) =>
-  ADD(post(`/api/admin/matches/${matchId}/parts`, body), withMatch(matchId));
-const correct = (matchId: string, partId: string, body: object) =>
-  CORRECT(patch(`/api/admin/matches/${matchId}/parts/${partId}`, body), withPart(matchId, partId));
-const remove = (matchId: string, partId: string) =>
-  REMOVE(del(`/api/admin/matches/${matchId}/parts/${partId}`), withPart(matchId, partId));
+  ADD(post(`/api/admin/matches/${matchId}/units`, body), withMatch(matchId));
+const correct = (matchId: string, unitId: string, body: object) =>
+  CORRECT(patch(`/api/admin/matches/${matchId}/units/${unitId}`, body), withUnit(matchId, unitId));
+const remove = (matchId: string, unitId: string) =>
+  REMOVE(del(`/api/admin/matches/${matchId}/units/${unitId}`), withUnit(matchId, unitId));
 
-describe("recording the parts of a series match", () => {
+describe("recording the units of a series match", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin());
   });
 
-  it("says where a match with no parts stands", async () => {
+  it("says where a match with no units stands", async () => {
     const { match } = await matchOf(CHESS);
 
     const body = await (await list(match.id)).json();
 
-    expect(body.parts).toEqual([]);
+    expect(body.units).toEqual([]);
     expect(body.standing.sideATotal).toBe(0);
     expect(body.standing.unitsLeft).toBe(2);
     expect(body.standing.over).toBe(false);
   });
 
-  it("records a part decided by outcome and moves the total", async () => {
+  it("records a unit decided by outcome and moves the total", async () => {
     const { match } = await matchOf(CHESS);
 
     const res = await add(match.id, { outcome: "SIDE_A" });
 
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.parts).toHaveLength(1);
-    expect(body.parts[0].order).toBe(1);
+    expect(body.units).toHaveLength(1);
+    expect(body.units[0].order).toBe(1);
     expect(body.standing.sideATotal).toBe(2);
   });
 
-  it("splits a drawn part", async () => {
+  it("splits a drawn unit", async () => {
     const { match } = await matchOf(CHESS);
 
     const body = await (await add(match.id, { outcome: "DRAW" })).json();
@@ -109,7 +109,7 @@ describe("recording the parts of a series match", () => {
     expect((await res.json()).error).toBe(messages.partWantsAnOutcome);
   });
 
-  it("refuses two scores where the part is decided by outcome", async () => {
+  it("refuses two scores where the unit is decided by outcome", async () => {
     const { match } = await matchOf(CHESS);
 
     const res = await add(match.id, { sideAPoints: 3, sideBPoints: 1 });
@@ -118,16 +118,16 @@ describe("recording the parts of a series match", () => {
     expect((await res.json()).error).toBe(messages.partWantsAnOutcome);
   });
 
-  it("records a part played to a target", async () => {
+  it("records a unit played to a target", async () => {
     const { match } = await matchOf(COUNTED);
 
     const body = await (await add(match.id, { sideAPoints: 101, sideBPoints: 74 })).json();
 
     expect(body.standing.sideATotal).toBe(2);
-    expect(body.parts[0].sideAPoints).toBe(101);
+    expect(body.units[0].sideAPoints).toBe(101);
   });
 
-  it("refuses a part with a missing score", async () => {
+  it("refuses a unit with a missing score", async () => {
     const { match } = await matchOf(COUNTED);
 
     const res = await add(match.id, { sideAPoints: 101 });
@@ -148,7 +148,7 @@ describe("recording the parts of a series match", () => {
     expect((await res.json()).standing.over).toBe(true);
   });
 
-  it("stops accepting parts once every one has been played", async () => {
+  it("stops accepting units once every one has been played", async () => {
     const { match } = await matchOf(CHESS);
     await add(match.id, { outcome: "SIDE_A" });
     await add(match.id, { outcome: "SIDE_A" });
@@ -159,7 +159,7 @@ describe("recording the parts of a series match", () => {
     expect((await res.json()).error).toBe(messages.matchTakesNoMoreParts);
   });
 
-  it("stops accepting parts once a side has reached the target", async () => {
+  it("stops accepting units once a side has reached the target", async () => {
     const { match } = await matchOf(COUNTED);
     await add(match.id, { sideAPoints: 101, sideBPoints: 20 });
     await add(match.id, { sideAPoints: 101, sideBPoints: 30 });
@@ -169,33 +169,33 @@ describe("recording the parts of a series match", () => {
     expect(res.status).toBe(409);
   });
 
-  it("corrects a part while the match is unfinished", async () => {
+  it("corrects a unit while the match is unfinished", async () => {
     const { match } = await matchOf(CHESS);
     const added = await (await add(match.id, { outcome: "SIDE_A" })).json();
 
-    const body = await (await correct(match.id, added.part.id, { outcome: "SIDE_B" })).json();
+    const body = await (await correct(match.id, added.unit.id, { outcome: "SIDE_B" })).json();
 
     expect(body.standing.sideATotal).toBe(0);
     expect(body.standing.sideBTotal).toBe(2);
   });
 
-  it("removes a part and gives its total back", async () => {
+  it("removes a unit and gives its total back", async () => {
     const { match } = await matchOf(CHESS);
     const added = await (await add(match.id, { outcome: "SIDE_A" })).json();
 
-    const body = await (await remove(match.id, added.part.id)).json();
+    const body = await (await remove(match.id, added.unit.id)).json();
 
-    expect(body.parts).toEqual([]);
+    expect(body.units).toEqual([]);
     expect(body.standing.sideATotal).toBe(0);
   });
 
-  it("says nothing found for a part of another match", async () => {
+  it("says nothing found for a unit of another match", async () => {
     const { match } = await matchOf(CHESS);
 
     expect((await remove(match.id, "nope")).status).toBe(404);
   });
 
-  it("refuses parts on a football match", async () => {
+  it("refuses units on a football match", async () => {
     const { match } = await matchOf([], "FOOTBALL");
 
     const res = await add(match.id, { outcome: "SIDE_A" });
@@ -204,7 +204,7 @@ describe("recording the parts of a series match", () => {
     expect((await res.json()).error).toBe(messages.partsFootballOnly);
   });
 
-  it("refuses parts before the tournament says what a match is made of", async () => {
+  it("refuses units before the tournament says what a match is made of", async () => {
     const { match } = await matchOf([]);
 
     const res = await add(match.id, { outcome: "SIDE_A" });
@@ -214,13 +214,13 @@ describe("recording the parts of a series match", () => {
   });
 });
 
-describe("a series knockout that advances on its parts", () => {
+describe("a series knockout that advances on its units", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin());
   });
 
-  it("takes the winner from the parts rather than from a score", async () => {
+  it("takes the winner from the units rather than from a score", async () => {
     const activity = await prisma.activity.create({
       data: {
         title: "بطولة",
@@ -283,21 +283,21 @@ describe("the colours of a series match", () => {
     return match;
   }
 
-  it("gives the first part the colour the draw set", async () => {
+  it("gives the first unit the colour the draw set", async () => {
     const match = await colouredMatch("FIRST");
 
     const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
 
-    expect(body.parts[0].sideAColour).toBe("FIRST");
+    expect(body.units[0].sideAColour).toBe("FIRST");
   });
 
-  it("turns the colours over on the next part", async () => {
+  it("turns the colours over on the next unit", async () => {
     const match = await colouredMatch("FIRST");
     await add(match.id, { outcome: "SIDE_A" });
 
     const body = await (await add(match.id, { outcome: "SIDE_B" })).json();
 
-    expect(body.parts.map((p: { sideAColour: string }) => p.sideAColour)).toEqual([
+    expect(body.units.map((p: { sideAColour: string }) => p.sideAColour)).toEqual([
       "FIRST",
       "SECOND",
     ]);
@@ -308,7 +308,7 @@ describe("the colours of a series match", () => {
 
     const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
 
-    expect(body.parts[0].sideAColour).toBeNull();
+    expect(body.units[0].sideAColour).toBeNull();
   });
 
   it("records no colour where the draw never set one", async () => {
@@ -316,7 +316,7 @@ describe("the colours of a series match", () => {
 
     const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
 
-    expect(body.parts[0].sideAColour).toBeNull();
+    expect(body.units[0].sideAColour).toBeNull();
   });
 });
 
@@ -326,7 +326,7 @@ describe("a level match on a level that extends", () => {
     await signInAsAdmin(await createAdmin());
   });
 
-  it("takes another pair of parts rather than standing level", async () => {
+  it("takes another pair of units rather than standing level", async () => {
     const { match } = await matchOf(KNOCKOUT_LEVELS);
     await add(match.id, { outcome: "DRAW" });
 
@@ -365,11 +365,98 @@ describe("a level match on a level that extends", () => {
 
     const body = await (await add(match.id, { outcome: "DRAW" })).json();
 
-    expect(body.parts.map((p: { sideAColour: string }) => p.sideAColour)).toEqual([
+    expect(body.units.map((p: { sideAColour: string }) => p.sideAColour)).toEqual([
       "FIRST",
       "SECOND",
       "FIRST",
       "SECOND",
     ]);
+  });
+});
+
+describe("a unit recorded under another", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  const CARDS: LevelFixture[] = [
+    { ...MATCH_LEVEL, ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },
+    {
+      singular: "شوط",
+      plural: "أشواط",
+      decision: "SCORE",
+      ending: "FIRST_TO",
+      unitsPerParent: 25,
+      unitsToWin: 2,
+      halvesPerUnit: 1,
+    },
+    { singular: "نقطة", plural: "نقاط", decision: "SCORE" },
+  ];
+
+  async function unitOf(matchId: string, body: object) {
+    const answer = await (await add(matchId, body)).json();
+    return answer.unit.id as string;
+  }
+
+  it("takes its score from what sits under it", async () => {
+    const { match } = await matchOf(CARDS);
+    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
+    await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
+
+    const body = await (
+      await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 })
+    ).json();
+
+    expect(body.units[0].standing.sideATotal).toBe(2);
+    expect(body.units[0].standing.over).toBe(true);
+    expect(body.standing.sideATotal).toBe(2);
+  });
+
+  it("counts its own order under its parent rather than across the match", async () => {
+    const { match } = await matchOf(CARDS);
+    const one = await unitOf(match.id, { sideAPoints: 2, sideBPoints: 0 });
+    const two = await unitOf(match.id, { sideAPoints: 0, sideBPoints: 2 });
+    await add(match.id, { parentId: one, sideAPoints: 1, sideBPoints: 0 });
+
+    const body = await (
+      await add(match.id, { parentId: two, sideAPoints: 0, sideBPoints: 1 })
+    ).json();
+
+    expect(body.units.map((unit: { order: number }) => unit.order)).toEqual([1, 2]);
+    expect(body.units[0].children[0].order).toBe(1);
+    expect(body.units[1].children[0].order).toBe(1);
+  });
+
+  it("refuses a typed score on a unit that has something under it", async () => {
+    const { match } = await matchOf(CARDS);
+    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
+    await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
+
+    const res = await correct(match.id, set, { sideAPoints: 5, sideBPoints: 5 });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(messages.unitTakesItsScoreFromBelow);
+  });
+
+  it("refuses a unit under the level that is recorded", async () => {
+    const { match } = await matchOf(CARDS);
+    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
+    const point = await unitOf(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
+
+    const res = await add(match.id, { parentId: point, sideAPoints: 1, sideBPoints: 0 });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.unitLevelMissing);
+  });
+
+  it("takes the children away with the unit above them", async () => {
+    const { match } = await matchOf(CARDS);
+    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
+    await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
+
+    const body = await (await remove(match.id, set)).json();
+
+    expect(body.units).toEqual([]);
   });
 });

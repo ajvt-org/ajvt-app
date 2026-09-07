@@ -3,26 +3,31 @@
 import HalfPoints from "@/components/HalfPoints";
 import Icon from "@/components/Icon";
 import { seriesResult as texts } from "@/lib/texts";
-import type { PartRow, RecordedAdjustmentRow, SeriesStandingRow } from "./seriesTypes";
+import type { RecordedAdjustmentRow, SeriesStandingRow, UnitRow } from "./seriesTypes";
 
-export function partMark(part: PartRow): { text: string; dim: boolean } {
-  if (part.abandoned) return { text: "—", dim: true };
-  if (part.outcome === "SIDE_A") return { text: "1", dim: false };
-  if (part.outcome === "SIDE_B") return { text: "0", dim: false };
-  if (part.outcome === "DRAW") return { text: "½", dim: false };
-  if (part.sideAPoints === null || part.sideBPoints === null) return { text: "—", dim: true };
-  return { text: `${part.sideAPoints}-${part.sideBPoints}`, dim: false };
+export function unitMark(unit: UnitRow): { text: string; dim: boolean } {
+  if (unit.abandoned) return { text: "—", dim: true };
+  if (unit.standing) {
+    if (unit.standing.winner === "SIDE_A") return { text: "1", dim: false };
+    if (unit.standing.winner === "SIDE_B") return { text: "0", dim: false };
+    return { text: `${unit.standing.sideATotal}-${unit.standing.sideBTotal}`, dim: false };
+  }
+  if (unit.outcome === "SIDE_A") return { text: "1", dim: false };
+  if (unit.outcome === "SIDE_B") return { text: "0", dim: false };
+  if (unit.outcome === "DRAW") return { text: "½", dim: false };
+  if (unit.sideAPoints === null || unit.sideBPoints === null) return { text: "—", dim: true };
+  return { text: `${unit.sideAPoints}-${unit.sideBPoints}`, dim: false };
 }
 
 export default function SeriesScoreline({
-  parts,
+  units,
   standing,
   unitWord,
   extensionUnits = "",
   adjustments = [],
   sides = [],
 }: {
-  parts: PartRow[];
+  units: UnitRow[];
   standing: SeriesStandingRow;
   unitWord: string;
   extensionUnits?: string;
@@ -41,14 +46,14 @@ export default function SeriesScoreline({
           {standing.extending ? texts.extending(extensionUnits) : texts.inProgress}
         </span>
       )}
-      {parts.length > 0 && (
+      {units.length > 0 && (
         <span className="flex items-center gap-1 flex-wrap">
-          {parts.map((part) => {
-            const mark = partMark(part);
+          {units.map((unit) => {
+            const mark = unitMark(unit);
             return (
               <span
-                key={part.id}
-                title={texts.unitNumber(unitWord, part.order)}
+                key={unit.id}
+                title={texts.unitNumber(unitWord, unit.order)}
                 className="text-xs font-bold rounded px-1.5 py-0.5"
                 style={{
                   background: "var(--mint-50)",

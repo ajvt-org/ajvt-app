@@ -3,7 +3,7 @@
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
 import type { SeriesConfig } from "./seriesConfig";
-import type { PartRow } from "./seriesTypes";
+import type { UnitRow } from "./seriesTypes";
 
 export interface PartDraft {
   outcome: "SIDE_A" | "SIDE_B" | "DRAW" | "";
@@ -13,11 +13,11 @@ export interface PartDraft {
 
 export const EMPTY_DRAFT: PartDraft = { outcome: "", sideAPoints: "", sideBPoints: "" };
 
-export function draftOf(part: PartRow): PartDraft {
+export function draftOf(unit: UnitRow): PartDraft {
   return {
-    outcome: part.outcome ?? "",
-    sideAPoints: part.sideAPoints === null ? "" : String(part.sideAPoints),
-    sideBPoints: part.sideBPoints === null ? "" : String(part.sideBPoints),
+    outcome: unit.outcome ?? "",
+    sideAPoints: unit.sideAPoints === null ? "" : String(unit.sideAPoints),
+    sideBPoints: unit.sideBPoints === null ? "" : String(unit.sideBPoints),
   };
 }
 

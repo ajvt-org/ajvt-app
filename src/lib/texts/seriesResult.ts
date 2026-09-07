@@ -32,6 +32,8 @@ export const seriesResult = {
   recordMove: "تسجيل حركة",
   pickMove: "اختر الحركة...",
   pickSide: "اختر الطرف...",
+  pickUnit: "الوحدة التي وقعت فيها الحركة",
+  pickUnitPrompt: "اختر الوحدة...",
   undoMove: "تراجع",
   noMoves: "لا حركات معرّفة في هذه البطولة",
   loadFailed: "تعذّر تحميل جولات المباراة",

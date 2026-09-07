@@ -12,7 +12,7 @@ import {
 import { DELETE as WITHDRAW } from "@/app/api/admin/activities/[id]/adjustment-rules/[ruleId]/route";
 import { POST as RECORD } from "@/app/api/admin/matches/[matchId]/adjustments/route";
 import { DELETE as UNDO } from "@/app/api/admin/matches/[matchId]/adjustments/[adjustmentId]/route";
-import { POST as ADD_PART, GET as PARTS } from "@/app/api/admin/matches/[matchId]/parts/route";
+import { POST as ADD_UNIT, GET as UNITS } from "@/app/api/admin/matches/[matchId]/units/route";
 
 const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2 };
 
@@ -50,10 +50,10 @@ const undo = (matchId: string, adjustmentId: string) =>
   UNDO(del(`/api/admin/matches/${matchId}/adjustments/${adjustmentId}`), {
     params: Promise.resolve({ matchId, adjustmentId }),
   });
-const addPart = (matchId: string, body: object) =>
-  ADD_PART(post(`/api/admin/matches/${matchId}/parts`, body), withMatch(matchId));
-const parts = (matchId: string) =>
-  PARTS(get(`/api/admin/matches/${matchId}/parts`), withMatch(matchId));
+const addUnit = (matchId: string, body: object) =>
+  ADD_UNIT(post(`/api/admin/matches/${matchId}/units`, body), withMatch(matchId));
+const units = (matchId: string) =>
+  UNITS(get(`/api/admin/matches/${matchId}/units`), withMatch(matchId));
 
 async function ruleOf(activityId: string) {
   return (await (await declare(activityId, TEYSSE)).json()).rule as { id: string; name: string };
@@ -115,11 +115,17 @@ describe("what a match records", () => {
     await signInAsAdmin(await createAdmin());
   });
 
+  async function unitOf(matchId: string, body: object) {
+    const answer = await (await addUnit(matchId, body)).json();
+    return answer.unit.id as string;
+  }
+
   it("wins the match on its own, without the rest being played", async () => {
     const { activity, match } = await tournamentWithMatch();
     const rule = await ruleOf(activity.id);
+    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
 
-    const res = await record(match.id, { ruleId: rule.id, side: "SIDE_A" });
+    const res = await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId });
 
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -132,35 +138,25 @@ describe("what a match records", () => {
   it("drives the other side below nothing rather than flooring at zero", async () => {
     const { activity, match } = await tournamentWithMatch();
     const rule = await ruleOf(activity.id);
-    await addPart(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const unitId = await unitOf(match.id, { sideAPoints: 20, sideBPoints: 101 });
 
-    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B" })).json();
+    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })).json();
 
     expect(body.standing.sideATotal).toBe(-2);
     expect(body.standing.sideBTotal).toBe(4);
   });
 
-  it("ends the part being played and leaves it scoring nothing", async () => {
+  it("sits in the unit it happened in rather than in a slot of its own", async () => {
     const { activity, match } = await tournamentWithMatch();
     const rule = await ruleOf(activity.id);
-    await addPart(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
 
-    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B" })).json();
+    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })).json();
 
-    expect(body.parts).toHaveLength(2);
-    expect(body.parts[0].abandoned).toBe(false);
-    expect(body.parts[1].abandoned).toBe(true);
-    expect(body.parts[1].sideAPoints).toBeNull();
-  });
-
-  it("leaves a part that was already finished alone", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    await addPart(match.id, { sideAPoints: 101, sideBPoints: 40 });
-
-    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B" })).json();
-
-    expect(body.parts[0].sideAPoints).toBe(101);
+    expect(body.units).toHaveLength(1);
+    expect(body.units[0].sideAPoints).toBe(101);
+    expect(body.adjustments[0].unitId).toBe(unitId);
   });
 
   it("takes one from each side and leaves them where they started", async () => {
@@ -170,60 +166,65 @@ describe("what a match records", () => {
       data: { unitsPerParent: 5, unitsToWin: 4 },
     });
     const rule = await ruleOf(activity.id);
-    await record(match.id, { ruleId: rule.id, side: "SIDE_A" });
+    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId });
 
-    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B" })).json();
+    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })).json();
 
-    expect(body.standing.sideATotal).toBe(0);
+    expect(body.standing.sideATotal).toBe(2);
     expect(body.standing.sideBTotal).toBe(0);
     expect(body.adjustments).toHaveLength(2);
   });
 
-  it("undoes one and restores the part it ended", async () => {
+  it("undoes one and leaves the unit it sat in alone", async () => {
     const { activity, match } = await tournamentWithMatch();
     const rule = await ruleOf(activity.id);
-    const recorded = await (await record(match.id, { ruleId: rule.id, side: "SIDE_A" })).json();
+    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const recorded = await (
+      await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })
+    ).json();
 
     const body = await (await undo(match.id, recorded.adjustments[0].id)).json();
 
     expect(body.adjustments).toEqual([]);
-    expect(body.standing.sideATotal).toBe(0);
+    expect(body.units).toHaveLength(1);
+    expect(body.standing.sideATotal).toBe(2);
     expect(body.standing.over).toBe(false);
-  });
-
-  it("leaves a part that was already played where it was when the move is undone", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    await addPart(match.id, { sideAPoints: 101, sideBPoints: 40 });
-    const recorded = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B" })).json();
-
-    const body = await (await undo(match.id, recorded.adjustments[0].id)).json();
-
-    expect(body.parts).toHaveLength(1);
-    expect(body.adjustments).toEqual([]);
   });
 
   it("refuses a move the tournament never declared", async () => {
     const { match } = await tournamentWithMatch();
+    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
 
-    expect((await record(match.id, { ruleId: "nope", side: "SIDE_A" })).status).toBe(404);
+    expect((await record(match.id, { ruleId: "nope", side: "SIDE_A", unitId })).status).toBe(404);
+  });
+
+  it("refuses a move that names no unit", async () => {
+    const { activity, match } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id);
+
+    const res = await record(match.id, { ruleId: rule.id, side: "SIDE_A" });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.adjustmentWantsAUnit);
   });
 
   it("refuses a move once the match is over", async () => {
     const { activity, match } = await tournamentWithMatch();
     const rule = await ruleOf(activity.id);
-    await addPart(match.id, { sideAPoints: 101, sideBPoints: 40 });
-    await addPart(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 });
 
-    expect((await record(match.id, { ruleId: rule.id, side: "SIDE_A" })).status).toBe(409);
+    expect((await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId })).status).toBe(409);
   });
 
-  it("carries what happened alongside the parts", async () => {
+  it("carries what happened alongside the units", async () => {
     const { activity, match } = await tournamentWithMatch();
     const rule = await ruleOf(activity.id);
-    await record(match.id, { ruleId: rule.id, side: "SIDE_A" });
+    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId });
 
-    const body = await (await parts(match.id)).json();
+    const body = await (await units(match.id)).json();
 
     expect(body.adjustments).toHaveLength(1);
     expect(body.adjustments[0].rule.name).toBe("تيس");

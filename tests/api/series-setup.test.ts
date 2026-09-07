@@ -135,17 +135,23 @@ describe("declaring the levels of a series tournament", () => {
     expect(await prisma.matchLevel.count()).toBe(0);
   });
 
-  it("takes the parts of a match away with the match", async () => {
+  it("takes the units of a match away with the match", async () => {
     const activity = await seriesTournament();
+    await save(activity.id, CHESS_LEVELS);
+    const level = await prisma.matchLevel.findFirstOrThrow({
+      where: { activityId: activity.id, order: 1 },
+    });
     const one = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
     const two = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
     const match = await prisma.match.create({
       data: { activityId: activity.id, ...sideIdData("SERIES", one.id, two.id) },
     });
-    await prisma.matchPart.create({ data: { matchId: match.id, order: 1, outcome: "SIDE_A" } });
+    await prisma.matchUnit.create({
+      data: { matchId: match.id, levelId: level.id, order: 1, outcome: "SIDE_A" },
+    });
 
     await prisma.match.delete({ where: { id: match.id } });
 
-    expect(await prisma.matchPart.count()).toBe(0);
+    expect(await prisma.matchUnit.count()).toBe(0);
   });
 });

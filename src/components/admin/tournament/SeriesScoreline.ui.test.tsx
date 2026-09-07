@@ -1,17 +1,23 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import SeriesScoreline, { partMark } from "./SeriesScoreline";
-import type { PartRow, SeriesStandingRow } from "./seriesTypes";
+import SeriesScoreline, { unitMark } from "./SeriesScoreline";
+import type { SeriesStandingRow, UnitRow } from "./seriesTypes";
 
-function part(id: string, order: number, extra: Partial<PartRow> = {}): PartRow {
+function part(id: string, order: number, extra: Partial<UnitRow> = {}): UnitRow {
   return {
     id,
+    levelId: "unit",
     order,
     abandoned: false,
     outcome: null,
     sideAPoints: null,
     sideBPoints: null,
     sideAColour: null,
+    worth: null,
+    sideALostCredit: false,
+    sideBLostCredit: false,
+    children: [],
+    standing: null,
     ...extra,
   };
 }
@@ -35,19 +41,19 @@ function standing(extra: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
   };
 }
 
-describe("partMark", () => {
-  it("marks a part won, drawn and lost the way a chess table does", () => {
-    expect(partMark(part("p", 1, { outcome: "SIDE_A" })).text).toBe("1");
-    expect(partMark(part("p", 1, { outcome: "DRAW" })).text).toBe("½");
-    expect(partMark(part("p", 1, { outcome: "SIDE_B" })).text).toBe("0");
+describe("the mark a unit draws", () => {
+  it("marks a unit won, drawn and lost the way a chess table does", () => {
+    expect(unitMark(part("p", 1, { outcome: "SIDE_A" })).text).toBe("1");
+    expect(unitMark(part("p", 1, { outcome: "DRAW" })).text).toBe("½");
+    expect(unitMark(part("p", 1, { outcome: "SIDE_B" })).text).toBe("0");
   });
 
-  it("marks a part played to a score with both scores", () => {
-    expect(partMark(part("p", 1, { sideAPoints: 101, sideBPoints: 74 })).text).toBe("101-74");
+  it("marks a unit played to a score with both scores", () => {
+    expect(unitMark(part("p", 1, { sideAPoints: 101, sideBPoints: 74 })).text).toBe("101-74");
   });
 
   it("marks an abandoned part as scoring nothing", () => {
-    const mark = partMark(part("p", 1, { abandoned: true }));
+    const mark = unitMark(part("p", 1, { abandoned: true }));
     expect(mark.text).toBe("—");
     expect(mark.dim).toBe(true);
   });
@@ -57,7 +63,7 @@ describe("the scoreline on a match card", () => {
   it("shows the total and every part", () => {
     render(
       <SeriesScoreline
-        parts={[part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "DRAW" })]}
+        units={[part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "DRAW" })]}
         standing={standing({ sideATotal: 3, sideBTotal: 1, over: true, level: false })}
         unitWord="لعبة"
       />,
@@ -69,13 +75,13 @@ describe("the scoreline on a match card", () => {
 
   it("reads a match in progress differently from a finished one", () => {
     const { rerender, container } = render(
-      <SeriesScoreline parts={[]} standing={standing()} unitWord="لعبة" />,
+      <SeriesScoreline units={[]} standing={standing()} unitWord="لعبة" />,
     );
     expect(screen.getByText("قيد اللعب")).toBeDefined();
 
     rerender(
       <SeriesScoreline
-        parts={[]}
+        units={[]}
         standing={standing({ over: true, level: false, winner: "SIDE_A" })}
         unitWord="لعبة"
       />,
@@ -87,7 +93,7 @@ describe("the scoreline on a match card", () => {
   it("says a level knockout match is being extended rather than looking finished", () => {
     render(
       <SeriesScoreline
-        parts={[]}
+        units={[]}
         standing={standing({ extending: true, unitsAllowed: 4 })}
         unitWord="لعبة"
         extensionUnits="2 ألعاب"
@@ -100,7 +106,7 @@ describe("the scoreline on a match card", () => {
   it("says a finished match ended level", () => {
     render(
       <SeriesScoreline
-        parts={[]}
+        units={[]}
         standing={standing({ over: true, level: true, unitsLeft: 0 })}
         unitWord="لعبة"
       />,
@@ -112,7 +118,7 @@ describe("the scoreline on a match card", () => {
   it("shows a side that owes units with the sign in front of the number", () => {
     const { container } = render(
       <SeriesScoreline
-        parts={[]}
+        units={[]}
         standing={standing({ sideATotal: -4, sideBTotal: 4 })}
         unitWord="لعبة"
       />,
