@@ -11,6 +11,36 @@ export type ProofReuse = {
   date: Date;
 };
 
+const PAYMENT_SELECT = {
+  id: true,
+  purpose: true,
+  userId: true,
+  year: true,
+  donorName: true,
+  createdAt: true,
+  user: { select: DONOR_ACCOUNT_SELECT },
+} as const;
+
+type MembershipPayment = {
+  userId: string;
+  year: number | null;
+  createdAt: Date;
+  user: { fullName: string | null; supportNameConfidential: boolean } | null;
+};
+
+function yearKey(userId: string, year: number | null): string {
+  return `${userId}:${year ?? ""}`;
+}
+
+async function submittedAtOf(rows: MembershipPayment[]): Promise<Map<string, Date>> {
+  if (rows.length === 0) return new Map();
+  const memberships = await prisma.membership.findMany({
+    where: { userId: { in: rows.map((row) => row.userId) } },
+    select: { userId: true, year: true, createdAt: true },
+  });
+  return new Map(memberships.map((m) => [yearKey(m.userId, m.year), m.createdAt]));
+}
+
 export async function findProofReuse(
   filename: string | null | undefined,
   viewer: SupportViewer,
@@ -28,21 +58,8 @@ export async function findProofReuse(
   if (sameImage.length === 0) return [];
 
   const names = sameImage.map((row) => row.filename);
-  const [members, donations, expenseProofs, legacyExpenses] = await Promise.all([
-    prisma.membership.findMany({
-      where: { paymentProof: { in: names } },
-      select: { userId: true, createdAt: true, user: { select: DONOR_ACCOUNT_SELECT } },
-    }),
-    prisma.donation.findMany({
-      where: { proof: { in: names } },
-      select: {
-        id: true,
-        donorName: true,
-        createdAt: true,
-        userId: true,
-        user: { select: DONOR_ACCOUNT_SELECT },
-      },
-    }),
+  const [payments, expenseProofs, legacyExpenses] = await Promise.all([
+    prisma.payment.findMany({ where: { proof: { in: names } }, select: PAYMENT_SELECT }),
     prisma.expenseProof.findMany({
       where: { filename: { in: names } },
       select: { expense: { select: { id: true, label: true, date: true } } },
@@ -53,14 +70,21 @@ export async function findProofReuse(
     }),
   ]);
 
+  const members = payments.filter(
+    (p): p is (typeof payments)[number] & MembershipPayment =>
+      p.purpose === "MEMBERSHIP" && p.userId !== null,
+  );
+  const given = payments.filter((p) => p.purpose !== "MEMBERSHIP");
+  const submittedAt = await submittedAtOf(members);
+
   const found: ProofReuse[] = [
     ...members.map((m) => ({
       kind: "member" as const,
       id: m.userId,
-      label: seesSupporterName(viewer, m) ? nameOf(m.user) : "",
-      date: m.createdAt,
+      label: seesSupporterName(viewer, m) && m.user ? nameOf(m.user) : "",
+      date: submittedAt.get(yearKey(m.userId, m.year)) ?? m.createdAt,
     })),
-    ...donations.map((d) => ({
+    ...given.map((d) => ({
       kind: "donation" as const,
       id: d.id,
       label: donorNameOnRecord(d, viewer),

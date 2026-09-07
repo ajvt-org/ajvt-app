@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { SUPER_ROLE } from "@/lib/adminRoles";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { findProofReuse } from "@/lib/proofReuse";
+import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { resetDb, makeMember } from "./helpers";
 
 const HASH = "a".repeat(64);
@@ -17,8 +19,17 @@ async function memberWithProof(fullName: string, paymentProof: string) {
     age: "البدريين",
     paymentMethod: "بنكيلي",
     status: "PENDING",
+    paidAmount: MEMBERSHIP_FEE,
     paymentProof,
   });
+}
+
+async function giftWithProof(donorName: string, proof: string) {
+  const donation = await prisma.donation.create({
+    data: { amount: 500, donorName, status: "ACTIVE", source: "PUBLIC", proof },
+  });
+  await mirrorDonation(prisma, donationMirrorOf(donation));
+  return donation;
 }
 
 const ADMIN = { role: SUPER_ROLE };
@@ -72,15 +83,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
   it("does not report a donation against itself", async () => {
     await fingerprint("one.webp", HASH);
     await fingerprint("two.webp", HASH);
-    const mine = await prisma.donation.create({
-      data: {
-        amount: 500,
-        donorName: "محمد",
-        status: "PENDING",
-        source: "PUBLIC",
-        proof: "one.webp",
-      },
-    });
+    const mine = await giftWithProof("محمد", "one.webp");
     await memberWithProof("أحمد", "two.webp");
 
     const reuse = await findProofReuse("one.webp", ADMIN, { kind: "donation", id: mine.id });
@@ -102,15 +105,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     await fingerprint("one.webp", HASH);
     await fingerprint("two.webp", HASH);
     await fingerprint("three.webp", HASH);
-    await prisma.donation.create({
-      data: {
-        amount: 500,
-        donorName: "محمد",
-        status: "ACTIVE",
-        source: "PUBLIC",
-        proof: "one.webp",
-      },
-    });
+    await giftWithProof("محمد", "one.webp");
     await prisma.expense.create({
       data: { label: "كرات", amount: 900, createdBy: "admin", proof: "two.webp" },
     });

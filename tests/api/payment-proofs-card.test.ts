@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { resetDb, get, post, createAdmin, signInAsAdmin, createUsers, makeMember } from "./helpers";
 import { GET as PROOFS } from "@/app/api/admin/payment-proofs/route";
 import { POST as RECORD } from "@/app/api/admin/donations/route";
@@ -69,6 +70,7 @@ describe("what the payments list hands the card", () => {
       fullName: "محمد المصطفى",
       paymentMethod: "بنكيلي",
       paymentProof: "membership.webp",
+      paidAmount: MEMBERSHIP_FEE,
       status: "PENDING",
     });
 

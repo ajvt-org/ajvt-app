@@ -11,6 +11,7 @@ import {
   TUTORIAL_BANK_NAME,
 } from "@/lib/questionBankServer";
 import type { ReviewStatus } from "@prisma/client";
+import { mirrorMembershipPayment } from "@/lib/paymentMirror";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
 import { forgetRateLimits } from "@/lib/rateLimit";
@@ -251,6 +252,33 @@ export async function adminAddsMember(body: Record<string, unknown>) {
     }),
     withId(saved.id),
   );
+}
+
+export async function mirrorMembershipYear(userId: string, year: number, amount?: number) {
+  const membership = await prisma.membership.findUniqueOrThrow({
+    where: { userId_year: { userId, year } },
+  });
+  const account = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { fullName: true },
+  });
+  await mirrorMembershipPayment(prisma, {
+    userId,
+    year,
+    amount: amount ?? MEMBERSHIP_FEE,
+    feeApplied: MEMBERSHIP_FEE,
+    method: membership.paymentMethod,
+    accountId: membership.accountId,
+    bankReference: membership.bankReference,
+    proof: membership.paymentProof,
+    referenceCode: membership.referenceCode,
+    status: membership.status,
+    reviewedBy: membership.reviewedBy,
+    reviewedAt: membership.reviewedAt,
+    anonymous: false,
+    donorName: account.fullName,
+    recordedBy: membership.recordedBy,
+  });
 }
 
 // The surplus of a membership payment is the part above the fee. It is worked

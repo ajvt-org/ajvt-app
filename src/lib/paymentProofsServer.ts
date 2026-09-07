@@ -32,13 +32,13 @@ function isRepeated(seenTwice: Set<string>, reference: string | null): boolean {
   return reference !== null && seenTwice.has(reference);
 }
 
-const MEMBERSHIP_SELECT = {
+const MEMBERSHIP_PAYMENT_SELECT = {
   userId: true,
   year: true,
   accountId: true,
   account: { select: { id: true, code: true, label: true } },
   bankReference: true,
-  paymentProof: true,
+  proof: true,
   status: true,
   createdAt: true,
   updatedAt: true,
@@ -81,6 +81,38 @@ const DONATION_SELECT = {
   updatedAt: true,
 } as const;
 
+function yearKey(userId: string, year: number): string {
+  return `${userId}:${year}`;
+}
+
+async function membershipProofPayments() {
+  const rows = await prisma.payment.findMany({
+    where: { purpose: "MEMBERSHIP", proof: { not: null }, userId: { not: null } },
+    select: MEMBERSHIP_PAYMENT_SELECT,
+  });
+  return rows.flatMap((row) =>
+    row.userId !== null && row.year !== null
+      ? [{ ...row, userId: row.userId, year: row.year }]
+      : [],
+  );
+}
+
+async function membershipTimes(userIds: string[]) {
+  const times = new Map<string, { createdAt: Date; updatedAt: Date }>();
+  if (userIds.length === 0) return times;
+  const rows = await prisma.membership.findMany({
+    where: { userId: { in: userIds } },
+    select: { userId: true, year: true, createdAt: true, updatedAt: true },
+  });
+  for (const row of rows) {
+    times.set(yearKey(row.userId, row.year), {
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    });
+  }
+  return times;
+}
+
 async function membershipSupport(userIds: string[]): Promise<Map<string, number>> {
   if (userIds.length === 0) return new Map();
   const payments = await prisma.payment.findMany({
@@ -100,12 +132,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
   const scope = proofScope(role);
 
   const [memberships, registrations, donations] = await Promise.all([
-    scope.membership
-      ? prisma.membership.findMany({
-          where: { paymentProof: { not: null } },
-          select: MEMBERSHIP_SELECT,
-        })
-      : Promise.resolve([]),
+    scope.membership ? membershipProofPayments() : Promise.resolve([]),
     scope.activity
       ? prisma.activityRegistration.findMany({
           where: { paymentProof: { not: null } },
@@ -135,32 +162,39 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
   };
 
   const current = [...latestByAccount(memberships).values()];
-  const support = await membershipSupport(current.map((m) => m.userId));
-  const seenTwice = await repeatedReferences();
+  const userIds = current.map((m) => m.userId);
+  const [support, times, seenTwice] = await Promise.all([
+    membershipSupport(userIds),
+    membershipTimes(userIds),
+    repeatedReferences(),
+  ]);
 
   const proofs = [
-    ...current.map((m) => ({
-      id: m.userId,
-      kind: "MEMBERSHIP" as const,
-      userId: m.userId,
-      proof: m.paymentProof as string,
-      memberName: nameOf(m.user),
-      accountId: m.accountId,
-      account: m.account,
-      bankReference: m.bankReference,
-      repeatedReference: isRepeated(seenTwice, m.bankReference),
-      activityTitle: null as string | null,
-      amount: null as number | null,
-      status: m.status,
-      uploadedAt: m.updatedAt,
-      submittedAt: m.createdAt,
-      named: seesPaymentIdentity(viewer, {
+    ...current.map((m) => {
+      const recorded = times.get(yearKey(m.userId, m.year));
+      return {
+        id: m.userId,
+        kind: "MEMBERSHIP" as const,
         userId: m.userId,
-        user: m.user,
-        purpose: "MEMBERSHIP",
-        amount: support.get(m.userId) ?? 0,
-      }),
-    })),
+        proof: m.proof as string,
+        memberName: m.user ? nameOf(m.user) : "",
+        accountId: m.accountId,
+        account: m.account,
+        bankReference: m.bankReference,
+        repeatedReference: isRepeated(seenTwice, m.bankReference),
+        activityTitle: null as string | null,
+        amount: null as number | null,
+        status: m.status,
+        uploadedAt: recorded?.updatedAt ?? m.updatedAt,
+        submittedAt: recorded?.createdAt ?? m.createdAt,
+        named: seesPaymentIdentity(viewer, {
+          userId: m.userId,
+          user: m.user,
+          purpose: "MEMBERSHIP",
+          amount: support.get(m.userId) ?? 0,
+        }),
+      };
+    }),
     ...registrations.map((r) => ({
       id: r.id,
       kind: "ACTIVITY" as const,
