@@ -136,13 +136,8 @@ function movesIn(container: string | null, placements: Placement[]): RecordedIns
     .map((placed) => ({ order: placed.order, side: placed.move.side, rule: placed.move.rule }));
 }
 
-export function decidesItsParent(
-  rules: SeriesRules,
-  index: number,
-  before: SeriesStanding,
-): boolean {
-  if (rules.unsettled !== "DECIDER") return false;
-  return index === (rules.unitCount ?? 0) && before.level && !before.over;
+export function decidesItsParent(rules: SeriesRules, before: SeriesStanding): boolean {
+  return rules.unsettled === "DECIDER" && before.unsettled;
 }
 
 export function resolveMatch(
@@ -191,7 +186,7 @@ export function resolveMatch(
     const done: ResolvedUnit[] = [];
     for (const row of rows) {
       const before = standingUnder(ladder, depth - 1, container, done, placements);
-      const decider = decidesItsParent(rulesAt(ladder, depth - 1), done.length, before);
+      const decider = decidesItsParent(rulesAt(ladder, depth - 1), before);
       done.push(resolve(row, depth, decider));
     }
     return done;

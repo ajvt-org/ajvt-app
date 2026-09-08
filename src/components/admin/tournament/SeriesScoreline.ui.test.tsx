@@ -39,6 +39,7 @@ function standing(extra: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
     target: null,
     over: false,
     level: true,
+    unsettled: false,
     extending: false,
     winner: null,
     ...extra,

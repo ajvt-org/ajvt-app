@@ -78,6 +78,7 @@ const MATCH: DecidedMatch = {
     target: null,
     over: true,
     level: false,
+    unsettled: false,
     extending: false,
     winner: "SIDE_A",
   },

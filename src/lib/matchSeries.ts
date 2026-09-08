@@ -50,6 +50,7 @@ export interface SeriesStanding {
   target: number | null;
   over: boolean;
   level: boolean;
+  unsettled: boolean;
   extending: boolean;
   winner: SeriesSide | null;
 }
@@ -248,6 +249,7 @@ export function deriveSeries(
       target,
       over,
       level,
+      unsettled: !over && level && reachedTarget(totals, target),
       extending: false,
       winner: run.winner,
     };
@@ -272,6 +274,7 @@ export function deriveSeries(
     target,
     over,
     level,
+    unsettled: !over && level && unitsRecorded >= (rules.unitCount ?? 0),
     extending: unitsAllowed > (rules.unitCount ?? 0),
     winner,
   };

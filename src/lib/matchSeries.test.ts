@@ -343,6 +343,56 @@ describe("a level whose units are counted by their points", () => {
   });
 });
 
+describe("a level that plays a deciding unit", () => {
+  const DECIDED: SeriesRules = { ...CHESS, unsettled: "DECIDER" };
+
+  it("reads as unsettled once the count is played and nothing is settled", () => {
+    const standing = deriveSeries(DECIDED, [drawn(1), drawn(2)]);
+
+    expect(standing.unsettled).toBe(true);
+    expect(standing.over).toBe(false);
+    expect(standing.unitsLeft).toBe(1);
+  });
+
+  it("reads as settled where one side came out of the count ahead", () => {
+    const standing = deriveSeries(DECIDED, [won(1, "SIDE_A"), drawn(2)]);
+
+    expect(standing.unsettled).toBe(false);
+    expect(standing.over).toBe(true);
+  });
+
+  it("is over once the deciding unit has been played", () => {
+    const standing = deriveSeries(DECIDED, [drawn(1), drawn(2), won(3, "SIDE_A")]);
+
+    expect(standing.over).toBe(true);
+    expect(standing.winner).toBe("SIDE_A");
+    expect(standing.unsettled).toBe(false);
+  });
+
+  it("takes only one deciding unit even where it too ends level", () => {
+    const standing = deriveSeries(DECIDED, [drawn(1), drawn(2), drawn(3)]);
+
+    expect(standing.over).toBe(true);
+    expect(standing.unsettled).toBe(false);
+    expect(standing.winner).toBeNull();
+  });
+
+  it("reads as unsettled on a level ending at a number when both are past it", () => {
+    const rules: SeriesRules = {
+      ...BASE,
+      countedBy: "POINTS",
+      endsBy: "TARGET",
+      unitCount: null,
+      target: 100,
+      unsettled: "DECIDER",
+    };
+    const standing = deriveSeries(rules, [scored(1, 101, 101)]);
+
+    expect(standing.unsettled).toBe(true);
+    expect(standing.over).toBe(false);
+  });
+});
+
 describe("a unit worth more than one", () => {
   it("counts what the row says it was worth", () => {
     const standing = deriveSeries(COUNTED, [{ ...won(1, "SIDE_A"), worth: 2 }]);

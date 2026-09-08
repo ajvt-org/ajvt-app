@@ -96,6 +96,7 @@ export function standingRow(over: Partial<SeriesStandingRow> = {}): SeriesStandi
     target: null,
     over: false,
     level: true,
+    unsettled: false,
     extending: false,
     winner: null,
     ...over,
