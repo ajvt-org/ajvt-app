@@ -7,7 +7,7 @@ import type { EntrantKind } from "@/lib/entrant";
 import NewMatchForm from "./NewMatchForm";
 import { isFootball } from "@/lib/matchShape";
 import type { SeriesConfig } from "./seriesConfig";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import BracketPanel from "./BracketPanel";
 import type { AdminQuestion } from "./askQuestion";
 import MatchListSection from "./MatchListSection";

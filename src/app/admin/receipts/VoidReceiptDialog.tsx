@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ConfirmDialogShell from "@/components/admin/ConfirmDialogShell";
+import ConfirmDialogShell from "@/components/ConfirmDialogShell";
 import { receiptAdmin as texts } from "@/lib/texts/receipt";
 
 export default function VoidReceiptDialog({

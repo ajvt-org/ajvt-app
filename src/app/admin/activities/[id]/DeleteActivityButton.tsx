@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import IconLabel from "@/components/IconLabel";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { deleteActivity as texts } from "@/lib/texts";
 
 export default function DeleteActivityButton({ activityId }: { activityId: string }) {

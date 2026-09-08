@@ -1,6 +1,6 @@
 "use client";
 
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { quizQuestionList as texts } from "@/lib/texts";
 import BankPicker from "./BankPicker";
 import QuestionList from "./QuestionList";

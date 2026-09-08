@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import Notice from "@/components/Notice";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { isVoteClosed, mvpWinner } from "@/lib/mvpVote";
 import { countdownLabel } from "@/lib/voteCountdown";
 import { mvpVote as texts } from "@/lib/texts";

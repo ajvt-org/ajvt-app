@@ -46,7 +46,7 @@ import { useBareAccounts } from "./useBareAccounts";
 import { OTHER_VILLAGE } from "@/lib/villages";
 import PageLoading from "@/components/PageLoading";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Notice from "@/components/Notice";
 import MemberDrawer from "./MemberDrawer";
 import { useBulkActions } from "./useBulkActions";

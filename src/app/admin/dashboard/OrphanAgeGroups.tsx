@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Notice from "@/components/Notice";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup, OrphanAge } from "./types";
 import { counted } from "@/lib/arabicCount";

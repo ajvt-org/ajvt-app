@@ -5,7 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { financeTags as texts } from "@/lib/texts";
 
 export type FinanceTagRow = { id: string; name: string; count: number; total: number };
