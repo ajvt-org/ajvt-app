@@ -12,7 +12,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import ErrorNotice from "@/components/form/ErrorNotice";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
 import { matchingMembers, matchingPeople, matchingTeams } from "./teamSearch";

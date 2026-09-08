@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup } from "./types";
 import { counted } from "@/lib/arabicCount";

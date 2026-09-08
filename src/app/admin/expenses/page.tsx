@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import PageLoading from "@/components/PageLoading";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import FinanceTagManager from "@/components/admin/FinanceTagManager";

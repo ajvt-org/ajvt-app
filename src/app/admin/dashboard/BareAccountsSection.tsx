@@ -5,7 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import Notice from "@/components/Notice";
 import PageLoading from "@/components/PageLoading";
-import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import VerbButton from "@/components/admin/VerbButton";
 import { GRAVE, LEAD, SAFE } from "@/components/admin/verbTones";
 import { push } from "@/lib/messages";

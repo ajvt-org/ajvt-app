@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { pendingAgeGroups } from "@/lib/texts";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import IconLabel from "@/components/IconLabel";
 import type { AgeGroup } from "./types";
 

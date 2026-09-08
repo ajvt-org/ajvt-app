@@ -1,6 +1,6 @@
 "use client";
 
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { memberPhoto as texts } from "@/lib/texts";
 
 export type PhotoAsking = "remove" | "lock";

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import AdminToolHeader from "@/components/admin/AdminToolHeader";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Notice from "@/components/Notice";
 import AccountRow from "@/components/admin/shell/AccountRow";
 import ActivityPicker from "@/components/admin/shell/ActivityPicker";

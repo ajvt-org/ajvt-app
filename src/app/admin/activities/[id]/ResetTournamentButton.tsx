@@ -4,7 +4,7 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import IconLabel from "@/components/IconLabel";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { counted } from "@/lib/arabicCount";
 import { DAY, GROUP, MATCH, RESULT, SUSPENSION } from "@/lib/messages";
 import { resetTournament as texts } from "@/lib/texts";
