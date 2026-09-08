@@ -88,7 +88,7 @@ describe("the moves of a match", () => {
     const { onRecord } = show();
 
     fireEvent.change(screen.getByLabelText("تسجيل حركة"), { target: { value: "r1" } });
-    fireEvent.change(screen.getByLabelText("الوحدة التي وقعت فيها الحركة"), {
+    fireEvent.change(screen.getByLabelText("الوحدة التي تقع عليها الحركة"), {
       target: { value: "u1" },
     });
     fireEvent.change(screen.getByLabelText("اختر الطرف..."), { target: { value: "SIDE_B" } });

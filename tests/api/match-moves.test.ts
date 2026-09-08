@@ -311,6 +311,88 @@ describe("a move that says what a unit counts as", () => {
   });
 });
 
+describe("a move typed into the unit below the one it acts on", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  const DEEP: LevelFixture[] = [
+    { ...MATCH_LEVEL, endsBy: "TARGET", unitCount: null, target: 2, unsettled: null },
+    { singular: "فكتوار", plural: "فكتوارات", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
+    { singular: "جولة", plural: "جولات" },
+  ];
+
+  async function deepMatch() {
+    const activity = await prisma.activity.create({
+      data: {
+        title: "بطولة",
+        description: "بطولة",
+        isTournament: true,
+        matchShape: "SERIES",
+        levels: ladderData(DEEP),
+      },
+    });
+    const one = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
+    const two = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
+    const match = await prisma.match.create({
+      data: { activityId: activity.id, ...sideIdData("SERIES", one.id, two.id) },
+    });
+    const levels = await prisma.matchLevel.findMany({
+      where: { activityId: activity.id },
+      orderBy: { order: "asc" },
+    });
+    return { activity, match, levels };
+  }
+
+  it("abandons the unit it was typed into and records against the one it acts on", async () => {
+    const { activity, match, levels } = await deepMatch();
+    const rule = await ruleOf(activity.id, {
+      ...TEYSSE,
+      levelId: levels[1].id,
+      endsUnit: true,
+    });
+    const parent = await unitOf(match.id, WON);
+    const child = await unitOf(match.id, { parentId: parent, sideAPoints: 30, sideBPoints: 10 });
+
+    const body = await (
+      await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId: child })
+    ).json();
+
+    expect(body.moves[0].unitId).toBe(parent);
+    expect(body.units[0].children[0].abandoned).toBe(true);
+    expect(body.units[0].endedBy.name).toBe("تيس");
+  });
+
+  it("leaves the unit alone where the move was typed into the one it acts on", async () => {
+    const { activity, match, levels } = await deepMatch();
+    const rule = await ruleOf(activity.id, { ...TEYSSE, levelId: levels[1].id });
+    const parent = await unitOf(match.id, WON);
+    const child = await unitOf(match.id, { parentId: parent, sideAPoints: 30, sideBPoints: 10 });
+
+    const body = await (
+      await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId: parent })
+    ).json();
+
+    expect(body.moves[0].unitId).toBe(parent);
+    expect(body.units[0].children[0].abandoned).toBe(false);
+    expect(child).toBeDefined();
+  });
+
+  it("moves the level above the unit it acts on", async () => {
+    const { activity, match, levels } = await deepMatch();
+    const rule = await ruleOf(activity.id, { ...TEYSSE, levelId: levels[1].id });
+    const parent = await unitOf(match.id, WON);
+
+    const body = await (
+      await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId: parent })
+    ).json();
+
+    expect(body.standing.sideBTotal).toBe(4);
+    expect(body.standing.sideATotal).toBe(-4);
+  });
+});
+
 describe("a move that names its own level", () => {
   beforeEach(async () => {
     await resetDb();

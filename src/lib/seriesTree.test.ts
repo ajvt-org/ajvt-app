@@ -468,13 +468,13 @@ describe("the deciding unit of a level", () => {
   });
 });
 
-describe("a rule that ends the unit it lands in", () => {
+describe("a rule that ends the unit it acts on", () => {
   const teysse = {
     id: "teysse",
     name: "تيس",
     unitsToSelf: 2,
     unitsFromOther: 2,
-    levelId: "round",
+    levelId: "point",
     endsUnit: true,
     unitWorth: null,
   };
@@ -493,12 +493,13 @@ describe("a rule that ends the unit it lands in", () => {
     unit({ id: "r2", levelId: "round", parentId: "p1", order: 2, sideAPoints: 30, sideBPoints: 5 }),
     unit({ id: "p2", levelId: "point", parentId: "s1", order: 2, outcome: "SIDE_A" }),
   ];
-  const moves: MoveRow[] = [{ id: "a1", unitId: "r2", side: "SIDE_B", rule: teysse }];
+  const moves: MoveRow[] = [{ id: "a1", unitId: "p1", side: "SIDE_B", rule: teysse }];
 
-  it("ends the unit the round it landed in belongs to", () => {
+  it("ends the unit it names rather than the one above it", () => {
     const { units } = resolveMatch(CARDS, rows, moves);
 
     expect(units[0].children[0].endedBy?.name).toBe("تيس");
+    expect(units[0].endedBy).toBeNull();
   });
 
   it("discards the ended unit rather than scoring it", () => {
@@ -515,12 +516,19 @@ describe("a rule that ends the unit it lands in", () => {
     expect(units[0].standing?.sideATotal).toBe(-2);
   });
 
-  it("leaves the point scoring where the rule does not end a unit", () => {
+  it("leaves the unit scoring where the rule does not end one", () => {
     const { units } = resolveMatch(CARDS, rows, [
       { ...moves[0], rule: { ...teysse, endsUnit: false } },
     ]);
 
     expect(units[0].children[0].endedBy).toBeNull();
     expect(units[0].children[0].played.endedByRule).toBe(false);
+  });
+
+  it("takes a total below nothing rather than flooring it at zero", () => {
+    const { units } = resolveMatch(CARDS, [rows[0], rows[1], rows[2], rows[3]], moves);
+
+    expect(units[0].standing?.sideATotal).toBe(-4);
+    expect(units[0].standing?.sideBTotal).toBe(4);
   });
 });

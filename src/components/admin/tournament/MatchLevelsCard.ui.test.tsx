@@ -122,7 +122,7 @@ describe("the match levels card", () => {
 
   it("offers only the levels the tournament declared to a move", async () => {
     show();
-    const picker = (await screen.findByLabelText("المستوى الذي تقع فيه")) as HTMLSelectElement;
+    const picker = (await screen.findByLabelText("المستوى الذي تقع عليه")) as HTMLSelectElement;
 
     expect([...picker.options].map((option) => option.textContent)).toEqual(["المباراة", "لعبة"]);
   });
@@ -130,10 +130,10 @@ describe("the match levels card", () => {
   it("declares a move against a level", async () => {
     show();
     fireEvent.change(await screen.findByLabelText("اسم الحركة"), { target: { value: "تيس" } });
-    fireEvent.change(screen.getByLabelText("المستوى الذي تقع فيه"), {
+    fireEvent.change(screen.getByLabelText("المستوى الذي تقع عليه"), {
       target: { value: "game" },
     });
-    fireEvent.click(screen.getByLabelText("تنهي الوحدة التي تقع فيها"));
+    fireEvent.click(screen.getByLabelText("تنهي الوحدة التي تقع عليها"));
     fireEvent.click(screen.getByRole("button", { name: "إضافة حركة" }));
 
     await waitFor(() => expect(postMock).toHaveBeenCalled());
