@@ -1,3 +1,9 @@
+export const PHONE_COUNTRY_CODE = "222";
+
+export function internationalPhone(phone: string): string {
+  return `${PHONE_COUNTRY_CODE}${phone.replace(/\D/g, "")}`;
+}
+
 export function validatePhone(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
   if (digits.length !== 8) return "يجب أن يكون رقم الهاتف 8 أرقام بالضبط";

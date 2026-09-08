@@ -155,7 +155,7 @@ function Row({
         </VerbButton>
       </div>
       {resetError && <Notice tone="error">{resetError}</Notice>}
-      {temp && <TempPasswordBox value={temp.password} hours={temp.hours} />}
+      {temp && <TempPasswordBox value={temp.password} hours={temp.hours} phone={user.phone} />}
     </div>
   );
 }
