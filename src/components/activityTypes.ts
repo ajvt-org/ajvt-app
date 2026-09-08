@@ -31,6 +31,7 @@ export interface MemberRegistration {
   activityId: string;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   rejectionReason: string | null;
+  chosenTeamId: string | null;
 }
 
 export interface MemberTeamMembership {
@@ -56,7 +57,12 @@ type ApiMember = {
   status: string;
   membershipYear: number;
   endedAt?: string | null;
-  registrations: { activityId: string; status: string; rejectionReason: string | null }[];
+  registrations: {
+    activityId: string;
+    status: string;
+    rejectionReason: string | null;
+    chosenTeamId?: string | null;
+  }[];
   teamMemberships: { status: string; team: { id: string; name: string; activityId: string } }[];
 };
 
@@ -84,6 +90,7 @@ export function toEligibleMember(
       activityId: r.activityId,
       status: r.status as MemberRegistration["status"],
       rejectionReason: r.rejectionReason,
+      chosenTeamId: r.chosenTeamId ?? null,
     })),
     teamMemberships: member.teamMemberships.map((tm) => ({
       teamId: tm.team.id,

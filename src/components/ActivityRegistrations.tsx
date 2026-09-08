@@ -24,6 +24,10 @@ export default function ActivityRegistrations({
   const showToast = useToast();
 
   const registration = member.registrations.find((r) => r.activityId === activity.id) || null;
+  const teamChosenAtRegistration =
+    registration?.status === "PENDING" && registration.chosenTeamId
+      ? (activity.joinableTeams.find((t) => t.id === registration.chosenTeamId)?.name ?? null)
+      : null;
   const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
   const settled = registration && registration.status !== "REJECTED";
   const hasTeamsToJoin = activity.joinableTeams.length > 0;
@@ -83,16 +87,29 @@ export default function ActivityRegistrations({
       <div className="space-y-1.5">
         <div className="flex flex-col items-stretch gap-2 text-xs">
           {settled ? (
-            <div className="flex items-center justify-center gap-2 py-1">
-              <span className={`badge ${STATUS_CLASS[registration!.status]}`}>
-                <IconLabel name={STATUS_LABEL[registration!.status].icon} size={11}>
-                  {STATUS_LABEL[registration!.status].text}
-                </IconLabel>
-              </span>
-              {registration!.status === "PENDING" && (
-                <button onClick={cancelPending} className="font-bold" style={{ color: "#991b1b" }}>
-                  {activityRegistration.cancel}
-                </button>
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-2 py-1">
+                <span className={`badge ${STATUS_CLASS[registration!.status]}`}>
+                  <IconLabel name={STATUS_LABEL[registration!.status].icon} size={11}>
+                    {STATUS_LABEL[registration!.status].text}
+                  </IconLabel>
+                </span>
+                {registration!.status === "PENDING" && (
+                  <button
+                    onClick={cancelPending}
+                    className="font-bold"
+                    style={{ color: "#991b1b" }}
+                  >
+                    {activityRegistration.cancel}
+                  </button>
+                )}
+              </div>
+              {teamChosenAtRegistration && (
+                <p className="text-center" style={{ color: "var(--text-muted)" }}>
+                  <IconLabel name="flag" size={12}>
+                    {activityRegistration.chosenTeamPending(teamChosenAtRegistration)}
+                  </IconLabel>
+                </p>
               )}
             </div>
           ) : !member.canJoinNew ? (
@@ -102,20 +119,25 @@ export default function ActivityRegistrations({
           ) : activity.isOpen && !full ? (
             <>
               {activity.isTournament && !activity.isVolunteer && hasTeamsToJoin && (
-                <div>
+                <div
+                  className="rounded-xl p-2.5 mb-1 space-y-1.5"
+                  style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
+                >
                   <label
                     htmlFor={`choose-team-${activity.id}`}
-                    className="block text-xs mb-1"
-                    style={{ color: "var(--text-muted)" }}
+                    className="block text-sm font-bold"
+                    style={{ color: "var(--text-main)" }}
                   >
-                    <Icon name="flag" size={12} className="icon-inline" />{" "}
-                    {activityRegistration.chooseTeamAtRegistration}
+                    <IconLabel name="flag" size={14}>
+                      {activityRegistration.chooseTeamAtRegistration}
+                    </IconLabel>
                   </label>
                   <select
                     id={`choose-team-${activity.id}`}
-                    className="input input-sm"
+                    className="input input-sm w-full"
                     value={chosenTeamId}
                     onChange={(e) => setChosenTeamId(e.target.value)}
+                    style={{ backgroundColor: "white" }}
                   >
                     <option value="">{activityRegistration.noTeamYet}</option>
                     {activity.joinableTeams.map((t) => (
