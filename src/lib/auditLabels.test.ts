@@ -8,6 +8,8 @@ const RETIRED: AuditAction[] = [
   "SEND_QUIZ_QUESTION",
   "FILL_QUIZ_ROUNDS",
   "GENERATE_MATCH_SCHEDULE",
+  "DECLARE_ADJUSTMENT_RULE",
+  "WITHDRAW_ADJUSTMENT_RULE",
 ];
 
 const retired = new Set<string>(RETIRED);

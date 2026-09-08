@@ -13,8 +13,14 @@ async function seriesTournament() {
   });
 }
 
-const save = (id: string, levels: object[]) =>
-  SAVE(put(`/api/admin/activities/${id}/levels`, { levels }), withId(id));
+const save = (id: string, levels: object[], moves: object[] = []) =>
+  SAVE(
+    put(`/api/admin/activities/${id}/levels`, {
+      levels: levels.map((level, at) => ({ key: `k${at}`, ...level })),
+      moves,
+    }),
+    withId(id),
+  );
 
 const read = (id: string) => READ(new Request(`http://x/a/${id}/levels`) as never, withId(id));
 

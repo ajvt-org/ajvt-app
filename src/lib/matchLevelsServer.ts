@@ -3,10 +3,13 @@ import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { tournament as messages } from "./messages";
 import { isFootball } from "./matchShape";
 import { ladderProblem } from "./seriesSetup";
-import { LEVEL_FIELDS } from "./matchSeriesServer";
+import { LEVEL_FIELDS, MOVE_FIELDS } from "./matchSeriesServer";
+import { ruleProblem, type RuleShape } from "./moveRules";
 import type { LevelRow } from "./matchLevels";
 
-export type LevelInput = Omit<LevelRow, "id" | "order"> & { id?: string | null };
+export type LevelInput = Omit<LevelRow, "id" | "order"> & { id?: string | null; key: string };
+
+export type MoveInput = Omit<RuleShape, "levelId"> & { id?: string | null; levelKey: string };
 
 const PARKED = 1000;
 
@@ -28,6 +31,14 @@ export async function listLevels(activityId: string): Promise<LevelRow[]> {
     where: { activityId },
     orderBy: { order: "asc" },
     select: LEVEL_FIELDS,
+  });
+}
+
+export async function listMoves(activityId: string) {
+  return prisma.moveRule.findMany({
+    where: { activityId },
+    orderBy: { createdAt: "asc" },
+    select: MOVE_FIELDS,
   });
 }
 
@@ -70,12 +81,42 @@ function guardPlayedLevels(existing: LevelRow[], wanted: LevelInput[], played: S
 }
 
 function rowData(level: LevelInput) {
-  const { id, ...rest } = level;
+  const { id, key, ...rest } = level;
   void id;
+  void key;
   return rest;
 }
 
-export async function declareLevels(activityId: string, wanted: LevelInput[]) {
+function moveData(move: MoveInput, levelId: string) {
+  return {
+    name: move.name.trim(),
+    levelId,
+    unitsToSelf: move.unitsToSelf,
+    unitsFromOther: move.unitsFromOther,
+    endsUnit: move.endsUnit ?? false,
+    unitWorth: move.unitWorth ?? null,
+  };
+}
+
+function guardMoves(moves: MoveInput[], keyed: Set<string>): void {
+  const names = new Set<string>();
+  for (const move of moves) {
+    const problem = ruleProblem({
+      ...move,
+      levelId: keyed.has(move.levelKey) ? move.levelKey : "",
+    });
+    if (problem) throw new ValidationError(messages.moveRule[problem]);
+    const name = move.name.trim();
+    if (names.has(name)) throw new ConflictError(messages.moveNameTaken);
+    names.add(name);
+  }
+}
+
+export async function declareConfiguration(
+  activityId: string,
+  wanted: LevelInput[],
+  moves: MoveInput[],
+) {
   const activity = await prisma.activity.findUnique({
     where: { id: activityId },
     select: { matchShape: true },
@@ -86,6 +127,7 @@ export async function declareLevels(activityId: string, wanted: LevelInput[]) {
   const ladder = wanted.map((level, order) => ({ ...level, id: level.id ?? "", order }));
   const problem = ladderProblem(ladder);
   if (problem) throw new ValidationError(faultMessage(problem));
+  guardMoves(moves, new Set(wanted.map((level) => level.key)));
 
   const existing = await listLevels(activityId);
   const known = new Set(existing.map((level) => level.id));
@@ -106,17 +148,39 @@ export async function declareLevels(activityId: string, wanted: LevelInput[]) {
         });
       }
     }
+    const idOfKey = new Map<string, string>();
     for (const [order, level] of wanted.entries()) {
-      if (level.id) {
-        await tx.matchLevel.update({ where: { id: level.id }, data: { ...rowData(level), order } });
+      const row = level.id
+        ? await tx.matchLevel.update({
+            where: { id: level.id },
+            data: { ...rowData(level), order },
+          })
+        : await tx.matchLevel.create({ data: { ...rowData(level), activityId, order } });
+      idOfKey.set(level.key, row.id);
+    }
+
+    const kept = moves.map((move) => move.id).filter((id): id is string => !!id);
+    await tx.moveRule.deleteMany({ where: { activityId, id: { notIn: kept } } });
+    for (const move of moves) {
+      const levelId = idOfKey.get(move.levelKey)!;
+      if (move.id) {
+        await tx.moveRule.update({ where: { id: move.id }, data: moveData(move, levelId) });
       } else {
-        await tx.matchLevel.create({ data: { ...rowData(level), activityId, order } });
+        await tx.moveRule.create({ data: { ...moveData(move, levelId), activityId } });
       }
     }
-    return tx.matchLevel.findMany({
-      where: { activityId },
-      orderBy: { order: "asc" },
-      select: LEVEL_FIELDS,
-    });
+
+    return {
+      levels: await tx.matchLevel.findMany({
+        where: { activityId },
+        orderBy: { order: "asc" },
+        select: LEVEL_FIELDS,
+      }),
+      moves: await tx.moveRule.findMany({
+        where: { activityId },
+        orderBy: { createdAt: "asc" },
+        select: MOVE_FIELDS,
+      }),
+    };
   });
 }

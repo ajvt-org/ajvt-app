@@ -5,6 +5,7 @@ const INVALID = common.invalidBody;
 
 const level = z.object({
   id: z.string().nullish(),
+  key: z.string(INVALID),
   singular: z.string(INVALID),
   plural: z.string(INVALID),
   countedBy: z.enum(["OUTCOME", "POINTS"], INVALID).nullable().default(null),
@@ -19,4 +20,17 @@ const level = z.object({
   creditWindow: z.number().int().default(0),
 });
 
-export const levelsSchema = z.object({ levels: z.array(level) });
+const move = z.object({
+  id: z.string().nullish(),
+  levelKey: z.string(INVALID),
+  name: z.string(INVALID),
+  unitsToSelf: z.number().int().default(0),
+  unitsFromOther: z.number().int().default(0),
+  endsUnit: z.boolean().default(false),
+  unitWorth: z.number().int().nullable().default(null),
+});
+
+export const levelsSchema = z.object({
+  levels: z.array(level),
+  moves: z.array(move).default([]),
+});
