@@ -3,6 +3,7 @@ import { render, screen, fireEvent, cleanup as rtlCleanup } from "@testing-libra
 import MatchResult from "./MatchResult";
 import type { DecidedMatch } from "./publicTypes";
 import { matchDisplay, mvpVote as voteTexts } from "@/lib/texts";
+import { MATCH_TEAMS_SIZES } from "./matchCard/MatchTeams";
 
 function match(): DecidedMatch {
   return {
@@ -76,6 +77,17 @@ describe("MatchResult by match shape", () => {
     expect(screen.queryByText(/سالم ولد علي/)).toBeNull();
     fireEvent.click(screen.getByText(/مجريات المباراة/));
     expect(screen.getByText(/سالم ولد علي/)).toBeDefined();
+  });
+
+  it("draws the crests at the largest step the scale carries", () => {
+    show(true);
+
+    const biggest = Math.max(...Object.values(MATCH_TEAMS_SIZES).map((step) => step.logo));
+    const crests = [...document.querySelectorAll("span.rounded-full, img.rounded-full")].filter(
+      (el) => (el.getAttribute("style") ?? "").includes(`width: ${biggest}px`),
+    );
+
+    expect(crests).toHaveLength(2);
   });
 
   it("keeps a board result to the score alone", () => {
