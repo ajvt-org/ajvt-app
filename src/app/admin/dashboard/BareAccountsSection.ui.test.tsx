@@ -140,7 +140,7 @@ describe("BareAccountsSection", () => {
 
     fireEvent.click(screen.getByText("حذف"));
     fireEvent.click(screen.getByText("متابعة"));
-    const input = screen.getByRole("textbox");
+    const input = screen.getByLabelText("اسم العضو للتأكيد");
     fireEvent.change(input, { target: { value: "محمد ولد أحمد" } });
     fireEvent.click(screen.getByRole("button", { name: "حذف نهائي" }));
 
@@ -251,5 +251,65 @@ describe("where the person is from", () => {
       const button = screen.getByRole("button", { name: new RegExp(label) });
       expect(button.className).toContain("disabled:opacity-50");
     }
+  });
+});
+
+describe("finding one account among many", () => {
+  function search() {
+    return screen.getByLabelText(bareAccounts.searchLabel);
+  }
+
+  it("narrows the list by name", () => {
+    renderSection([
+      account(),
+      account({ id: "u2", phone: "36000002", fullName: "سيدي ولد الحسن" }),
+    ]);
+
+    fireEvent.change(search(), { target: { value: "سيدي" } });
+
+    expect(screen.getByText("سيدي ولد الحسن")).toBeDefined();
+    expect(screen.queryByText("محمد ولد أحمد")).toBeNull();
+  });
+
+  it("matches the phone of an account whose phone is not on screen", () => {
+    renderSection([account({ fullName: null }), account({ id: "u2", phone: "36000002" })]);
+
+    fireEvent.change(search(), { target: { value: "36000001" } });
+
+    expect(screen.getByText("36000001")).toBeDefined();
+    expect(screen.queryByText("محمد ولد أحمد")).toBeNull();
+  });
+
+  it("says nothing matched rather than that nobody is without a request", () => {
+    renderSection([account()]);
+
+    fireEvent.change(search(), { target: { value: "خديجة" } });
+
+    expect(screen.getByText(bareAccounts.noMatch)).toBeDefined();
+    expect(screen.queryByText(bareAccounts.empty)).toBeNull();
+  });
+
+  it("offers no box to search when nobody is without a request", () => {
+    renderSection([]);
+
+    expect(screen.queryByLabelText(bareAccounts.searchLabel)).toBeNull();
+    expect(screen.getByText(bareAccounts.empty)).toBeDefined();
+  });
+
+  it("keeps a password it has just issued when the search hides the row and brings it back", async () => {
+    post.mockResolvedValue({ tempPassword: "J2AF3JQL4D", hours: 1 });
+    renderSection([
+      account(),
+      account({ id: "u2", phone: "36000002", fullName: "سيدي ولد الحسن" }),
+    ]);
+
+    fireEvent.click(screen.getAllByText("إعادة تعيين")[0]);
+    await waitFor(() => expect(screen.getByText("J2AF3JQL4D")).toBeDefined());
+
+    fireEvent.change(search(), { target: { value: "سيدي" } });
+    expect(screen.queryByText("J2AF3JQL4D")).toBeNull();
+
+    fireEvent.change(search(), { target: { value: "" } });
+    expect(screen.getByText("J2AF3JQL4D")).toBeDefined();
   });
 });
