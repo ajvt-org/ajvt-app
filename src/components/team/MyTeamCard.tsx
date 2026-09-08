@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { rosterFault, squadLabel, teamIsFull, type SquadSize } from "@/lib/squadSize";
 import type { Candidate, MyTeamMember, MyTeamView } from "@/lib/myTeamServer";
@@ -13,6 +15,12 @@ const SEATED = { background: "var(--mint-50)" };
 const ACCEPT = { background: "var(--mint-600)", color: "white" };
 const HANDOVER = { background: "var(--mint-100)", color: "var(--mint-700)" };
 const DESTRUCTIVE = { background: "#fee2e2", color: "#991b1b" };
+
+type Ask =
+  | { kind: "handover"; userId: string; fullName: string }
+  | { kind: "remove"; userId: string; fullName: string }
+  | { kind: "disband" }
+  | { kind: "leave" };
 
 function seatNote(kind: MyTeamMember["kind"]): string | null {
   if (kind === "invitation") return texts.waitingOnInvitation;
@@ -48,6 +56,7 @@ export default function MyTeamCard({
   onLeave: () => void;
 }) {
   const [pick, setPick] = useState("");
+  const [ask, setAsk] = useState<Ask | null>(null);
   const leads = team.captainUserId === viewerId;
   const captain = leads && !locked;
   const seated = team.members.filter((m) => m.kind === "member");
@@ -135,10 +144,13 @@ export default function MyTeamCard({
                   <>
                     {entry.kind === "member" && (
                       <button
-                        onClick={() => {
-                          if (confirm(texts.confirmHandover(entry.fullName)))
-                            onHandOver(entry.userId);
-                        }}
+                        onClick={() =>
+                          setAsk({
+                            kind: "handover",
+                            userId: entry.userId,
+                            fullName: entry.fullName,
+                          })
+                        }
                         disabled={busy}
                         aria-label={texts.makeCaptain(entry.fullName)}
                         className="btn btn-sm btn-icon shrink-0"
@@ -150,7 +162,7 @@ export default function MyTeamCard({
                     <button
                       onClick={() => {
                         if (entry.kind === "request") return onAnswerRequest(entry.userId, false);
-                        if (confirm(texts.confirmRemove(entry.fullName))) onRemove(entry.userId);
+                        setAsk({ kind: "remove", userId: entry.userId, fullName: entry.fullName });
                       }}
                       disabled={busy}
                       aria-label={
@@ -220,9 +232,7 @@ export default function MyTeamCard({
 
       {captain && (
         <button
-          onClick={() => {
-            if (confirm(texts.confirmDisband)) onDisband();
-          }}
+          onClick={() => setAsk({ kind: "disband" })}
           disabled={busy}
           className="text-xs font-bold"
           style={{ color: "#991b1b" }}
@@ -233,15 +243,73 @@ export default function MyTeamCard({
 
       {!leads && !locked && (
         <button
-          onClick={() => {
-            if (confirm(texts.confirmLeave)) onLeave();
-          }}
+          onClick={() => setAsk({ kind: "leave" })}
           disabled={busy}
           className="text-xs font-bold"
           style={{ color: "#991b1b" }}
         >
           {texts.leave}
         </button>
+      )}
+
+      {ask?.kind === "handover" && (
+        <ConfirmDialog
+          title={texts.makeCaptain(ask.fullName)}
+          message={texts.confirmHandover(ask.fullName)}
+          confirmLabel={texts.makeCaptain(ask.fullName)}
+          loading={busy}
+          onConfirm={() => {
+            setAsk(null);
+            onHandOver(ask.userId);
+          }}
+          onClose={() => setAsk(null)}
+        />
+      )}
+
+      {ask?.kind === "remove" && (
+        <ConfirmDialog
+          title={texts.removePlayer(ask.fullName)}
+          message={texts.confirmRemove(ask.fullName)}
+          confirmLabel={texts.removePlayer(ask.fullName)}
+          danger
+          loading={busy}
+          onConfirm={() => {
+            setAsk(null);
+            onRemove(ask.userId);
+          }}
+          onClose={() => setAsk(null)}
+        />
+      )}
+
+      {ask?.kind === "leave" && (
+        <ConfirmDialog
+          title={texts.leave}
+          message={texts.confirmLeave}
+          confirmLabel={texts.leave}
+          danger
+          loading={busy}
+          onConfirm={() => {
+            setAsk(null);
+            onLeave();
+          }}
+          onClose={() => setAsk(null)}
+        />
+      )}
+
+      {ask?.kind === "disband" && (
+        <ConfirmDeleteDialog
+          name={team.name}
+          consequence={texts.confirmDisband}
+          title={texts.disband}
+          nameField={texts.disbandNameField}
+          confirmLabel={texts.disband}
+          loading={busy}
+          onConfirm={() => {
+            setAsk(null);
+            onDisband();
+          }}
+          onClose={() => setAsk(null)}
+        />
       )}
     </div>
   );
