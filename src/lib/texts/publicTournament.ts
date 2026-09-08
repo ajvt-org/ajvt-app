@@ -27,7 +27,6 @@ export const matchDisplay = {
   upcomingShort: "قادمة",
   todayMatches: "مباريات اليوم",
   clubName: "رابطة شباب قرية التاكلالت",
-  shareResult: "مشاركة النتيجة",
   timeline: "مجريات المباراة",
   hideTimeline: "إخفاء المجريات",
 } as const;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Icon from "@/components/Icon";
 import CardChip from "../CardChip";
 import PlayerAvatar from "../PlayerAvatar";
@@ -18,13 +18,17 @@ export default function MatchTimeline({
   entries,
   teams,
   tone = "light",
+  badge = null,
+  children = null,
 }: {
   entries: TimelineEntry[];
   teams?: { home: string; away: string };
   tone?: MatchTone;
+  badge?: string | null;
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  if (entries.length === 0) return null;
+  if (entries.length === 0 && !children) return null;
   const { event: color, rule, muted } = matchTone[tone];
 
   return (
@@ -36,9 +40,10 @@ export default function MatchTimeline({
       >
         <span className="optical-name">{open ? texts.hideTimeline : texts.timeline}</span>
         <Icon name={open ? "chevronUp" : "chevronDown"} size={13} />
+        {badge && !open && <span className="badge badge-active">{badge}</span>}
       </button>
 
-      {open && (
+      {open && entries.length > 0 && (
         <div
           className="grid gap-x-2 gap-y-1 mt-2 text-xs font-bold"
           style={{ gridTemplateColumns: "auto auto auto minmax(0,1fr) auto", color }}
@@ -68,6 +73,8 @@ export default function MatchTimeline({
           ))}
         </div>
       )}
+
+      {open && children}
     </div>
   );
 }

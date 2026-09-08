@@ -18,6 +18,35 @@ describe("MatchTimeline", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("opens for what it carries even when the match had no events", () => {
+    cleanup();
+    render(
+      <MatchTimeline entries={[]}>
+        <p>التصويت</p>
+      </MatchTimeline>,
+    );
+
+    expect(screen.getByText(texts.timeline)).toBeDefined();
+    expect(screen.queryByText("التصويت")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByText("التصويت")).toBeDefined();
+  });
+
+  it("marks the folded section when something inside it is live", () => {
+    cleanup();
+    render(
+      <MatchTimeline entries={entries} badge="التصويت مفتوح">
+        <p>التصويت</p>
+      </MatchTimeline>,
+    );
+
+    expect(screen.getByText("التصويت مفتوح")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.queryByText("التصويت مفتوح")).toBeNull();
+  });
+
   it("keeps the events folded away until asked", () => {
     cleanup();
     render(<MatchTimeline entries={entries} />);
