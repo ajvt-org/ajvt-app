@@ -55,7 +55,7 @@ export const renewForm = {
 export const paymentsPage = {
   title: (count: number) => `كل الدفعات (${count})`,
   addDonation: "تسجيل تبرع يدوياً",
-  search: "بحث بالاسم أو النشاط...",
+  search: "بحث بالاسم أو النشاط أو رقم الوصل أو المرجع البنكي...",
   allAccounts: "كل الأرقام",
   accountFilter: "تصفية حسب الرقم",
   noResults: "لا توجد نتائج",
