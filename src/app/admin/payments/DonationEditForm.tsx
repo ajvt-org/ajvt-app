@@ -61,14 +61,11 @@ export default function DonationEditForm({
   const shownAs = form.anonymous ? money.anonymousDonor : form.donorName.trim() || proof.memberName;
 
   async function save() {
-    const invalid = donationFormError(
-      {
-        donorName: form.donorName.trim() || undefined,
-        donorPhone: form.donorPhone,
-        amount: form.amount,
-      },
-      !linked,
-    );
+    const invalid = donationFormError({
+      donorName: form.donorName.trim() || undefined,
+      donorPhone: form.donorPhone,
+      amount: form.amount,
+    });
     setError(invalid);
     if (invalid) return;
 

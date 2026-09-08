@@ -115,15 +115,27 @@ describe("editing a support payment", () => {
     expect(screen.getAllByText("أبوبكر لمرابط").length).toBeGreaterThan(0);
   });
 
-  it("asks for a name only when nothing is linked", async () => {
-    mockPatch();
+  it("records a donation whose giver is not known, with no name at all", async () => {
+    const fetchMock = mockPatch();
     show({ userId: null }, undefined);
 
     const field = screen.getByLabelText(donationEdit.donorName);
     await userEvent.clear(field);
     await userEvent.click(screen.getByText(donationEdit.save));
 
-    expect(screen.getByText(money.nameRequired)).toBeTruthy();
+    await waitFor(() => expect(bodyOf(fetchMock).donorName).toBeNull());
+  });
+
+  it("refuses the display constant typed in as a name", async () => {
+    mockPatch();
+    show({ userId: null }, undefined);
+
+    const field = screen.getByLabelText(donationEdit.donorName);
+    await userEvent.clear(field);
+    await userEvent.type(field, money.anonymousDonor);
+    await userEvent.click(screen.getByText(donationEdit.save));
+
+    expect(screen.getByText(money.nameIsThePlaceholder)).toBeTruthy();
   });
 
   it("keeps a linked payment saveable with no typed name at all", async () => {
