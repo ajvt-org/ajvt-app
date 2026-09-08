@@ -1,4 +1,5 @@
 export const adminAccounts = {
+  confirmDeleteTitle: "حذف حساب مشرف",
   confirmDelete: "هل أنت متأكد من حذف هذا الحساب؟",
   addTitle: "إضافة مشرف جديد",
   username: "اسم المستخدم",

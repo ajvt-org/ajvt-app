@@ -3,8 +3,10 @@ import { countedNoun, PLAYERS } from "../arabicPlural";
 const ACCEPT = "قبول";
 const REJECT = "رفض";
 const REMOVE = "إزالة";
+const WITHDRAW = "سحب";
 
 export const teamsTab = {
+  confirmDeleteTitle: "حذف فريق",
   confirmDelete: "هل تريد حذف هذا الفريق؟",
   teamCount: (count: number) => `عدد الفرق: ${count}`,
   teamCountShown: (shown: number, total: number) => `عدد الفرق: ${shown} من ${total}`,
@@ -42,9 +44,15 @@ export const teamsTab = {
   acceptOf: (name: string) => `${ACCEPT} ${name}`,
   rejectOf: (name: string) => `${REJECT} ${name}`,
   removeOf: (name: string) => `${REMOVE} ${name}`,
+  confirmRemoveTitle: "إزالة لاعب",
   confirmRemove: (name: string) => `إزالة ${name} من الفريق؟`,
+  remove: REMOVE,
+  reject: REJECT,
+  confirmRejectTitle: "رفض طلب انضمام",
   confirmReject: (name: string) => `رفض طلب ${name} للانضمام؟`,
+  confirmWithdrawTitle: "سحب دعوة",
   confirmWithdraw: (name: string) => `سحب دعوة ${name}؟`,
+  withdraw: WITHDRAW,
   withdrawOf: (name: string) => `سحب دعوة ${name}`,
   seatOf: (name: string) => `إدخال ${name} إلى الفريق`,
   openCardOf: (name: string) => `فتح بطاقة ${name}`,

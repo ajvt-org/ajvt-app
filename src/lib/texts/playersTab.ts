@@ -1,6 +1,8 @@
 export const playersTab = {
   added: "أُضيف اللاعب",
+  confirmRemoveTitle: "إزالة لاعب",
   confirmRemove: (name: string) => `إزالة ${name} من البطولة؟`,
+  remove: "إزالة",
   removed: "أُزيل اللاعب",
   heading: (count: number) => `اللاعبون (${count})`,
   empty: "لا يوجد لاعبون بعد — أضف أول لاعب أدناه.",
