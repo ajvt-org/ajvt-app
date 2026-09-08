@@ -19,6 +19,9 @@ export const filterSheet = {
   yearOption: (year: number) => `عضوية ${year}`,
   requestDate: "تاريخ الطلب",
   membershipOf: (year: number) => `عضوية ${year}`,
+  from: "من",
+  to: "إلى",
   clear: "إزالة التصفية",
+  clearCount: (count: number) => `إزالة التصفية (${count})`,
   done: "تم",
 } as const;
