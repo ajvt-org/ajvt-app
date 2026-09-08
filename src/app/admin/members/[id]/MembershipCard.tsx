@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import ProfileSection from "@/components/admin/ProfileSection";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
@@ -8,6 +9,14 @@ import { membershipSummary as texts } from "@/lib/texts";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import MembershipEnding, { EndedRows } from "./MembershipEnding";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
+import MembershipYears from "./MembershipYears";
+import RenewForm from "./RenewForm";
+import YearAmountForm from "./YearAmountForm";
+import type { MembershipHistory } from "./membershipTypes";
+
+function fetchHistory(memberId: string): Promise<MembershipHistory | null> {
+  return api.get<MembershipHistory>(`/api/admin/members/${memberId}/memberships`).catch(() => null);
+}
 
 export default function MembershipCard({
   member,
@@ -19,6 +28,19 @@ export default function MembershipCard({
   onChanged: () => void;
 }) {
   const [opening, setOpening] = useState(false);
+  const [history, setHistory] = useState<MembershipHistory | null>(null);
+
+  const reload = useCallback(() => fetchHistory(member.id).then(setHistory), [member.id]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  function refresh() {
+    onChanged();
+    return reload();
+  }
+
   const state = membershipState(
     {
       status: member.status as StatefulMembership["status"],
@@ -27,6 +49,7 @@ export default function MembershipCard({
     },
     currentYear,
   );
+  const paidYear = history?.memberships.find((y) => y.year === history.currentYear);
 
   return (
     <ProfileSection icon="card" title={texts.title}>
@@ -59,16 +82,33 @@ export default function MembershipCard({
           <MembershipEnding
             memberId={member.id}
             ended={member.endedAt !== null}
-            onChanged={onChanged}
+            onChanged={refresh}
           />
         )}
       </div>
+
+      {history && <MembershipYears years={history.memberships} currentYear={history.currentYear} />}
+
+      {history?.refusal === "alreadyRenewed" && (
+        <YearAmountForm
+          memberId={member.id}
+          year={history.currentYear}
+          amount={
+            paidYear?.paidAmount == null ? null : paidYear.paidAmount + paidYear.supportAmount
+          }
+          onSaved={refresh}
+        />
+      )}
+
+      {history && !history.refusal && (
+        <RenewForm memberId={member.id} year={history.currentYear} onRenewed={refresh} />
+      )}
 
       {opening && (
         <MembershipPaymentDialog
           member={member}
           currentYear={currentYear}
-          onChanged={onChanged}
+          onChanged={refresh}
           onClose={() => setOpening(false)}
         />
       )}

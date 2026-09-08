@@ -12,7 +12,6 @@ import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
 import MemberIdentityCard from "./MemberIdentityCard";
 import DeleteMemberCard from "./DeleteMemberCard";
-import MembershipPanel from "@/app/admin/dashboard/MembershipPanel";
 import MembershipCard from "./MembershipCard";
 import ProfileGroup from "./ProfileGroup";
 import ProfileList from "./ProfileList";
@@ -113,8 +112,6 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
 
       <ProfileGroup title={texts.groupMembership}>
         <MembershipCard member={member} currentYear={currentYear} onChanged={load} />
-
-        <MembershipPanel memberId={member.id} />
 
         <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
 
