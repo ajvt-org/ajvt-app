@@ -59,14 +59,14 @@ export default function RenewForm({
         onChange={(e) => set({ paidAmount: e.target.value })}
         required
         className="input text-xs"
-        style={{ background: "white" }}
+        style={{ backgroundColor: "white" }}
       />
       <select
         value={form.paymentMethod}
         onChange={(e) => set({ paymentMethod: e.target.value, accountId: "" })}
         required
         className="input text-xs"
-        style={{ background: "white" }}
+        style={{ backgroundColor: "white" }}
       >
         <option value="" disabled>
           {texts.methodUnset}
@@ -82,7 +82,7 @@ export default function RenewForm({
           accounts={accounts}
           value={form.accountId}
           onPick={(accountId) => set({ accountId })}
-          style={{ background: "white" }}
+          style={{ backgroundColor: "white" }}
         />
       )}
       <PhotoUpload
