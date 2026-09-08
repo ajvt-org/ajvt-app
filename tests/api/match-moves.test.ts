@@ -61,6 +61,11 @@ const addUnit = (matchId: string, body: object) =>
 const units = (matchId: string) =>
   UNITS(get(`/api/admin/matches/${matchId}/units`), withMatch(matchId));
 
+async function unitOf(matchId: string, body: object) {
+  const answer = await (await addUnit(matchId, body)).json();
+  return answer.unit.id as string;
+}
+
 async function ruleOf(activityId: string, body: object) {
   return (await (await declare(activityId, body)).json()).rule as { id: string; name: string };
 }
@@ -125,11 +130,6 @@ describe("what a match records", () => {
     await resetDb();
     await signInAsAdmin(await createAdmin());
   });
-
-  async function unitOf(matchId: string, body: object) {
-    const answer = await (await addUnit(matchId, body)).json();
-    return answer.unit.id as string;
-  }
 
   it("wins the match on its own, without the rest being played", async () => {
     const { activity, match, teysse } = await tournamentWithMatch();
@@ -240,6 +240,74 @@ describe("what a match records", () => {
     expect(body.moves).toHaveLength(1);
     expect(body.moves[0].rule.name).toBe("تيس");
     expect(body.moves[0].side).toBe("SIDE_A");
+  });
+});
+
+describe("a move that says what a unit counts as", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("is declared with its number rather than with a condition", async () => {
+    const { activity, teysse } = await tournamentWithMatch();
+
+    const res = await declare(activity.id, {
+      ...teysse,
+      name: "أبيض",
+      unitsToSelf: 0,
+      unitsFromOther: 0,
+      unitWorth: 2,
+    });
+
+    expect(res.status).toBe(201);
+    expect((await res.json()).rule.unitWorth).toBe(2);
+  });
+
+  it("counts the unit it was marked on by that number", async () => {
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, {
+      ...teysse,
+      name: "أبيض",
+      unitsToSelf: 0,
+      unitsFromOther: 0,
+      unitWorth: 2,
+    });
+    const unitId = await unitOf(match.id, WON);
+
+    const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId })).json();
+
+    expect(body.standing.sideATotal).toBe(4);
+    expect(body.standing.over).toBe(true);
+  });
+
+  it("leaves the unit counting one once the mark is undone", async () => {
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, {
+      ...teysse,
+      name: "أبيض",
+      unitsToSelf: 0,
+      unitsFromOther: 0,
+      unitWorth: 2,
+    });
+    const unitId = await unitOf(match.id, WON);
+    const marked = await (
+      await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId })
+    ).json();
+
+    const body = await (await undo(match.id, marked.moves[0].id)).json();
+
+    expect(body.standing.sideATotal).toBe(2);
+    expect(body.standing.over).toBe(false);
+  });
+
+  it("refuses a number that is not a whole positive count", async () => {
+    const { activity, teysse } = await tournamentWithMatch();
+
+    const res = await declare(activity.id, { ...teysse, name: "أبيض", unitWorth: 0 });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.moveRule.worth);
   });
 });
 

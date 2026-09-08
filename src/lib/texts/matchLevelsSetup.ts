@@ -37,10 +37,12 @@ export const matchLevelsSetup = {
   moveFromOther: "ما تخصمه",
   moveLevel: "المستوى الذي تقع فيه",
   moveEndsUnit: "تنهي الوحدة التي تقع فيها",
+  moveWorth: "العدد الذي تُحتسب به الوحدة",
   addMove: "إضافة حركة",
   removeMove: (name: string) => `حذف ${name}`,
   moveLine: (name: string, toSelf: string, fromOther: string) =>
     `${name} تضيف ${toSelf} وتخصم ${fromOther}`,
   moveEndsLine: "تنهي الوحدة",
+  moveWorthLine: (worth: string) => `تُحتسب الوحدة بـ${worth}`,
   noMoves: "لا حركات معرّفة",
 } as const;

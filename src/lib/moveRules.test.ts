@@ -42,6 +42,15 @@ describe("what a tournament may declare", () => {
   it("wants the level the move acts in", () => {
     expect(ruleProblem({ ...TEYSSE, levelId: "" })).toBe("level");
   });
+
+  it("takes a move whose only effect is what the unit counts as", () => {
+    expect(ruleProblem({ ...TEYSSE, unitsToSelf: 0, unitsFromOther: 0, unitWorth: 2 })).toBeNull();
+  });
+
+  it("wants a whole positive count where a move sets one", () => {
+    expect(ruleProblem({ ...TEYSSE, unitWorth: 0 })).toBe("worth");
+    expect(ruleProblem({ ...TEYSSE, unitWorth: 1.5 })).toBe("worth");
+  });
 });
 
 describe("what a match records", () => {

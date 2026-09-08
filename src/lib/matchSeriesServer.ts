@@ -305,6 +305,7 @@ export async function declareMoveRule(activityId: string, input: RuleShape) {
         unitsFromOther: input.unitsFromOther,
         levelId: input.levelId,
         endsUnit: input.endsUnit ?? false,
+        unitWorth: input.unitWorth ?? null,
       },
     });
   } catch (err) {
