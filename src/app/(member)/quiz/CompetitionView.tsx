@@ -423,22 +423,24 @@ export default function CompetitionView({
         )}
 
         {open && (
-          <StandingsBoard
-            title={
-              open.wholeRun
-                ? open.title
-                : `${open.title} · ${blockLabel(
-                    open.blockRounds,
-                    past && block !== null ? block : open.block,
-                    standings.roundCount ?? 0,
-                    open.blockTitle,
-                  )}`
-            }
-            rows={past ? past.rows : open.rows}
-            mine={past ? past.mine : open.mine}
-            meId={standings.meId}
-            empty="لا ترتيب بعد"
-          />
+          <div className="card p-4">
+            <StandingsBoard
+              title={
+                open.wholeRun
+                  ? open.title
+                  : `${open.title} · ${blockLabel(
+                      open.blockRounds,
+                      past && block !== null ? block : open.block,
+                      standings.roundCount ?? 0,
+                      open.blockTitle,
+                    )}`
+              }
+              rows={past ? past.rows : open.rows}
+              mine={past ? past.mine : open.mine}
+              meId={standings.meId}
+              empty="لا ترتيب بعد"
+            />
+          </div>
         )}
 
         {competitionId && canPlay && <RoundRecap competitionId={competitionId} />}

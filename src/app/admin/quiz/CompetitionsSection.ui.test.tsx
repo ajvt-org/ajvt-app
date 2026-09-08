@@ -64,7 +64,7 @@ const standings = {
       wholeRun: true,
       block: 0,
       blocks: 1,
-      rows: [{ rank: 1, userId: "u1", name: "يوسف", total: 41 }],
+      rows: [{ rank: 1, userId: "u1", name: "يوسف", photoUrl: null, total: 41 }],
     },
   ],
 };
@@ -143,7 +143,7 @@ describe("CompetitionsSection", () => {
   it("puts every tab of a running competition on one strip", async () => {
     serve({ ...competition, visibility: "PRIVATE", startedAt: "2026-08-21T08:00:00.000Z" });
     const { container } = render(<CompetitionsSection />);
-    await waitFor(() => screen.getByText(/1 · يوسف/));
+    await waitFor(() => screen.getByRole("listitem"));
 
     expect(container.querySelectorAll(".tab-strip")).toHaveLength(1);
     expect(container.querySelectorAll(".tab-strip button")).toHaveLength(4);
@@ -153,7 +153,7 @@ describe("CompetitionsSection", () => {
     serve({ ...competition, startedAt: "2026-08-21T08:00:00.000Z" });
     render(<CompetitionsSection />);
 
-    await waitFor(() => expect(screen.getByText(/1 · يوسف/)).toBeDefined());
+    await waitFor(() => expect(screen.getByRole("listitem")).toBeDefined());
 
     await userEvent.click(screen.getByRole("button", { name: /النقاط/ }));
 
@@ -178,7 +178,7 @@ describe("CompetitionsSection", () => {
       startedAt: "2026-08-21T08:00:00.000Z",
     });
     render(<CompetitionsSection />);
-    await waitFor(() => screen.getByText(/1 · يوسف/));
+    await waitFor(() => screen.getByRole("listitem"));
 
     await userEvent.click(screen.getByRole("button", { name: /المشاركون/ }));
 

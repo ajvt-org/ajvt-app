@@ -24,7 +24,7 @@ export default function StandingsBoard({
   meId,
   empty,
 }: {
-  title: string;
+  title?: string;
   rows: BoardRow[];
   mine: MyPlace | null;
   meId: string | null;
@@ -35,10 +35,12 @@ export default function StandingsBoard({
   const rest = rows.length >= 3 ? rows.slice(3) : rows;
 
   return (
-    <section className="card p-4 space-y-2">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        {title}
-      </p>
+    <section className="space-y-2">
+      {title && (
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          {title}
+        </p>
+      )}
 
       {podium.length === 3 && (
         <div className="flex items-end justify-center gap-3 pb-2" aria-label={texts.podium}>
@@ -122,11 +124,11 @@ export default function StandingsBoard({
           {empty}
         </p>
       ) : (
-        <ol className="space-y-1.5">
+        <ol className="space-y-1">
           {rest.map((row) => (
             <li
               key={row.userId}
-              className="flex items-center gap-2.5 rounded-xl p-2"
+              className="flex items-center gap-2 rounded-xl px-2 py-1.5"
               style={{
                 background: row.userId === meId ? "var(--mint-100)" : "transparent",
               }}
@@ -137,7 +139,7 @@ export default function StandingsBoard({
               >
                 {row.rank}
               </span>
-              <PlayerAvatar photoUrl={row.photoUrl} fullName={row.name} size={26} />
+              <PlayerAvatar photoUrl={row.photoUrl} fullName={row.name} size={24} />
               <span className="text-sm flex-1 truncate" style={{ color: "var(--text-main)" }}>
                 {row.name}
               </span>

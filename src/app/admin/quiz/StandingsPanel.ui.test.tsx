@@ -22,7 +22,9 @@ const body = {
       wholeRun: false,
       block: 3,
       blocks: 4,
-      rows: [{ rank: 1, userId: "u1", name: "يوسف", total: 31 }],
+      rows: [
+        { rank: 1, userId: "u1", name: "يوسف", photoUrl: "/api/files/member/m1.webp", total: 31 },
+      ],
     },
     {
       id: "b2",
@@ -32,8 +34,8 @@ const body = {
       block: 0,
       blocks: 1,
       rows: [
-        { rank: 1, userId: "u1", name: "يوسف", total: 41 },
-        { rank: 2, userId: "u2", name: "محمد", total: 30 },
+        { rank: 1, userId: "u1", name: "يوسف", photoUrl: null, total: 41 },
+        { rank: 2, userId: "u2", name: "محمد", photoUrl: null, total: 30 },
       ],
     },
   ],
@@ -55,8 +57,25 @@ describe("StandingsPanel", () => {
   it("shows the first board's rows with rank and total", async () => {
     render(<StandingsPanel competitionId="c1" />);
 
-    await waitFor(() => expect(screen.getByText(/1 · يوسف/)).toBeDefined());
-    expect(screen.getByText("31")).toBeDefined();
+    await waitFor(() => expect(screen.getByRole("listitem")).toBeDefined());
+    const row = screen.getByRole("listitem").textContent;
+    expect(row).toContain("يوسف");
+    expect(row).toContain("1");
+    expect(row).toContain("31");
+  });
+
+  it("draws the participant the way the member board does", async () => {
+    render(<StandingsPanel competitionId="c1" />);
+
+    const photo = (await screen.findByAltText("يوسف")) as HTMLImageElement;
+    expect(photo.src).toContain("/api/files/member/m1-thumb.webp");
+  });
+
+  it("leaves out the highlight and the closing line a supervisor has no place in", async () => {
+    render(<StandingsPanel competitionId="c1" />);
+
+    await waitFor(() => screen.getByRole("listitem"));
+    expect(screen.queryByText(/ترتيبك/)).toBeNull();
   });
 
   it("switches boards on the tab", async () => {
@@ -65,13 +84,17 @@ describe("StandingsPanel", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "الترتيب العام" }));
 
-    expect(screen.getByText(/2 · محمد/)).toBeDefined();
+    const rows = screen.getAllByRole("listitem").map((li) => li.textContent);
+    expect(rows[0]).toContain("يوسف");
+    expect(rows[1]).toContain("محمد");
   });
 
   it("offers the board's past blocks and shows the one picked", async () => {
     get.mockImplementation((url: string) =>
       url.includes("board=")
-        ? Promise.resolve({ rows: [{ rank: 1, userId: "u2", name: "محمد", total: 12 }] })
+        ? Promise.resolve({
+            rows: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 12 }],
+          })
         : Promise.resolve(body),
     );
     render(<StandingsPanel competitionId="c1" />);
@@ -79,7 +102,7 @@ describe("StandingsPanel", () => {
 
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "فترة الترتيب" }), "1");
 
-    await waitFor(() => expect(screen.getByText(/1 · محمد/)).toBeDefined());
+    await waitFor(() => expect(screen.getByRole("listitem").textContent).toContain("محمد"));
     expect(get).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/standings?board=b1&block=1");
   });
 
