@@ -996,6 +996,7 @@ model Payment {
   reviewedBy    String?
   reviewedAt    DateTime?
   referenceCode String?         @unique
+  paidOn        DateTime?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
@@ -1007,6 +1008,7 @@ model Payment {
   @@index([competitionId])
   @@index([accountId])
   @@index([bankReference])
+  @@index([paidOn])
 }
 
 enum ReceiptStatus {
