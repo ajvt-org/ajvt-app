@@ -11,22 +11,16 @@ export type LevelInput = Omit<LevelRow, "id" | "order"> & { id?: string | null }
 const PARKED = 1000;
 
 const SCORING: (keyof LevelRow)[] = [
-  "ending",
-  "unitsPerParent",
-  "unitsToWin",
+  "countedBy",
+  "endsBy",
+  "unitCount",
   "target",
+  "unsettled",
+  "margin",
+  "continueUnits",
   "deciderTarget",
-  "bothPastTarget",
-  "extendsWhenLevel",
-  "extensionUnits",
   "startingCredit",
   "creditWindow",
-  "halvesPerUnit",
-  "decision",
-  "wonUnitWorth",
-  "doubledWorth",
-  "doublesOnBlankOpponent",
-  "doublesOnRecoveredCredit",
 ];
 
 export async function listLevels(activityId: string): Promise<LevelRow[]> {

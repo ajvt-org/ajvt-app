@@ -7,33 +7,27 @@ const BLANK: LevelRow = {
   order: 0,
   singular: "المباراة",
   plural: "المباريات",
-  ending: null,
-  unitsPerParent: null,
-  unitsToWin: null,
+  countedBy: null,
+  endsBy: null,
+  unitCount: null,
   target: null,
+  unsettled: null,
+  margin: null,
+  continueUnits: null,
   deciderTarget: null,
-  bothPastTarget: null,
-  extendsWhenLevel: false,
-  extensionUnits: 0,
   startingCredit: 0,
   creditWindow: 0,
-  halvesPerUnit: 2,
-  decision: null,
-  wonUnitWorth: 1,
-  doubledWorth: 1,
-  doublesOnBlankOpponent: false,
-  doublesOnRecoveredCredit: false,
 };
 
-const match: LevelRow = { ...BLANK, ending: "PLAY_ALL", unitsPerParent: 2 };
-const game: LevelRow = {
+const match: LevelRow = {
   ...BLANK,
-  id: "two",
-  order: 1,
-  singular: "لعبة",
-  plural: "ألعاب",
-  decision: "OUTCOME",
+  countedBy: "OUTCOME",
+  endsBy: "COUNT",
+  unitCount: 2,
+  unsettled: "DRAW",
 };
+
+const game: LevelRow = { ...BLANK, id: "two", order: 1, singular: "لعبة", plural: "ألعاب" };
 
 const chess = [match, game];
 
@@ -55,71 +49,66 @@ describe("what a ladder may be set up as", () => {
     expect(fault([match, { ...game, plural: "  " }])).toBe("words");
   });
 
-  it("wants to know how a level that has units under it ends", () => {
-    expect(fault([{ ...match, ending: null }, game])).toBe("ending");
+  it("wants to know how the units under a level are counted", () => {
+    expect(fault([{ ...match, countedBy: null }, game])).toBe("countedBy");
   });
 
-  it("wants a count of the units a level holds", () => {
-    expect(fault([{ ...match, unitsPerParent: 0 }, game])).toBe("unitsPerParent");
+  it("wants to know when a level ends", () => {
+    expect(fault([{ ...match, endsBy: null }, game])).toBe("endsBy");
   });
 
-  it("refuses an ending on the level that is recorded", () => {
-    expect(fault([match, { ...game, ending: "PLAY_ALL" }])).toBe("endingOnTheLastLevel");
+  it("wants a count of the units a level plays", () => {
+    expect(fault([{ ...match, unitCount: 0 }, game])).toBe("unitCountMissing");
   });
 
-  it("refuses a recording decision on the match itself", () => {
-    expect(fault([{ ...match, decision: "OUTCOME" }, game])).toBe("decision");
-  });
-
-  it("wants a recording decision on every level under the match", () => {
-    expect(fault([match, { ...game, decision: null }])).toBe("decision");
+  it("refuses rules on the level that is recorded", () => {
+    expect(fault([match, { ...game, endsBy: "COUNT", unitCount: 2 }])).toBe("rulesOnTheLastLevel");
   });
 });
 
-describe("a level that ends on a count of units", () => {
-  const counted: LevelRow = { ...match, ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 };
-
-  it("takes the count", () => {
-    expect(ladderProblem([counted, game])).toBeNull();
-  });
-
-  it("wants the count", () => {
-    expect(fault([{ ...counted, unitsToWin: null }, game])).toBe("unitsToWinMissing");
-  });
-
-  it("refuses a count it cannot reach", () => {
-    expect(fault([{ ...counted, unitsToWin: 4 }, game])).toBe("unitsToWinUnreachable");
-  });
-
-  it("refuses a scored total beside it", () => {
-    expect(fault([{ ...counted, target: 100 }, game])).toBe("targetUnused");
-  });
-});
-
-describe("a level that ends past a total", () => {
+describe("a level that ends at a number", () => {
   const past: LevelRow = {
     ...match,
-    ending: "FIRST_PAST",
-    unitsPerParent: 20,
+    countedBy: "POINTS",
+    endsBy: "TARGET",
+    unitCount: null,
     target: 100,
-    bothPastTarget: "PLAY_ON",
+    unsettled: "CONTINUE",
+    margin: 1,
+    continueUnits: 1,
   };
-  const round: LevelRow = { ...game, decision: "SCORE" };
 
-  it("takes the total and what happens when both pass it", () => {
-    expect(ladderProblem([past, round])).toBeNull();
+  it("takes the number and what happens when it is not settled", () => {
+    expect(ladderProblem([past, game])).toBeNull();
   });
 
-  it("wants the total", () => {
-    expect(fault([{ ...past, target: null }, round])).toBe("targetMissing");
+  it("wants the number", () => {
+    expect(fault([{ ...past, target: null }, game])).toBe("targetMissing");
   });
 
-  it("wants to know what happens when both sides pass it", () => {
-    expect(fault([{ ...past, bothPastTarget: null }, round])).toBe("bothPastTargetUnused");
+  it("needs no ceiling on the units under it", () => {
+    expect(ladderProblem([{ ...past, unitCount: null }, game])).toBeNull();
   });
 
-  it("refuses a total with no scored level under it", () => {
-    expect(fault([past, { ...round, decision: "OUTCOME" }])).toBe("targetWithoutAScoredLevel");
+  it("takes a number counted by the outcomes under it", () => {
+    const dozen: LevelRow = { ...past, countedBy: "OUTCOME", target: 12, unsettled: null };
+    expect(ladderProblem([dozen, game])).toBeNull();
+  });
+});
+
+describe("a level that is continued while it stays unsettled", () => {
+  const knockout: LevelRow = { ...match, unsettled: "CONTINUE", margin: 1, continueUnits: 2 };
+
+  it("takes the margin and the units it continues by", () => {
+    expect(ladderProblem([knockout, game])).toBeNull();
+  });
+
+  it("wants the margin", () => {
+    expect(fault([{ ...knockout, margin: null }, game])).toBe("marginMissing");
+  });
+
+  it("wants the units it continues by", () => {
+    expect(fault([{ ...knockout, continueUnits: null }, game])).toBe("continueUnitsMissing");
   });
 });
 
@@ -134,20 +123,26 @@ describe("a starting credit", () => {
     expect(fault([{ ...credited, creditWindow: 0 }, game])).toBe("creditWithoutAWindow");
   });
 
-  it("refuses a window wider than the units that exist", () => {
+  it("refuses a window wider than the units a level counts out", () => {
     expect(fault([{ ...credited, creditWindow: 5 }, game])).toBe("creditWindowTooWide");
   });
 });
 
-describe("a decider target", () => {
-  it("is refused on a level that plays all of its units", () => {
-    expect(fault([{ ...match, deciderTarget: 24 }, game])).toBe("deciderTargetOnPlayAll");
+describe("the number of a deciding unit", () => {
+  it("is refused on a level that does not end at a number", () => {
+    expect(fault([{ ...match, deciderTarget: 24 }, game])).toBe("deciderTargetWithoutATarget");
   });
-});
 
-describe("an extension", () => {
-  it("wants a count of the units it adds", () => {
-    expect(fault([{ ...match, extendsWhenLevel: true }, game])).toBe("extensionUnits");
+  it("sits on the level whose number it changes", () => {
+    const dozen: LevelRow = {
+      ...match,
+      endsBy: "TARGET",
+      unitCount: null,
+      target: 12,
+      unsettled: null,
+      deciderTarget: 24,
+    };
+    expect(ladderProblem([dozen, game])).toBeNull();
   });
 });
 

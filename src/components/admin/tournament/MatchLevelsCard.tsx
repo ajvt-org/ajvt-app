@@ -137,7 +137,6 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
             </div>
             <LevelFields
               draft={draft}
-              first={index === 0}
               last={index === drafts.length - 1}
               disabled={busy}
               locked={locked(draft)}

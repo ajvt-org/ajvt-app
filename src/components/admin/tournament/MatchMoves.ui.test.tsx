@@ -11,8 +11,9 @@ const TEYSSE: MoveRuleRow = {
   name: "تيس",
   unitsToSelf: 2,
   unitsFromOther: 2,
-  levelId: null,
+  levelId: "unit",
   endsUnit: false,
+  unitWorth: null,
 };
 
 const UNITS: UnitRow[] = [

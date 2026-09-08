@@ -27,13 +27,14 @@ export default function UnitBranch({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const level = levelAt(api, depth);
-  if (!level) return null;
+  const parent = levelAt(api, depth - 1);
+  if (!level || !parent) return null;
 
   const editable = api.open && !full;
   const rules = offerableRules(api.rules, [level.id]);
 
   function submit() {
-    const body = bodyOf(draft, level!);
+    const body = bodyOf(draft, parent!);
     if (editingId) api.onCorrect(editingId, body);
     else api.onAdd(parentId, body);
     setDraft(EMPTY_DRAFT);
@@ -85,6 +86,7 @@ export default function UnitBranch({
         <UnitEditor
           draft={draft}
           level={level}
+          parent={parent}
           sides={api.sides}
           busy={api.busy}
           editing={false}

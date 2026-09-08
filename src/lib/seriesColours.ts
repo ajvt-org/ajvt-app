@@ -31,8 +31,8 @@ export function coloursBalanced(parts: ColouredPart[]): boolean {
   return tally.sideA === tally.sideB;
 }
 
-export function canBalance(unitsPerParent: number): boolean {
-  return unitsPerParent % COLOURS_IN_ROTATION === 0;
+export function canBalance(unitCount: number): boolean {
+  return unitCount % COLOURS_IN_ROTATION === 0;
 }
 
 export function evenlyDrawnOpeners<T>(

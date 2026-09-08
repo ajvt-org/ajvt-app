@@ -43,8 +43,9 @@ export interface MoveRuleRow {
   name: string;
   unitsToSelf: number;
   unitsFromOther: number;
-  levelId: string | null;
+  levelId: string;
   endsUnit: boolean;
+  unitWorth: number | null;
 }
 
 export interface RecordedMoveRow {

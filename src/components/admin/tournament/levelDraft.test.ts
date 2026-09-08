@@ -7,54 +7,55 @@ function chess() {
     ...blankDraft("a"),
     singular: "المباراة",
     plural: "المباريات",
-    ending: "PLAY_ALL" as const,
-    unitsPerParent: "2",
+    countedBy: "OUTCOME" as const,
+    endsBy: "COUNT" as const,
+    unitCount: "2",
+    unsettled: "DRAW" as const,
   };
-  const game = {
-    ...blankDraft("b"),
-    singular: "لعبة",
-    plural: "ألعاب",
-    decision: "OUTCOME" as const,
-  };
+  const game = { ...blankDraft("b"), singular: "لعبة", plural: "ألعاب" };
   return [match, game];
 }
 
 describe("a level drafted on the setup card", () => {
-  it("leaves the match itself without a way of being recorded", () => {
-    const level = levelOfDraft(chess()[0], 0, 2);
-
-    expect(level.decision).toBeNull();
-  });
-
-  it("leaves the last level without an ending", () => {
+  it("leaves the last level without rules of its own", () => {
     const level = levelOfDraft(chess()[1], 1, 2);
 
-    expect(level.ending).toBeNull();
-    expect(level.unitsPerParent).toBeNull();
+    expect(level.countedBy).toBeNull();
+    expect(level.endsBy).toBeNull();
+    expect(level.unitCount).toBeNull();
   });
 
-  it("drops a count of units where the level ends past a total", () => {
-    const draft = { ...chess()[0], ending: "FIRST_PAST" as const, target: "100", unitsToWin: "12" };
+  it("drops a count of units where the level ends at a number", () => {
+    const draft = { ...chess()[0], endsBy: "TARGET" as const, target: "100", unitCount: "12" };
 
     const level = levelOfDraft(draft, 0, 2);
 
-    expect(level.unitsToWin).toBeNull();
+    expect(level.unitCount).toBeNull();
     expect(level.target).toBe(100);
   });
 
-  it("drops a total where the level ends on a count of units", () => {
-    const draft = { ...chess()[0], ending: "FIRST_TO" as const, target: "100", unitsToWin: "2" };
+  it("drops a number where the level ends on a count of units", () => {
+    const draft = { ...chess()[0], endsBy: "COUNT" as const, target: "100", unitCount: "2" };
 
     const level = levelOfDraft(draft, 0, 2);
 
     expect(level.target).toBeNull();
-    expect(level.unitsToWin).toBe(2);
+    expect(level.unitCount).toBe(2);
   });
 
-  it("drops a decider target where the level plays all of its units", () => {
-    const draft = { ...chess()[0], ending: "PLAY_ALL" as const, deciderTarget: "24" };
+  it("drops the number of a deciding unit where the level ends on a count", () => {
+    const draft = { ...chess()[0], deciderTarget: "24" };
 
     expect(levelOfDraft(draft, 0, 2).deciderTarget).toBeNull();
+  });
+
+  it("drops a margin where nothing is continued", () => {
+    const draft = { ...chess()[0], margin: "1", continueUnits: "2" };
+
+    const level = levelOfDraft(draft, 0, 2);
+
+    expect(level.margin).toBeNull();
+    expect(level.continueUnits).toBeNull();
   });
 
   it("passes the ladder check a chess tournament would draw", () => {
@@ -62,10 +63,11 @@ describe("a level drafted on the setup card", () => {
   });
 
   it("comes back the way it went in", () => {
-    const level = levelOfDraft(chess()[1], 1, 2);
+    const level = levelOfDraft(chess()[0], 0, 2);
 
-    expect(draftOfLevel(level).singular).toBe("لعبة");
-    expect(draftOfLevel(level).decision).toBe("OUTCOME");
+    expect(draftOfLevel(level).singular).toBe("المباراة");
+    expect(draftOfLevel(level).countedBy).toBe("OUTCOME");
+    expect(draftOfLevel(level).unitCount).toBe("2");
   });
 });
 

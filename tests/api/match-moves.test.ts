@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { resetDb, get, post, del, createAdmin, signInAsAdmin, withId } from "./helpers";
 import { tournament as messages } from "@/lib/messages";
 import { sideIdData } from "@/lib/matchSides";
-import { SCORED_LEVELS, ladderData } from "./ladders";
+import { MATCH_LEVEL, ladderData, type LevelFixture } from "./ladders";
 
 import { GET as LIST_RULES, POST as DECLARE } from "@/app/api/admin/activities/[id]/moves/route";
 import { DELETE as WITHDRAW } from "@/app/api/admin/activities/[id]/moves/[ruleId]/route";
@@ -13,6 +13,13 @@ import { POST as ADD_UNIT, GET as UNITS } from "@/app/api/admin/matches/[matchId
 
 const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2 };
 
+const TARGET_LEVELS: LevelFixture[] = [
+  { ...MATCH_LEVEL, endsBy: "TARGET", unitCount: null, target: 2, unsettled: null },
+  { singular: "جولة", plural: "جولات" },
+];
+
+const WON = { outcome: "SIDE_A" };
+
 async function tournamentWithMatch() {
   const activity = await prisma.activity.create({
     data: {
@@ -20,7 +27,7 @@ async function tournamentWithMatch() {
       description: "بطولة",
       isTournament: true,
       matchShape: "SERIES",
-      levels: ladderData(SCORED_LEVELS),
+      levels: ladderData(TARGET_LEVELS),
     },
   });
   const one = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
@@ -28,7 +35,10 @@ async function tournamentWithMatch() {
   const match = await prisma.match.create({
     data: { activityId: activity.id, ...sideIdData("SERIES", one.id, two.id) },
   });
-  return { activity, match };
+  const unitLevel = await prisma.matchLevel.findFirstOrThrow({
+    where: { activityId: activity.id, order: 1 },
+  });
+  return { activity, match, teysse: { ...TEYSSE, levelId: unitLevel.id } };
 }
 
 const withMatch = (matchId: string) => ({ params: Promise.resolve({ matchId }) });
@@ -51,8 +61,8 @@ const addUnit = (matchId: string, body: object) =>
 const units = (matchId: string) =>
   UNITS(get(`/api/admin/matches/${matchId}/units`), withMatch(matchId));
 
-async function ruleOf(activityId: string) {
-  return (await (await declare(activityId, TEYSSE)).json()).rule as { id: string; name: string };
+async function ruleOf(activityId: string, body: object) {
+  return (await (await declare(activityId, body)).json()).rule as { id: string; name: string };
 }
 
 describe("what a tournament declares", () => {
@@ -62,42 +72,47 @@ describe("what a tournament declares", () => {
   });
 
   it("keeps the move under the game's own name", async () => {
-    const { activity } = await tournamentWithMatch();
+    const { activity, teysse } = await tournamentWithMatch();
 
-    const res = await declare(activity.id, TEYSSE);
+    const res = await declare(activity.id, teysse);
 
     expect(res.status).toBe(201);
     expect((await res.json()).rule.name).toBe("تيس");
   });
 
   it("refuses a move with no name", async () => {
-    const { activity } = await tournamentWithMatch();
+    const { activity, teysse } = await tournamentWithMatch();
 
-    const res = await declare(activity.id, { ...TEYSSE, name: "  " });
+    const res = await declare(activity.id, { ...teysse, name: "  " });
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(messages.moveRule.name);
   });
 
   it("refuses a move with no effect", async () => {
-    const { activity } = await tournamentWithMatch();
+    const { activity, teysse } = await tournamentWithMatch();
 
-    const res = await declare(activity.id, { name: "لا شيء", unitsToSelf: 0, unitsFromOther: 0 });
+    const res = await declare(activity.id, {
+      ...teysse,
+      name: "لا شيء",
+      unitsToSelf: 0,
+      unitsFromOther: 0,
+    });
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(messages.moveRule.noEffect);
   });
 
   it("refuses the same name twice", async () => {
-    const { activity } = await tournamentWithMatch();
-    await declare(activity.id, TEYSSE);
+    const { activity, teysse } = await tournamentWithMatch();
+    await declare(activity.id, teysse);
 
-    expect((await declare(activity.id, TEYSSE)).status).toBe(409);
+    expect((await declare(activity.id, teysse)).status).toBe(409);
   });
 
   it("lists and withdraws what it declared", async () => {
-    const { activity } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
+    const { activity, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
 
     expect((await (await listRules(activity.id)).json()).rules).toHaveLength(1);
     expect((await withdraw(activity.id, rule.id)).status).toBe(200);
@@ -117,9 +132,9 @@ describe("what a match records", () => {
   }
 
   it("wins the match on its own, without the rest being played", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
+    const unitId = await unitOf(match.id, WON);
 
     const res = await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId });
 
@@ -132,10 +147,10 @@ describe("what a match records", () => {
   });
 
   it("drives the other side below nothing rather than flooring at zero", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 });
-    const unitId = await unitOf(match.id, { sideAPoints: 20, sideBPoints: 101 });
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
+    await addUnit(match.id, WON);
+    const unitId = await unitOf(match.id, { outcome: "SIDE_B" });
 
     const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })).json();
 
@@ -144,25 +159,25 @@ describe("what a match records", () => {
   });
 
   it("sits in the unit it happened in rather than in a slot of its own", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
+    const unitId = await unitOf(match.id, WON);
 
     const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })).json();
 
     expect(body.units).toHaveLength(1);
-    expect(body.units[0].sideAPoints).toBe(101);
+    expect(body.units[0].outcome).toBe("SIDE_A");
     expect(body.moves[0].unitId).toBe(unitId);
   });
 
   it("takes one from each side and leaves them where they started", async () => {
-    const { activity, match } = await tournamentWithMatch();
+    const { activity, match, teysse } = await tournamentWithMatch();
     await prisma.matchLevel.updateMany({
       where: { activityId: activity.id, order: 0 },
-      data: { unitsPerParent: 5, unitsToWin: 4 },
+      data: { target: 4 },
     });
-    const rule = await ruleOf(activity.id);
-    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const rule = await ruleOf(activity.id, teysse);
+    const unitId = await unitOf(match.id, WON);
     await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId });
 
     const body = await (await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })).json();
@@ -173,9 +188,9 @@ describe("what a match records", () => {
   });
 
   it("undoes one and leaves the unit it sat in alone", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
+    const unitId = await unitOf(match.id, WON);
     const recorded = await (
       await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })
     ).json();
@@ -190,14 +205,14 @@ describe("what a match records", () => {
 
   it("refuses a move the tournament never declared", async () => {
     const { match } = await tournamentWithMatch();
-    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const unitId = await unitOf(match.id, WON);
 
     expect((await record(match.id, { ruleId: "nope", side: "SIDE_A", unitId })).status).toBe(404);
   });
 
   it("refuses a move that names no unit", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
 
     const res = await record(match.id, { ruleId: rule.id, side: "SIDE_A" });
 
@@ -206,18 +221,18 @@ describe("what a match records", () => {
   });
 
   it("refuses a move once the match is over", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
-    await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
+    const unitId = await unitOf(match.id, WON);
+    await addUnit(match.id, WON);
 
     expect((await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId })).status).toBe(409);
   });
 
   it("carries what happened alongside the units", async () => {
-    const { activity, match } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id);
-    const unitId = await unitOf(match.id, { sideAPoints: 101, sideBPoints: 40 });
+    const { activity, match, teysse } = await tournamentWithMatch();
+    const rule = await ruleOf(activity.id, teysse);
+    const unitId = await unitOf(match.id, WON);
     await record(match.id, { ruleId: rule.id, side: "SIDE_A", unitId });
 
     const body = await (await units(match.id)).json();
@@ -239,12 +254,12 @@ describe("a move that names its own level", () => {
   }
 
   it("is refused on a unit at another level", async () => {
-    const { activity, match } = await tournamentWithMatch();
+    const { activity, match, teysse } = await tournamentWithMatch();
     const levels = await levelsOf(activity.id);
     const rule = await (
-      await declare(activity.id, { ...TEYSSE, levelId: levels[0].id, endsUnit: true })
+      await declare(activity.id, { ...teysse, levelId: levels[0].id, endsUnit: true })
     ).json();
-    const answer = await (await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 })).json();
+    const answer = await (await addUnit(match.id, WON)).json();
 
     const res = await record(match.id, {
       ruleId: rule.rule.id,
@@ -257,10 +272,10 @@ describe("a move that names its own level", () => {
   });
 
   it("is taken on a unit at the level it names", async () => {
-    const { activity, match } = await tournamentWithMatch();
+    const { activity, match, teysse } = await tournamentWithMatch();
     const levels = await levelsOf(activity.id);
-    const rule = await (await declare(activity.id, { ...TEYSSE, levelId: levels[1].id })).json();
-    const answer = await (await addUnit(match.id, { sideAPoints: 101, sideBPoints: 40 })).json();
+    const rule = await (await declare(activity.id, { ...teysse, levelId: levels[1].id })).json();
+    const answer = await (await addUnit(match.id, WON)).json();
 
     const res = await record(match.id, {
       ruleId: rule.rule.id,
@@ -272,9 +287,9 @@ describe("a move that names its own level", () => {
   });
 
   it("is refused for a level the tournament does not have", async () => {
-    const { activity } = await tournamentWithMatch();
+    const { activity, teysse } = await tournamentWithMatch();
 
-    const res = await declare(activity.id, { ...TEYSSE, levelId: "nope" });
+    const res = await declare(activity.id, { ...teysse, levelId: "nope" });
 
     expect(res.status).toBe(404);
     expect((await res.json()).error).toBe(messages.levelNotInTournament);

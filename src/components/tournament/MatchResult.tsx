@@ -107,7 +107,9 @@ export default function MatchResult({
               units={match.units}
               standing={match.series}
               unitWord={unitLevel?.singular ?? ""}
-              extensionUnits={unitLevel ? countedUnits(ladder[0].extensionUnits, unitLevel) : ""}
+              extensionUnits={
+                unitLevel ? countedUnits(ladder[0].continueUnits ?? 0, unitLevel) : ""
+              }
             />
           </div>
           <MatchUnits

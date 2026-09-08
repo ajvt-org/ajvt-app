@@ -10,22 +10,16 @@ export const BLANK_LEVEL: LevelRow = {
   order: 0,
   singular: "المباراة",
   plural: "المباريات",
-  ending: null,
-  unitsPerParent: null,
-  unitsToWin: null,
+  countedBy: null,
+  endsBy: null,
+  unitCount: null,
   target: null,
+  unsettled: null,
+  margin: null,
+  continueUnits: null,
   deciderTarget: null,
-  bothPastTarget: null,
-  extendsWhenLevel: false,
-  extensionUnits: 2,
   startingCredit: 0,
   creditWindow: 0,
-  halvesPerUnit: 2,
-  decision: null,
-  wonUnitWorth: 1,
-  doubledWorth: 1,
-  doublesOnBlankOpponent: false,
-  doublesOnRecoveredCredit: false,
 };
 
 export function levelRow(over: Partial<LevelRow> = {}): LevelRow {
@@ -37,8 +31,15 @@ export function ladderConfig(
   unit: Partial<LevelRow>,
   colours: Partial<Pick<SeriesConfig, "hasColours" | "firstColourWord" | "secondColourWord">> = {},
 ): SeriesConfig {
-  const matchLevel = levelRow({ id: "match", order: 0, ending: "PLAY_ALL", ...match });
-  const unitLevel = levelRow({ id: "unit", order: 1, decision: "OUTCOME", ...unit });
+  const matchLevel = levelRow({
+    id: "match",
+    order: 0,
+    countedBy: "OUTCOME",
+    endsBy: "COUNT",
+    unsettled: "DRAW",
+    ...match,
+  });
+  const unitLevel = levelRow({ id: "unit", order: 1, ...unit });
   return {
     ladder: [matchLevel, unitLevel],
     match: matchLevel,
@@ -51,8 +52,8 @@ export function ladderConfig(
 }
 
 export const CHESS_CONFIG = ladderConfig(
-  { unitsPerParent: 2 },
-  { singular: "لعبة", plural: "ألعاب", decision: "OUTCOME" },
+  { unitCount: 2 },
+  { singular: "لعبة", plural: "ألعاب" },
   { hasColours: true, firstColourWord: "أبيض", secondColourWord: "أسود" },
 );
 
@@ -76,8 +77,8 @@ export function unitNode(over: Partial<UnitNodeShape> & { id: string; order: num
 }
 
 export const SCORED_CONFIG = ladderConfig(
-  { ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },
-  { singular: "جولة", plural: "جولات", decision: "SCORE" },
+  { countedBy: "POINTS", endsBy: "TARGET", target: 200 },
+  { singular: "جولة", plural: "جولات" },
 );
 
 export function standingRow(over: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
