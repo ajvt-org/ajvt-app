@@ -40,6 +40,7 @@ const ACCOUNT_SELECT = {
       activityId: true,
       status: true,
       rejectionReason: true,
+      chosenTeamId: true,
       activity: { select: { id: true, title: true } },
     },
   },
