@@ -17,7 +17,7 @@ describe("the tool header", () => {
     }
   });
 
-  it("puts the way back at the start of the row, before the title", () => {
+  it("puts the way back above the title, and reads before it", () => {
     render(<AdminToolHeader href="/admin/broadcast" />);
     expect(
       precedes(
@@ -33,7 +33,7 @@ describe("the tool header", () => {
     expect(link?.getAttribute("href")).toBe("/admin/tools");
   });
 
-  it("keeps the note after the title and leaves it out when there is none", () => {
+  it("keeps the note on the title's row and leaves it out when there is none", () => {
     const { unmount } = render(<AdminToolHeader href="/admin/audit-log" note="نتيجتان" />);
     expect(
       precedes(screen.getByText(toolAt("/admin/audit-log").label), screen.getByText("نتيجتان")),
