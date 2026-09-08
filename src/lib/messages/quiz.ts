@@ -22,5 +22,10 @@ export const quiz = {
   importTooMany: "عدد الأسئلة أكبر من الحد المسموح في المرة الواحدة",
   importDuplicate: "سؤال مكرر داخل الملف",
   pointsOutOfRange: "النقاط يجب أن تكون بين 1 و 20",
+  pointsNotPositive: "النقاط يجب أن تكون رقماً صحيحاً موجباً",
+  correctCountInvalid: "عدد الإجابات الصحيحة غير صالح",
+  correctCountExact: (answers: string) => `يجب تحديد ${answers} صحيحة بالضبط`,
+  settingsNotPositive: "كل القيم يجب أن تكون أرقاماً صحيحة موجبة",
+  correctCountOverAnswers: "عدد الإجابات الصحيحة لا يمكن أن يتجاوز عدد الإجابات",
   importAnswersDuplicate: "إجابات مكررة داخل السؤال",
 } as const;

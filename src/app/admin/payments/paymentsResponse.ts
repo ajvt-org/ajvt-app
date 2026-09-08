@@ -14,6 +14,13 @@ export const proofSchema = z.object({
   status: z.string(),
   source: z.string().optional(),
   paymentMethod: nullableText.optional(),
+  accountId: nullableText.optional(),
+  account: z
+    .object({ id: z.string(), code: z.string(), label: nullableText })
+    .nullable()
+    .optional(),
+  bankReference: nullableText.optional(),
+  repeatedReference: z.boolean().optional(),
   memberId: nullableText.optional(),
   userId: nullableText.optional(),
   anonymous: z.boolean().optional(),
@@ -51,7 +58,18 @@ export const destinationSchema = z.object({
 
 export const financeTagSchema = z.object({ id: z.string(), name: z.string() });
 
-function readRows<T>(event: string, item: z.ZodType<T>, body: unknown, key: string): T[] {
+function undeclaredIn(declared: ReadonlySet<string>, row: unknown): string[] {
+  if (row === null || typeof row !== "object") return [];
+  return Object.keys(row).filter((field) => !declared.has(field));
+}
+
+function readRows<T>(
+  event: string,
+  item: z.ZodType<T>,
+  body: unknown,
+  key: string,
+  declared?: ReadonlySet<string>,
+): T[] {
   const rows = (body as Record<string, unknown> | null | undefined)?.[key];
   if (!Array.isArray(rows)) {
     logger.error(event, { reason: "not a list" });
@@ -59,16 +77,26 @@ function readRows<T>(event: string, item: z.ZodType<T>, body: unknown, key: stri
   }
 
   const kept: T[] = [];
+  const dropped = new Set<string>();
   for (const row of rows) {
     const result = item.safeParse(row);
-    if (result.success) kept.push(result.data);
-    else logger.error(event, result.error.issues[0]);
+    if (!result.success) {
+      logger.error(event, result.error.issues[0]);
+      continue;
+    }
+    kept.push(result.data);
+    if (declared) for (const field of undeclaredIn(declared, row)) dropped.add(field);
+  }
+  if (dropped.size > 0) {
+    logger.error(event, { reason: "undeclared fields", fields: [...dropped].sort() });
   }
   return kept;
 }
 
+const PROOF_FIELDS: ReadonlySet<string> = new Set(Object.keys(proofSchema.shape));
+
 export function readProofs(body: unknown) {
-  return readRows("payments.proofs.shape", proofSchema, body, "proofs");
+  return readRows("payments.proofs.shape", proofSchema, body, "proofs", PROOF_FIELDS);
 }
 
 export function readDestinations(body: unknown) {

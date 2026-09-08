@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import PlayersTab from "./PlayersTab";
 import type { RosterMember, Team } from "./types";
-import { playersTab as texts } from "@/lib/texts";
+import { confirmDialog, playersTab as texts } from "@/lib/texts";
 
 const post = vi.fn();
 const patch = vi.fn();
@@ -60,6 +60,13 @@ function show(teams: Team[], roster: RosterMember[]) {
   const onChange = vi.fn();
   render(<PlayersTab activityId="a1" teams={teams} roster={roster} onChange={onChange} />);
   return onChange;
+}
+
+function removePlayer(name = "أحمد ولد محمد") {
+  fireEvent.click(screen.getByLabelText(texts.removeOf(name)));
+  fireEvent.click(
+    screen.getByText(texts.confirmRemove(name)).parentElement!.querySelector("button")!,
+  );
 }
 
 describe("PlayersTab", () => {
@@ -129,26 +136,38 @@ describe("PlayersTab", () => {
 
   it("reports a failed request in place rather than as a toast", async () => {
     del.mockRejectedValue(new Error("تعذر حذف اللاعب"));
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     show([player("p1", "أحمد ولد محمد")], []);
 
-    fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
+    removePlayer();
 
     await waitFor(() => expect(screen.getByText("تعذر حذف اللاعب")).toBeDefined());
-    vi.unstubAllGlobals();
   });
 
   it("clears the failure when the next attempt starts", async () => {
     del.mockRejectedValueOnce(new Error("تعذر حذف اللاعب")).mockResolvedValueOnce({});
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    show([player("p1", "أحمد ولد محمد")], []);
+
+    removePlayer();
+    await waitFor(() => expect(screen.getByText("تعذر حذف اللاعب")).toBeDefined());
+
+    removePlayer();
+
+    await waitFor(() => expect(screen.queryByText("تعذر حذف اللاعب")).toBeNull());
+  });
+
+  it("asks through the app before removing a player, and removes nobody on a cancel", () => {
+    const asked = vi.fn();
+    vi.stubGlobal("confirm", asked);
     show([player("p1", "أحمد ولد محمد")], []);
 
     fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
-    await waitFor(() => expect(screen.getByText("تعذر حذف اللاعب")).toBeDefined());
 
-    fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
+    expect(asked).not.toHaveBeenCalled();
+    expect(screen.getByText(texts.confirmRemove("أحمد ولد محمد"))).toBeDefined();
 
-    await waitFor(() => expect(screen.queryByText("تعذر حذف اللاعب")).toBeNull());
+    fireEvent.click(screen.getByText(confirmDialog.cancel));
+
+    expect(del).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 
