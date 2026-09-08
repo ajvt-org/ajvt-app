@@ -21,6 +21,10 @@ import { DANGER, FIELD, PRIMARY, QUIET } from "./donationTones";
 import { destinationOf, destinationValue, type DestinationOption } from "@/lib/moneyDestination";
 import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
+function dayOf(value: string | null): string {
+  return value ? value.slice(0, 10) : "";
+}
+
 function initial(proof: Proof) {
   return {
     donorName: proof.userId ? "" : proof.donorName || "",
@@ -32,6 +36,7 @@ function initial(proof: Proof) {
     bankReference: proof.bankReference || "",
     destinationId: destinationValue(proof),
     proof: proof.proof || null,
+    paidOn: dayOf(proof.paidOn),
     anonymous: proof.anonymous ?? false,
   };
 }
@@ -94,6 +99,7 @@ export default function DonationEditForm({
         bankReference: form.bankReference.trim() || null,
         ...destinationOf(destinations, form.destinationId),
         proof: form.proof,
+        paidOn: form.paidOn || null,
         anonymous: form.anonymous,
       });
       onSaved(proofFromDonation(donation, destinations));
@@ -190,6 +196,18 @@ export default function DonationEditForm({
             dir="ltr"
             value={form.amount}
             onChange={(e) => set({ amount: e.target.value })}
+            className="input text-xs"
+            style={FIELD}
+          />
+        </FormField>
+
+        <FormField id={field("paid-on")} label={donationEdit.paidOn} compact>
+          <input
+            id={field("paid-on")}
+            type="date"
+            dir="ltr"
+            value={form.paidOn}
+            onChange={(e) => set({ paidOn: e.target.value })}
             className="input text-xs"
             style={FIELD}
           />

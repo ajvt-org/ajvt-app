@@ -14,6 +14,7 @@ const PROOF: Proof = {
   amount: 500,
   status: "PENDING",
   source: "PUBLIC",
+  paidOn: "2026-08-18T00:00:00.000Z",
   uploadedAt: "2026-08-20T09:00:00.000Z",
   submittedAt: "2026-08-20T09:00:00.000Z",
 };

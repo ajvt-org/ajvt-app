@@ -7,10 +7,11 @@ import {
   donorName,
   donorPhone,
   optionalText,
+  paidOn,
   paymentMethodIn,
 } from "@/lib/donationFields";
 
-export { accountId, amount, donorName, donorPhone, optionalText, paymentMethodIn };
+export { accountId, amount, donorName, donorPhone, optionalText, paidOn, paymentMethodIn };
 
 const INVALID = common.invalidBody;
 
@@ -28,5 +29,6 @@ export function donationCreateSchema(accepted: readonly string[]) {
     activityId: z.string(INVALID).nullish(),
     competitionId: z.string(INVALID).nullish(),
     userId: accountId,
+    paidOn: paidOn.optional(),
   });
 }

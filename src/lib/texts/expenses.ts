@@ -36,6 +36,12 @@ export const expensesPage = {
   resetFilters: "إعادة تصفير الكل",
 } as const;
 
+export const dailyRevenue = {
+  title: "الإيرادات اليومية (آخر 30 يوماً)",
+  empty: "لا توجد إيرادات في هذه الفترة",
+  noDetail: "لا توجد تفاصيل",
+} as const;
+
 export const financeTotals = {
   revenue: `الإيرادات (${ouguiya.singular})`,
   expenses: `المصاريف (${ouguiya.singular})`,

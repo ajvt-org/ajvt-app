@@ -40,6 +40,7 @@ const MEMBERSHIP_PAYMENT_SELECT = {
   bankReference: true,
   proof: true,
   status: true,
+  paidOn: true,
   createdAt: true,
   updatedAt: true,
   user: { select: DONOR_ACCOUNT_SELECT },
@@ -149,11 +150,19 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       : Promise.resolve([]),
   ]);
 
-  const receipts = await prisma.receipt.findMany({
-    where: { paymentId: { in: donations.map((d) => d.id) } },
-    select: { paymentId: true, number: true, status: true, token: true },
-  });
+  const donationIds = donations.map((d) => d.id);
+  const [receipts, mirrored] = await Promise.all([
+    prisma.receipt.findMany({
+      where: { paymentId: { in: donationIds } },
+      select: { paymentId: true, number: true, status: true, token: true },
+    }),
+    prisma.payment.findMany({
+      where: { id: { in: donationIds } },
+      select: { id: true, paidOn: true },
+    }),
+  ]);
   const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
+  const paidOnOf = new Map(mirrored.map((p) => [p.id, p.paidOn]));
 
   const receiptFor = (id: string, named: boolean) => {
     const receipt = receiptOf.get(id);
@@ -185,6 +194,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
         activityTitle: null as string | null,
         amount: null as number | null,
         status: m.status,
+        paidOn: m.paidOn,
         uploadedAt: recorded?.updatedAt ?? m.updatedAt,
         submittedAt: recorded?.createdAt ?? m.createdAt,
         named: seesPaymentIdentity(viewer, {
@@ -204,6 +214,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       activityTitle: r.activity.title,
       amount: null as number | null,
       status: r.status,
+      paidOn: null as Date | null,
       uploadedAt: r.updatedAt,
       submittedAt: r.createdAt,
       named: true,
@@ -232,6 +243,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       donorPhoto: d.donorPhoto,
       tags: d.tags,
       receipt: receiptFor(d.id, seesSupporterName(viewer, d)),
+      paidOn: paidOnOf.get(d.id) ?? null,
       uploadedAt: d.updatedAt,
       submittedAt: d.createdAt,
       named: seesSupporterName(viewer, d),

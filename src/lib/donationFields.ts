@@ -38,6 +38,13 @@ export const optionalText = z
 
 export const accountId = z.string(INVALID).nullish();
 
+export const paidOn = z.unknown().superRefine((v, ctx) => {
+  if (v === null || v === undefined || v === "") return;
+  if (Number.isNaN(new Date(v as string).getTime())) {
+    ctx.addIssue({ code: "custom", message: common.invalidDate });
+  }
+});
+
 export function paymentMethodIn(accepted: readonly string[]) {
   return z
     .string(money.paymentMethodInvalid)

@@ -22,6 +22,7 @@ import { willBeLinked } from "@/lib/linkedDonor";
 import type { SupportViewer } from "@/lib/supportPrivacy";
 import { money as amountText } from "@/lib/money";
 import { releaseUploads } from "@/lib/uploadRelease";
+import { readPaidOn } from "@/lib/paymentDate";
 
 async function namedAccount(userId: string | null, viewer: SupportViewer): Promise<string | null> {
   if (!userId) return null;
@@ -59,6 +60,7 @@ export const PATCH = withRoute(
       tagIds,
       activityId,
       competitionId,
+      paidOn,
     } = parse(donationUpdateSchema(accepted), await req.json());
     if (
       existing.source === "MEMBERSHIP" &&
@@ -77,6 +79,7 @@ export const PATCH = withRoute(
         tagIds,
         activityId,
         competitionId,
+        paidOn,
       ].some((v) => v !== undefined)
     ) {
       return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
@@ -149,7 +152,8 @@ export const PATCH = withRoute(
       data,
       include: { user: { select: DONOR_ACCOUNT_SELECT } },
     });
-    await mirrorDonation(prisma, donationMirrorOf(donation, tagIds));
+    const madeOn = paidOn === undefined ? undefined : readPaidOn(paidOn);
+    await mirrorDonation(prisma, donationMirrorOf(donation, tagIds, madeOn));
 
     const target = {
       ...auditContext(session, req),
@@ -225,7 +229,14 @@ export const PATCH = withRoute(
 
     await releaseUploads(existing.proof, existing.donorPhoto);
 
-    return NextResponse.json({ donation: donationView(donation, viewer) });
+    const mirrored = await prisma.payment.findUnique({
+      where: { id },
+      select: { paidOn: true },
+    });
+
+    return NextResponse.json({
+      donation: { ...donationView(donation, viewer), paidOn: mirrored?.paidOn ?? null },
+    });
   },
 );
 

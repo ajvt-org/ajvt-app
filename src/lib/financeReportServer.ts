@@ -1,16 +1,17 @@
 import { prisma } from "./prisma";
 import { splitPayment } from "./membershipPayment";
 import { byMonth, byTag, sumOf, type ReportEntry } from "./financeReport";
+import { PAYMENT_DATE_SELECT, paidWithin, paymentDate } from "./paymentDate";
 
 export async function financeReport(from: Date, to: Date) {
   const [payments, expenses] = await Promise.all([
     prisma.payment.findMany({
-      where: { status: "ACTIVE", createdAt: { gte: from, lte: to } },
+      where: { status: "ACTIVE", ...paidWithin({ gte: from, lte: to }) },
       select: {
         amount: true,
         purpose: true,
         feeApplied: true,
-        createdAt: true,
+        ...PAYMENT_DATE_SELECT,
         tags: { select: { name: true } },
       },
     }),
@@ -21,7 +22,7 @@ export async function financeReport(from: Date, to: Date) {
   ]);
 
   const income: ReportEntry[] = payments.map((p) => ({
-    at: p.createdAt,
+    at: paymentDate(p),
     amount: p.amount,
     tags: p.tags.map((t) => t.name),
   }));

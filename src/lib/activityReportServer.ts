@@ -7,6 +7,7 @@ import {
   type ActivityReportRow,
   type ActivityReportTotals,
 } from "./activityReport";
+import { PAYMENT_DATE_SELECT, paidWithin, paymentDate } from "./paymentDate";
 
 export interface ActivityReport {
   from: string;
@@ -20,10 +21,10 @@ export async function activityFinanceReport(from: Date, to: Date): Promise<Activ
     prisma.activity.findMany({ select: { id: true, title: true } }),
     prisma.competition.findMany({ select: { id: true, name: true } }),
     prisma.payment.findMany({
-      where: { status: "ACTIVE", createdAt: { gte: from, lte: to } },
+      where: { status: "ACTIVE", ...paidWithin({ gte: from, lte: to }) },
       select: {
         amount: true,
-        createdAt: true,
+        ...PAYMENT_DATE_SELECT,
         activityId: true,
         competitionId: true,
         tags: { select: { name: true } },
@@ -50,7 +51,7 @@ export async function activityFinanceReport(from: Date, to: Date): Promise<Activ
     activities,
     competitions,
     payments.map((p) => ({
-      at: p.createdAt,
+      at: paymentDate(p),
       amount: p.amount,
       activityId: p.activityId,
       competitionId: p.competitionId,

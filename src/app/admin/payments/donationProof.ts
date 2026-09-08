@@ -28,6 +28,7 @@ export function proofFromDonation(
     donorName: donation.donorName ?? null,
     donorPhone: donation.donorPhone ?? null,
     donorPhoto: donation.donorPhoto ?? null,
+    paidOn: donation.paidOn,
     uploadedAt: donation.updatedAt,
     submittedAt: donation.createdAt,
   };

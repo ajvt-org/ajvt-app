@@ -112,7 +112,8 @@ describe("the finance summary", () => {
   it("keeps an old payment in the totals but off the day list", async () => {
     const m = await member("محمد");
     await feePaid(m, 1000);
-    await prisma.payment.updateMany({ data: { createdAt: new Date("2020-01-01T12:00:00Z") } });
+    const long = new Date("2020-01-01T12:00:00Z");
+    await prisma.payment.updateMany({ data: { createdAt: long, paidOn: long } });
 
     const summary = await getFinanceSummary(ADMIN, 30);
 
@@ -126,7 +127,8 @@ describe("the finance summary", () => {
 
   it("still lists an old gift with no method for assignment", async () => {
     const donation = await gift(500, { name: "زائر" });
-    await prisma.payment.updateMany({ data: { createdAt: new Date("2020-01-01T12:00:00Z") } });
+    const long = new Date("2020-01-01T12:00:00Z");
+    await prisma.payment.updateMany({ data: { createdAt: long, paidOn: long } });
 
     const summary = await getFinanceSummary(ADMIN, 30);
 
