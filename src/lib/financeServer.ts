@@ -8,6 +8,7 @@ import {
 } from "@/lib/supportPrivacy";
 import { nameOf } from "@/lib/person";
 import { activitySpending, totalSpending } from "@/lib/expenseSpendingServer";
+import { PAYMENT_DATE_SELECT, paidWithin, paymentDate } from "@/lib/paymentDate";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
@@ -61,13 +62,13 @@ export async function getFinanceSummary(
 
   const [payments, methodTotals, totalExpenses, unassignedRows, detailRows] = await Promise.all([
     prisma.payment.findMany({
-      where: { status: "ACTIVE", ...scope, createdAt: { gte: windowStart } },
+      where: { status: "ACTIVE", ...scope, ...paidWithin({ gte: windowStart }) },
       select: {
         purpose: true,
         amount: true,
         feeApplied: true,
         method: true,
-        createdAt: true,
+        ...PAYMENT_DATE_SELECT,
         anonymous: true,
         donorName: true,
         userId: true,
@@ -171,15 +172,16 @@ export async function getFinanceSummary(
   }
 
   for (const p of payments) {
+    const at = paymentDate(p);
     if (p.purpose !== "MEMBERSHIP") {
-      addRecord(p.amount, p.method, p.createdAt, publicDonorName(p, viewer), "دعم");
+      addRecord(p.amount, p.method, at, publicDonorName(p, viewer), "دعم");
       continue;
     }
     const { fee, surplus } = splitPayment(p.amount, p.feeApplied ?? 0);
     const named = p.user && seesPaymentIdentity(viewer, p) ? nameOf(p.user) : "";
-    addRecord(fee, p.method, p.createdAt, named, "انتساب");
+    addRecord(fee, p.method, at, named, "انتساب");
     if (surplus > 0) {
-      addRecord(surplus, p.method, p.createdAt, publicDonorName(p, viewer), "دعم");
+      addRecord(surplus, p.method, at, publicDonorName(p, viewer), "دعم");
     }
   }
 
