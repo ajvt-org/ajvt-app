@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import AdminToolHeader from "@/components/admin/AdminToolHeader";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import Notice from "@/components/Notice";
 import AccountRow from "@/components/admin/shell/AccountRow";
 import ActivityPicker from "@/components/admin/shell/ActivityPicker";
 import NewAccountForm from "@/components/admin/shell/NewAccountForm";
@@ -21,6 +23,8 @@ export default function AdminAccountsPage() {
   const [accounts, setAccounts] = useState<AdminAccountRow[]>([]);
   const [viewer, setViewer] = useState<{ username: string; role: string } | null>(null);
   const [scoping, setScoping] = useState<string | null>(null);
+  const [asking, setAsking] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   const load = () => fetchAccounts().then(setAccounts);
 
@@ -33,12 +37,13 @@ export default function AdminAccountsPage() {
   }, []);
 
   async function remove(id: string) {
-    if (!confirm(adminAccounts.confirmDelete)) return;
+    setAsking(null);
+    setError("");
     try {
       await api.del(`/api/admin/admins/${id}`);
       await load();
     } catch (e) {
-      alert(errorMessage(e));
+      setError(errorMessage(e));
     }
   }
 
@@ -65,6 +70,8 @@ export default function AdminAccountsPage() {
     <div className="admin-page space-y-4">
       <AdminToolHeader href="/admin/admins" />
 
+      {error && <Notice tone="error">{error}</Notice>}
+
       <div className="space-y-2">
         {accounts.map((account) => (
           <AccountRow
@@ -74,12 +81,23 @@ export default function AdminAccountsPage() {
             isSelf={account.username === viewer?.username}
             onScope={() => setScoping(account.id)}
             onRole={(role) => setRole(account.id, role)}
-            onDelete={() => remove(account.id)}
+            onDelete={() => setAsking(account.id)}
           />
         ))}
       </div>
 
       <NewAccountForm viewerRole={viewer?.role ?? null} onCreated={load} />
+
+      {asking && (
+        <ConfirmDialog
+          title={adminAccounts.confirmDeleteTitle}
+          message={adminAccounts.confirmDelete}
+          confirmLabel={adminAccounts.remove}
+          danger
+          onConfirm={() => remove(asking)}
+          onClose={() => setAsking(null)}
+        />
+      )}
     </div>
   );
 }

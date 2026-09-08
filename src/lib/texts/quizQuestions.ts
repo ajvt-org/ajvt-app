@@ -25,7 +25,19 @@ export const quizSettingsForm = {
   save: "حفظ الإعدادات",
 } as const;
 
+export const quizAdminToast = {
+  confirmAnswersOn: "أعيد زر تأكيد الإجابة، ويسري من الجولة القادمة",
+  confirmAnswersOff: "أصبح اختيار الإجابة يرسلها مباشرة، ويسري من الجولة القادمة",
+  settingsSaved: "تم حفظ الإعدادات",
+  questionSaved: "تم حفظ التعديل",
+  questionAdded: "تمت إضافة السؤال",
+  questionDeleted: "تم حذف السؤال",
+} as const;
+
 export const quizQuestionList = {
+  deleteQuestionTitle: "حذف سؤال",
+  deleteQuestion: "هل أنت متأكد من حذف هذا السؤال؟ سيتم حذف كل الإجابات المرتبطة به.",
+  deleteQuestionConfirm: "حذف السؤال",
   heading: (count: number) => `الأسئلة (${count})`,
   headingFiltered: (shown: number, total: number) => `الأسئلة (${shown}/${total})`,
   import: "استيراد",

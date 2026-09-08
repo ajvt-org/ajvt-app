@@ -1,13 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
-import { DONOR_NAME_MAX } from "@/lib/donorChoice";
-
-const ANONYMOUS_NOTE =
-  'سيُسجَّل تبرعك باسم "فاعل خير"، فيظهر في لوحة شرف المتبرعين دون اسمك ويُحتسب ضمن مجموع الدعم.';
-const NAMED_NOTE = "سنذكر اسمك تقديراً لدعمك، وسيظهر في لوحة شرف المتبرعين.";
-const UNANSWERED_NOTE =
-  "كلا الخيارين متاحان بنفس القدر، ويظهر تبرعك في لوحة شرف المتبرعين إما باسمك أو باسم فاعل خير.";
+import { donorNameChoice as texts } from "@/lib/texts";
 
 function choiceStyle(picked: boolean) {
   return {
@@ -17,17 +11,19 @@ function choiceStyle(picked: boolean) {
   };
 }
 
+function noteFor(wantsName: boolean | null): string {
+  if (wantsName === true) return texts.namedNote;
+  if (wantsName === false) return texts.anonymousNote;
+  return texts.unansweredNote;
+}
+
 export default function DonorNameChoice({
   wantsName,
   onPick,
-  donorName,
-  onDonorName,
   memberName,
 }: {
   wantsName: boolean | null;
   onPick: (wants: boolean) => void;
-  donorName?: string;
-  onDonorName?: (name: string) => void;
   memberName?: string;
 }) {
   return (
@@ -37,7 +33,7 @@ export default function DonorNameChoice({
         className="block text-sm font-bold mb-2"
         style={{ color: "var(--text-main)" }}
       >
-        هل تريد ذكر اسمك مع التبرع؟
+        {texts.question}
       </p>
       <div
         className="grid grid-cols-2 gap-2"
@@ -52,7 +48,7 @@ export default function DonorNameChoice({
           className="py-3 rounded-xl text-sm font-bold transition-all border-2"
           style={choiceStyle(wantsName === true)}
         >
-          <IconLabel name="pencil">نعم{memberName ? ` — ${memberName}` : "، باسمي"}</IconLabel>
+          <IconLabel name="pencil">{memberName ? texts.yesNamed(memberName) : texts.yes}</IconLabel>
         </button>
         <button
           type="button"
@@ -62,25 +58,12 @@ export default function DonorNameChoice({
           className="py-3 rounded-xl text-sm font-bold transition-all border-2"
           style={choiceStyle(wantsName === false)}
         >
-          <IconLabel name="lock">أفضّل أن أبقى مجهولاً</IconLabel>
+          <IconLabel name="lock">{texts.no}</IconLabel>
         </button>
       </div>
 
-      {!memberName && wantsName === true && onDonorName && (
-        <input
-          type="text"
-          value={donorName ?? ""}
-          onChange={(e) => onDonorName(e.target.value)}
-          placeholder="اكتب اسمك هنا"
-          maxLength={DONOR_NAME_MAX}
-          className="input mt-2"
-          aria-label="اسمك"
-          autoFocus
-        />
-      )}
-
       <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-        {wantsName === false ? ANONYMOUS_NOTE : wantsName === true ? NAMED_NOTE : UNANSWERED_NOTE}
+        {noteFor(wantsName)}
       </p>
     </div>
   );

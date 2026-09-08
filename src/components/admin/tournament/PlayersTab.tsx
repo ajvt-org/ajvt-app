@@ -7,6 +7,7 @@ import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ErrorNotice from "@/components/form/ErrorNotice";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
@@ -30,6 +31,7 @@ export default function PlayersTab({
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("");
+  const [asking, setAsking] = useState<Team | null>(null);
   const from = useAdminOrigin();
 
   const candidates = roster.filter((m) => !m.team);
@@ -62,9 +64,12 @@ export default function PlayersTab({
   }
 
   function removePlayer(team: Team) {
-    const name = team.members[0]?.member.fullName ?? team.name;
-    if (!confirm(playersTab.confirmRemove(name))) return;
+    setAsking(null);
     run(() => api.del(`/api/admin/teams/${team.id}`), playersTab.removed);
+  }
+
+  function nameOnTeam(team: Team): string {
+    return team.members[0]?.member.fullName ?? team.name;
   }
 
   return (
@@ -122,7 +127,7 @@ export default function PlayersTab({
                   </button>
                 )}
                 <button
-                  onClick={() => removePlayer(team)}
+                  onClick={() => setAsking(team)}
                   disabled={busy}
                   aria-label={playersTab.removeOf(entry?.member.fullName ?? team.name)}
                   className="btn btn-sm btn-icon shrink-0"
@@ -178,6 +183,17 @@ export default function PlayersTab({
           </>
         )}
       </div>
+      {asking && (
+        <ConfirmDialog
+          title={playersTab.confirmRemoveTitle}
+          message={playersTab.confirmRemove(nameOnTeam(asking))}
+          confirmLabel={playersTab.remove}
+          danger
+          loading={busy}
+          onConfirm={() => removePlayer(asking)}
+          onClose={() => setAsking(null)}
+        />
+      )}
     </div>
   );
 }

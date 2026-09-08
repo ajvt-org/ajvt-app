@@ -40,6 +40,7 @@ export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { confirmDelete, confirmDialog, deleteMember } from "./deleteRecords";
 export { bulkReview, reviewQueue } from "./reviewQueue";
+export { financeTags } from "./financeTags";
 export { memberDecision } from "./memberDecision";
 export { memberRejected } from "./memberRejected";
 export { membershipSummary } from "./membershipSummary";
@@ -51,6 +52,7 @@ export { lists } from "./lists";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { donationForm } from "./donationForm";
+export { donorNameChoice } from "./donorNameChoice";
 export { donationActions, donationEdit } from "./donationEdit";
 export { dataExport, dataPage, siteVisits } from "./dataPage";
 export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from "./expenses";
@@ -102,7 +104,12 @@ export {
   paymentMethodChoice,
   paymentMethodManager,
 } from "./paymentMethods";
-export { quizBankPicker, quizQuestionList, quizSettingsForm } from "./quizQuestions";
+export {
+  quizAdminToast,
+  quizBankPicker,
+  quizQuestionList,
+  quizSettingsForm,
+} from "./quizQuestions";
 export { quizRecap } from "./quizRecap";
 export {
   memberReceipts,

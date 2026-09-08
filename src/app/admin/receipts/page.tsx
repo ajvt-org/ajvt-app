@@ -8,6 +8,7 @@ import { saveReceiptPdf } from "@/components/pdf/receiptPdf";
 import { receiptFileName, type OfficialReceiptView } from "@/lib/officialReceipt";
 import { receiptAdmin } from "@/lib/texts/receipt";
 import ReceiptForm from "./ReceiptForm";
+import VoidReceiptDialog from "./VoidReceiptDialog";
 import ReceiptList from "./ReceiptList";
 import { useReceiptsData } from "./useReceiptsData";
 import { emptyReceiptForm, type ReceiptForm as Form } from "./types";
@@ -18,6 +19,7 @@ export default function AdminReceiptsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [printing, setPrinting] = useState<OfficialReceiptView | null>(null);
+  const [voiding, setVoiding] = useState<OfficialReceiptView | null>(null);
 
   useEffect(() => {
     if (!printing) return;
@@ -46,9 +48,11 @@ export default function AdminReceiptsPage() {
     }
   }
 
-  async function cancel(receipt: OfficialReceiptView) {
-    const reason = window.prompt(receiptAdmin.voidReasonLabel);
-    if (!reason?.trim()) return;
+  async function cancel(reason: string) {
+    if (!voiding) return;
+    const receipt = voiding;
+    setVoiding(null);
+    setError("");
     try {
       await api.post(`/api/admin/receipts/${receipt.number}/void`, { reason });
     } catch (err) {
@@ -98,8 +102,17 @@ export default function AdminReceiptsPage() {
         receipts={receipts}
         busyId={printing?.number ?? null}
         onPrint={setPrinting}
-        onVoid={cancel}
+        onVoid={setVoiding}
       />
+
+      {voiding && (
+        <VoidReceiptDialog
+          number={voiding.number}
+          loading={false}
+          onConfirm={cancel}
+          onClose={() => setVoiding(null)}
+        />
+      )}
     </div>
   );
 }

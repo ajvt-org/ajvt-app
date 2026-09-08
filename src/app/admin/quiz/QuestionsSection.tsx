@@ -1,5 +1,7 @@
 "use client";
 
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { quizQuestionList as texts } from "@/lib/texts";
 import BankPicker from "./BankPicker";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
@@ -28,9 +30,21 @@ export default function QuestionsSection({ state }: { state: QuizQuestionsState 
         onImport={() => state.setShowImport(true)}
         onEdit={state.openEdit}
         onToggle={state.toggleActive}
-        onDelete={state.deleteQuestion}
+        onDelete={state.askDeleteQuestion}
         onMove={state.moveQuestion}
       />
+
+      {state.askingDelete && (
+        <ConfirmDialog
+          title={texts.deleteQuestionTitle}
+          message={texts.deleteQuestion}
+          confirmLabel={texts.deleteQuestionConfirm}
+          danger
+          loading={state.busyId === state.askingDelete}
+          onConfirm={() => state.deleteQuestion(state.askingDelete!)}
+          onClose={() => state.askDeleteQuestion(null)}
+        />
+      )}
 
       {state.showImport && (
         <ImportDialog

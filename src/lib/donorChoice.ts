@@ -11,6 +11,6 @@ export function validateDonorChoice(anonymous: boolean | null, name: string): st
   return null;
 }
 
-export function donorNameFor(anonymous: boolean, name: string): string | null {
-  return anonymous ? null : name.trim() || null;
+export function donorNameFor(name: string): string | null {
+  return name.trim() || null;
 }
