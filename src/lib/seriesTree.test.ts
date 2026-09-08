@@ -289,6 +289,40 @@ describe("what a won unit is worth", () => {
     expect(units[0].standing?.sideATotal).toBe(4);
   });
 
+  it("counts a unit by what a marked move says it is worth", () => {
+    const white = {
+      id: "white",
+      name: "أبيض",
+      unitsToSelf: 0,
+      unitsFromOther: 0,
+      levelId: "point",
+      endsUnit: false,
+      unitWorth: 2,
+    };
+    const rows = [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1, outcome: "SIDE_A" }),
+    ];
+
+    const { units } = resolveMatch(CARDS, rows, [
+      { id: "m1", unitId: "p1", side: "SIDE_A", rule: white },
+    ]);
+
+    expect(units[0].standing?.sideATotal).toBe(4);
+  });
+
+  it("counts a unit by one where the move was never marked on it", () => {
+    const rows = [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1, outcome: "SIDE_A" }),
+      unit({ id: "p2", levelId: "point", parentId: "s1", order: 2, outcome: "SIDE_A" }),
+    ];
+
+    const { units } = resolveMatch(CARDS, rows);
+
+    expect(units[0].standing?.sideATotal).toBe(4);
+  });
+
   it("carries the worth of a point that was played out of its rounds", () => {
     const rows = [
       unit({ id: "s1", levelId: "set", order: 1 }),

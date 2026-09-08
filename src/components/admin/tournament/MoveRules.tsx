@@ -13,6 +13,7 @@ interface MoveDraft {
   unitsFromOther: string;
   levelId: string;
   endsUnit: boolean;
+  unitWorth: string;
 }
 
 const EMPTY: MoveDraft = {
@@ -21,6 +22,7 @@ const EMPTY: MoveDraft = {
   unitsFromOther: "0",
   levelId: "",
   endsUnit: false,
+  unitWorth: "",
 };
 
 export function moveIsReady(draft: MoveDraft): boolean {
@@ -43,6 +45,7 @@ export default function MoveRules({
     unitsFromOther: number;
     levelId: string | null;
     endsUnit: boolean;
+    unitWorth: number | null;
   }) => void;
   onWithdraw: (ruleId: string) => void;
 }) {
@@ -79,6 +82,11 @@ export default function MoveRules({
                 {rule.endsUnit && (
                   <span className="ms-2" style={{ color: "var(--copper-600)" }}>
                     {texts.moveEndsLine}
+                  </span>
+                )}
+                {rule.unitWorth !== null && (
+                  <span className="ms-2" style={{ color: "var(--copper-600)" }}>
+                    {texts.moveWorthLine(String(rule.unitWorth))}
                   </span>
                 )}
               </span>
@@ -147,6 +155,18 @@ export default function MoveRules({
             ))}
           </select>
         </label>
+        <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
+          <span className="block mb-1">{texts.moveWorth}</span>
+          <input
+            type="number"
+            dir="ltr"
+            min={1}
+            value={draft.unitWorth}
+            disabled={busy}
+            onChange={(e) => setDraft({ ...draft, unitWorth: e.target.value })}
+            className="input input-sm w-full"
+          />
+        </label>
         <label className="flex items-center gap-2 text-xs" style={{ color: "var(--text-main)" }}>
           <input
             type="checkbox"
@@ -164,6 +184,7 @@ export default function MoveRules({
               unitsFromOther: Number(draft.unitsFromOther),
               levelId: draft.levelId || null,
               endsUnit: draft.endsUnit,
+              unitWorth: draft.unitWorth.trim() === "" ? null : Number(draft.unitWorth),
             });
             setDraft(EMPTY);
           }}

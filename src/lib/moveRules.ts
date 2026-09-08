@@ -1,6 +1,7 @@
 import type { RecordedMove, SeriesSide } from "./matchSeries";
 
 export const MAX_MOVE_UNITS = 10;
+export const MAX_UNIT_WORTH = 10;
 
 export interface RuleShape {
   name: string;
@@ -8,9 +9,10 @@ export interface RuleShape {
   unitsFromOther: number;
   levelId: string;
   endsUnit?: boolean;
+  unitWorth?: number | null;
 }
 
-export type RuleProblem = "name" | "units" | "noEffect" | "level";
+export type RuleProblem = "name" | "units" | "noEffect" | "level" | "worth";
 
 export function ruleProblem(rule: RuleShape): RuleProblem | null {
   if (!rule.name.trim()) return "name";
@@ -18,10 +20,23 @@ export function ruleProblem(rule: RuleShape): RuleProblem | null {
   for (const units of [rule.unitsToSelf, rule.unitsFromOther]) {
     if (!Number.isInteger(units) || units < 0 || units > MAX_MOVE_UNITS) return "units";
   }
-  if (rule.unitsToSelf === 0 && rule.unitsFromOther === 0 && rule.endsUnit !== true) {
+  const worth = rule.unitWorth ?? null;
+  if (worth !== null && (!Number.isInteger(worth) || worth < 1 || worth > MAX_UNIT_WORTH)) {
+    return "worth";
+  }
+  if (
+    rule.unitsToSelf === 0 &&
+    rule.unitsFromOther === 0 &&
+    rule.endsUnit !== true &&
+    worth === null
+  ) {
     return "noEffect";
   }
   return null;
+}
+
+export function marksAWorth(rule: { unitWorth: number | null }): boolean {
+  return rule.unitWorth !== null;
 }
 
 export interface RecordedInstance {

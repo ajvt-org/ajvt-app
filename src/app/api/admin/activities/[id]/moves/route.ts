@@ -29,6 +29,7 @@ export const POST = withRoute(
       unitsFromOther?: unknown;
       levelId?: unknown;
       endsUnit?: unknown;
+      unitWorth?: unknown;
     };
     try {
       body = await req.json();
@@ -42,6 +43,7 @@ export const POST = withRoute(
       unitsFromOther: Number(body.unitsFromOther),
       levelId: typeof body.levelId === "string" ? body.levelId : "",
       endsUnit: body.endsUnit === true,
+      unitWorth: Number.isInteger(body.unitWorth) ? (body.unitWorth as number) : null,
     });
     await logAction(session.username, "DECLARE_ADJUSTMENT_RULE", rule.name);
 

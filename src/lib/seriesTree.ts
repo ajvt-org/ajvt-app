@@ -74,21 +74,26 @@ export function rulesAt(ladder: Ladder, depth: number): SeriesRules {
   };
 }
 
-function typedPlay(row: UnitRow, endedByRule: boolean): PlayedUnit {
+function typedPlay(row: UnitRow, endedByRule: boolean, worth: number | null): PlayedUnit {
   return {
     order: row.order,
     abandoned: row.abandoned,
     outcome: row.outcome,
     sideAPoints: row.sideAPoints,
     sideBPoints: row.sideBPoints,
-    worth: row.worth,
+    worth,
     sideALostCredit: row.sideALostCredit,
     sideBLostCredit: row.sideBLostCredit,
     endedByRule,
   };
 }
 
-function computedPlay(row: UnitRow, standing: SeriesStanding, endedByRule: boolean): PlayedUnit {
+function computedPlay(
+  row: UnitRow,
+  standing: SeriesStanding,
+  endedByRule: boolean,
+  worth: number | null,
+): PlayedUnit {
   const decided = standing.over;
   return {
     order: row.order,
@@ -96,7 +101,7 @@ function computedPlay(row: UnitRow, standing: SeriesStanding, endedByRule: boole
     outcome: standing.winner ?? (decided ? "DRAW" : null),
     sideAPoints: standing.sideATotal,
     sideBPoints: standing.sideBTotal,
-    worth: row.worth,
+    worth,
     sideALostCredit: standing.sideALostCredit,
     sideBLostCredit: standing.sideBLostCredit,
     endedByRule,
@@ -112,6 +117,14 @@ function byParent(rows: UnitRow[]): Map<string | null, UnitRow[]> {
   }
   for (const siblings of groups.values()) siblings.sort((one, two) => one.order - two.order);
   return groups;
+}
+
+export function markedWorth(moves: MoveRow[]): Map<string, number> {
+  const marks = new Map<string, number>();
+  for (const move of moves) {
+    if (move.rule.unitWorth !== null) marks.set(move.unitId, move.rule.unitWorth);
+  }
+  return marks;
 }
 
 export function placeMoves(rows: UnitRow[], moves: MoveRow[]): Placement[] {
@@ -148,12 +161,14 @@ export function resolveMatch(
   const ladder = ladderOf(levels);
   const groups = byParent(rows);
   const placements = placeMoves(rows, moves);
+  const marks = markedWorth(moves);
   const endings = new Map(
     placements.filter((placed) => placed.ended).map((placed) => [placed.ended!, placed.move.rule]),
   );
 
   const resolve = (row: UnitRow, depth: number, decider: boolean): ResolvedUnit => {
     const endedBy = endings.get(row.id) ?? null;
+    const worth = marks.get(row.id) ?? row.worth;
     const children = resolveSiblings(row.id, groups.get(row.id) ?? [], depth + 1);
     if (children.length === 0) {
       return {
@@ -163,7 +178,7 @@ export function resolveMatch(
         endedBy,
         children,
         standing: null,
-        played: typedPlay(row, endedBy !== null),
+        played: typedPlay(row, endedBy !== null, worth),
       };
     }
     const standing = standingUnder(ladder, depth, row.id, children, placements, decider);
@@ -174,7 +189,7 @@ export function resolveMatch(
       endedBy,
       children,
       standing,
-      played: computedPlay(row, standing, endedBy !== null),
+      played: computedPlay(row, standing, endedBy !== null, worth),
     };
   };
 
