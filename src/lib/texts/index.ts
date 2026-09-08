@@ -106,6 +106,7 @@ export {
   paymentAccountManager,
   paymentAccountPicker,
   paymentsPage,
+  PAYMENT_SORT_LABEL,
   renewForm,
   paymentInfoBanner,
   paymentMethodChoice,

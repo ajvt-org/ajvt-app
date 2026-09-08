@@ -59,7 +59,19 @@ export const paymentsPage = {
   allAccounts: "كل الأرقام",
   accountFilter: "تصفية حسب الرقم",
   noResults: "لا توجد نتائج",
+  sortBy: "الترتيب",
+  sortNewest: "الأحدث دفعاً",
+  sortOldest: "الأقدم دفعاً",
+  sortLargest: "الأكبر مبلغاً",
+  sortSmallest: "الأصغر مبلغاً",
 } as const;
+
+export const PAYMENT_SORT_LABEL: Record<string, string> = {
+  newest: paymentsPage.sortNewest,
+  oldest: paymentsPage.sortOldest,
+  largest: paymentsPage.sortLargest,
+  smallest: paymentsPage.sortSmallest,
+};
 
 export const byAccount = {
   title: "حسب الرقم المستلم",

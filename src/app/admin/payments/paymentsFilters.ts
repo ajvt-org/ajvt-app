@@ -1,6 +1,7 @@
 import type { KindFilter } from "./KindTabs";
+import { DEFAULT_SORT, readPaymentSort, type PaymentSort } from "./paymentsSort";
 
-export const PAYMENTS_FILTER_KEYS = ["kind", "q", "account", "focus"];
+export const PAYMENTS_FILTER_KEYS = ["kind", "q", "account", "sort", "focus"];
 
 export const NO_ACCOUNT = "UNKNOWN";
 
@@ -8,6 +9,7 @@ export interface PaymentsFilters {
   kind: KindFilter;
   q: string;
   account: string;
+  sort: PaymentSort;
   focus: string;
 }
 
@@ -17,6 +19,7 @@ export function readPaymentsFilters(params: URLSearchParams): PaymentsFilters {
     kind: kind === "MEMBERSHIP" || kind === "ACTIVITY" || kind === "DONATION" ? kind : "ALL",
     q: params.get("q") || "",
     account: params.get("account") || "",
+    sort: readPaymentSort(params.get("sort")),
     focus: params.get("focus") || "",
   };
 }
@@ -26,6 +29,7 @@ export function writePaymentsFilters(filters: PaymentsFilters): URLSearchParams 
   if (filters.kind !== "ALL") params.set("kind", filters.kind);
   if (filters.q.trim()) params.set("q", filters.q.trim());
   if (filters.account) params.set("account", filters.account);
+  if (filters.sort !== DEFAULT_SORT) params.set("sort", filters.sort);
   if (filters.focus) params.set("focus", filters.focus);
   return params;
 }
