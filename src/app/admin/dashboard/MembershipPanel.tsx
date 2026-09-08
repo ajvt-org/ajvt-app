@@ -3,19 +3,11 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
-import type { RenewalRefusal } from "@/lib/renewal";
+import { membershipSummary as texts } from "@/lib/texts";
 import MembershipYears from "./MembershipYears";
 import RenewForm from "./RenewForm";
 import YearAmountForm from "./YearAmountForm";
 import type { MembershipHistory } from "./membershipTypes";
-
-const REFUSAL_NOTE: Record<NonNullable<RenewalRefusal>, string> = {
-  underReview: "الاشتراك الحالي قيد المراجعة",
-  notActive: "التجديد متاح للأعضاء المقبولين فقط",
-  notIssued: "لا يوجد رقم عضوية لتجديده",
-  alreadyRenewed: "مسدّد لهذه السنة",
-  yearBehind: "العضوية تتجاوز السنة الجارية",
-};
 
 function fetchHistory(memberId: string): Promise<MembershipHistory | null> {
   return api.get<MembershipHistory>(`/api/admin/members/${memberId}/memberships`).catch(() => null);
@@ -36,23 +28,21 @@ export default function MembershipPanel({ memberId }: { memberId: string }) {
   return (
     <div className="card p-4 space-y-2">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="card">سنوات العضوية</IconLabel>
+        <IconLabel name="card">{texts.years}</IconLabel>
       </p>
 
       <MembershipYears years={history.memberships} currentYear={history.currentYear} />
 
-      {history.refusal === "alreadyRenewed" ? (
+      {history.refusal === "alreadyRenewed" && (
         <YearAmountForm
           memberId={memberId}
           year={history.currentYear}
           amount={current?.paidAmount == null ? null : current.paidAmount + current.supportAmount}
           onSaved={reload}
         />
-      ) : history.refusal ? (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {REFUSAL_NOTE[history.refusal]}
-        </p>
-      ) : (
+      )}
+
+      {!history.refusal && (
         <RenewForm memberId={memberId} year={history.currentYear} onRenewed={reload} />
       )}
     </div>

@@ -1,5 +1,6 @@
 export const membershipSummary = {
   title: "العضوية",
+  years: "سنوات العضوية",
   year: "السنة",
   standing: "الحالة",
   toPayment: "افتح الدفعة",
