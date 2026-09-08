@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as OPTIONS } from "@/app/api/admin/members/options/route";
+import { prisma } from "@/lib/prisma";
 import { resetDb, get, createAdmin, signInAsAdmin, createUser, makeMember } from "./helpers";
 import { runningYear } from "@/lib/membershipYear";
 
@@ -36,15 +37,7 @@ describe("the source behind the manual add picker", () => {
 
     const [row] = await options();
 
-    expect(Object.keys(row).sort()).toEqual([
-      "age",
-      "fullName",
-      "id",
-      "phone",
-      "photo",
-      "status",
-      "village",
-    ]);
+    expect(Object.keys(row).sort()).toEqual(["age", "fullName", "id", "phone", "photo", "village"]);
   });
 
   it("names the account rather than the membership row", async () => {
@@ -56,12 +49,12 @@ describe("the source behind the manual add picker", () => {
     expect(row.phone).toBe(user.phone);
   });
 
-  it("puts the newest membership first, whatever its review state", async () => {
+  it("puts the newest membership first", async () => {
     const old = new Date("2026-01-01T00:00:00.000Z");
     const mid = new Date("2026-05-01T00:00:00.000Z");
     const fresh = new Date("2026-09-01T00:00:00.000Z");
-    await member("قديم", { createdAt: old, status: "REJECTED" });
-    await member("جديد", { createdAt: fresh, status: "PENDING" });
+    await member("قديم", { createdAt: old });
+    await member("جديد", { createdAt: fresh });
     await member("وسط", { createdAt: mid });
 
     expect(await names()).toEqual(["جديد", "وسط", "قديم"]);
@@ -71,10 +64,33 @@ describe("the source behind the manual add picker", () => {
     const user = await member("مجدد", { membershipYear: YEAR - 1, status: "REJECTED" });
     await makeMember({ userId: user.id, membershipYear: YEAR, status: "ACTIVE" });
 
-    const rows = await options();
+    expect(await options()).toHaveLength(1);
+  });
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0].status).toBe("ACTIVE");
+  it("offers nobody whose application is still waiting or was refused", async () => {
+    await member("منتظر", { status: "PENDING" });
+    await member("مرفوض", { status: "REJECTED" });
+    await member("عضو");
+
+    expect(await names()).toEqual(["عضو"]);
+  });
+
+  it("offers nobody who has stopped renewing", async () => {
+    await member("متأخر", { membershipYear: YEAR - 1 });
+    await member("عضو");
+
+    expect(await names()).toEqual(["عضو"]);
+  });
+
+  it("offers nobody whose membership was ended", async () => {
+    const ended = await member("منتهية");
+    await prisma.membership.updateMany({
+      where: { userId: ended.id },
+      data: { endedAt: new Date("2026-06-01T00:00:00.000Z") },
+    });
+    await member("عضو");
+
+    expect(await names()).toEqual(["عضو"]);
   });
 
   it("returns every membership rather than a page of them", async () => {

@@ -10,6 +10,10 @@ import { adminRegisterSchema, registrationReviewSchema } from "./schema";
 import { activities, members, notify } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
 import { seatRegistrant, unseatRegistrant } from "@/lib/registrationTeamServer";
+import { getAppSettings } from "@/lib/settingsServer";
+import { membershipState } from "@/lib/membershipState";
+import { asMembershipState } from "@/lib/currentMembership";
+import { currentMembership } from "@/lib/currentMembershipServer";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -35,6 +39,22 @@ export const POST = withRoute(
     ]);
     if (!account) return NextResponse.json({ error: members.notFound }, { status: 404 });
     if (!activity) return NextResponse.json({ error: activities.notFound }, { status: 404 });
+
+    const [membership, { membershipYear }] = await Promise.all([
+      currentMembership(prisma, account.id),
+      getAppSettings(),
+    ]);
+    if (!membership) return NextResponse.json({ error: members.notFound }, { status: 404 });
+    if (membership.status !== "ACTIVE") {
+      return NextResponse.json({ error: activities.membershipNotApproved }, { status: 403 });
+    }
+    const standing = membershipState(asMembershipState(membership), membershipYear);
+    if (standing === "ENDED") {
+      return NextResponse.json({ error: activities.membershipEnded }, { status: 403 });
+    }
+    if (standing === "BEHIND") {
+      return NextResponse.json({ error: activities.membershipBehind }, { status: 403 });
+    }
 
     if (activity.capacity !== null && activity._count.registrations >= activity.capacity) {
       const already = await prisma.activityRegistration.findUnique({

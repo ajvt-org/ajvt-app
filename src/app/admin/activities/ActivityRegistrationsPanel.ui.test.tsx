@@ -17,7 +17,6 @@ function candidate(over: Partial<MemberOption> = {}): MemberOption {
     photo: null,
     age: "البدريين",
     village: "التاكلالت",
-    status: "ACTIVE",
     ...over,
   };
 }
@@ -172,20 +171,20 @@ describe("the manual add on the registrants tab", () => {
     expect(screen.getByText("أجوير · الأشبال")).toBeTruthy();
   });
 
-  it("stays quiet about a membership that is approved", async () => {
-    show([candidate({ status: "ACTIVE" })]);
+  it("says nothing about a membership, since only up to date members are offered", async () => {
+    show([candidate()]);
 
     await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "احمد");
 
     expect(screen.queryByText("معتمد")).toBeNull();
+    expect(screen.queryByText("قيد الانتظار")).toBeNull();
   });
 
-  it("warns when a membership is not approved", async () => {
-    show([candidate({ status: "PENDING" })]);
+  it("says there is nobody to add rather than that everybody is already in", () => {
+    show([]);
 
-    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "احمد");
-
-    expect(screen.getByText("قيد الانتظار")).toBeTruthy();
+    expect(screen.getByText(texts.noMemberToAdd)).toBeTruthy();
+    expect(screen.queryByText(texts.allRegistered)).toBeNull();
   });
 
   it("finds a candidate by their village", async () => {

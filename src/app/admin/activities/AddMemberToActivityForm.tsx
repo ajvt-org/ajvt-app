@@ -3,7 +3,6 @@
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import { matchesSearch, searchTokens } from "@/lib/arabicText";
-import { memberStatusLabels } from "@/lib/messages";
 import { activityRegistrants as texts } from "@/lib/texts";
 import PersonIdentity from "./PersonIdentity";
 import type { MemberOption } from "./activityTypes";
@@ -70,6 +69,8 @@ export default function AddMemberToActivityForm({
       />
       {loading ? (
         <Note>{texts.loadingMembers}</Note>
+      ) : candidates.length === 0 ? (
+        <Note>{texts.noMemberToAdd}</Note>
       ) : everyoneRegistered ? (
         <Note>{texts.allRegistered}</Note>
       ) : results.length === 0 ? (
@@ -94,22 +95,16 @@ export default function AddMemberToActivityForm({
                   person={candidate}
                   detail={<span>{texts.candidateDetail(candidate.village, candidate.age)}</span>}
                 />
-                {taken ? (
-                  <span className="badge shrink-0">{texts.alreadyRegistered}</span>
-                ) : (
-                  candidate.status !== "ACTIVE" && (
-                    <span className="badge shrink-0">{memberStatusLabels[candidate.status]}</span>
-                  )
-                )}
+                {taken && <span className="badge shrink-0">{texts.alreadyRegistered}</span>}
               </button>
             );
           })}
+          {hidden > 0 && (
+            <p className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>
+              {texts.more(hidden)}
+            </p>
+          )}
         </div>
-      )}
-      {hidden > 0 && (
-        <p className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>
-          {texts.more(hidden)}
-        </p>
       )}
     </div>
   );
