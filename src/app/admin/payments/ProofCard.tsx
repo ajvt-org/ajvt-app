@@ -2,20 +2,19 @@
 
 import { useEffect, useRef } from "react";
 import Money from "@/components/Money";
-import IconLabel from "@/components/IconLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
-import { paymentCard, PROOF_STATUS_LABEL } from "@/lib/texts";
 import { linkedAccount } from "@/lib/linkedAccount";
 import { donorNamesShown } from "@/lib/donorNamesShown";
 import DonationProofCard from "./DonationProofCard";
 import MembershipProofCard from "./MembershipProofCard";
 import PaymentFacts from "./PaymentFacts";
+import ProofBadges from "./ProofBadges";
 import PaymentHistory from "./PaymentHistory";
 import ProofThumb from "./ProofThumb";
 import { REUSE_KIND } from "./proofKinds";
 import type { DestinationOption } from "@/lib/moneyDestination";
-import { STATUS_CLASS, type MemberOption, type Proof } from "./paymentTypes";
+import { type MemberOption, type Proof } from "./paymentTypes";
 
 export default function ProofCard({
   proof,
@@ -69,23 +68,7 @@ export default function ProofCard({
               <p className="font-bold text-sm min-w-0" style={{ color: "var(--text-main)" }}>
                 {names.name}
               </p>
-              <span className={`badge ${STATUS_CLASS[proof.status] || "badge-pending"}`}>
-                {PROOF_STATUS_LABEL[proof.status] || proof.status}
-              </span>
-              {isDonation && proof.userId && (
-                <span className="badge badge-active">
-                  <IconLabel name="link" size={11}>
-                    {paymentCard.linked}
-                  </IconLabel>
-                </span>
-              )}
-              {isDonation && proof.anonymous && (
-                <span className="badge badge-pending">
-                  <IconLabel name="ban" size={11}>
-                    {paymentCard.hiddenOnBoard}
-                  </IconLabel>
-                </span>
-              )}
+              <ProofBadges proof={proof} />
             </div>
             {isDonation && proof.amount != null && (
               <p className="font-bold text-sm shrink-0" style={{ color: "var(--mint-700)" }}>
