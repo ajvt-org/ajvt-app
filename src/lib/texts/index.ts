@@ -128,6 +128,7 @@ export {
   receiptVerify,
 } from "./receipt";
 export { signUp } from "./signUp";
+export { standingsBoard } from "./standingsBoard";
 export { supportPrivacy } from "./supportPrivacy";
 export { adminSupporters, supporters, surplusCard } from "./supporters";
 export { teamsTab } from "./teamsTab";

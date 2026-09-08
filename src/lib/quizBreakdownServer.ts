@@ -149,15 +149,16 @@ export async function attemptsInRound(competitionId: string, index: number) {
   });
   const people = await prisma.user.findMany({
     where: { id: { in: attempts.map((a) => a.userId) } },
-    select: { id: true, fullName: true },
+    select: { id: true, fullName: true, photo: true },
   });
-  const names = new Map(people.map((u) => [u.id, u.fullName]));
+  const byId = new Map(people.map((u) => [u.id, u]));
 
   return attempts
     .map((a) => ({
       attemptId: a.id,
       userId: a.userId,
-      name: names.get(a.userId) ?? "",
+      name: byId.get(a.userId)?.fullName ?? "",
+      photo: byId.get(a.userId)?.photo ?? null,
       score: a.voidedAt ? 0 : a.score,
       voided: a.voidedAt !== null,
       finishedAt: a.finishedAt,

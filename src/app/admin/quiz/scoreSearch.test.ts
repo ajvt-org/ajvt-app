@@ -6,6 +6,7 @@ const row = (name: string): AttemptRow => ({
   attemptId: name,
   userId: name,
   name,
+  photo: null,
   score: 10,
   voided: false,
   finishedAt: null,

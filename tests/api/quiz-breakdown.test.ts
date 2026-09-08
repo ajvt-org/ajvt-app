@@ -197,6 +197,27 @@ describe("an admin reading anyone's score", () => {
     expect(body.attempts[0].score).toBe(10);
   });
 
+  it("carries the photo of whoever played, and nothing when they have none", async () => {
+    const c = await competition();
+    const withPhoto = await paidUser("أحمد");
+    const without = await paidUser("محمد");
+    await prisma.user.update({ where: { id: withPhoto.id }, data: { photo: "face.webp" } });
+    const played = await attempt(c.id, withPhoto.id);
+    await prisma.quizAttempt.create({
+      data: { roundId: played.roundId, userId: without.id, score: 4 },
+    });
+
+    const body = await (
+      await ADMIN_ROUND(get(`/api/admin/quiz/competitions/${c.id}/attempts?round=0`), withId(c.id))
+    ).json();
+
+    const byName = new Map(
+      body.attempts.map((a: { name: string; photo: string | null }) => [a.name, a.photo]),
+    );
+    expect(byName.get("أحمد")).toBe("face.webp");
+    expect(byName.get("محمد")).toBeNull();
+  });
+
   it("is empty for a round nobody has played", async () => {
     const c = await competition();
 
