@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import TeamBuilder from "./TeamBuilder";
 import { ToastProvider } from "./Toast";
-import { teamBuilder as texts } from "@/lib/texts";
+import { teamBuilder as texts, confirmDelete } from "@/lib/texts";
 import type { MyTeamView, MyTeamMember } from "@/lib/myTeamServer";
 
 const VIEWER = "u1";
+
+const dialog = () => within(document.querySelector(".fixed.inset-0") as HTMLElement);
+
+async function answer(name: string) {
+  await userEvent.click(dialog().getByRole("button", { name }));
+}
 
 const person = (
   userId: string,
@@ -235,25 +241,19 @@ describe("a captain acting on their own roster", () => {
   });
 
   it("asks before removing a player", async () => {
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => false),
-    );
     const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
 
     await userEvent.click(await screen.findByLabelText(texts.removePlayer("سالم")));
 
+    expect(dialog().getByText(texts.confirmRemove("سالم"))).toBeDefined();
     expect(fetchMock.mock.calls.length).toBe(1);
   });
 
   it("removes a player once the question is answered", async () => {
     const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => true),
-    );
 
     await userEvent.click(await screen.findByLabelText(texts.removePlayer("سالم")));
+    await answer(texts.removePlayer("سالم"));
 
     await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
     expect(sent(fetchMock, 1)).toMatchObject({
@@ -272,12 +272,9 @@ describe("a captain acting on their own roster", () => {
 
   it("hands the captaincy to another player", async () => {
     const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد"), person("u2", "سالم")]) }));
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => true),
-    );
 
     await userEvent.click(await screen.findByLabelText(texts.makeCaptain("سالم")));
+    await answer(texts.makeCaptain("سالم"));
 
     await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
     expect(sent(fetchMock, 1)).toMatchObject({
@@ -294,14 +291,13 @@ describe("a captain acting on their own roster", () => {
     expect(screen.queryByLabelText(texts.makeCaptain("سالم"))).toBeNull();
   });
 
-  it("disbands the team once the question is answered", async () => {
+  it("disbands the team once the captain has typed its name", async () => {
     const { fetchMock } = show(view({ team: led([person(VIEWER, "محمد")]) }));
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => true),
-    );
 
     await userEvent.click(await screen.findByRole("button", { name: texts.disband }));
+    await userEvent.click(dialog().getByText(confirmDelete.proceed));
+    await userEvent.type(dialog().getByLabelText(texts.disbandNameField), "الصقور");
+    await answer(texts.disband);
 
     await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
     expect(sent(fetchMock, 1)).toMatchObject({ url: "/api/teams/t1", method: "DELETE" });
@@ -397,12 +393,9 @@ describe("while the tournament has not started", () => {
     const { fetchMock } = show(
       view({ team: led([person("u9", "سالم"), person(VIEWER, "محمد")], "u9") }),
     );
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => true),
-    );
 
     await userEvent.click(await screen.findByRole("button", { name: texts.leave }));
+    await answer(texts.leave);
 
     await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
     expect(sent(fetchMock, 1)).toMatchObject({
