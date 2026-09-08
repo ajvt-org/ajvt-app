@@ -1,30 +1,7 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma";
 import { sortTeamPlaces, teamsLeftEmpty, type TeamPlace } from "../src/lib/teamPlaces";
-
-async function appearedIn(userId: string, teamId: string): Promise<boolean> {
-  const [goals, bookings, kicks, candidacies] = await Promise.all([
-    prisma.matchGoal.count({ where: { userId, teamId } }),
-    prisma.matchBooking.count({ where: { userId, teamId } }),
-    prisma.matchPenaltyKick.count({ where: { userId, teamId } }),
-    prisma.mvpCandidate.count({
-      where: {
-        userId,
-        vote: {
-          match: {
-            OR: [
-              { homeTeamId: teamId },
-              { awayTeamId: teamId },
-              { sideATeamId: teamId },
-              { sideBTeamId: teamId },
-            ],
-          },
-        },
-      },
-    }),
-  ]);
-  return goals + bookings + kicks + candidacies > 0;
-}
+import { appearedForTeam } from "../src/lib/teamPlacesServer";
 
 async function strayPlaces(): Promise<TeamPlace[]> {
   const rows = await prisma.teamMember.findMany({
@@ -47,7 +24,7 @@ async function strayPlaces(): Promise<TeamPlace[]> {
       userId: row.userId,
       teamId: row.teamId,
       captain: row.team.captainUserId === row.userId,
-      appeared: await appearedIn(row.userId, row.teamId),
+      appeared: await appearedForTeam(prisma, row.userId, row.teamId),
     });
   }
   return places;
