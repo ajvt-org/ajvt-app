@@ -1,6 +1,7 @@
 "use client";
 
 import AttemptBreakdown, { type AttemptDetail } from "./AttemptBreakdown";
+import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import ScoreActions from "./ScoreActions";
 import { quizScores as texts } from "@/lib/texts";
 import type { AttemptRow } from "./scoreTypes";
@@ -34,10 +35,11 @@ export default function ScoreRow({
         onClick={onOpen}
         aria-expanded={detail !== null}
         aria-label={texts.openAttempt(row.name)}
-        className="w-full flex items-center justify-between gap-2 rounded-lg p-2 text-xs text-start min-w-0"
+        className="w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-start min-w-0"
         style={{ background: "var(--surface-2)", border: "1px solid var(--mint-100)" }}
       >
-        <span className="truncate" style={{ color: "var(--text-main)" }}>
+        <PlayerAvatar photo={row.photo} fullName={row.name} size={24} />
+        <span className="truncate flex-1" style={{ color: "var(--text-main)" }}>
           {row.name}
           {row.voided && (
             <span className="font-bold" style={{ color: VOIDED }}>
