@@ -21,19 +21,14 @@ import {
   writePaymentsFilters,
   type PaymentsFilters,
 } from "./paymentsFilters";
+import { matchesSearch } from "./paymentsSearch";
 import { PAYMENT_SORTS, readPaymentSort, sortPayments } from "./paymentsSort";
 import { PAGE_SIZE, type Proof } from "./paymentTypes";
 
 function match(proof: Proof, filters: PaymentsFilters) {
   if (filters.kind !== "ALL" && proof.kind !== filters.kind) return false;
   if (!matchesAccount(proof, filters.account)) return false;
-  const query = filters.q.trim();
-  if (!query) return true;
-  return (
-    proof.memberName.includes(query) ||
-    (proof.activityTitle || "").includes(query) ||
-    (proof.bankReference || "").includes(query)
-  );
+  return matchesSearch(proof, filters.q);
 }
 
 function AdminPaymentsPageInner() {

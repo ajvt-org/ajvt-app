@@ -4,6 +4,7 @@ import {
   type MembershipState,
   type StatefulMembership,
 } from "./membershipState";
+import { containsSearch, normalizeSearch } from "./searchText";
 
 export type MemberFilters = {
   status: string;
@@ -95,12 +96,12 @@ export function activeFilterCount(filters: MemberFilters): number {
 }
 
 function matchesText(member: FilterableMember, q: string): boolean {
-  const needle = q.trim().toLowerCase();
+  const needle = normalizeSearch(q);
   if (!needle) return true;
   return (
-    member.fullName.toLowerCase().includes(needle) ||
-    (member.user?.phone || "").includes(needle) ||
-    (member.referenceCode || "").toLowerCase().includes(needle)
+    containsSearch(member.fullName, needle) ||
+    containsSearch(member.user?.phone, needle) ||
+    containsSearch(member.referenceCode, needle)
   );
 }
 
