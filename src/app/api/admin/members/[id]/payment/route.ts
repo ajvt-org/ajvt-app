@@ -13,6 +13,7 @@ import { members as messages } from "@/lib/messages";
 import { memberPaymentSchema } from "./schema";
 import { accountIdError } from "@/lib/paymentAccountsServer";
 import { nameOf } from "@/lib/person";
+import { releaseUploads } from "@/lib/uploadRelease";
 
 export const PUT = withRoute(
   "PUT /api/admin/members/[id]/payment",
@@ -67,6 +68,8 @@ export const PUT = withRoute(
         );
       }
     });
+
+    await releaseUploads(current.paymentProof);
 
     await logAction(session.username, "UPDATE_MEMBER_PAYMENT", nameOf(account), {
       ...auditContext(session, req),

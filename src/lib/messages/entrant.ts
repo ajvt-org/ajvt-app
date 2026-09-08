@@ -12,6 +12,7 @@ export interface EntrantWording {
   captainNotInEntrant: string;
   memberAlreadyEntered: (name: string) => string;
   entrantChoiceLocked: string;
+  entrantChoiceSettled: string;
   setupNeedsTwoEntrants: string;
   targetEntrantsRange: string;
   entrantsIncomplete: (min: number | null, max: number | null, names: string) => string;
@@ -35,7 +36,8 @@ const TEAM_WORDING: EntrantWording = {
   entrantFull: (max: number | null) => `هذا الفريق مكتمل — الحد الأقصى ${max} لاعبين`,
   captainNotInEntrant: "القائد يجب أن يكون أحد لاعبي الفريق",
   memberAlreadyEntered: (name: string) => `هذا العضو منضم بالفعل إلى فريق «${name}» في هذه البطولة`,
-  entrantChoiceLocked: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره",
+  entrantChoiceLocked: "انطلقت البطولة، لم يعد بالإمكان تغيير الفريق",
+  entrantChoiceSettled: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره",
   setupNeedsTwoEntrants: "يحتاج النشاط إلى فريقين على الأقل",
   targetEntrantsRange: "عدد الفرق المستهدف يجب أن يكون بين 2 و64",
   entrantsIncomplete: (min: number | null, max: number | null, names: string) =>
@@ -61,7 +63,8 @@ const PLAYER_WORDING: EntrantWording = {
   entrantFull: () => "هذه بطولة فردية، لا يُضاف لاعب ثانٍ إلى مشارك",
   captainNotInEntrant: "القائد يجب أن يكون اللاعب نفسه",
   memberAlreadyEntered: () => "هذا العضو مشارك بالفعل في هذه البطولة",
-  entrantChoiceLocked: "لقد تم تأكيد مشاركتك، لا يمكن تغييرها",
+  entrantChoiceLocked: "انطلقت البطولة، لم يعد بالإمكان تغيير المشاركة",
+  entrantChoiceSettled: "لقد تم تأكيد مشاركتك، لا يمكن تغييرها",
   setupNeedsTwoEntrants: "يحتاج النشاط إلى لاعبين اثنين على الأقل",
   targetEntrantsRange: "عدد اللاعبين المستهدف يجب أن يكون بين 2 و64",
   entrantsIncomplete: (_min: number | null, _max: number | null, names: string) =>

@@ -508,15 +508,17 @@ button:disabled {
 
 /* A row of tabs wider than the screen used to widen the whole page, so the
    layout sat shifted with the first tabs off-screen. It scrolls inside itself
-   now. overflow-x auto makes the other axis auto as well, so the strip clips
-   vertically and a count badge hanging below a tab loses its lower edge. The
-   padding is that overhang, and it lives here rather than on each strip because
-   a call site that forgets it clips the badge with no other sign. */
+   now. overflow-x auto makes the other axis auto as well, so the strip clips a
+   count badge hanging off a tab on either axis. The padding below and the
+   spacer after the last tab are that overhang with room to spare, and they live
+   here rather than on each strip because a call site that forgets them clips
+   the badge with no other sign. Matching the overhang exactly is not enough,
+   since the badge then sits flush against the edge it is kept away from. */
 .tab-strip {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -525,6 +527,67 @@ button:disabled {
 }
 .tab-strip > * {
   flex-shrink: 0;
+}
+.tab-strip::after {
+  content: "";
+  flex: 0 0 8px;
+}
+
+/* A knockout bracket is a tree of fixed width columns, which no phone is wide
+   enough for. Below the breakpoint the rounds stack down the page and each card
+   takes the full width, so the final is reached by the scroll a phone already
+   does. The tree returns where there is room for it. The geometry lives in
+   custom properties rather than inline positions so both shapes are one set of
+   cards, one heading per round, and one crest per side, rather than two copies
+   of the bracket with only one of them shown. */
+.bracket-round + .bracket-round {
+  margin-top: 1rem;
+}
+.bracket-card + .bracket-card {
+  margin-top: 0.5rem;
+}
+.bracket-connectors {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .bracket-scroller {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  .bracket-rounds {
+    display: flex;
+    gap: var(--bracket-gap);
+    width: fit-content;
+    margin-inline: auto;
+  }
+  .bracket-round {
+    flex-shrink: 0;
+    width: var(--bracket-column);
+  }
+  .bracket-round + .bracket-round {
+    margin-top: 0;
+  }
+  .bracket-round-name {
+    text-align: center;
+  }
+  .bracket-slots {
+    position: relative;
+    height: var(--bracket-height);
+  }
+  .bracket-card {
+    position: absolute;
+    inset-inline: 0;
+    top: var(--bracket-top);
+  }
+  .bracket-card + .bracket-card {
+    margin-top: 0;
+  }
+  .bracket-connectors {
+    display: block;
+    position: absolute;
+    top: 0;
+  }
 }
 
 /* Arabic carries most of its mass above the baseline, so centring an icon's

@@ -6,9 +6,14 @@ import { confirmDialog, teamsTab } from "@/lib/texts";
 
 const LONG_NAME = "الحسن احمدو يحي البناني";
 
-function entry(name: string, status: "ACTIVE" | "PENDING" = "ACTIVE"): TeamMemberEntry {
+function entry(
+  name: string,
+  status: "ACTIVE" | "PENDING" = "ACTIVE",
+  invitedByCaptain = false,
+): TeamMemberEntry {
   return {
     status,
+    invitedByCaptain,
     member: {
       id: "p1",
       fullName: name,
@@ -26,8 +31,8 @@ const handlers = {
   onRemove: vi.fn(),
 };
 
-function answer(yes: boolean) {
-  const label = yes ? screen.getByText(teamsTab.remove) : screen.getByText(confirmDialog.cancel);
+function answer(yes: boolean, confirmLabel: string = teamsTab.remove) {
+  const label = yes ? screen.getByText(confirmLabel) : screen.getByText(confirmDialog.cancel);
   fireEvent.click(label);
 }
 
@@ -159,7 +164,7 @@ describe("RosterRow", () => {
 
     expect(row.style.background).toBe("rgb(254, 243, 199)");
     expect(row.style.border).toContain("copper");
-    expect(screen.getByText("بانتظار الموافقة")).toBeDefined();
+    expect(screen.getByText(teamsTab.joinRequest)).toBeDefined();
   });
 
   it("keeps the destructive action beside the others and tells it apart by tone", () => {
@@ -215,7 +220,7 @@ describe("RosterRow", () => {
     show(entry(LONG_NAME, "PENDING"), { captain: true, suspended: true });
 
     const link = screen.getByLabelText(`فتح بطاقة ${LONG_NAME}`);
-    for (const badge of ["بانتظار الموافقة", "موقوف"]) {
+    for (const badge of [teamsTab.joinRequest, "موقوف"]) {
       expect(link.contains(screen.getByText(badge))).toBe(false);
     }
   });
@@ -223,7 +228,54 @@ describe("RosterRow", () => {
   it("says a player is waiting or suspended in words", () => {
     show(entry(LONG_NAME, "PENDING"), { suspended: true });
 
-    expect(screen.getByText("بانتظار الموافقة")).toBeDefined();
+    expect(screen.getByText(teamsTab.joinRequest)).toBeDefined();
     expect(screen.getByText("موقوف")).toBeDefined();
+  });
+});
+
+describe("which way a waiting row points", () => {
+  beforeEach(() => {
+    for (const fn of Object.values(handlers)) fn.mockReset();
+  });
+
+  it("says a request came from the player", () => {
+    show(entry("أحمد ولد سالم", "PENDING"));
+
+    expect(screen.getByText(teamsTab.joinRequest)).toBeDefined();
+    expect(screen.queryByText(teamsTab.captainInvitation)).toBeNull();
+  });
+
+  it("says an invitation came from the captain", () => {
+    show(entry("أحمد ولد سالم", "PENDING", true));
+
+    expect(screen.getByText(teamsTab.captainInvitation)).toBeDefined();
+    expect(screen.queryByText(teamsTab.joinRequest)).toBeNull();
+  });
+
+  it("leaves an accepted player carrying neither, whichever way they came", () => {
+    show(entry("أحمد ولد سالم", "ACTIVE", true));
+
+    expect(screen.queryByText(teamsTab.captainInvitation)).toBeNull();
+    expect(screen.queryByText(teamsTab.joinRequest)).toBeNull();
+  });
+
+  it("asks about withdrawing an invitation rather than rejecting a request", () => {
+    show(entry("أحمد ولد سالم", "PENDING", true));
+
+    fireEvent.click(screen.getByLabelText(teamsTab.withdrawOf("أحمد ولد سالم")));
+
+    expect(screen.getByText(teamsTab.confirmWithdraw("أحمد ولد سالم"))).toBeTruthy();
+    expect(screen.queryByText(teamsTab.confirmReject("أحمد ولد سالم"))).toBeNull();
+
+    answer(true, teamsTab.withdraw);
+    expect(handlers.onRemove).toHaveBeenCalled();
+  });
+
+  it("still lets the admin seat an invited player who has not answered", () => {
+    show(entry("أحمد ولد سالم", "PENDING", true));
+
+    fireEvent.click(screen.getByLabelText(teamsTab.seatOf("أحمد ولد سالم")));
+
+    expect(handlers.onApprove).toHaveBeenCalled();
   });
 });

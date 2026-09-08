@@ -5,7 +5,18 @@ import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
 import { squadOf } from "@/lib/squadSize";
 import { matchSideTeams } from "@/lib/matchSides";
 import { isFootball } from "@/lib/matchShape";
-import { standingOf } from "@/lib/matchSeriesServer";
+import { LEVELS_SELECT, UNITS_SELECT } from "@/lib/matchSeriesServer";
+import { resolveMatch, toNodes, type AdjustmentRow, type UnitRow } from "@/lib/seriesTree";
+import type { LevelRow } from "@/lib/matchLevels";
+
+function seriesOf(
+  match: { units: UnitRow[]; adjustments: AdjustmentRow[] },
+  activity: { matchShape: "FOOTBALL" | "SERIES"; levels: LevelRow[] },
+) {
+  if (isFootball(activity.matchShape)) return { units: [], series: null };
+  const resolved = resolveMatch(activity.levels, match.units, match.adjustments);
+  return { units: toNodes(resolved.units), series: resolved.standing };
+}
 
 const MATCH_SIDE = { select: { id: true, name: true, logo: true } } as const;
 
@@ -31,12 +42,7 @@ async function loadActivity(id: string) {
       endsAt: true,
       withTime: true,
       matchShape: true,
-      partsPerMatch: true,
-      matchEnding: true,
-      partsToWin: true,
-      partDecision: true,
-      partWord: true,
-      partsWord: true,
+      levels: LEVELS_SELECT,
       hasColours: true,
       firstColourWord: true,
       secondColourWord: true,
@@ -86,19 +92,8 @@ async function loadActivity(id: string) {
           forfeitWinnerTeamId: true,
           manOfTheMatchUserId: true,
           manOfTheMatchUser: { select: { fullName: true, photo: true } },
-          adjustments: { orderBy: { order: "asc" }, include: { rule: true } },
-          parts: {
-            orderBy: { order: "asc" },
-            select: {
-              id: true,
-              order: true,
-              abandoned: true,
-              outcome: true,
-              sideAPoints: true,
-              sideBPoints: true,
-              sideAColour: true,
-            },
-          },
+          adjustments: { orderBy: { createdAt: "asc" }, include: { rule: true } },
+          units: UNITS_SELECT,
           goals: {
             orderBy: { minute: "asc" as const },
             select: {
@@ -168,9 +163,7 @@ function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) 
         ...match,
         firstTeam: namedEntrant(sides.first, identities),
         secondTeam: namedEntrant(sides.second, identities),
-        series: isFootball(activity.matchShape)
-          ? null
-          : standingOf(activity, match.parts, match.isKnockout, match.adjustments),
+        ...seriesOf(match, activity),
         manOfTheMatch: match.manOfTheMatchUser
           ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
           : null,

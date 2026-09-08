@@ -115,8 +115,14 @@ describe("ActivityRegistrations", () => {
     expect(screen.getByText("اكتمل العدد")).toBeDefined();
   });
 
-  it("lets an approved registrant pick a team in a tournament", async () => {
-    const fetchMock = mockFetch();
+  it("hands an approved registrant the team block once the switch is on", async () => {
+    mockFetch({
+      team: null,
+      request: null,
+      invitations: [],
+      candidates: [],
+      squad: { min: 2, max: 3 },
+    });
     setup({
       activity: {
         isTournament: true,
@@ -126,39 +132,17 @@ describe("ActivityRegistrations", () => {
       member: { registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }] },
     });
 
-    await userEvent.click(screen.getByRole("button", { name: "الفريق الأول" }));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/teams/t1/join");
+    await waitFor(() => expect(screen.getByLabelText(/أنشئ فريقك/)).toBeDefined());
   });
 
-  it("locks the team once the admin has confirmed it", () => {
-    setup({
-      activity: {
-        isTournament: true,
-        playersBuildTeams: true,
-        joinableTeams: [{ id: "t1", name: "الفريق الأول" }],
-      },
-      member: {
-        registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }],
-        teamMemberships: [
-          { teamId: "t1", teamName: "الفريق الأول", activityId: "a1", status: "ACTIVE" },
-        ],
-      },
-    });
-
-    expect(screen.getByText("تم التأكيد — لا يمكن تغييره")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "الفريق الأول" })).toBeNull();
-  });
-
-  it("offers no team to join on a tournament the admin arranges", () => {
+  it("offers no team block on a tournament the admin arranges", () => {
     setup({
       activity: { isTournament: true, joinableTeams: [{ id: "t1", name: "الفريق الأول" }] },
       member: { registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }] },
     });
 
     expect(screen.queryByRole("button", { name: "الفريق الأول" })).toBeNull();
-    expect(screen.queryByText(/اختر فريقك:/)).toBeNull();
+    expect(screen.queryByLabelText(/أنشئ فريقك/)).toBeNull();
   });
 });
 

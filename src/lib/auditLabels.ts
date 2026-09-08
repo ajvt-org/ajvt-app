@@ -46,6 +46,7 @@ export const ACTION_LABELS = {
   UPDATE_TEAM: "تعديل فريق",
   DELETE_TEAM: "حذف فريق",
   CREATE_MATCH: "إضافة مباراة",
+  DECLARE_MATCH_LEVELS: "إعداد مستويات مباريات البطولة ",
   DECLARE_ADJUSTMENT_RULE: "إضافة حركة للبطولة ",
   WITHDRAW_ADJUSTMENT_RULE: "حذف حركة من البطولة ",
   RECORD_MATCH_ADJUSTMENT: "تسجيل حركة في مباراة ",

@@ -1,5 +1,6 @@
 import type { PartColour } from "@prisma/client";
-import { HALVES_PER_PART } from "./matchSeries";
+
+export const COLOURS_IN_ROTATION = 2;
 
 export const OTHER_COLOUR: Record<PartColour, PartColour> = {
   FIRST: "SECOND",
@@ -7,7 +8,7 @@ export const OTHER_COLOUR: Record<PartColour, PartColour> = {
 };
 
 export function colourOfPart(opensAs: PartColour, order: number): PartColour {
-  return order % HALVES_PER_PART === 1 ? opensAs : OTHER_COLOUR[opensAs];
+  return order % COLOURS_IN_ROTATION === 1 ? opensAs : OTHER_COLOUR[opensAs];
 }
 
 export interface ColouredPart {
@@ -30,8 +31,8 @@ export function coloursBalanced(parts: ColouredPart[]): boolean {
   return tally.sideA === tally.sideB;
 }
 
-export function canBalance(partsPerMatch: number): boolean {
-  return partsPerMatch % HALVES_PER_PART === 0;
+export function canBalance(unitsPerParent: number): boolean {
+  return unitsPerParent % COLOURS_IN_ROTATION === 0;
 }
 
 export function evenlyDrawnOpeners<T>(

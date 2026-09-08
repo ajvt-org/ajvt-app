@@ -10,10 +10,12 @@ function entry(
   id: string,
   name: string,
   status: "ACTIVE" | "PENDING" = "ACTIVE",
+  invitedByCaptain = false,
   village = "التاكلالت",
 ): TeamMemberEntry {
   return {
     status,
+    invitedByCaptain,
     member: {
       id,
       fullName: name,
@@ -27,7 +29,7 @@ function entry(
 
 function squad(count: number, outside = 0): TeamMemberEntry[] {
   return Array.from({ length: count }, (_, i) =>
-    entry(`p${i}`, `لاعب ${i}`, "ACTIVE", i < outside ? "نواكشوط" : "التاكلالت"),
+    entry(`p${i}`, `لاعب ${i}`, "ACTIVE", false, i < outside ? "نواكشوط" : "التاكلالت"),
   );
 }
 
@@ -110,7 +112,21 @@ describe("TeamCard", () => {
       max: 2,
     });
 
-    expect(screen.getByText("1 بانتظار الموافقة")).toBeDefined();
+    expect(screen.getByText(teamsTab.requestCount(1))).toBeDefined();
+  });
+
+  it("counts the invitations apart from the requests", () => {
+    show(
+      [
+        entry("p1", "أحمد ولد محمد"),
+        entry("p2", "بابا ولد سيدي", "PENDING"),
+        entry("p3", "سالم ولد الشيخ", "PENDING", true),
+      ],
+      { min: 1, max: 9 },
+    );
+
+    expect(screen.getByText(teamsTab.requestCount(1))).toBeDefined();
+    expect(screen.getByText(teamsTab.invitationCount(1))).toBeDefined();
   });
 
   it("accepts and rejects a player who is waiting", () => {
@@ -297,15 +313,19 @@ describe("TeamCard", () => {
   });
 
   it("keeps the name, the count and the delete button in the closed summary", () => {
-    show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي", "PENDING")], {
-      min: 4,
-      max: 4,
-    });
+    show(
+      [
+        entry("p1", "أحمد ولد محمد"),
+        entry("p2", "بابا ولد سيدي"),
+        entry("p3", "سالم ولد الشيخ", "PENDING"),
+      ],
+      { min: 4, max: 4 },
+    );
 
     const summary = document.querySelector("summary") as HTMLElement;
     expect(summary.textContent).toContain("فريق النجم");
     expect(summary.textContent).toContain("لاعبان");
-    expect(summary.textContent).toContain("1 بانتظار الموافقة");
+    expect(summary.textContent).toContain(teamsTab.requestCount(1));
     expect(summary.querySelector('[aria-label="حذف الفريق"]')).not.toBeNull();
   });
 
@@ -446,11 +466,11 @@ describe("a squad the admin should look at", () => {
       />,
     );
 
-    const badge = screen.getByText(teamsTab.rosterCount(members.length));
+    const badge = screen.getByText(teamsTab.rosterCount(2));
     const below = badge.closest("div")?.parentElement as HTMLElement;
 
     expect(below.style.marginBlockStart).toBe(`${CLEAR_OF_THE_CREST}px`);
-    expect(below.textContent).toContain(teamsTab.awaitingCount(1));
+    expect(below.textContent).toContain(teamsTab.requestCount(1));
   });
 
   it("says nothing about the outside share on a team the limit does not reach", () => {
@@ -496,7 +516,7 @@ describe("a squad the admin should look at", () => {
   it("keeps the awaiting count, which is a different fact", () => {
     withBreaches([], [...squad(15), entry("pz", "سالم", "PENDING")]);
 
-    expect(screen.getByText(teamsTab.awaitingCount(1))).toBeDefined();
+    expect(screen.getByText(teamsTab.requestCount(1))).toBeDefined();
   });
 
   it("falls back to a plain count where the squad has no maximum", () => {

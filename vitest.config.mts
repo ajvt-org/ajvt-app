@@ -12,16 +12,20 @@ export default defineConfig({
   test: {
     // Measured over src/lib, which is what this suite tests. Components and screens
     // belong to the UI suite, and counting them here would report a number that
-    // no test in this file could ever move. The same goes for the modules bound
-    // to prisma: the api suite exercises those, so counting them here reported a
-    // floor that pure code could not lift and that shifted when logic moved
-    // between the two. coverageScope.test.ts keeps that list honest.
+    // no test in this file could ever move. src/lib/texts is the same thing under
+    // another name: it is the copy those screens render, reached by the UI suite,
+    // and a unit test asserting a template against itself would lift the number
+    // without testing anything. The same goes for the modules bound to prisma:
+    // the api suite exercises those, so counting them here reported a floor that
+    // pure code could not lift and that shifted when logic moved between the two.
+    // coverageScope.test.ts keeps that list honest.
     coverage: {
       provider: "v8",
       reporter: ["text-summary", "json-summary"],
       reportsDirectory: "coverage/unit",
       include: ["src/lib/**/*.ts"],
       exclude: [
+        "src/lib/texts/**",
         "src/**/*.test.ts",
         "src/**/*.ui.test.tsx",
         "src/generated/**",

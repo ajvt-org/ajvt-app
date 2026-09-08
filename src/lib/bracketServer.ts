@@ -19,10 +19,11 @@ import {
 } from "./matchSides";
 import type { MatchShape } from "@prisma/client";
 import { isFootball } from "./matchShape";
-import { deriveSeries, type PlayedPart } from "./matchSeries";
+import { resolveMatch, type AdjustmentRow, type UnitRow } from "./seriesTree";
 import { canBalance, evenlyDrawnOpeners } from "./seriesColours";
 import type { PartColour } from "@prisma/client";
-import { rulesOf } from "./matchSeriesServer";
+import { LEVELS_SELECT, UNITS_SELECT } from "./matchSeriesServer";
+import { ladderOf, type LevelRow } from "./matchLevels";
 
 async function nextMatchOrder(activityId: string) {
   const row = await prisma.match.findFirst({
@@ -42,7 +43,8 @@ interface BracketRow {
   awayTeamId: string | null;
   sideATeamId: string | null;
   sideBTeamId: string | null;
-  parts: PlayedPart[];
+  units: UnitRow[];
+  adjustments: AdjustmentRow[];
 }
 
 async function matchShapeOf(activityId: string): Promise<MatchShape> {
@@ -66,16 +68,8 @@ async function bracketRows(activityId: string): Promise<BracketRow[]> {
       awayTeamId: true,
       sideATeamId: true,
       sideBTeamId: true,
-      parts: {
-        orderBy: { order: "asc" },
-        select: {
-          order: true,
-          abandoned: true,
-          outcome: true,
-          sideAPoints: true,
-          sideBPoints: true,
-        },
-      },
+      units: UNITS_SELECT,
+      adjustments: { orderBy: { createdAt: "asc" }, include: { rule: true } },
     },
   });
 }
@@ -189,7 +183,7 @@ export async function drawBracket(activityId: string, redo = false) {
       maxTeamSize: true,
       matchShape: true,
       hasColours: true,
-      partsPerMatch: true,
+      levels: LEVELS_SELECT,
     },
   });
   const teams = await prisma.team.findMany({
@@ -252,7 +246,9 @@ export async function drawBracket(activityId: string, redo = false) {
   return {
     created,
     label,
-    coloursBalance: hasColours ? canBalance(activity?.partsPerMatch ?? 0) : null,
+    coloursBalance: hasColours
+      ? canBalance(ladderOf(activity?.levels ?? [])[0]?.unitsPerParent ?? 0)
+      : null,
   };
 }
 
@@ -281,11 +277,11 @@ function footballWinner(
 }
 
 function seriesWinner(
-  activity: Parameters<typeof rulesOf>[0],
-  parts: PlayedPart[],
+  levels: LevelRow[],
+  match: { units: UnitRow[]; adjustments: AdjustmentRow[] },
   sides: { first: string | null; second: string | null },
 ): string | null {
-  const standing = deriveSeries(rulesOf(activity, true), parts);
+  const standing = resolveMatch(levels, match.units, match.adjustments).standing;
   if (!standing.over || standing.winner === null) return null;
   return standing.winner === "SIDE_A" ? sides.first : sides.second;
 }
@@ -303,13 +299,7 @@ function suggestionError(problem: string, words: EntrantWording): string {
 async function groupTables(activityId: string) {
   const setup = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: {
-      matchShape: true,
-      partsPerMatch: true,
-      matchEnding: true,
-      partsToWin: true,
-      partDecision: true,
-    },
+    select: { matchShape: true, levels: LEVELS_SELECT },
   });
   const shape = setup.matchShape;
   const [groups, teams, matches] = await Promise.all([
@@ -329,16 +319,8 @@ async function groupTables(activityId: string) {
         awayTeam: { select: { id: true } },
         sideATeam: { select: { id: true } },
         sideBTeam: { select: { id: true } },
-        parts: {
-          orderBy: { order: "asc" },
-          select: {
-            order: true,
-            abandoned: true,
-            outcome: true,
-            sideAPoints: true,
-            sideBPoints: true,
-          },
-        },
+        units: UNITS_SELECT,
+        adjustments: { orderBy: { createdAt: "asc" }, include: { rule: true } },
         homeScore: true,
         awayScore: true,
         status: true,
@@ -357,7 +339,7 @@ async function groupTables(activityId: string) {
         ...m,
         firstTeam: sides.first,
         secondTeam: sides.second,
-        series: series ? deriveSeries(rulesOf(setup), m.parts) : null,
+        series: series ? resolveMatch(setup.levels, m.units, m.adjustments).standing : null,
       };
     });
   return {
@@ -405,7 +387,7 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
 
   const setup = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: { matchShape: true, hasColours: true, partsPerMatch: true },
+    select: { matchShape: true, hasColours: true, levels: LEVELS_SELECT },
   });
   const shape = setup.matchShape;
   const waiting = await clearRedoableBracket(activityId, redo, shape);
@@ -427,20 +409,16 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
     created,
     label,
     problem,
-    coloursBalance: setup.hasColours ? canBalance(setup.partsPerMatch ?? 0) : null,
+    coloursBalance: setup.hasColours
+      ? canBalance(ladderOf(setup.levels)[0]?.unitsPerParent ?? 0)
+      : null,
   };
 }
 
 export async function advanceBracket(activityId: string) {
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: {
-      matchShape: true,
-      partsPerMatch: true,
-      matchEnding: true,
-      partsToWin: true,
-      partDecision: true,
-    },
+    select: { matchShape: true, levels: LEVELS_SELECT },
   });
   const shape = activity.matchShape;
   const bracketMatches = await bracketRows(activityId);
@@ -480,7 +458,7 @@ export async function advanceBracket(activityId: string) {
     const sides = matchSideIds(m, shape);
     const winner = isFootball(shape)
       ? footballWinner(m, sides, scoreOf.get(m.id))
-      : seriesWinner(activity, m.parts, sides);
+      : seriesWinner(activity.levels, m, sides);
     if (!winner) throw new ConflictError(messages.tieNeedsPenalties);
     winners.push(winner);
   }

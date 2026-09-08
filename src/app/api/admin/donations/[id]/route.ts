@@ -19,6 +19,7 @@ import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import type { SupportViewer } from "@/lib/supportPrivacy";
 import { money as amountText } from "@/lib/money";
+import { releaseUploads } from "@/lib/uploadRelease";
 
 async function namedAccount(userId: string | null, viewer: SupportViewer): Promise<string | null> {
   if (!userId) return null;
@@ -220,6 +221,8 @@ export const PATCH = withRoute(
       );
     }
 
+    await releaseUploads(existing.proof, existing.donorPhoto);
+
     return NextResponse.json({ donation: donationView(donation, viewer) });
   },
 );
@@ -244,6 +247,7 @@ export const DELETE = withRoute(
 
     await prisma.donation.delete({ where: { id } });
     await removeMirroredDonation(prisma, id);
+    await releaseUploads(existing.proof, existing.donorPhoto);
     await logAction(
       session.username,
       "DELETE_DONATION",

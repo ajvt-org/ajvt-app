@@ -3,6 +3,7 @@ import { countedNoun, PLAYERS } from "../arabicPlural";
 const ACCEPT = "قبول";
 const REJECT = "رفض";
 const REMOVE = "إزالة";
+const WITHDRAW = "سحب";
 
 export const teamsTab = {
   confirmDeleteTitle: "حذف فريق",
@@ -31,10 +32,14 @@ export const teamsTab = {
   squadSize: (size: string) => `حجم الفريق ${size}`,
   rosterCount: (count: number) => countedNoun(count, PLAYERS),
   awaitingCount: (count: number) => `${count} بانتظار الموافقة`,
+  requestCount: (count: number) => `${count} طلب انضمام`,
+  invitationCount: (count: number) => `${count} دعوة لم يُرد عليها`,
   makeCaptain: (name: string) => `اجعل ${name} قائد الفريق`,
   clearCaptain: (name: string) => `إلغاء قيادة ${name} للفريق`,
   noPlayers: "لا يوجد لاعبون بعد",
   awaitingApproval: "بانتظار الموافقة",
+  joinRequest: "طلب انضمام من اللاعب",
+  captainInvitation: "دعوة من قائد الفريق",
   accept: ACCEPT,
   acceptOf: (name: string) => `${ACCEPT} ${name}`,
   rejectOf: (name: string) => `${REJECT} ${name}`,
@@ -45,6 +50,11 @@ export const teamsTab = {
   reject: REJECT,
   confirmRejectTitle: "رفض طلب انضمام",
   confirmReject: (name: string) => `رفض طلب ${name} للانضمام؟`,
+  confirmWithdrawTitle: "سحب دعوة",
+  confirmWithdraw: (name: string) => `سحب دعوة ${name}؟`,
+  withdraw: WITHDRAW,
+  withdrawOf: (name: string) => `سحب دعوة ${name}`,
+  seatOf: (name: string) => `إدخال ${name} إلى الفريق`,
   openCardOf: (name: string) => `فتح بطاقة ${name}`,
   pickPlayer: "اختر لاعباً...",
   add: "إضافة",

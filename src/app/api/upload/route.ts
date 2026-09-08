@@ -8,6 +8,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { proofHash } from "@/lib/proofHash";
 import { getUploadDir } from "@/lib/uploadDir";
+import { thumbnailOf } from "@/lib/uploadNames";
 import { uploadOwnerOf } from "@/lib/uploadOwner";
 import { declaredBodyTooLarge } from "@/lib/uploadRequestSize";
 import { uploads } from "@/lib/messages";
@@ -32,7 +33,7 @@ export const POST = withRoute("POST /api/upload", async (req: NextRequest) => {
 
     const id = uuidv4();
     const filename = `${id}.webp`;
-    const thumbnailFilename = `${id}-thumb.webp`;
+    const thumbnailFilename = thumbnailOf(filename);
     const uploadDir = getUploadDir();
     let processed;
     try {

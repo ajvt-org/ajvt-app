@@ -9,7 +9,12 @@ async function aTournament(title = "كأس الرابطة") {
   });
 }
 
-async function aTeamWith(activityId: string, name: string, statuses: string[]) {
+async function aTeamWith(
+  activityId: string,
+  name: string,
+  statuses: string[],
+  invitedByCaptain = false,
+) {
   const team = await prisma.team.create({ data: { activityId, name } });
   for (const [i, status] of statuses.entries()) {
     const [user] = await createUsers(1);
@@ -25,6 +30,7 @@ async function aTeamWith(activityId: string, name: string, statuses: string[]) {
         teamId: team.id,
         userId: member.userId,
         status: status as "PENDING",
+        invitedByCaptain,
       },
     });
   }
@@ -74,6 +80,14 @@ describe("join requests waiting on an activity", () => {
     const byTitle = Object.fromEntries(rows.map((r) => [r.title, r.pendingJoinRequests]));
     expect(byTitle["كأس الرابطة"]).toBe(1);
     expect(byTitle["بطولة الناشئين"]).toBe(0);
+  });
+
+  it("leaves out an invitation a captain sent, which waits on the player and not the admin", async () => {
+    const activity = await aTournament();
+    await aTeamWith(activity.id, "الشناقطة", ["PENDING", "PENDING"], true);
+    await aTeamWith(activity.id, "الفرسان", ["PENDING"]);
+
+    expect((await listed())[0].pendingJoinRequests).toBe(1);
   });
 
   it("is zero for an activity with no teams at all", async () => {

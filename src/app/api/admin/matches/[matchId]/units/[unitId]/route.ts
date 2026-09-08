@@ -4,18 +4,18 @@ import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { common } from "@/lib/messages";
-import { correctPart, loadSeriesMatch, removePart, seriesStateOf } from "@/lib/matchSeriesServer";
+import { correctUnit, loadSeriesMatch, removeUnit, seriesStateOf } from "@/lib/matchSeriesServer";
 
-type Params = { params: Promise<{ matchId: string; partId: string }> };
+type Params = { params: Promise<{ matchId: string; unitId: string }> };
 
 async function stateOf(matchId: string) {
   return seriesStateOf(await loadSeriesMatch(matchId));
 }
 
 export const PATCH = withRoute(
-  "PATCH /api/admin/matches/[matchId]/parts/[partId]",
+  "PATCH /api/admin/matches/[matchId]/units/[unitId]",
   async (req: NextRequest, { params }: Params) => {
-    const { matchId, partId } = await params;
+    const { matchId, unitId } = await params;
     const session = await requireMatchAccess(matchId);
 
     let body: Record<string, unknown>;
@@ -25,21 +25,21 @@ export const PATCH = withRoute(
       throw new ValidationError(common.invalidBody);
     }
 
-    const part = await correctPart(matchId, partId, body);
-    await logAction(session.username, "UPDATE_MATCH_PART", String(part.order));
+    const unit = await correctUnit(matchId, unitId, body);
+    await logAction(session.username, "UPDATE_MATCH_PART", String(unit.order));
 
     return NextResponse.json(await stateOf(matchId));
   },
 );
 
 export const DELETE = withRoute(
-  "DELETE /api/admin/matches/[matchId]/parts/[partId]",
+  "DELETE /api/admin/matches/[matchId]/units/[unitId]",
   async (_req: NextRequest, { params }: Params) => {
-    const { matchId, partId } = await params;
+    const { matchId, unitId } = await params;
     const session = await requireMatchAccess(matchId);
 
-    const part = await removePart(matchId, partId);
-    await logAction(session.username, "DELETE_MATCH_PART", String(part.order));
+    const unit = await removeUnit(matchId, unitId);
+    await logAction(session.username, "DELETE_MATCH_PART", String(unit.order));
 
     return NextResponse.json(await stateOf(matchId));
   },

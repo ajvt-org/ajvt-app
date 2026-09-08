@@ -18,6 +18,7 @@ import { accountIsOpenOn, methodNames, payableMethods } from "@/lib/paymentMetho
 import { readBankReference } from "@/lib/bankReference";
 import { members, money } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
+import { releaseUploads } from "@/lib/uploadRelease";
 
 const CODE_ATTEMPTS = 5;
 
@@ -85,6 +86,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         anonymous: surplusAnonymous,
       });
     });
+    await releaseUploads(current.paymentProof);
     return NextResponse.json({ id }, { status: 200 });
   }
 

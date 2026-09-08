@@ -120,6 +120,14 @@ async function claimReminder(matchId: string, now: Date): Promise<boolean> {
   return claimed.count === 1;
 }
 
+export async function notifyTeamInvitation(userId: string, teamName: string, activityId: string) {
+  await sendPushToUser(
+    userId,
+    notify.teamInvitation(teamName, activityId),
+    "TEAM_CHOICE_REMINDER",
+  ).catch((err) => logger.error("team.invitation.push.error", err));
+}
+
 const TEAM_NUDGE_INTERVAL_MS = 60 * 60 * 1000;
 
 export async function sendTeamChoiceReminders() {
@@ -153,7 +161,11 @@ export async function sendTeamChoiceReminders() {
     if (registration.activity.startsAt && registration.activity.startsAt <= now) continue;
     if (isSinglesSquad(squadOf(registration.activity))) continue;
     const onATeam = await prisma.teamMember.count({
-      where: { userId: registration.userId, team: { activityId: registration.activityId } },
+      where: {
+        userId: registration.userId,
+        status: "ACTIVE",
+        team: { activityId: registration.activityId },
+      },
     });
     if (onATeam > 0) continue;
     if (!(await claimTeamNudge(registration.id, now, since))) continue;

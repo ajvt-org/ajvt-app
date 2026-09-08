@@ -25,7 +25,7 @@ export const GET = withRoute(
             age: true,
             photo: true,
             teamMemberships: {
-              where: { team: { activityId: id } },
+              where: { status: "ACTIVE", team: { activityId: id } },
               select: { team: { select: { id: true, name: true } } },
             },
           },
