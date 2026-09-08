@@ -5,13 +5,10 @@ import { tournament as messages } from "@/lib/messages";
 import { sideIdData } from "@/lib/matchSides";
 import { SCORED_LEVELS, ladderData } from "./ladders";
 
-import {
-  GET as LIST_RULES,
-  POST as DECLARE,
-} from "@/app/api/admin/activities/[id]/adjustment-rules/route";
-import { DELETE as WITHDRAW } from "@/app/api/admin/activities/[id]/adjustment-rules/[ruleId]/route";
-import { POST as RECORD } from "@/app/api/admin/matches/[matchId]/adjustments/route";
-import { DELETE as UNDO } from "@/app/api/admin/matches/[matchId]/adjustments/[adjustmentId]/route";
+import { GET as LIST_RULES, POST as DECLARE } from "@/app/api/admin/activities/[id]/moves/route";
+import { DELETE as WITHDRAW } from "@/app/api/admin/activities/[id]/moves/[ruleId]/route";
+import { POST as RECORD } from "@/app/api/admin/matches/[matchId]/moves/route";
+import { DELETE as UNDO } from "@/app/api/admin/matches/[matchId]/moves/[moveId]/route";
 import { POST as ADD_UNIT, GET as UNITS } from "@/app/api/admin/matches/[matchId]/units/route";
 
 const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2 };
@@ -37,18 +34,17 @@ async function tournamentWithMatch() {
 const withMatch = (matchId: string) => ({ params: Promise.resolve({ matchId }) });
 
 const declare = (id: string, body: object) =>
-  DECLARE(post(`/api/admin/activities/${id}/adjustment-rules`, body), withId(id));
-const listRules = (id: string) =>
-  LIST_RULES(get(`/api/admin/activities/${id}/adjustment-rules`), withId(id));
+  DECLARE(post(`/api/admin/activities/${id}/moves`, body), withId(id));
+const listRules = (id: string) => LIST_RULES(get(`/api/admin/activities/${id}/moves`), withId(id));
 const withdraw = (id: string, ruleId: string) =>
-  WITHDRAW(del(`/api/admin/activities/${id}/adjustment-rules/${ruleId}`), {
+  WITHDRAW(del(`/api/admin/activities/${id}/moves/${ruleId}`), {
     params: Promise.resolve({ id, ruleId }),
   });
 const record = (matchId: string, body: object) =>
-  RECORD(post(`/api/admin/matches/${matchId}/adjustments`, body), withMatch(matchId));
-const undo = (matchId: string, adjustmentId: string) =>
-  UNDO(del(`/api/admin/matches/${matchId}/adjustments/${adjustmentId}`), {
-    params: Promise.resolve({ matchId, adjustmentId }),
+  RECORD(post(`/api/admin/matches/${matchId}/moves`, body), withMatch(matchId));
+const undo = (matchId: string, moveId: string) =>
+  UNDO(del(`/api/admin/matches/${matchId}/moves/${moveId}`), {
+    params: Promise.resolve({ matchId, moveId }),
   });
 const addUnit = (matchId: string, body: object) =>
   ADD_UNIT(post(`/api/admin/matches/${matchId}/units`, body), withMatch(matchId));
@@ -80,7 +76,7 @@ describe("what a tournament declares", () => {
     const res = await declare(activity.id, { ...TEYSSE, name: "  " });
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(messages.adjustmentRule.name);
+    expect((await res.json()).error).toBe(messages.moveRule.name);
   });
 
   it("refuses a move with no effect", async () => {
@@ -89,7 +85,7 @@ describe("what a tournament declares", () => {
     const res = await declare(activity.id, { name: "لا شيء", unitsToSelf: 0, unitsFromOther: 0 });
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(messages.adjustmentRule.noEffect);
+    expect((await res.json()).error).toBe(messages.moveRule.noEffect);
   });
 
   it("refuses the same name twice", async () => {
@@ -156,7 +152,7 @@ describe("what a match records", () => {
 
     expect(body.units).toHaveLength(1);
     expect(body.units[0].sideAPoints).toBe(101);
-    expect(body.adjustments[0].unitId).toBe(unitId);
+    expect(body.moves[0].unitId).toBe(unitId);
   });
 
   it("takes one from each side and leaves them where they started", async () => {
@@ -173,7 +169,7 @@ describe("what a match records", () => {
 
     expect(body.standing.sideATotal).toBe(2);
     expect(body.standing.sideBTotal).toBe(0);
-    expect(body.adjustments).toHaveLength(2);
+    expect(body.moves).toHaveLength(2);
   });
 
   it("undoes one and leaves the unit it sat in alone", async () => {
@@ -184,9 +180,9 @@ describe("what a match records", () => {
       await record(match.id, { ruleId: rule.id, side: "SIDE_B", unitId })
     ).json();
 
-    const body = await (await undo(match.id, recorded.adjustments[0].id)).json();
+    const body = await (await undo(match.id, recorded.moves[0].id)).json();
 
-    expect(body.adjustments).toEqual([]);
+    expect(body.moves).toEqual([]);
     expect(body.units).toHaveLength(1);
     expect(body.standing.sideATotal).toBe(2);
     expect(body.standing.over).toBe(false);
@@ -206,7 +202,7 @@ describe("what a match records", () => {
     const res = await record(match.id, { ruleId: rule.id, side: "SIDE_A" });
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(messages.adjustmentWantsAUnit);
+    expect((await res.json()).error).toBe(messages.moveWantsAUnit);
   });
 
   it("refuses a move once the match is over", async () => {
@@ -226,9 +222,9 @@ describe("what a match records", () => {
 
     const body = await (await units(match.id)).json();
 
-    expect(body.adjustments).toHaveLength(1);
-    expect(body.adjustments[0].rule.name).toBe("تيس");
-    expect(body.adjustments[0].side).toBe("SIDE_A");
+    expect(body.moves).toHaveLength(1);
+    expect(body.moves[0].rule.name).toBe("تيس");
+    expect(body.moves[0].side).toBe("SIDE_A");
   });
 });
 

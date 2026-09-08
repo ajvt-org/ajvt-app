@@ -40,7 +40,7 @@ const GAME: LevelRow = levelRow({
 
 function answering(levels: LevelRow[], rules: unknown[] = []) {
   getMock.mockImplementation(async (url: string) =>
-    String(url).includes("adjustment-rules") ? { rules } : { levels },
+    String(url).includes("moves") ? { rules } : { levels },
   );
 }
 
@@ -151,9 +151,7 @@ describe("the match levels card", () => {
 describe("a level that has units recorded in it", () => {
   beforeEach(() => {
     getMock.mockImplementation(async (url: string) =>
-      String(url).includes("adjustment-rules")
-        ? { rules: [] }
-        : { levels: [MATCH, GAME], played: ["game"] },
+      String(url).includes("moves") ? { rules: [] } : { levels: [MATCH, GAME], played: ["game"] },
     );
   });
 

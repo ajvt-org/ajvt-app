@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nextOrderUnder, resolveMatch, type AdjustmentRow, type UnitRow } from "./seriesTree";
+import { nextOrderUnder, resolveMatch, type MoveRow, type UnitRow } from "./seriesTree";
 import type { LevelRow } from "./matchLevels";
 
 const BLANK: LevelRow = {
@@ -186,7 +186,7 @@ describe("a move recorded in a unit", () => {
 
   it("swings the level above the unit it sits in, before that unit is scored", () => {
     const rows = [unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 12, sideBPoints: 4 })];
-    const moves: AdjustmentRow[] = [{ id: "a1", unitId: "s1", side: "SIDE_B", rule }];
+    const moves: MoveRow[] = [{ id: "a1", unitId: "s1", side: "SIDE_B", rule }];
 
     const { standing } = resolveMatch(CARDS, rows, moves);
 
@@ -197,7 +197,7 @@ describe("a move recorded in a unit", () => {
 
   it("takes a side below nothing rather than flooring at zero", () => {
     const rows = [unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 4, sideBPoints: 12 })];
-    const moves: AdjustmentRow[] = [{ id: "a1", unitId: "s1", side: "SIDE_B", rule }];
+    const moves: MoveRow[] = [{ id: "a1", unitId: "s1", side: "SIDE_B", rule }];
 
     const { standing } = resolveMatch(CARDS, rows, moves);
 
@@ -501,7 +501,7 @@ describe("a rule that ends the unit it lands in", () => {
       sideBPoints: 4,
     }),
   ];
-  const moves: AdjustmentRow[] = [{ id: "a1", unitId: "r2", side: "SIDE_B", rule: teysse }];
+  const moves: MoveRow[] = [{ id: "a1", unitId: "r2", side: "SIDE_B", rule: teysse }];
 
   it("ends the unit the round it landed in belongs to", () => {
     const { units } = resolveMatch(CARDS, rows, moves);

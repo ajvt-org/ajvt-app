@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { seriesResult as texts } from "@/lib/texts";
-import { offerableRules } from "@/lib/adjustmentRules";
-import MatchAdjustments from "./MatchAdjustments";
+import { offerableRules } from "@/lib/moveRules";
+import MatchMoves from "./MatchMoves";
 import UnitBlock from "./UnitBlock";
 import UnitEditor, { EMPTY_DRAFT, bodyOf, draftOf, type UnitDraft } from "./UnitEditor";
 import { UnitsEmpty } from "./UnitRow";
@@ -68,7 +68,7 @@ export default function UnitBranch({
       )}
 
       {rules.length > 0 && units.length > 0 && (
-        <MatchAdjustments
+        <MatchMoves
           rules={rules}
           recorded={movesOn(api, units)}
           sides={api.sides}

@@ -15,7 +15,7 @@ export interface UnitRow {
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
   decider: boolean;
-  endedBy: AdjustmentRuleRow | null;
+  endedBy: MoveRuleRow | null;
   children: UnitRow[];
   standing: SeriesStandingRow | null;
 }
@@ -38,7 +38,7 @@ export interface SeriesStandingRow {
   winner: "SIDE_A" | "SIDE_B" | null;
 }
 
-export interface AdjustmentRuleRow {
+export interface MoveRuleRow {
   id: string;
   name: string;
   unitsToSelf: number;
@@ -47,16 +47,16 @@ export interface AdjustmentRuleRow {
   endsUnit: boolean;
 }
 
-export interface RecordedAdjustmentRow {
+export interface RecordedMoveRow {
   id: string;
   unitId: string;
   side: "SIDE_A" | "SIDE_B";
-  rule: AdjustmentRuleRow;
+  rule: MoveRuleRow;
 }
 
 export interface SeriesState {
   units: UnitRow[];
-  adjustments: RecordedAdjustmentRow[];
+  moves: RecordedMoveRow[];
   levels: LevelRow[];
   standing: SeriesStandingRow;
 }

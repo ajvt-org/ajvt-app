@@ -3,7 +3,7 @@
 import HalfPoints from "@/components/HalfPoints";
 import Icon from "@/components/Icon";
 import { seriesResult as texts } from "@/lib/texts";
-import type { RecordedAdjustmentRow, SeriesStandingRow, UnitRow } from "./seriesTypes";
+import type { RecordedMoveRow, SeriesStandingRow, UnitRow } from "./seriesTypes";
 
 export function unitMark(unit: UnitRow): { text: string; dim: boolean } {
   if (unit.abandoned) return { text: "—", dim: true };
@@ -24,14 +24,14 @@ export default function SeriesScoreline({
   standing,
   unitWord,
   extensionUnits = "",
-  adjustments = [],
+  moves = [],
   sides = [],
 }: {
   units: UnitRow[];
   standing: SeriesStandingRow;
   unitWord: string;
   extensionUnits?: string;
-  adjustments?: RecordedAdjustmentRow[];
+  moves?: RecordedMoveRow[];
   sides?: string[];
 }) {
   return (
@@ -66,10 +66,10 @@ export default function SeriesScoreline({
           })}
         </span>
       )}
-      {adjustments.length > 0 && (
+      {moves.length > 0 && (
         <span className="text-xs" style={{ color: "var(--copper-600)" }}>
           <Icon name="swords" size={12} className="icon-inline" />{" "}
-          {adjustments
+          {moves
             .map((row) => texts.moveOf(row.rule.name, row.side === "SIDE_A" ? sides[0] : sides[1]))
             .join(texts.movesSeparator)}
         </span>

@@ -4,7 +4,7 @@ import {
   nextUnitOrder,
   targetHalves,
   type PlayedUnit,
-  type RecordedAdjustment,
+  type RecordedMove,
   type SeriesRules,
 } from "./matchSeries";
 
@@ -53,7 +53,7 @@ function abandoned(order: number): PlayedUnit {
   return { order, abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null };
 }
 
-function teysse(order: number, side: "SIDE_A" | "SIDE_B"): RecordedAdjustment {
+function teysse(order: number, side: "SIDE_A" | "SIDE_B"): RecordedMove {
   return { order, side, selfHalves: 4, otherHalves: 4 };
 }
 
@@ -150,7 +150,7 @@ describe("an abandoned part", () => {
   });
 });
 
-describe("an adjustment", () => {
+describe("an move", () => {
   it("swings both sides at once", () => {
     const standing = deriveSeries(CHESS, [], [teysse(1, "SIDE_A")]);
 

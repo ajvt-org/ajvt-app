@@ -1,4 +1,4 @@
-import type { BothPastTarget, MatchEnding, PartDecision, PartOutcome } from "@prisma/client";
+import type { BothPastTarget, MatchEnding, PartDecision, UnitOutcome } from "@prisma/client";
 
 export type SeriesSide = "SIDE_A" | "SIDE_B";
 
@@ -24,7 +24,7 @@ export interface SeriesRules {
 export interface PlayedUnit {
   order: number;
   abandoned: boolean;
-  outcome: PartOutcome | null;
+  outcome: UnitOutcome | null;
   sideAPoints: number | null;
   sideBPoints: number | null;
   worth?: number | null;
@@ -33,7 +33,7 @@ export interface PlayedUnit {
   endedByRule?: boolean;
 }
 
-export interface RecordedAdjustment {
+export interface RecordedMove {
   order: number;
   side: SeriesSide;
   selfHalves: number;
@@ -127,8 +127,8 @@ function scoreOf(unit: PlayedUnit): Tally {
   return { a: unit.sideAPoints ?? 0, b: unit.sideBPoints ?? 0 };
 }
 
-function ordered(units: PlayedUnit[], adjustments: RecordedAdjustment[]): number[] {
-  const orders = [...units, ...adjustments].map((row) => row.order);
+function ordered(units: PlayedUnit[], moves: RecordedMove[]): number[] {
+  const orders = [...units, ...moves].map((row) => row.order);
   return [...new Set(orders)].sort((one, two) => one - two);
 }
 
@@ -149,7 +149,7 @@ function pastTarget(totals: Tally, target: number | null, rules: SeriesRules): V
 function runHalves(
   rules: SeriesRules,
   units: PlayedUnit[],
-  adjustments: RecordedAdjustment[],
+  moves: RecordedMove[],
   target: number | null,
 ) {
   const totals: Tally = { a: rules.startingCredit, b: rules.startingCredit };
@@ -166,8 +166,8 @@ function runHalves(
     return null;
   };
 
-  for (const step of ordered(units, adjustments)) {
-    for (const move of adjustments.filter((row) => row.order === step)) {
+  for (const step of ordered(units, moves)) {
+    for (const move of moves.filter((row) => row.order === step)) {
       if (move.side === "SIDE_A") {
         totals.a += move.selfHalves;
         totals.b -= move.otherHalves;
@@ -243,14 +243,12 @@ function runScores(rules: SeriesRules, units: PlayedUnit[], target: number | nul
 export function deriveSeries(
   rules: SeriesRules,
   units: PlayedUnit[],
-  adjustments: RecordedAdjustment[] = [],
+  moves: RecordedMove[] = [],
   decider = false,
 ): SeriesStanding {
   const scored = countsAScore(rules);
   const target = scored ? thresholdOf(rules, decider) : targetHalves(rules, decider);
-  const run = scored
-    ? runScores(rules, units, target)
-    : runHalves(rules, units, adjustments, target);
+  const run = scored ? runScores(rules, units, target) : runHalves(rules, units, moves, target);
 
   const { totals, unitsRecorded, unitsScored } = run;
   let winner = run.winner;

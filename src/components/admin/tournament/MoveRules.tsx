@@ -5,7 +5,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { matchLevelsSetup as texts } from "@/lib/texts";
 import type { LevelRow } from "@/lib/matchLevels";
-import type { AdjustmentRuleRow } from "./seriesTypes";
+import type { MoveRuleRow } from "./seriesTypes";
 
 interface MoveDraft {
   name: string;
@@ -34,7 +34,7 @@ export default function MoveRules({
   onDeclare,
   onWithdraw,
 }: {
-  rules: AdjustmentRuleRow[];
+  rules: MoveRuleRow[];
   levels: LevelRow[];
   busy: boolean;
   onDeclare: (draft: {

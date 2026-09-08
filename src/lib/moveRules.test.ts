@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { asAdjustments, ruleProblem } from "./adjustmentRules";
+import { asMoves, ruleProblem } from "./moveRules";
 import { deriveSeries, type SeriesRules } from "./matchSeries";
 
 const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2 };
@@ -49,7 +49,7 @@ describe("what a tournament may declare", () => {
 describe("what a match records", () => {
   it("turns a declared move into halves on each side", () => {
     expect(
-      asAdjustments([{ order: 1, side: "SIDE_A", rule: { unitsToSelf: 2, unitsFromOther: 2 } }], 2),
+      asMoves([{ order: 1, side: "SIDE_A", rule: { unitsToSelf: 2, unitsFromOther: 2 } }], 2),
     ).toEqual([{ order: 1, side: "SIDE_A", selfHalves: 4, otherHalves: 4 }]);
   });
 
@@ -57,7 +57,7 @@ describe("what a match records", () => {
     const standing = deriveSeries(
       COUNTED,
       [{ order: 1, abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null }],
-      asAdjustments([{ order: 1, side: "SIDE_A", rule: TEYSSE }], 2),
+      asMoves([{ order: 1, side: "SIDE_A", rule: TEYSSE }], 2),
     );
 
     expect(standing.over).toBe(true);
@@ -70,7 +70,7 @@ describe("what a match records", () => {
     const standing = deriveSeries(
       { ...COUNTED, unitsToWin: 3, unitsPerParent: 5 },
       [{ order: 1, abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null }],
-      asAdjustments([{ order: 1, side: "SIDE_B", rule: TEYSSE }], 2),
+      asMoves([{ order: 1, side: "SIDE_B", rule: TEYSSE }], 2),
     );
 
     expect(standing.sideATotal).toBe(-4);

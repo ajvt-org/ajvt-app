@@ -48,7 +48,7 @@ function match(): Match {
       },
     ],
     units: [],
-    adjustments: [],
+    moves: [],
     series: null,
     mvpVote: null,
   };

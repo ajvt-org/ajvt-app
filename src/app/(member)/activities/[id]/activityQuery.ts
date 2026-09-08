@@ -6,15 +6,15 @@ import { squadOf } from "@/lib/squadSize";
 import { matchSideTeams } from "@/lib/matchSides";
 import { isFootball } from "@/lib/matchShape";
 import { LEVELS_SELECT, UNITS_SELECT } from "@/lib/matchSeriesServer";
-import { resolveMatch, toNodes, type AdjustmentRow, type UnitRow } from "@/lib/seriesTree";
+import { resolveMatch, toNodes, type MoveRow, type UnitRow } from "@/lib/seriesTree";
 import type { LevelRow } from "@/lib/matchLevels";
 
 function seriesOf(
-  match: { units: UnitRow[]; adjustments: AdjustmentRow[] },
+  match: { units: UnitRow[]; moves: MoveRow[] },
   activity: { matchShape: "FOOTBALL" | "SERIES"; levels: LevelRow[] },
 ) {
   if (isFootball(activity.matchShape)) return { units: [], series: null };
-  const resolved = resolveMatch(activity.levels, match.units, match.adjustments);
+  const resolved = resolveMatch(activity.levels, match.units, match.moves);
   return { units: toNodes(resolved.units), series: resolved.standing };
 }
 
@@ -92,7 +92,7 @@ async function loadActivity(id: string) {
           forfeitWinnerTeamId: true,
           manOfTheMatchUserId: true,
           manOfTheMatchUser: { select: { fullName: true, photo: true } },
-          adjustments: { orderBy: { createdAt: "asc" }, include: { rule: true } },
+          moves: { orderBy: { createdAt: "asc" }, include: { rule: true } },
           units: UNITS_SELECT,
           goals: {
             orderBy: { minute: "asc" as const },

@@ -1,7 +1,7 @@
-import type { PartColour, PartOutcome } from "@prisma/client";
+import type { UnitColour, UnitOutcome } from "@prisma/client";
 import { deriveSeries, type PlayedUnit, type SeriesStanding } from "./matchSeries";
 import { ladderOf, type Ladder, type LevelRow } from "./matchLevels";
-import { asAdjustments, type RecordedInstance } from "./adjustmentRules";
+import { asMoves, type RecordedInstance } from "./moveRules";
 import type { SeriesRules } from "./matchSeries";
 
 export interface UnitRow {
@@ -10,16 +10,16 @@ export interface UnitRow {
   levelId: string;
   order: number;
   abandoned: boolean;
-  outcome: PartOutcome | null;
+  outcome: UnitOutcome | null;
   sideAPoints: number | null;
   sideBPoints: number | null;
-  sideAColour: PartColour | null;
+  sideAColour: UnitColour | null;
   worth: number | null;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
 }
 
-export interface AdjustmentRule {
+export interface MoveRule {
   id: string;
   name: string;
   unitsToSelf: number;
@@ -28,15 +28,15 @@ export interface AdjustmentRule {
   endsUnit: boolean;
 }
 
-export interface AdjustmentRow {
+export interface MoveRow {
   id: string;
   unitId: string;
   side: "SIDE_A" | "SIDE_B";
-  rule: AdjustmentRule;
+  rule: MoveRule;
 }
 
 export interface Placement {
-  move: AdjustmentRow;
+  move: MoveRow;
   container: string | null;
   order: number;
   ended: string | null;
@@ -46,7 +46,7 @@ export interface ResolvedUnit {
   row: UnitRow;
   depth: number;
   decider: boolean;
-  endedBy: AdjustmentRule | null;
+  endedBy: MoveRule | null;
   children: ResolvedUnit[];
   standing: SeriesStanding | null;
   played: PlayedUnit;
@@ -165,10 +165,10 @@ function byParent(rows: UnitRow[]): Map<string | null, UnitRow[]> {
   return groups;
 }
 
-export function placeMoves(rows: UnitRow[], adjustments: AdjustmentRow[]): Placement[] {
+export function placeMoves(rows: UnitRow[], moves: MoveRow[]): Placement[] {
   const byId = new Map(rows.map((row) => [row.id, row]));
   const placed: Placement[] = [];
-  for (const move of adjustments) {
+  for (const move of moves) {
     const on = byId.get(move.unitId);
     if (!on) continue;
     const parent = on.parentId === null ? null : byId.get(on.parentId);
@@ -198,11 +198,11 @@ export function decidesItsParent(
 export function resolveMatch(
   levels: LevelRow[],
   rows: UnitRow[],
-  adjustments: AdjustmentRow[] = [],
+  moves: MoveRow[] = [],
 ): ResolvedMatch {
   const ladder = ladderOf(levels);
   const groups = byParent(rows);
-  const placements = placeMoves(rows, adjustments);
+  const placements = placeMoves(rows, moves);
   const endings = new Map(
     placements.filter((placed) => placed.ended).map((placed) => [placed.ended!, placed.move.rule]),
   );
@@ -264,7 +264,7 @@ function standingUnder(
   return deriveSeries(
     rules,
     children.map((child) => child.played),
-    asAdjustments(movesIn(container, placements), rules.halvesPerUnit),
+    asMoves(movesIn(container, placements), rules.halvesPerUnit),
     decider,
   );
 }
@@ -286,15 +286,15 @@ export interface UnitNode {
   levelId: string;
   order: number;
   abandoned: boolean;
-  outcome: PartOutcome | null;
+  outcome: UnitOutcome | null;
   sideAPoints: number | null;
   sideBPoints: number | null;
-  sideAColour: PartColour | null;
+  sideAColour: UnitColour | null;
   worth: number | null;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
   decider: boolean;
-  endedBy: AdjustmentRule | null;
+  endedBy: MoveRule | null;
   children: UnitNode[];
   standing: SeriesStanding | null;
 }

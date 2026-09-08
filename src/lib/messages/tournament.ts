@@ -91,16 +91,16 @@ export const tournament = {
   seriesNotConfigured: "أكمل إعداد جولات البطولة قبل تسجيل نتيجة",
   matchTakesNoMoreParts: "انتهت المباراة، لا تقبل جولة أخرى",
   partNotFound: "الجولة غير موجودة",
-  adjustmentRuleNotFound: "هذه الحركة غير معرّفة في البطولة",
-  adjustmentNotFound: "الحركة المسجّلة غير موجودة",
+  moveRuleNotFound: "هذه الحركة غير معرّفة في البطولة",
+  moveNotFound: "الحركة المسجّلة غير موجودة",
   moveWantsItsOwnLevel: "هذه الحركة تُسجَّل في مستوى آخر من مستويات المباراة",
-  adjustmentWantsAUnit: "حدد الوحدة التي وقعت فيها الحركة",
-  adjustmentRule: {
+  moveWantsAUnit: "حدد الوحدة التي وقعت فيها الحركة",
+  moveRule: {
     name: "اسم الحركة مطلوب باسمها في اللعبة",
     units: "عدد الوحدات يجب أن يكون عدداً صحيحاً غير سالب",
     noEffect: "الحركة بلا أثر، حدد ما تضيفه أو ما تخصمه أو اجعلها تنهي الوحدة",
   },
-  adjustmentNameTaken: "توجد حركة بهذا الاسم في البطولة",
+  moveNameTaken: "توجد حركة بهذا الاسم في البطولة",
   partWantsAnOutcome: "الجولة تُحسم بفوز أحد الطرفين أو بتعادل",
   partWantsTwoScores: "الجولة تحتاج نقاط الطرفين، أعداداً صحيحة غير سالبة",
   coloursNeedAnEvenCount:

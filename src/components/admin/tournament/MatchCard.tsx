@@ -122,7 +122,7 @@ export default function MatchCard({
               standing={match.series}
               unitWord={series.unit.singular}
               extensionUnits={countedUnits(series.match.extensionUnits, series.unit)}
-              adjustments={match.adjustments}
+              moves={match.moves}
               sides={[teamName(match.firstTeam), teamName(match.secondTeam)]}
             />
           </div>
