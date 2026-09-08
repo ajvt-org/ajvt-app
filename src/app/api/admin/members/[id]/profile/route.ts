@@ -67,6 +67,8 @@ export const GET = withRoute(
             account: { select: { id: true, code: true, label: true } },
             proof: true,
             referenceCode: true,
+            paidOn: true,
+            createdAt: true,
           },
         },
         donations: {
@@ -132,6 +134,8 @@ export const GET = withRoute(
         account: payment?.account ?? null,
         paymentProof: payment?.proof ?? null,
         referenceCode: payment?.referenceCode ?? null,
+        paymentPaidOn: payment?.paidOn ?? null,
+        paymentRecordedAt: payment?.createdAt ?? null,
         id,
         user: { id: person.id, phone: person.phone, createdAt: person.createdAt },
         membershipYear: year,

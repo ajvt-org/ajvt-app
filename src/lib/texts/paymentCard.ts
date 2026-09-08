@@ -10,7 +10,6 @@ export const paymentCard = {
   receipt: "وصل",
   receiptActive: "ساري",
   receiptVoid: "ملغى",
-  uploadedAt: (date: string, time: string) => `رُفعت بتاريخ ${date} — ${time}`,
   history: "السجل",
 } as const;
 
