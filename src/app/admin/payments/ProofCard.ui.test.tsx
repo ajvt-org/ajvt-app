@@ -11,6 +11,7 @@ import {
   proofReuse,
 } from "@/lib/texts";
 import { money } from "@/lib/money";
+import { formatDate } from "@/lib/utils";
 import type { MemberOption, Proof } from "./paymentTypes";
 
 const ACCOUNT: MemberOption = {
@@ -48,8 +49,7 @@ function proofOf(over: Partial<Proof> = {}): Proof {
     amount: 500,
     status: "PENDING",
     source: "PUBLIC",
-    paidOn: "2026-08-18T00:00:00.000Z",
-    uploadedAt: "2026-08-20T09:00:00.000Z",
+    paidOn: "2026-08-18T12:00:00.000Z",
     submittedAt: "2026-08-20T09:00:00.000Z",
     ...over,
   };
@@ -317,8 +317,12 @@ describe("the order a list of payments reads in", () => {
     expect(text.indexOf(paymentCard.statusPending)).toBeLessThan(
       text.indexOf(paymentCard.generalSupport),
     );
-    expect(text.indexOf(paymentCard.generalSupport)).toBeLessThan(text.indexOf("2026/08/20"));
-    expect(text.indexOf("2026/08/20")).toBeLessThan(text.indexOf("R-2026-0243"));
+    expect(text.indexOf(paymentCard.generalSupport)).toBeLessThan(
+      text.indexOf(formatDate("2026-08-18T12:00:00.000Z")),
+    );
+    expect(text.indexOf(formatDate("2026-08-18T12:00:00.000Z"))).toBeLessThan(
+      text.indexOf("R-2026-0243"),
+    );
   });
 });
 

@@ -28,7 +28,6 @@ export interface Proof {
   tags?: FinanceTag[];
   receipt?: { number: string; status: string; token?: string } | null;
   paidOn: string | null;
-  uploadedAt: string;
   submittedAt: string;
 }
 

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import { formatDate, formatTime } from "@/lib/utils";
 import { paymentCard, RECEIPT_STATUS_LABEL } from "@/lib/texts";
 import { donorNamesShown } from "@/lib/donorNamesShown";
 import { donorPhoneShown } from "@/lib/donorPhoneShown";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
+import PaymentDateLine from "@/components/admin/PaymentDateLine";
 import MemberIdentity from "./MemberIdentity";
 import type { MemberOption, Proof } from "./paymentTypes";
 
@@ -66,9 +66,7 @@ export default function PaymentFacts({
         <Origin proof={proof} />
       </span>
 
-      <span>
-        {paymentCard.uploadedAt(formatDate(proof.uploadedAt), formatTime(proof.uploadedAt))}
-      </span>
+      <PaymentDateLine paidOn={proof.paidOn} recordedAt={proof.submittedAt} />
 
       {linkedMember && (
         <span className="min-w-0 max-w-full shrink-0">

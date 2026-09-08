@@ -11,7 +11,6 @@ function proof(over: Partial<Proof> & { id: string }): Proof {
     amount: null,
     status: "ACTIVE",
     paidOn: null,
-    uploadedAt: "2026-09-01T00:00:00.000Z",
     submittedAt: "2026-09-01T00:00:00.000Z",
     ...over,
   };

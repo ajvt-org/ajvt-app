@@ -36,7 +36,6 @@ export const proofSchema = z.object({
     .nullable()
     .optional(),
   paidOn: nullableText,
-  uploadedAt: z.string(),
   submittedAt: z.string(),
 });
 
