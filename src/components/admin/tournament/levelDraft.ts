@@ -91,6 +91,14 @@ export function ladderOfDrafts(drafts: LevelDraft[]): LevelRow[] {
   return drafts.map((draft, index) => levelOfDraft(draft, index, drafts.length));
 }
 
+export function levelPayload(drafts: LevelDraft[]) {
+  return drafts.map((draft, index) => ({
+    ...levelOfDraft(draft, index, drafts.length),
+    id: draft.id,
+    key: draft.key,
+  }));
+}
+
 export function movedDraft(drafts: LevelDraft[], from: number, to: number): LevelDraft[] {
   if (to < 0 || to >= drafts.length) return drafts;
   const next = [...drafts];

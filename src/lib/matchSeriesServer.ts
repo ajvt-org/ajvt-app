@@ -5,8 +5,6 @@ import { tournament as messages } from "./messages";
 import { isSeriesConfigured } from "./seriesSetup";
 import { isFootball } from "./matchShape";
 import { colourOfPart } from "./seriesColours";
-import { ruleProblem, type RuleShape } from "./moveRules";
-import { isUniqueViolation } from "./prismaError";
 import { countsPoints, ladderOf, type LevelRow } from "./matchLevels";
 import type { SeriesStanding } from "./matchSeries";
 import {
@@ -54,6 +52,16 @@ export const UNIT_FIELDS = {
 } as const;
 
 export const UNITS_SELECT = { orderBy: { order: "asc" }, select: UNIT_FIELDS } as const;
+
+export const MOVE_FIELDS = {
+  id: true,
+  name: true,
+  levelId: true,
+  unitsToSelf: true,
+  unitsFromOther: true,
+  endsUnit: true,
+  unitWorth: true,
+} as const;
 
 export const MATCH_WITH_SERIES = {
   units: UNITS_SELECT,
@@ -301,40 +309,6 @@ export async function undoMove(matchId: string, moveId: string) {
 
   await prisma.matchMove.delete({ where: { id: moveId } });
   return recorded;
-}
-
-export async function listMoveRules(activityId: string) {
-  return prisma.moveRule.findMany({ where: { activityId }, orderBy: { createdAt: "asc" } });
-}
-
-export async function declareMoveRule(activityId: string, input: RuleShape) {
-  const problem = ruleProblem(input);
-  if (problem) throw new ValidationError(messages.moveRule[problem]);
-  const level = await prisma.matchLevel.findFirst({ where: { id: input.levelId, activityId } });
-  if (!level) throw new NotFoundError(messages.levelNotInTournament);
-  try {
-    return await prisma.moveRule.create({
-      data: {
-        activityId,
-        name: input.name.trim(),
-        unitsToSelf: input.unitsToSelf,
-        unitsFromOther: input.unitsFromOther,
-        levelId: input.levelId,
-        endsUnit: input.endsUnit ?? false,
-        unitWorth: input.unitWorth ?? null,
-      },
-    });
-  } catch (err) {
-    if (isUniqueViolation(err)) throw new ConflictError(messages.moveNameTaken);
-    throw err;
-  }
-}
-
-export async function withdrawMoveRule(activityId: string, ruleId: string) {
-  const rule = await prisma.moveRule.findFirst({ where: { id: ruleId, activityId } });
-  if (!rule) throw new NotFoundError(messages.moveRuleNotFound);
-  await prisma.moveRule.delete({ where: { id: ruleId } });
-  return rule;
 }
 
 export function seriesStateOf(match: LoadedMatch) {

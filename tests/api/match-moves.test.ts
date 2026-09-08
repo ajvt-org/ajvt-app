@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, del, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, post, put, del, createAdmin, signInAsAdmin, withId } from "./helpers";
 import { tournament as messages } from "@/lib/messages";
 import { sideIdData } from "@/lib/matchSides";
 import { MATCH_LEVEL, ladderData, type LevelFixture } from "./ladders";
 
-import { GET as LIST_RULES, POST as DECLARE } from "@/app/api/admin/activities/[id]/moves/route";
-import { DELETE as WITHDRAW } from "@/app/api/admin/activities/[id]/moves/[ruleId]/route";
+import { PUT as SAVE, GET as READ } from "@/app/api/admin/activities/[id]/levels/route";
 import { POST as RECORD } from "@/app/api/admin/matches/[matchId]/moves/route";
 import { DELETE as UNDO } from "@/app/api/admin/matches/[matchId]/moves/[moveId]/route";
 import { POST as ADD_UNIT, GET as UNITS } from "@/app/api/admin/matches/[matchId]/units/route";
@@ -38,18 +37,25 @@ async function tournamentWithMatch() {
   const unitLevel = await prisma.matchLevel.findFirstOrThrow({
     where: { activityId: activity.id, order: 1 },
   });
-  return { activity, match, teysse: { ...TEYSSE, levelId: unitLevel.id } };
+  return { activity, match, teysse: { ...TEYSSE, levelKey: unitLevel.id } };
 }
 
 const withMatch = (matchId: string) => ({ params: Promise.resolve({ matchId }) });
 
-const declare = (id: string, body: object) =>
-  DECLARE(post(`/api/admin/activities/${id}/moves`, body), withId(id));
-const listRules = (id: string) => LIST_RULES(get(`/api/admin/activities/${id}/moves`), withId(id));
-const withdraw = (id: string, ruleId: string) =>
-  WITHDRAW(del(`/api/admin/activities/${id}/moves/${ruleId}`), {
-    params: Promise.resolve({ id, ruleId }),
-  });
+const saveConfig = (id: string, levels: object[], moves: object[]) =>
+  SAVE(put(`/api/admin/activities/${id}/levels`, { levels, moves }), withId(id));
+const readConfig = (id: string) =>
+  READ(new Request(`http://x/a/${id}/levels`) as never, withId(id));
+
+async function keyedLevels(activityId: string) {
+  const body = await (await readConfig(activityId)).json();
+  return (body.levels as { id: string }[]).map((level) => ({ ...level, key: level.id }));
+}
+
+async function declare(activityId: string, move: object) {
+  const levels = await keyedLevels(activityId);
+  return saveConfig(activityId, levels, [move]);
+}
 const record = (matchId: string, body: object) =>
   RECORD(post(`/api/admin/matches/${matchId}/moves`, body), withMatch(matchId));
 const undo = (matchId: string, moveId: string) =>
@@ -67,7 +73,8 @@ async function unitOf(matchId: string, body: object) {
 }
 
 async function ruleOf(activityId: string, body: object) {
-  return (await (await declare(activityId, body)).json()).rule as { id: string; name: string };
+  const saved = await (await declare(activityId, body)).json();
+  return saved.moves[0] as { id: string; name: string };
 }
 
 describe("what a tournament declares", () => {
@@ -81,8 +88,8 @@ describe("what a tournament declares", () => {
 
     const res = await declare(activity.id, teysse);
 
-    expect(res.status).toBe(201);
-    expect((await res.json()).rule.name).toBe("تيس");
+    expect(res.status).toBe(200);
+    expect((await res.json()).moves[0].name).toBe("تيس");
   });
 
   it("refuses a move with no name", async () => {
@@ -108,20 +115,42 @@ describe("what a tournament declares", () => {
     expect((await res.json()).error).toBe(messages.moveRule.noEffect);
   });
 
-  it("refuses the same name twice", async () => {
+  it("refuses the same name twice in one configuration", async () => {
+    const { activity, teysse } = await tournamentWithMatch();
+    const levels = await keyedLevels(activity.id);
+
+    const res = await saveConfig(activity.id, levels, [teysse, teysse]);
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(messages.moveNameTaken);
+  });
+
+  it("saves the levels and the moves in one write", async () => {
     const { activity, teysse } = await tournamentWithMatch();
     await declare(activity.id, teysse);
 
-    expect((await declare(activity.id, teysse)).status).toBe(409);
+    expect((await (await readConfig(activity.id)).json()).moves).toHaveLength(1);
+
+    const levels = await keyedLevels(activity.id);
+    await saveConfig(activity.id, levels, []);
+
+    expect((await (await readConfig(activity.id)).json()).moves).toEqual([]);
   });
 
-  it("lists and withdraws what it declared", async () => {
+  it("changes nothing at all when the ladder beside the move is faulty", async () => {
     const { activity, teysse } = await tournamentWithMatch();
-    const rule = await ruleOf(activity.id, teysse);
+    const levels = await keyedLevels(activity.id);
 
-    expect((await (await listRules(activity.id)).json()).rules).toHaveLength(1);
-    expect((await withdraw(activity.id, rule.id)).status).toBe(200);
-    expect((await (await listRules(activity.id)).json()).rules).toEqual([]);
+    const res = await saveConfig(
+      activity.id,
+      [{ ...levels[0], target: null }, levels[1]],
+      [teysse],
+    );
+
+    expect(res.status).toBe(400);
+    const after = await (await readConfig(activity.id)).json();
+    expect(after.moves).toEqual([]);
+    expect(after.levels[0].target).toBe(2);
   });
 });
 
@@ -260,8 +289,8 @@ describe("a move that says what a unit counts as", () => {
       unitWorth: 2,
     });
 
-    expect(res.status).toBe(201);
-    expect((await res.json()).rule.unitWorth).toBe(2);
+    expect(res.status).toBe(200);
+    expect((await res.json()).moves[0].unitWorth).toBe(2);
   });
 
   it("counts the unit it was marked on by that number", async () => {
@@ -349,7 +378,7 @@ describe("a move typed into the unit below the one it acts on", () => {
     const { activity, match, levels } = await deepMatch();
     const rule = await ruleOf(activity.id, {
       ...TEYSSE,
-      levelId: levels[1].id,
+      levelKey: levels[1].id,
       endsUnit: true,
     });
     const parent = await unitOf(match.id, WON);
@@ -366,7 +395,7 @@ describe("a move typed into the unit below the one it acts on", () => {
 
   it("leaves the unit alone where the move was typed into the one it acts on", async () => {
     const { activity, match, levels } = await deepMatch();
-    const rule = await ruleOf(activity.id, { ...TEYSSE, levelId: levels[1].id });
+    const rule = await ruleOf(activity.id, { ...TEYSSE, levelKey: levels[1].id });
     const parent = await unitOf(match.id, WON);
     const child = await unitOf(match.id, { parentId: parent, sideAPoints: 30, sideBPoints: 10 });
 
@@ -381,7 +410,7 @@ describe("a move typed into the unit below the one it acts on", () => {
 
   it("moves the level above the unit it acts on", async () => {
     const { activity, match, levels } = await deepMatch();
-    const rule = await ruleOf(activity.id, { ...TEYSSE, levelId: levels[1].id });
+    const rule = await ruleOf(activity.id, { ...TEYSSE, levelKey: levels[1].id });
     const parent = await unitOf(match.id, WON);
 
     const body = await (
@@ -406,13 +435,15 @@ describe("a move that names its own level", () => {
   it("is refused on a unit at another level", async () => {
     const { activity, match, teysse } = await tournamentWithMatch();
     const levels = await levelsOf(activity.id);
-    const rule = await (
-      await declare(activity.id, { ...teysse, levelId: levels[0].id, endsUnit: true })
-    ).json();
+    const rule = await ruleOf(activity.id, {
+      ...teysse,
+      levelKey: levels[0].id,
+      endsUnit: true,
+    });
     const answer = await (await addUnit(match.id, WON)).json();
 
     const res = await record(match.id, {
-      ruleId: rule.rule.id,
+      ruleId: rule.id,
       side: "SIDE_A",
       unitId: answer.unit.id,
     });
@@ -424,11 +455,11 @@ describe("a move that names its own level", () => {
   it("is taken on a unit at the level it names", async () => {
     const { activity, match, teysse } = await tournamentWithMatch();
     const levels = await levelsOf(activity.id);
-    const rule = await (await declare(activity.id, { ...teysse, levelId: levels[1].id })).json();
+    const rule = await ruleOf(activity.id, { ...teysse, levelKey: levels[1].id });
     const answer = await (await addUnit(match.id, WON)).json();
 
     const res = await record(match.id, {
-      ruleId: rule.rule.id,
+      ruleId: rule.id,
       side: "SIDE_A",
       unitId: answer.unit.id,
     });
@@ -436,12 +467,12 @@ describe("a move that names its own level", () => {
     expect(res.status).toBe(201);
   });
 
-  it("is refused for a level the tournament does not have", async () => {
+  it("is refused for a level the configuration does not have", async () => {
     const { activity, teysse } = await tournamentWithMatch();
 
-    const res = await declare(activity.id, { ...teysse, levelId: "nope" });
+    const res = await declare(activity.id, { ...teysse, levelKey: "nope" });
 
-    expect(res.status).toBe(404);
-    expect((await res.json()).error).toBe(messages.levelNotInTournament);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.moveRule.level);
   });
 });
