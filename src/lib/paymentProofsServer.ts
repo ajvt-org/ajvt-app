@@ -9,6 +9,7 @@ import {
   withoutFields,
   type SupportViewer,
 } from "./supportPrivacy";
+import { paymentDate } from "./paymentDate";
 
 const HIDDEN_ON_A_PROOF = ["memberName", "proof", "donorName", "donorPhone", "donorPhoto"];
 
@@ -30,6 +31,10 @@ async function repeatedReferences(): Promise<Set<string>> {
 
 function isRepeated(seenTwice: Set<string>, reference: string | null): boolean {
   return reference !== null && seenTwice.has(reference);
+}
+
+function whenPaid(proof: { paidOn: Date | null; submittedAt: Date }): Date {
+  return paymentDate({ paidOn: proof.paidOn, createdAt: proof.submittedAt });
 }
 
 const MEMBERSHIP_PAYMENT_SELECT = {
@@ -251,6 +256,6 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
   ];
 
   return proofs
-    .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())
+    .sort((a, b) => whenPaid(b).getTime() - whenPaid(a).getTime())
     .map(({ named, ...row }) => (named ? row : hideIdentity(row)));
 }

@@ -15,18 +15,31 @@ describe("carrying the payments filters in the address", () => {
       kind: "ALL",
       q: "",
       account: "",
+      sort: "newest",
       focus: "",
     });
   });
 
   it("writes nothing for the default view", () => {
-    expect(writePaymentsFilters({ kind: "ALL", q: "", account: "", focus: "" }).toString()).toBe(
-      "",
-    );
+    expect(
+      writePaymentsFilters({
+        kind: "ALL",
+        q: "",
+        account: "",
+        sort: "newest",
+        focus: "",
+      }).toString(),
+    ).toBe("");
   });
 
   it("survives a round trip, which is what a shared link is", () => {
-    const chosen = { kind: "DONATION" as const, q: "hello", account: "a1", focus: "p9" };
+    const chosen = {
+      kind: "DONATION" as const,
+      q: "hello",
+      account: "a1",
+      sort: "largest" as const,
+      focus: "p9",
+    };
     expect(
       readPaymentsFilters(new URLSearchParams(writePaymentsFilters(chosen).toString())),
     ).toEqual(chosen);
@@ -38,6 +51,12 @@ describe("carrying the payments filters in the address", () => {
     }
   });
 
+  it("falls back to the newest first for any order it does not recognize", () => {
+    for (const raw of ["", "BOGUS", "Newest", "date"]) {
+      expect(readPaymentsFilters(new URLSearchParams(`sort=${raw}`)).sort, raw).toBe("newest");
+    }
+  });
+
   it("accepts each of the three real kinds", () => {
     for (const kind of ["MEMBERSHIP", "ACTIVITY", "DONATION"]) {
       expect(readPaymentsFilters(new URLSearchParams(`kind=${kind}`)).kind).toBe(kind);
@@ -45,7 +64,7 @@ describe("carrying the payments filters in the address", () => {
   });
 
   it("lists exactly the keys it owns in the address", () => {
-    expect(PAYMENTS_FILTER_KEYS).toEqual(["kind", "q", "account", "focus"]);
+    expect(PAYMENTS_FILTER_KEYS).toEqual(["kind", "q", "account", "sort", "focus"]);
   });
 });
 

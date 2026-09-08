@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
-import { paymentAccountPicker, paymentsPage as texts } from "@/lib/texts";
+import { PAYMENT_SORT_LABEL, paymentAccountPicker, paymentsPage as texts } from "@/lib/texts";
 import KindTabs from "./KindTabs";
 import ManualDonationDialog from "./ManualDonationDialog";
 import PaymentsList from "./PaymentsList";
@@ -21,6 +21,7 @@ import {
   writePaymentsFilters,
   type PaymentsFilters,
 } from "./paymentsFilters";
+import { PAYMENT_SORTS, readPaymentSort, sortPayments } from "./paymentsSort";
 import { PAGE_SIZE, type Proof } from "./paymentTypes";
 
 function match(proof: Proof, filters: PaymentsFilters) {
@@ -56,7 +57,10 @@ function AdminPaymentsPageInner() {
   if (loading) return <PageLoading />;
 
   const accountOptions = accountOptionsOf(proofs);
-  const filtered = proofs.filter((p) => match(p, filters));
+  const filtered = sortPayments(
+    proofs.filter((p) => match(p, filters)),
+    filters.sort,
+  );
   const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const holding = pageHolding(
     filtered.map((p) => p.id),
@@ -93,6 +97,19 @@ function AdminPaymentsPageInner() {
         onChange={(e) => go({ ...filters, focus: "", q: e.target.value })}
         className="input text-sm"
       />
+
+      <select
+        aria-label={texts.sortBy}
+        value={filters.sort}
+        onChange={(e) => go({ ...filters, focus: "", sort: readPaymentSort(e.target.value) })}
+        className="input text-sm"
+      >
+        {PAYMENT_SORTS.map((sort) => (
+          <option key={sort} value={sort}>
+            {PAYMENT_SORT_LABEL[sort]}
+          </option>
+        ))}
+      </select>
 
       {accountOptions.length > 0 && (
         <select
