@@ -141,7 +141,7 @@ describe("the other kinds on the same list", () => {
     const { container } = show({ amount: 2000 });
 
     expect(container.textContent).toContain(money(2000));
-    expect(screen.getByText(paymentCard.statusPending).textContent).toBe(paymentCard.statusPending);
+    expect(container.textContent).not.toContain(paymentCard.statusPending);
   });
 
   it("drops the name typed by hand once the gift is linked to an account", () => {
@@ -193,14 +193,14 @@ describe("the other kinds on the same list", () => {
     mockFetch([]);
     show({ anonymous: true });
 
-    expect(screen.getByText(paymentCard.hiddenOnBoard)).toBeTruthy();
+    expect(screen.getByLabelText(paymentCard.hiddenOnBoard)).toBeTruthy();
   });
 
   it("says nothing about hiding a gift that is named", () => {
     mockFetch([]);
     show({ anonymous: false });
 
-    expect(screen.queryByText(paymentCard.hiddenOnBoard)).toBeNull();
+    expect(screen.queryByLabelText(paymentCard.hiddenOnBoard)).toBeNull();
   });
 
   it("shows who the gift is linked to, with enough to confirm it", () => {
