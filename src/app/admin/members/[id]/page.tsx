@@ -77,6 +77,8 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
   }
 
   const { member, supportPrivacy, history, currentYear } = data;
+  const activities = member.registrations.length > 0;
+  const teams = member.teamMemberships.length > 0;
 
   return (
     <div className="admin-page space-y-5">
@@ -115,54 +117,59 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
 
         <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
 
-        <ProfileList
-          icon="heart"
-          title={texts.donations(member.donations.length)}
-          empty={texts.noDonations}
-          rows={member.donations.map((d) => ({
-            key: d.id,
-            main: (
-              <span className="font-bold">
-                {d.amount === null ? "—" : <Money value={d.amount} />}
-              </span>
-            ),
-            aside: (
-              <>
-                {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
-              </>
-            ),
-          }))}
-        />
+        {member.donations.length > 0 && (
+          <ProfileList
+            icon="heart"
+            title={texts.donations(member.donations.length)}
+            rows={member.donations.map((d) => ({
+              key: d.id,
+              main: (
+                <span className="font-bold">
+                  {d.amount === null ? "—" : <Money value={d.amount} />}
+                </span>
+              ),
+              aside: (
+                <>
+                  {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
+                </>
+              ),
+            }))}
+          />
+        )}
       </ProfileGroup>
 
-      <ProfileGroup title={texts.groupParticipation}>
-        <ProfileList
-          icon="trophy"
-          title={texts.activities(member.registrations.length)}
-          empty={texts.noActivities}
-          rows={member.registrations.map((r) => ({
-            key: r.id,
-            main: r.activity.title,
-            aside: (
-              <>
-                {registrationStatusLabels[r.status] ?? r.status} ·{" "}
-                <span dir="ltr">{day(r.createdAt)}</span>
-              </>
-            ),
-          }))}
-        />
+      {(activities || teams) && (
+        <ProfileGroup title={texts.groupParticipation}>
+          {activities && (
+            <ProfileList
+              icon="trophy"
+              title={texts.activities(member.registrations.length)}
+              rows={member.registrations.map((r) => ({
+                key: r.id,
+                main: r.activity.title,
+                aside: (
+                  <>
+                    {registrationStatusLabels[r.status] ?? r.status} ·{" "}
+                    <span dir="ltr">{day(r.createdAt)}</span>
+                  </>
+                ),
+              }))}
+            />
+          )}
 
-        <ProfileList
-          icon="users"
-          title={texts.teams(member.teamMemberships.length)}
-          empty={texts.noTeams}
-          rows={member.teamMemberships.map((t) => ({
-            key: t.team.id,
-            main: t.team.name,
-            aside: t.team.activity.title,
-          }))}
-        />
-      </ProfileGroup>
+          {teams && (
+            <ProfileList
+              icon="users"
+              title={texts.teams(member.teamMemberships.length)}
+              rows={member.teamMemberships.map((t) => ({
+                key: t.team.id,
+                main: t.team.name,
+                aside: t.team.activity.title,
+              }))}
+            />
+          )}
+        </ProfileGroup>
+      )}
 
       <ProfileGroup title={texts.groupRecord}>
         {supportPrivacy && (

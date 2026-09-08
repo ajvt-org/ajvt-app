@@ -16,16 +16,17 @@ export default function ProfileList({
 }: {
   icon: IconName;
   title: string;
-  empty: string;
+  empty?: string;
   rows: ProfileRow[];
 }) {
   return (
     <ProfileSection icon={icon} title={title}>
-      {rows.length === 0 ? (
+      {rows.length === 0 && empty && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {empty}
         </p>
-      ) : (
+      )}
+      {rows.length > 0 && (
         <ul className="space-y-1.5">
           {rows.map((row) => (
             <li key={row.key} className="flex items-center justify-between gap-2 text-sm">
