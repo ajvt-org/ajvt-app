@@ -260,22 +260,38 @@ export async function removeUnit(matchId: string, unitId: string) {
   return unit;
 }
 
+function actedOn(match: LoadedMatch, typedInto: UnitRow, levelId: string): UnitRow {
+  if (typedInto.levelId === levelId) return typedInto;
+  const parent = typedInto.parentId === null ? null : unitOf(match, typedInto.parentId);
+  if (!parent || parent.levelId !== levelId) {
+    throw new ValidationError(messages.moveWantsItsOwnLevel);
+  }
+  return parent;
+}
+
 export async function recordMove(matchId: string, ruleId: string, side: MatchSide, unitId: string) {
   const match = await loadSeriesMatch(matchId);
-  const unit = unitOf(match, unitId);
-  if (standingUnder(match, unit.parentId)?.over) {
-    throw new ConflictError(messages.matchTakesNoMoreParts);
-  }
+  const typedInto = unitOf(match, unitId);
 
   const rule = await prisma.moveRule.findFirst({
     where: { id: ruleId, activityId: match.activityId },
   });
   if (!rule) throw new NotFoundError(messages.moveRuleNotFound);
-  if (rule.levelId !== unit.levelId) {
-    throw new ValidationError(messages.moveWantsItsOwnLevel);
+
+  const unit = actedOn(match, typedInto, rule.levelId);
+  if (standingUnder(match, unit.parentId)?.over) {
+    throw new ConflictError(messages.matchTakesNoMoreParts);
   }
 
-  return prisma.matchMove.create({ data: { matchId, ruleId, side, unitId } });
+  return prisma.$transaction(async (tx) => {
+    if (typedInto.id !== unit.id) {
+      await tx.matchUnit.update({
+        where: { id: typedInto.id },
+        data: { abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null },
+      });
+    }
+    return tx.matchMove.create({ data: { matchId, ruleId, side, unitId: unit.id } });
+  });
 }
 
 export async function undoMove(matchId: string, moveId: string) {

@@ -133,12 +133,12 @@ export function placeMoves(rows: UnitRow[], moves: MoveRow[]): Placement[] {
   for (const move of moves) {
     const on = byId.get(move.unitId);
     if (!on) continue;
-    const parent = on.parentId === null ? null : byId.get(on.parentId);
-    if (!move.rule.endsUnit || !parent) {
-      placed.push({ move, container: on.parentId, order: on.order, ended: null });
-      continue;
-    }
-    placed.push({ move, container: parent.parentId, order: parent.order, ended: parent.id });
+    placed.push({
+      move,
+      container: on.parentId,
+      order: on.order,
+      ended: move.rule.endsUnit ? on.id : null,
+    });
   }
   return placed;
 }
