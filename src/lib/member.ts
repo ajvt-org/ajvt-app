@@ -1,4 +1,3 @@
-import { randomInt } from "crypto";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "./prisma";
 import { generateVerifyToken } from "./verifyToken";
@@ -22,8 +21,4 @@ export async function generateMemberNumber(db: Db = prisma): Promise<string> {
   });
   const seq = String(counter.value).padStart(4, "0");
   return `AJVT-${year}-${seq}`;
-}
-
-export function generateTempPassword(): string {
-  return String(randomInt(100000, 1000000));
 }
