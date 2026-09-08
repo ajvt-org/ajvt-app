@@ -3,6 +3,7 @@ export const donationEdit = {
   donorPhoto: "صورة المتبرع",
   donorPhotoOptional: "صورة المتبرع (اختياري)",
   donorName: "اسم المتبرع",
+  contactFromAccount: "الاسم ورقم الهاتف مأخوذان من حساب العضو المرتبط",
   shownAs: "يظهر باسم",
   linkedTo: "مرتبط بحساب",
   link: "ربط بعضو مسجل",

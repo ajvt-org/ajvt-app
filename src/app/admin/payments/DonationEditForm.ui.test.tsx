@@ -96,16 +96,31 @@ afterEach(() => {
 });
 
 describe("editing a support payment", () => {
-  it("lets the name be corrected even though a member is linked", async () => {
+  it("asks for no name and no phone once a member is linked", () => {
+    show({ userId: "u1" });
+
+    expect(screen.queryByLabelText(donationEdit.donorName)).toBeNull();
+    expect(screen.queryByLabelText(donationEdit.phone)).toBeNull();
+    expect(screen.getByText(donationEdit.contactFromAccount)).toBeTruthy();
+  });
+
+  it("sends neither of them when saving a linked payment", async () => {
     const fetchMock = mockPatch();
     show({ userId: "u1" });
 
-    const field = screen.getByLabelText(donationEdit.donorName);
-    await userEvent.clear(field);
-    await userEvent.type(field, "أبوبكر");
     await userEvent.click(screen.getByText(donationEdit.save));
 
-    expect(bodyOf(fetchMock).donorName).toBe("أبوبكر");
+    const body = bodyOf(fetchMock);
+    expect(body).not.toHaveProperty("donorName");
+    expect(body).not.toHaveProperty("donorPhone");
+  });
+
+  it("still asks for a name and a phone when nothing is linked", () => {
+    show({ userId: null }, undefined);
+
+    expect(screen.getByLabelText(donationEdit.donorName)).toBeTruthy();
+    expect(screen.getByLabelText(donationEdit.phone)).toBeTruthy();
+    expect(screen.queryByText(donationEdit.contactFromAccount)).toBeNull();
   });
 
   it("shows the account name as the one people will see", () => {
@@ -144,7 +159,7 @@ describe("editing a support payment", () => {
 
     await userEvent.click(screen.getByText(donationEdit.save));
 
-    expect(bodyOf(fetchMock).donorName).toBeNull();
+    expect(bodyOf(fetchMock).amount).toBe(2000);
   });
 
   it("hides the giver behind فاعل خير once the toggle is on", async () => {

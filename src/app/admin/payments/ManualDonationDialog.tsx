@@ -7,7 +7,6 @@ import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
 import { accountsOfMethod } from "@/lib/paymentMethodChoices";
 import { donationFormError } from "@/lib/donationFields";
 import { linkedAccount } from "@/lib/linkedAccount";
-import { nameAdoptedOnLink } from "@/lib/donorName";
 import { manualDonation, paymentAccountPicker } from "@/lib/texts";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
@@ -54,9 +53,6 @@ export default function ManualDonationDialog({
   const set = (changes: Partial<typeof EMPTY>) => setForm((p) => ({ ...p, ...changes }));
   const accounts = accountsOfMethod(methods, form.paymentMethod);
 
-  const adopted = nameAdoptedOnLink(account);
-  const donorName = adopted ?? form.donorName;
-
   async function submit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     const invalid = donationFormError({ ...form, donorName: form.donorName.trim() || undefined });
@@ -66,8 +62,8 @@ export default function ManualDonationDialog({
     setSaving(true);
     try {
       const { donation } = await api.post<DonationResponse>("/api/admin/donations", {
-        donorName: donorName.trim() || null,
-        donorPhone: form.donorPhone.trim() || null,
+        donorName: account ? null : form.donorName.trim() || null,
+        donorPhone: account ? null : form.donorPhone.trim() || null,
         donorPhoto: form.donorPhoto || null,
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
@@ -113,29 +109,25 @@ export default function ManualDonationDialog({
           onUpload={(filename) => set({ proof: filename })}
         />
 
-        <div>
-          <label
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-            htmlFor="manual-donor-name"
-          >
-            {manualDonation.donorName}
-          </label>
-          <input
-            id="manual-donor-name"
-            type="text"
-            value={donorName}
-            onChange={(e) => set({ donorName: e.target.value })}
-            readOnly={adopted !== null}
-            maxLength={50}
-            className="input"
-          />
-          {adopted !== null && (
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              {manualDonation.donorNameFromAccount}
-            </p>
-          )}
-        </div>
+        {!account && (
+          <div>
+            <label
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="manual-donor-name"
+            >
+              {manualDonation.donorName}
+            </label>
+            <input
+              id="manual-donor-name"
+              type="text"
+              value={form.donorName}
+              onChange={(e) => set({ donorName: e.target.value })}
+              maxLength={50}
+              className="input"
+            />
+          </div>
+        )}
 
         <div>
           <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
@@ -145,16 +137,21 @@ export default function ManualDonationDialog({
             {manualDonation.accountHint}
           </p>
           {account ? (
-            <div className="flex items-center justify-between gap-2">
-              <MemberIdentity member={account} />
-              <button
-                type="button"
-                onClick={() => setAccount(null)}
-                className="text-xs px-2.5 py-1 rounded-lg font-bold shrink-0"
-                style={QUIET}
-              >
-                {manualDonation.clearAccount}
-              </button>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <MemberIdentity member={account} />
+                <button
+                  type="button"
+                  onClick={() => setAccount(null)}
+                  className="text-xs px-2.5 py-1 rounded-lg font-bold shrink-0"
+                  style={QUIET}
+                >
+                  {manualDonation.clearAccount}
+                </button>
+              </div>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {manualDonation.contactFromAccount}
+              </p>
             </div>
           ) : picking ? (
             <LinkMemberPanel
@@ -177,25 +174,27 @@ export default function ManualDonationDialog({
           )}
         </div>
 
-        <div>
-          <label
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-            htmlFor="manual-donor-phone"
-          >
-            {manualDonation.phone}
-          </label>
-          <input
-            id="manual-donor-phone"
-            type="tel"
-            dir="ltr"
-            value={form.donorPhone}
-            onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-            placeholder="2XXXXXXX"
-            maxLength={8}
-            className="input"
-          />
-        </div>
+        {!account && (
+          <div>
+            <label
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="manual-donor-phone"
+            >
+              {manualDonation.phone}
+            </label>
+            <input
+              id="manual-donor-phone"
+              type="tel"
+              dir="ltr"
+              value={form.donorPhone}
+              onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+              placeholder="2XXXXXXX"
+              maxLength={8}
+              className="input"
+            />
+          </div>
+        )}
 
         <div>
           <label

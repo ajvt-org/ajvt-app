@@ -21,8 +21,8 @@ import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
 function initial(proof: Proof) {
   return {
-    donorName: proof.donorName || "",
-    donorPhone: proof.donorPhone || "",
+    donorName: proof.userId ? "" : proof.donorName || "",
+    donorPhone: proof.userId ? "" : proof.donorPhone || "",
     donorPhoto: proof.donorPhoto || null,
     amount: proof.amount != null ? String(proof.amount) : "",
     paymentMethod: proof.paymentMethod || "",
@@ -72,9 +72,13 @@ export default function DonationEditForm({
     setSaving(true);
     try {
       const { donation } = await api.patch<DonationResponse>(`/api/admin/donations/${proof.id}`, {
-        donorName: form.donorName.trim() || null,
+        ...(linked
+          ? {}
+          : {
+              donorName: form.donorName.trim() || null,
+              donorPhone: form.donorPhone.trim() || null,
+            }),
         donorPhoto: form.donorPhoto,
-        donorPhone: form.donorPhone.trim() || null,
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
         accountId: form.accountId || null,
@@ -123,38 +127,49 @@ export default function DonationEditForm({
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 items-start">
-        <div className="space-y-1">
-          <label
-            className="block text-[11px] font-bold"
+        {linked ? (
+          <p
+            className="text-[11px] font-semibold self-center"
             style={{ color: "var(--text-muted)" }}
-            htmlFor={`donor-name-${proof.id}`}
           >
-            {donationEdit.donorName}
-          </label>
-          <input
-            id={`donor-name-${proof.id}`}
-            type="text"
-            aria-label={donationEdit.donorName}
-            placeholder={donationEdit.donorName}
-            value={form.donorName}
-            onChange={(e) => set({ donorName: e.target.value })}
-            maxLength={50}
-            className="input text-xs"
-            style={FIELD}
-          />
-        </div>
+            {donationEdit.contactFromAccount}
+          </p>
+        ) : (
+          <>
+            <div className="space-y-1">
+              <label
+                className="block text-[11px] font-bold"
+                style={{ color: "var(--text-muted)" }}
+                htmlFor={`donor-name-${proof.id}`}
+              >
+                {donationEdit.donorName}
+              </label>
+              <input
+                id={`donor-name-${proof.id}`}
+                type="text"
+                aria-label={donationEdit.donorName}
+                placeholder={donationEdit.donorName}
+                value={form.donorName}
+                onChange={(e) => set({ donorName: e.target.value })}
+                maxLength={50}
+                className="input text-xs"
+                style={FIELD}
+              />
+            </div>
 
-        <input
-          type="tel"
-          dir="ltr"
-          aria-label={donationEdit.phone}
-          placeholder={donationEdit.phone}
-          value={form.donorPhone}
-          onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-          maxLength={8}
-          className="input text-xs self-end"
-          style={FIELD}
-        />
+            <input
+              type="tel"
+              dir="ltr"
+              aria-label={donationEdit.phone}
+              placeholder={donationEdit.phone}
+              value={form.donorPhone}
+              onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+              maxLength={8}
+              className="input text-xs self-end"
+              style={FIELD}
+            />
+          </>
+        )}
 
         <input
           type="number"
