@@ -15,6 +15,7 @@ import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 import { cleanProofNames, leadProof, proofsToAdd, proofsToRemove } from "@/lib/expenseProofs";
 import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
+import { releaseUploads } from "@/lib/uploadRelease";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
@@ -134,6 +135,7 @@ export const PATCH = withRoute(
 
       return saved;
     });
+    await releaseUploads(...proofsToRemove(held, wanted));
     await logAction(
       session.username,
       "UPDATE_EXPENSE",
@@ -169,7 +171,12 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: expenseMessages.notFound }, { status: 404 });
     }
 
+    const held = (
+      await prisma.expenseProof.findMany({ where: { expenseId: id }, select: { filename: true } })
+    ).map((row) => row.filename);
+
     await prisma.expense.delete({ where: { id } });
+    await releaseUploads(existing.proof, ...held);
     await logAction(
       session.username,
       "DELETE_EXPENSE",

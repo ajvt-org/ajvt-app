@@ -7,7 +7,9 @@ import type { EntrantKind } from "@/lib/entrant";
 import NewMatchForm from "./NewMatchForm";
 import { isFootball } from "@/lib/matchShape";
 import type { SeriesConfig } from "./seriesConfig";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import BracketPanel from "./BracketPanel";
+import type { AdminQuestion } from "./askQuestion";
 import MatchListSection from "./MatchListSection";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
@@ -45,9 +47,10 @@ export default function MatchesTab({
   const [mvpFor, setMvpFor] = useState<string | null>(null);
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [asking, setAsking] = useState<(AdminQuestion & { run: () => Promise<void> }) | null>(null);
 
-  async function runBracketAction(endpoint: string, confirmMsg: string, body?: object) {
-    if (!confirm(confirmMsg)) return;
+  async function runBracketAction(endpoint: string, body?: object) {
+    setAsking(null);
     setGenerating(true);
     setError("");
     try {
@@ -58,6 +61,10 @@ export default function MatchesTab({
     } finally {
       setGenerating(false);
     }
+  }
+
+  function askBracketAction(endpoint: string, question: AdminQuestion, body?: object) {
+    setAsking({ ...question, run: () => runBracketAction(endpoint, body) });
   }
 
   const state = matchesState({ format, groups, matches });
@@ -82,18 +89,28 @@ export default function MatchesTab({
       ]);
       onChange();
     } catch {
-      alert(texts.reorderFailed);
+      setError(texts.reorderFailed);
     }
   }
 
   async function deleteMatch(matchId: string) {
-    if (!confirm(texts.confirmDeleteMatch)) return;
+    setAsking(null);
     try {
       await api.del(`/api/admin/matches/${matchId}`);
       onChange();
     } catch (e) {
-      alert(errorMessage(e));
+      setError(errorMessage(e));
     }
+  }
+
+  function askDeleteMatch(matchId: string) {
+    setAsking({
+      title: texts.confirmDeleteMatchTitle,
+      message: texts.confirmDeleteMatch,
+      confirmLabel: texts.deleteMatch,
+      danger: true,
+      run: () => deleteMatch(matchId),
+    });
   }
 
   const scheduled = matches.filter((m) => m.status === "SCHEDULED");
@@ -141,7 +158,7 @@ export default function MatchesTab({
           busy={generating}
           entrant={entrant}
           state={state}
-          onAction={runBracketAction}
+          onAction={askBracketAction}
         />
       )}
 
@@ -158,7 +175,7 @@ export default function MatchesTab({
         matches={scheduled}
         common={common}
         panels={panels}
-        onDelete={deleteMatch}
+        onDelete={askDeleteMatch}
         onChange={onChange}
         onMove={(index, direction) => moveMatch(scheduled, index, direction)}
       />
@@ -169,9 +186,21 @@ export default function MatchesTab({
         matches={played}
         common={common}
         panels={panels}
-        onDelete={deleteMatch}
+        onDelete={askDeleteMatch}
         onChange={onChange}
       />
+
+      {asking && (
+        <ConfirmDialog
+          title={asking.title}
+          message={asking.message}
+          confirmLabel={asking.confirmLabel}
+          danger={asking.danger}
+          loading={generating}
+          onConfirm={asking.run}
+          onClose={() => setAsking(null)}
+        />
+      )}
 
       {showWizard && (
         <SetupWizard

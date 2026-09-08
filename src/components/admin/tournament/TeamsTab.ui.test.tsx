@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import TeamsTab from "./TeamsTab";
 import type { RosterMember, Team } from "./types";
-import { teamsTab } from "@/lib/texts";
+import { confirmDialog, teamsTab } from "@/lib/texts";
 
 const post = vi.fn();
 const patch = vi.fn();
@@ -141,11 +141,11 @@ describe("TeamsTab", () => {
 
   it("leaves the card open when the admin acts on a player inside it", async () => {
     del.mockResolvedValue({});
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     show();
 
     fireEvent.click(screen.getByText("فريق النجم"));
     fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
+    fireEvent.click(screen.getByText(teamsTab.remove));
 
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     expect(cards().map((c) => c.open)).toEqual([true, false]);
@@ -156,8 +156,25 @@ describe("TeamsTab", () => {
     show();
 
     fireEvent.click(screen.getAllByLabelText(/إزالة/)[0]);
+    fireEvent.click(screen.getByText(teamsTab.remove));
 
     await waitFor(() => expect(screen.getByText("تعذر حذف الفريق")).toBeDefined());
+  });
+
+  it("asks through the app before deleting a team, and deletes nothing on a cancel", () => {
+    const asked = vi.fn();
+    vi.stubGlobal("confirm", asked);
+    show();
+
+    fireEvent.click(screen.getAllByLabelText(teamsTab.deleteTeam)[0]);
+
+    expect(asked).not.toHaveBeenCalled();
+    expect(screen.getByText(teamsTab.confirmDelete)).toBeDefined();
+
+    fireEvent.click(screen.getByText(confirmDialog.cancel));
+
+    expect(del).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 
   it("finds a team by its own name and by a player it holds", () => {

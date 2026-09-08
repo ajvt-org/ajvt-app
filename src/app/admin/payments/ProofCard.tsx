@@ -24,6 +24,7 @@ export default function ProofCard({
   destinations,
   financeTags,
   busy,
+  error,
   onReview,
   onDelete,
   onLink,
@@ -36,6 +37,7 @@ export default function ProofCard({
   destinations: DestinationOption[];
   financeTags: FinanceTag[];
   busy: boolean;
+  error: string;
   onReview: (status: "ACTIVE" | "REJECTED") => void;
   onDelete: () => void;
   onLink: (userId: string | null) => void;
@@ -106,6 +108,7 @@ export default function ProofCard({
           destinations={destinations}
           financeTags={financeTags}
           busy={busy}
+          error={error}
           onReview={onReview}
           onDelete={onDelete}
           onLink={onLink}

@@ -15,6 +15,7 @@ export const mvpVote = {
   extend: "تمديد",
   extendMinutes: "دقائق إضافية",
   remove: "حذف",
+  confirmRemoveTitle: "حذف التصويت",
   confirmRemove: "حذف هذا التصويت نهائياً؟ ستُحذف كل الأصوات المسجَّلة.",
   totalVotes: (count: number) => `مجموع الأصوات: ${count}`,
   winnerApplied: (name: string) => `${name} هو رجل المباراة بحسب التصويت`,

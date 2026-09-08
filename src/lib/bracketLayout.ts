@@ -1,7 +1,7 @@
 export const CARD_HEIGHT = 64;
 export const CARD_GAP = 16;
 export const COLUMN_WIDTH = 170;
-export const COLUMN_GAP = 32;
+export const COLUMN_GAP = 24;
 
 const UNIT = CARD_HEIGHT + CARD_GAP;
 

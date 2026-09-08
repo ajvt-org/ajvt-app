@@ -7,9 +7,11 @@ import OrphanAgeGroups from "./OrphanAgeGroups";
 import PendingAgeGroups from "./PendingAgeGroups";
 import MoveAgeGroupMembers from "./MoveAgeGroupMembers";
 import AgeGroupTotal from "./AgeGroupTotal";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { ageGroupsDialog as texts } from "@/lib/texts";
 
 export default function AgeGroupsDialog({
   ageGroups,
@@ -29,6 +31,7 @@ export default function AgeGroupsDialog({
   const [renamingAgeGroupId, setRenamingAgeGroupId] = useState<string | null>(null);
   const [renameAgeGroupValue, setRenameAgeGroupValue] = useState("");
   const [movingId, setMovingId] = useState<string | null>(null);
+  const [asking, setAsking] = useState<string | null>(null);
 
   async function addAgeGroup(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -68,8 +71,7 @@ export default function AgeGroupsDialog({
   }
 
   async function deleteAgeGroup(id: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا العصر من القائمة؟ لن يؤثر ذلك على الأعضاء الحاليين."))
-      return;
+    setAsking(null);
     setAgeGroupBusyId(id);
     setAgeGroupError("");
     try {
@@ -95,14 +97,13 @@ export default function AgeGroupsDialog({
         style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
       >
         <DialogHeader
-          title={<IconLabel name="tag">إدارة الأعصار</IconLabel>}
+          title={<IconLabel name="tag">{texts.title}</IconLabel>}
           onClose={() => onClose()}
         />
 
         <div className="p-5 space-y-4">
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل اسم عصر هنا يغيّره لدى كل الأعضاء
-            الذين اختاروه من قبل، أما حذفه فلا يغيّر شيئاً لديهم.
+            {texts.intro}
           </p>
 
           <PendingAgeGroups
@@ -117,7 +118,7 @@ export default function AgeGroupsDialog({
               type="text"
               value={newAgeGroupName}
               onChange={(e) => setNewAgeGroupName(e.target.value)}
-              placeholder="اسم عصر جديد..."
+              placeholder={texts.addPlaceholder}
               maxLength={30}
               className="input text-sm"
             />
@@ -127,7 +128,7 @@ export default function AgeGroupsDialog({
               className="text-xs px-3 py-2.5 rounded-lg font-bold shrink-0"
               style={{ background: "var(--mint-600)", color: "white" }}
             >
-              {ageGroupSaving ? "..." : <IconLabel name="plus">إضافة</IconLabel>}
+              {ageGroupSaving ? "..." : <IconLabel name="plus">{texts.add}</IconLabel>}
             </button>
           </form>
 
@@ -142,7 +143,7 @@ export default function AgeGroupsDialog({
 
           {ageGroups.length === 0 ? (
             <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>
-              لا توجد أعصار مسجلة بعد
+              {texts.empty}
             </p>
           ) : (
             <div className="space-y-2">
@@ -167,14 +168,14 @@ export default function AgeGroupsDialog({
                             className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
                             style={{ background: "var(--mint-600)", color: "white" }}
                           >
-                            {ageGroupBusyId === g.id ? "..." : "حفظ"}
+                            {ageGroupBusyId === g.id ? "..." : texts.save}
                           </button>
                           <button
                             onClick={() => setRenamingAgeGroupId(null)}
                             className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
                             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                           >
-                            إلغاء
+                            {texts.cancel}
                           </button>
                         </>
                       ) : (
@@ -199,7 +200,7 @@ export default function AgeGroupsDialog({
                             className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
                             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                           >
-                            <IconLabel name="upload">نقل</IconLabel>
+                            <IconLabel name="upload">{texts.move}</IconLabel>
                           </button>
                           <button
                             onClick={() => startRenameAgeGroup(g)}
@@ -207,10 +208,10 @@ export default function AgeGroupsDialog({
                             className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
                             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                           >
-                            <IconLabel name="pencil">تعديل</IconLabel>
+                            <IconLabel name="pencil">{texts.edit}</IconLabel>
                           </button>
                           <button
-                            onClick={() => deleteAgeGroup(g.id)}
+                            onClick={() => setAsking(g.id)}
                             disabled={ageGroupBusyId === g.id}
                             className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
                             style={{ background: "#fee2e2", color: "#991b1b" }}
@@ -240,6 +241,18 @@ export default function AgeGroupsDialog({
           )}
         </div>
       </div>
+
+      {asking && (
+        <ConfirmDialog
+          title={texts.confirmDeleteTitle}
+          message={texts.confirmDelete}
+          confirmLabel={texts.delete}
+          danger
+          loading={ageGroupBusyId === asking}
+          onConfirm={() => deleteAgeGroup(asking)}
+          onClose={() => setAsking(null)}
+        />
+      )}
     </div>
   );
 }

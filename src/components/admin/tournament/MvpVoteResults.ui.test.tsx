@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import MvpVoteResults from "./MvpVoteResults";
-import { mvpVote as texts } from "@/lib/texts";
+import { confirmDialog, mvpVote as texts } from "@/lib/texts";
 import type { MvpVote } from "./types";
 
 const patchMock = vi.fn();
+const delMock = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   api: {
     patch: (...args: unknown[]) => patchMock(...args),
-    del: vi.fn(),
+    del: (...args: unknown[]) => delMock(...args),
   },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
@@ -35,7 +36,10 @@ function show(over: Partial<MvpVote> = {}) {
   render(<MvpVoteResults matchId="m1" vote={vote(over)} defaultMinutes={90} onChange={vi.fn()} />);
 }
 
-beforeEach(() => patchMock.mockReset().mockResolvedValue({}));
+beforeEach(() => {
+  patchMock.mockReset().mockResolvedValue({});
+  delMock.mockReset().mockResolvedValue({});
+});
 afterEach(cleanup);
 
 describe("MvpVoteResults", () => {
@@ -87,5 +91,51 @@ describe("MvpVoteResults", () => {
     show();
 
     expect(screen.getByText(texts.totalVotes(4))).toBeDefined();
+  });
+});
+
+describe("deleting the vote on a match", () => {
+  it("asks through the app rather than through the browser", () => {
+    const asked = vi.fn();
+    vi.stubGlobal("confirm", asked);
+    show();
+
+    fireEvent.click(screen.getByText(texts.remove));
+
+    expect(asked).not.toHaveBeenCalled();
+    expect(screen.getByText(texts.confirmRemove)).toBeDefined();
+    expect(delMock).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("deletes it once the reader says so", async () => {
+    show();
+
+    fireEvent.click(screen.getByText(texts.remove));
+    const [, inDialog] = screen.getAllByText(texts.remove);
+    fireEvent.click(inDialog);
+
+    await waitFor(() => expect(delMock).toHaveBeenCalledTimes(1));
+  });
+
+  it("deletes nothing when the reader backs out", () => {
+    show();
+
+    fireEvent.click(screen.getByText(texts.remove));
+    fireEvent.click(screen.getByText(confirmDialog.cancel));
+
+    expect(delMock).not.toHaveBeenCalled();
+    expect(screen.queryByText(texts.confirmRemove)).toBeNull();
+  });
+
+  it("says on the card what went wrong rather than in a box the browser draws", async () => {
+    delMock.mockRejectedValue(new Error("تعذر حذف التصويت"));
+    show();
+
+    fireEvent.click(screen.getByText(texts.remove));
+    const [, inDialog] = screen.getAllByText(texts.remove);
+    fireEvent.click(inDialog);
+
+    await waitFor(() => expect(screen.getByText("تعذر حذف التصويت")).toBeDefined());
   });
 });

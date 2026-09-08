@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import RosterRow from "./RosterRow";
-import { teamsTab } from "@/lib/texts";
 import type { TeamMemberEntry } from "./types";
+import { confirmDialog, teamsTab } from "@/lib/texts";
 
 const LONG_NAME = "الحسن احمدو يحي البناني";
 
@@ -31,8 +31,9 @@ const handlers = {
   onRemove: vi.fn(),
 };
 
-function answer(yes: boolean) {
-  vi.stubGlobal("confirm", vi.fn().mockReturnValue(yes));
+function answer(yes: boolean, confirmLabel: string = teamsTab.remove) {
+  const label = yes ? screen.getByText(confirmLabel) : screen.getByText(confirmDialog.cancel);
+  fireEvent.click(label);
 }
 
 function show(
@@ -98,22 +99,29 @@ describe("RosterRow", () => {
   });
 
   it("asks before it removes a player, and cancelling removes nobody", () => {
-    answer(false);
+    const asked = vi.fn();
+    vi.stubGlobal("confirm", asked);
     show(entry(LONG_NAME));
+
     fireEvent.click(screen.getByLabelText(`إزالة ${LONG_NAME}`));
-    expect(confirm).toHaveBeenCalledWith(`إزالة ${LONG_NAME} من الفريق؟`);
+
+    expect(asked).not.toHaveBeenCalled();
+    expect(screen.getByText(`إزالة ${LONG_NAME} من الفريق؟`)).toBeTruthy();
+    answer(false);
     expect(handlers.onRemove).not.toHaveBeenCalled();
 
-    answer(true);
     fireEvent.click(screen.getByLabelText(`إزالة ${LONG_NAME}`));
+    answer(true);
     expect(handlers.onRemove).toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 
   it("asks a different question before rejecting someone still waiting", () => {
-    answer(false);
     show(entry(LONG_NAME, "PENDING"));
+
     fireEvent.click(screen.getByLabelText(`رفض ${LONG_NAME}`));
-    expect(confirm).toHaveBeenCalledWith(`رفض طلب ${LONG_NAME} للانضمام؟`);
+
+    expect(screen.getByText(`رفض طلب ${LONG_NAME} للانضمام؟`)).toBeTruthy();
     expect(handlers.onRemove).not.toHaveBeenCalled();
   });
 
@@ -178,13 +186,13 @@ describe("RosterRow", () => {
   });
 
   it("keeps accept, reject and captain working", () => {
-    answer(true);
     show(entry(LONG_NAME, "PENDING"));
 
     fireEvent.click(screen.getByLabelText(`قبول ${LONG_NAME}`));
     expect(handlers.onApprove).toHaveBeenCalled();
 
     fireEvent.click(screen.getByLabelText(`رفض ${LONG_NAME}`));
+    fireEvent.click(screen.getByText(teamsTab.reject));
     expect(handlers.onRemove).toHaveBeenCalled();
 
     fireEvent.click(screen.getByLabelText(`اجعل ${LONG_NAME} قائد الفريق`));
@@ -252,11 +260,14 @@ describe("which way a waiting row points", () => {
   });
 
   it("asks about withdrawing an invitation rather than rejecting a request", () => {
-    answer(true);
     show(entry("أحمد ولد سالم", "PENDING", true));
 
     fireEvent.click(screen.getByLabelText(teamsTab.withdrawOf("أحمد ولد سالم")));
 
+    expect(screen.getByText(teamsTab.confirmWithdraw("أحمد ولد سالم"))).toBeTruthy();
+    expect(screen.queryByText(teamsTab.confirmReject("أحمد ولد سالم"))).toBeNull();
+
+    answer(true, teamsTab.withdraw);
     expect(handlers.onRemove).toHaveBeenCalled();
   });
 

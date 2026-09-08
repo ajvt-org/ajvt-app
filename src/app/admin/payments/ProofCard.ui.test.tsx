@@ -62,6 +62,7 @@ function show(over: Partial<Proof> = {}, members: MemberOption[] = []) {
       destinations={[]}
       financeTags={[]}
       busy={false}
+      error=""
       onReview={vi.fn()}
       onDelete={vi.fn()}
       onLink={vi.fn()}

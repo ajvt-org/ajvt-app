@@ -66,7 +66,7 @@ describe("BracketTree", () => {
 
     expect(screen.getByText("الأبطال")).toBeTruthy();
     expect(screen.getByText("الصقور")).toBeTruthy();
-    expect(container.querySelectorAll(".absolute.inset-x-0")).toHaveLength(3);
+    expect(container.querySelectorAll(".bracket-card")).toHaveLength(3);
   });
 
   it("names both teams of a match that has been drawn", () => {
@@ -120,11 +120,11 @@ const bracketOf = (firstRoundCount: number) => {
 };
 
 const columnsOf = (container: HTMLElement) =>
-  Array.from(container.querySelectorAll("p + div.relative"));
+  Array.from(container.querySelectorAll("p + div.bracket-slots"));
 
 const cardTops = (column: Element) =>
   Array.from(column.querySelectorAll<HTMLElement>(":scope > div")).map((card) =>
-    Number.parseFloat(card.style.top),
+    Number.parseFloat(card.style.getPropertyValue("--bracket-top")),
   );
 
 describe("BracketTree, how the rounds are laid out", () => {
@@ -171,5 +171,37 @@ describe("BracketTree, how the rounds are laid out", () => {
     render(<BracketTree matches={[{ ...FINAL, round: null, bracketRound: 3 }]} />);
 
     expect(screen.getByText(texts.bracketRound(3))).toBeTruthy();
+  });
+});
+
+describe("BracketTree, the shape a phone reads", () => {
+  it("puts one heading in front of the fixtures of the round it names", () => {
+    const { container } = render(<BracketTree matches={bracketOf(4)} />);
+    const headings = container.querySelectorAll(".bracket-round-name");
+
+    expect(headings).toHaveLength(3);
+    expect(columnsOf(container)).toHaveLength(3);
+  });
+
+  it("draws one card per fixture and no second copy of the bracket", () => {
+    const { container } = render(<BracketTree matches={bracketOf(8)} />);
+
+    expect(container.querySelectorAll(".bracket-card")).toHaveLength(15);
+  });
+
+  it("reads the rounds in order down the page, first round first", () => {
+    const { container } = render(<BracketTree matches={[SEMI, FINAL]} />);
+    const headings = Array.from(container.querySelectorAll(".bracket-round-name")).map(
+      (heading) => heading.textContent,
+    );
+
+    expect(headings).toEqual(["نصف النهائي", "النهائي"]);
+  });
+
+  it("carries the height of the tree where only the wide layout reads it", () => {
+    const { container } = render(<BracketTree matches={bracketOf(4)} />);
+    const rounds = container.querySelector<HTMLElement>(".bracket-rounds");
+
+    expect(rounds?.style.getPropertyValue("--bracket-height")).toBe(`${CARD_HEIGHT + 3 * 80}px`);
   });
 });

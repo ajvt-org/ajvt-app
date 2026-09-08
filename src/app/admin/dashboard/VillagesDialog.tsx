@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import { villagesDialog } from "@/lib/texts";
+import { lists, villagesDialog } from "@/lib/texts";
 import { OTHER_VILLAGE, VILLAGE_NAME_MAX } from "@/lib/villages";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 import VillageRow from "./VillageRow";
@@ -30,6 +31,7 @@ export default function VillagesDialog({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [asking, setAsking] = useState<string | null>(null);
 
   async function addVillage(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -63,7 +65,7 @@ export default function VillagesDialog({
   }
 
   async function deleteVillage(id: string) {
-    if (!confirm(villagesDialog.confirmDelete)) return;
+    setAsking(null);
     setBusyId(id);
     setError("");
     try {
@@ -105,7 +107,7 @@ export default function VillagesDialog({
             >
               <IconLabel name="warning">
                 {villagesDialog.unlisted(
-                  unlisted.map((row) => `${row.name} (${row.count})`).join("، "),
+                  unlisted.map((row) => `${row.name} (${row.count})`).join(lists.separator),
                 )}
               </IconLabel>
             </div>
@@ -160,7 +162,7 @@ export default function VillagesDialog({
                   }}
                   onCancelRename={() => setRenamingId(null)}
                   onSaveRename={() => saveRename(village.id)}
-                  onDelete={() => deleteVillage(village.id)}
+                  onDelete={() => setAsking(village.id)}
                 />
               ))}
             </div>
@@ -196,6 +198,18 @@ export default function VillagesDialog({
           </div>
         </div>
       </div>
+
+      {asking && (
+        <ConfirmDialog
+          title={villagesDialog.confirmDeleteTitle}
+          message={villagesDialog.confirmDelete}
+          confirmLabel={villagesDialog.delete}
+          danger
+          loading={busyId === asking}
+          onConfirm={() => deleteVillage(asking)}
+          onClose={() => setAsking(null)}
+        />
+      )}
     </div>
   );
 }

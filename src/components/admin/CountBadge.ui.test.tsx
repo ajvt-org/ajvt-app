@@ -33,8 +33,20 @@ describe("the count of work waiting", () => {
   });
 
   it("reads its number left to right inside a right to left screen", () => {
+    show(5);
+
+    expect(screen.getByText("5").getAttribute("dir")).toBe("ltr");
+  });
+
+  it("leaves the direction of its own corner to the screen around it", () => {
     const { container } = show(5);
 
-    expect(container.firstElementChild?.getAttribute("dir")).toBe("ltr");
+    expect(container.firstElementChild?.hasAttribute("dir")).toBe(false);
+  });
+
+  it("keeps the plus in front once it stops counting", () => {
+    show(40);
+
+    expect(screen.getByText("+9").getAttribute("dir")).toBe("ltr");
   });
 });

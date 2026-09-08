@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Notice from "@/components/Notice";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
+import { donationActions } from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import DonationActions from "./DonationActions";
 import DonationEditForm from "./DonationEditForm";
@@ -18,6 +21,7 @@ export default function DonationProofCard({
   destinations,
   financeTags,
   busy,
+  error,
   onReview,
   onDelete,
   onLink,
@@ -29,12 +33,14 @@ export default function DonationProofCard({
   destinations: DestinationOption[];
   financeTags: FinanceTag[];
   busy: boolean;
+  error: string;
   onReview: (status: "ACTIVE" | "REJECTED") => void;
   onDelete: () => void;
   onLink: (userId: string | null) => void;
   onPatch: (changes: Partial<Proof>) => void;
 }) {
   const [panel, setPanel] = useState<Panel | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const toggle = (next: Panel) => setPanel((p) => (p === next ? null : next));
 
@@ -46,7 +52,7 @@ export default function DonationProofCard({
         onReview={onReview}
         onEdit={() => toggle("edit")}
         onTag={() => toggle("tags")}
-        onDelete={onDelete}
+        onDelete={() => setConfirming(true)}
         onLink={() => toggle("link")}
         onUnlink={() => onLink(null)}
       />
@@ -86,6 +92,23 @@ export default function DonationProofCard({
             onLink(userId);
             setPanel(null);
           }}
+        />
+      )}
+
+      {error && <Notice tone="error">{error}</Notice>}
+
+      {confirming && (
+        <ConfirmDialog
+          title={donationActions.remove}
+          message={donationActions.confirmRemove}
+          confirmLabel={donationActions.remove}
+          danger
+          loading={busy}
+          onConfirm={() => {
+            setConfirming(false);
+            onDelete();
+          }}
+          onClose={() => setConfirming(false)}
         />
       )}
     </>
