@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent, cleanup as rtlCleanup } from "@testing-library/react";
 import MatchResult from "./MatchResult";
 import type { DecidedMatch } from "./publicTypes";
-import { matchDisplay } from "@/lib/texts";
+import { matchDisplay, mvpVote as voteTexts } from "@/lib/texts";
+import { MATCH_TEAMS_SIZES } from "./matchCard/MatchTeams";
 
 function match(): DecidedMatch {
   return {
@@ -56,7 +57,6 @@ function show(football: boolean) {
       day={{ round: null, venue: null }}
       allMatches={[match()]}
       football={football}
-      tournamentTitle="كأس"
       loggedIn={false}
       myVoteCandidateId={null}
     />,
@@ -79,6 +79,17 @@ describe("MatchResult by match shape", () => {
     expect(screen.getByText(/سالم ولد علي/)).toBeDefined();
   });
 
+  it("draws the crests at the largest step the scale carries", () => {
+    show(true);
+
+    const biggest = Math.max(...Object.values(MATCH_TEAMS_SIZES).map((step) => step.logo));
+    const crests = [...document.querySelectorAll("span.rounded-full, img.rounded-full")].filter(
+      (el) => (el.getAttribute("style") ?? "").includes(`width: ${biggest}px`),
+    );
+
+    expect(crests).toHaveLength(2);
+  });
+
   it("keeps a board result to the score alone", () => {
     show(false);
 
@@ -99,18 +110,19 @@ describe("a tournament that hides the scorers and the red cards", () => {
         allMatches={[match()]}
         football
         showScorersAndCards={showScorersAndCards}
-        tournamentTitle="كأس"
         loggedIn={false}
         myVoteCandidateId={null}
       />,
     );
-    const card = container.cloneNode(true) as HTMLElement;
-    card.querySelector("[style*='-9999px']")?.remove();
-    return card;
+    return container.cloneNode(true) as HTMLElement;
   }
 
   it("names the scorer and his minute while the detail is on", () => {
     expect(onCard(true).textContent).toContain("12'");
+  });
+
+  it("carries nothing to download the result as a picture", () => {
+    expect(onCard(true).textContent).not.toContain("مشاركة");
   });
 
   it("drops the scorer once the detail is off, keeping the score", () => {
@@ -142,26 +154,92 @@ describe("a tournament that hides the scorers and the red cards", () => {
     expect(card.querySelector(".space-y-3")).toBeNull();
   });
 
-  it("leaves the shared image its full detail", () => {
+  it("shows the detail when the tournament never set it", () => {
+    expect(onCard(undefined).textContent).toContain("12'");
+  });
+});
+
+describe("the vote for the man of the match", () => {
+  function withVote(status: "OPEN" | "CLOSED", over: Partial<DecidedMatch> = {}) {
     rtlCleanup();
-    const { container } = render(
+    render(
       <MatchResult
-        match={match()}
+        match={{
+          ...match(),
+          ...over,
+          mvpVote: {
+            id: "v1",
+            status,
+            closesAt: new Date(Date.now() + 3600_000),
+            candidates: [
+              { id: "c1", member: { id: "p1", fullName: "أحمد ولد محمد" }, _count: { votes: 3 } },
+            ],
+          },
+        }}
         day={{ round: null, venue: null }}
         allMatches={[match()]}
         football
-        showScorersAndCards={false}
-        tournamentTitle="كأس"
-        loggedIn={false}
+        loggedIn
+        myVoteCandidateId={null}
+      />,
+    );
+  }
+
+  it("folds the vote into the section rather than the body of the card", () => {
+    withVote("OPEN");
+
+    expect(screen.queryByText(/صوّت لأفضل لاعب/)).toBeNull();
+
+    fireEvent.click(screen.getByText(/مجريات المباراة/));
+    expect(screen.getByText(/صوّت لأفضل لاعب/)).toBeDefined();
+  });
+
+  it("says on the folded section that the vote is open", () => {
+    withVote("OPEN");
+
+    expect(screen.getByText(voteTexts.open)).toBeDefined();
+  });
+
+  it("says nothing on the section once the vote has closed", () => {
+    withVote("CLOSED");
+
+    expect(screen.queryByText(voteTexts.open)).toBeNull();
+
+    fireEvent.click(screen.getByText(/مجريات المباراة/));
+    expect(screen.getByText(/نتيجة تصويت أفضل لاعب/)).toBeDefined();
+  });
+
+  it("offers the section for a vote on a match with no events at all", () => {
+    withVote("OPEN", { goals: [], bookings: [], manOfTheMatch: null });
+
+    expect(screen.getByText(/مجريات المباراة/)).toBeDefined();
+    fireEvent.click(screen.getByText(/مجريات المباراة/));
+    expect(screen.getByText(/صوّت لأفضل لاعب/)).toBeDefined();
+  });
+
+  it("keeps the vote off a match that is not football", () => {
+    rtlCleanup();
+    render(
+      <MatchResult
+        match={{
+          ...match(),
+          mvpVote: {
+            id: "v1",
+            status: "OPEN",
+            closesAt: new Date(Date.now() + 3600_000),
+            candidates: [],
+          },
+        }}
+        day={{ round: null, venue: null }}
+        allMatches={[match()]}
+        football={false}
+        loggedIn
         myVoteCandidateId={null}
       />,
     );
 
-    expect(container.querySelector("[style*='-9999px']")?.textContent).toContain("12'");
-  });
-
-  it("shows the detail when the tournament never set it", () => {
-    expect(onCard(undefined).textContent).toContain("12'");
+    expect(screen.queryByText(voteTexts.open)).toBeNull();
+    expect(screen.queryByText(/مجريات المباراة/)).toBeNull();
   });
 });
 
@@ -177,7 +255,6 @@ describe("a match won by forfeit", () => {
         day={{ round: null, venue: null }}
         allMatches={[match()]}
         football
-        tournamentTitle="كأس"
         loggedIn={false}
         myVoteCandidateId={null}
       />,

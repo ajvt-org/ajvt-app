@@ -82,6 +82,16 @@ describe("the account behind a donation", () => {
     expect(donation.userId).toBe(user.id);
   });
 
+  it("stores no name of its own on a donation the giver sent themselves", async () => {
+    const { user, member } = await aMember("22110099", "محمد ولد أحمد");
+    await signInAs(user);
+
+    await give(member.userId);
+
+    const donation = await prisma.donation.findFirstOrThrow({ where: { userId: member.userId } });
+    expect(donation.donorName).toBeNull();
+  });
+
   it("carries the account onto the mirrored payment", async () => {
     const { user, member } = await aMember("22110022", "أحمد سالم");
     await signInAs(user);
@@ -111,20 +121,27 @@ describe("the account behind a donation", () => {
     expect(after.userId).not.toBe(first.user.id);
   });
 
-  it("adopts the member's name onto the gift when an admin links it", async () => {
+  it("clears the typed name and phone when an admin links the gift", async () => {
     const { user } = await aMember("22110133", "سالم ولد محمد");
     const gift = await prisma.donation.create({
-      data: { donorName: "ابو", amount: 5000, source: "PUBLIC", status: "ACTIVE" },
+      data: {
+        donorName: "ابو",
+        donorPhone: "22110044",
+        amount: 5000,
+        source: "PUBLIC",
+        status: "ACTIVE",
+      },
     });
     await signInAsAdmin(await createAdmin());
 
     await UPDATE(patch(`/api/admin/donations/${gift.id}`, { userId: user.id }), withId(gift.id));
 
     const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
-    expect(after.donorName).toBe("سالم ولد محمد");
+    expect(after.donorName).toBeNull();
+    expect(after.donorPhone).toBeNull();
   });
 
-  it("carries the adopted name onto the mirrored payment", async () => {
+  it("clears them on the mirrored payment too", async () => {
     const { user } = await aMember("22110144", "سالم ولد محمد");
     const gift = await prisma.donation.create({
       data: { donorName: "ابو", amount: 5000, source: "PUBLIC", status: "ACTIVE" },
@@ -134,11 +151,11 @@ describe("the account behind a donation", () => {
     await UPDATE(patch(`/api/admin/donations/${gift.id}`, { userId: user.id }), withId(gift.id));
 
     const payment = await prisma.payment.findUniqueOrThrow({ where: { id: gift.id } });
-    expect(payment.donorName).toBe("سالم ولد محمد");
+    expect(payment.donorName).toBeNull();
   });
 
-  it("leaves the typed name alone when the account carries no name", async () => {
-    const user = await prisma.user.create({ data: { phone: "22110155" } });
+  it("keeps the name it cleared in the action log", async () => {
+    const { user } = await aMember("22110155", "سالم ولد محمد");
     const gift = await prisma.donation.create({
       data: { donorName: "ابو", amount: 5000, source: "PUBLIC", status: "ACTIVE" },
     });
@@ -146,31 +163,44 @@ describe("the account behind a donation", () => {
 
     await UPDATE(patch(`/api/admin/donations/${gift.id}`, { userId: user.id }), withId(gift.id));
 
-    const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
-    expect(after.donorName).toBe("ابو");
+    const logged = await prisma.auditLog.findFirstOrThrow({
+      where: { targetId: gift.id, action: "LINK_DONATION_MEMBER" },
+    });
+    expect((logged.before as Record<string, unknown>).donorName).toBe("ابو");
+    expect((logged.after as Record<string, unknown>).donorName).toBeNull();
   });
 
-  it("leaves the name alone when the account is unlinked", async () => {
+  it("reads the account name rather than a stored one on a linked gift", async () => {
     const { user } = await aMember("22110166", "سالم ولد محمد");
     const gift = await prisma.donation.create({
-      data: {
-        donorName: "سالم ولد محمد",
-        amount: 5000,
-        source: "PUBLIC",
-        status: "ACTIVE",
-        userId: user.id,
-      },
+      data: { donorName: "ابو", amount: 5000, source: "PUBLIC", status: "ACTIVE" },
+    });
+    await signInAsAdmin(await createAdmin());
+
+    const res = await UPDATE(
+      patch(`/api/admin/donations/${gift.id}`, { userId: user.id }),
+      withId(gift.id),
+    );
+
+    expect((await res.json()).donation.memberName).toBe("سالم ولد محمد");
+  });
+
+  it("leaves an unlinked gift with no name, which is the unknown giver", async () => {
+    const { user } = await aMember("22110177", "سالم ولد محمد");
+    const gift = await prisma.donation.create({
+      data: { amount: 5000, source: "PUBLIC", status: "ACTIVE", userId: user.id },
     });
     await signInAsAdmin(await createAdmin());
 
     await UPDATE(patch(`/api/admin/donations/${gift.id}`, { userId: null }), withId(gift.id));
 
     const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
-    expect(after.donorName).toBe("سالم ولد محمد");
+    expect(after.userId).toBeNull();
+    expect(after.donorName).toBeNull();
   });
 
-  it("lets a name sent with the link win over the one on the account", async () => {
-    const { user } = await aMember("22110177", "سالم ولد محمد");
+  it("refuses to store a name sent alongside a link", async () => {
+    const { user } = await aMember("22110188", "سالم ولد محمد");
     const gift = await prisma.donation.create({
       data: { donorName: "ابو", amount: 5000, source: "PUBLIC", status: "ACTIVE" },
     });
@@ -182,7 +212,7 @@ describe("the account behind a donation", () => {
     );
 
     const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
-    expect(after.donorName).toBe("أبوبكر");
+    expect(after.donorName).toBeNull();
   });
 
   it("refuses an account that does not exist", async () => {

@@ -7,17 +7,19 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
+import { readBankReference } from "@/lib/bankReference";
 import { donationCreateSchema } from "./schema";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { members } from "@/lib/messages";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import { viewerOf } from "@/lib/supportViewer";
-import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
 import { money } from "@/lib/money";
 
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
+  const viewer = viewerOf(session);
   const {
     donorName,
     donorPhone,
@@ -26,6 +28,8 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     donorPhoto,
     paymentMethod,
     accountId,
+    bankReference,
+    anonymous,
     activityId,
     competitionId,
     userId,
@@ -43,14 +47,15 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
   const donation = await prisma.donation.create({
     include: { user: { select: DONOR_ACCOUNT_SELECT } },
     data: {
-      anonymous: false,
-      donorName,
+      anonymous: anonymous ?? false,
+      donorName: donorName ?? null,
       donorPhone: donorPhone ?? null,
       amount,
       proof: proof ?? null,
       donorPhoto: donorPhoto ?? null,
       paymentMethod: paymentMethod || null,
       accountId: accountId || null,
+      bankReference: readBankReference(bankReference) || null,
       activityId: destination.activityId,
       competitionId: destination.competitionId,
       userId: giver?.id ?? null,
@@ -62,16 +67,19 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
   await logAction(
     session.username,
     "CREATE_DONATION_MANUAL",
-    logLabelFor(donation, `${donorName} — ${money(amount)}`),
+    logLabelFor(donation, `${donorNameOnRecord(donation, viewer)} — ${money(amount)}`),
     {
       ...auditContext(session, req),
       targetType: "Donation",
       targetId: donation.id,
       after: logSnapshotFor(donation, {
+        anonymous: donation.anonymous,
         donorName: donation.donorName,
         donorPhone: donation.donorPhone,
         amount: donation.amount,
         paymentMethod: donation.paymentMethod,
+        accountId: donation.accountId,
+        bankReference: donation.bankReference,
         status: donation.status,
         source: donation.source,
         userId: donation.userId,
@@ -79,8 +87,5 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     },
   );
 
-  return NextResponse.json(
-    { donation: donationView(donation, viewerOf(session)) },
-    { status: 201 },
-  );
+  return NextResponse.json({ donation: donationView(donation, viewer) }, { status: 201 });
 });

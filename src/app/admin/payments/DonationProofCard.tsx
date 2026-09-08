@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Notice from "@/components/Notice";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import { donationActions } from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
@@ -75,8 +75,10 @@ export default function DonationProofCard({
           proof={proof}
           destinations={destinations}
           linkedMember={linkedMember}
+          members={members}
+          busy={busy}
           onCancel={() => setPanel(null)}
-          onRelink={() => setPanel("link")}
+          onLink={onLink}
           onSaved={(changes) => {
             onPatch(changes);
             setPanel(null);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Notice from "@/components/Notice";
-import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import MemberProofButton from "@/components/admin/MemberProofButton";
 import MemberProofPanel from "@/components/admin/MemberProofPanel";
 import VerbButton from "@/components/admin/VerbButton";

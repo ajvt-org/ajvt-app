@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ManualDonationDialog from "./ManualDonationDialog";
-import { manualDonation, memberPicker } from "@/lib/texts";
+import { bankReference, manualDonation, memberPicker, paymentAccountPicker } from "@/lib/texts";
 import { members, money } from "@/lib/messages";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { MemberOption } from "./paymentTypes";
@@ -107,8 +107,8 @@ describe("recording a support payment by hand", () => {
     expect(bodyOf(fetchMock).userId).toBe("u1");
   });
 
-  it("takes the name from the account instead of asking for one", async () => {
-    const fetchMock = mockPost();
+  it("stops asking for a name and a phone once an account is picked", async () => {
+    mockPost();
     show();
     await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
 
@@ -116,15 +116,12 @@ describe("recording a support payment by hand", () => {
     await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "ابو");
     await userEvent.click(screen.getByText("أبوبكر لمرابط"));
 
-    const field = screen.getByLabelText(/اسم المتبرع/) as HTMLInputElement;
-    expect(field.value).toBe("أبوبكر لمرابط");
-    expect(field.readOnly).toBe(true);
-
-    await userEvent.click(screen.getByText(manualDonation.submit));
-    expect(bodyOf(fetchMock).donorName).toBe("أبوبكر لمرابط");
+    expect(screen.queryByLabelText(/اسم المتبرع/)).toBeNull();
+    expect(screen.queryByLabelText(/رقم الهاتف/)).toBeNull();
+    expect(screen.getByText(manualDonation.contactFromAccount)).toBeTruthy();
   });
 
-  it("lets the account name win over a name already typed", async () => {
+  it("records no name and no phone of its own against a picked account", async () => {
     const fetchMock = mockPost();
     show();
     await fillIn();
@@ -134,7 +131,8 @@ describe("recording a support payment by hand", () => {
     await userEvent.click(screen.getByText("أبوبكر لمرابط"));
     await userEvent.click(screen.getByText(manualDonation.submit));
 
-    expect(bodyOf(fetchMock).donorName).toBe("أبوبكر لمرابط");
+    expect(bodyOf(fetchMock).donorName).toBeNull();
+    expect(bodyOf(fetchMock).donorPhone).toBeNull();
   });
 
   it("gives the typed name back when the account is cleared", async () => {
@@ -150,6 +148,19 @@ describe("recording a support payment by hand", () => {
     const field = screen.getByLabelText(/اسم المتبرع/) as HTMLInputElement;
     expect(field.value).toBe("ابو");
     expect(field.readOnly).toBe(false);
+  });
+
+  it("keeps that name off the record when the account is picked again", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "ابو");
+    await userEvent.click(screen.getByText("أبوبكر لمرابط"));
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).donorName).toBeNull();
   });
 
   it("confirms the person who was picked, not the first of the list", async () => {
@@ -261,15 +272,100 @@ describe("recording a support payment by hand", () => {
     expect(await screen.findByText(members.notFound)).toBeTruthy();
   });
 
-  it("refuses a name that is only spaces", async () => {
-    mockPost();
+  it("records a donation whose giver is not known, with no name at all", async () => {
+    const fetchMock = mockPost();
+    show();
+    await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).donorName).toBeNull();
+  });
+
+  it("takes a name that is only spaces as no name at all", async () => {
+    const fetchMock = mockPost();
     show();
     await userEvent.type(screen.getByLabelText(/اسم المتبرع/), "   ");
     await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
 
     await userEvent.click(screen.getByText(manualDonation.submit));
 
-    expect(screen.getByText(money.nameRequired)).toBeTruthy();
+    expect(bodyOf(fetchMock).donorName).toBeNull();
+  });
+
+  it("refuses the display constant typed in as a name", async () => {
+    mockPost();
+    show();
+    await userEvent.type(screen.getByLabelText(/اسم المتبرع/), money.anonymousDonor);
+    await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(screen.getByText(money.nameIsThePlaceholder)).toBeTruthy();
+  });
+
+  it("records the operation number an admin typed", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.type(screen.getByLabelText(bankReference.label), "TR10000000001");
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).bankReference).toBe("TR10000000001");
+  });
+
+  it("sends no operation number when none was typed", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).bankReference).toBeNull();
+  });
+
+  it("records a giver the admin knows but does not publish", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByLabelText(manualDonation.anonymous));
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).anonymous).toBe(true);
+    expect(bodyOf(fetchMock).donorName).toBe("ابو");
+  });
+
+  it("publishes the giver unless the admin says otherwise", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).anonymous).toBe(false);
+  });
+
+  it("names every field it draws", async () => {
+    mockPost();
+    show([ACCOUNT], DESTINATIONS);
+
+    await screen.findByRole("option", { name: "بنكيلي" });
+    await userEvent.selectOptions(screen.getByLabelText(manualDonation.paymentMethod), "بنكيلي");
+
+    for (const label of [
+      manualDonation.donorName,
+      manualDonation.phone,
+      manualDonation.amount,
+      manualDonation.paymentMethod,
+      paymentAccountPicker.label,
+      bankReference.label,
+      manualDonation.destination,
+      manualDonation.anonymous,
+    ]) {
+      expect(screen.getByLabelText(label)).toBeDefined();
+    }
   });
 
   it("hands back the proof named the way the server named it", async () => {

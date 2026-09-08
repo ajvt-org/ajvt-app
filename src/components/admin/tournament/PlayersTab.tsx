@@ -7,7 +7,7 @@ import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ErrorNotice from "@/components/form/ErrorNotice";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";

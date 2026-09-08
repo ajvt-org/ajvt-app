@@ -5,7 +5,6 @@ import Scoreline from "./Scoreline";
 import type { DecidedMatch } from "./publicTypes";
 import { CHESS_CONFIG } from "@tests/ui/ladders";
 
-vi.mock("./ShareResultButton", () => ({ default: () => null }));
 vi.mock("./MvpVoteWidget", () => ({ default: () => null }));
 
 const MATCH: DecidedMatch = {
@@ -94,7 +93,6 @@ function show(match: DecidedMatch = MATCH) {
       football={false}
       levels={CHESS_CONFIG.ladder}
       showScorersAndCards={false}
-      tournamentTitle="بطولة الشطرنج"
       loggedIn={false}
       entrant="player"
       manOfTheMatchTeam={null}

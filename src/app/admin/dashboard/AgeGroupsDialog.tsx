@@ -7,7 +7,7 @@ import OrphanAgeGroups from "./OrphanAgeGroups";
 import PendingAgeGroups from "./PendingAgeGroups";
 import MoveAgeGroupMembers from "./MoveAgeGroupMembers";
 import AgeGroupTotal from "./AgeGroupTotal";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";

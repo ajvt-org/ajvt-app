@@ -4,7 +4,7 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { lists, villagesDialog } from "@/lib/texts";
 import { OTHER_VILLAGE, VILLAGE_NAME_MAX } from "@/lib/villages";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 import VillageRow from "./VillageRow";

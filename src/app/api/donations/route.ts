@@ -54,28 +54,23 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   }
 
   let selfUserId: string | null = null;
-  let selfName: string | null = null;
   let selfAnonymous = false;
   if (typeof userIdRaw === "string" && userIdRaw.trim()) {
     const session = await getUserSession();
     if (!session) return NextResponse.json({ error: common.unauthorized }, { status: 401 });
     const { userId } = session as { userId: string };
     const membership = userIdRaw.trim() === userId ? await currentMembership(prisma, userId) : null;
-    const account = membership
-      ? await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true } })
-      : null;
     const { membershipYear } = await getAppSettings();
     const standing = membershipState(asMembershipState(membership), membershipYear);
     if (!membership || !holdsMembership(standing)) {
       return NextResponse.json({ error: members.invalidMember }, { status: 403 });
     }
     selfUserId = userId;
-    selfName = account?.fullName ?? null;
     selfAnonymous = formData.get("anonymous") === "true";
   }
 
   let anonymous = selfAnonymous;
-  let donorName: string | null = selfAnonymous ? null : selfName;
+  let donorName: string | null = null;
   if (!selfUserId) {
     const anonymousRaw = formData.get("anonymous");
     const choice = anonymousRaw === "true" ? true : anonymousRaw === "false" ? false : null;
@@ -85,7 +80,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       return NextResponse.json({ error: choiceError ?? money.nameChoiceRequired }, { status: 400 });
     }
     anonymous = choice;
-    donorName = donorNameFor(choice, typed);
+    donorName = donorNameFor(typed);
   }
 
   const n = Number(amountRaw);

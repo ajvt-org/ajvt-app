@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
 import { deleteMember as texts } from "@/lib/texts";
-import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 
 export default function DeleteMemberCard({
   userId,

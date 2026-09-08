@@ -104,7 +104,7 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: activities.registrationNotFound }, { status: 404 });
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const { updated, kept } = await prisma.$transaction(async (tx) => {
       const row = await tx.activityRegistration.update({
         where: { id: registrationId },
         data: {
@@ -112,9 +112,12 @@ export const PATCH = withRoute(
           rejectionReason: status === "REJECTED" ? reason?.trim() || null : null,
         },
       });
-      if (status === "ACTIVE") await seatRegistrant(tx, registrationId);
-      else await unseatRegistrant(tx, registration.activityId, registration.userId);
-      return row;
+      if (status === "ACTIVE") {
+        await seatRegistrant(tx, registrationId);
+        return { updated: row, kept: 0 };
+      }
+      const released = await unseatRegistrant(tx, registration.activityId, registration.userId);
+      return { updated: row, kept: released.kept };
     });
 
     await logAction(
@@ -142,7 +145,7 @@ export const PATCH = withRoute(
       ).catch((err) => logger.error("registration.review.push.error", err));
     }
 
-    return NextResponse.json({ registration: updated });
+    return NextResponse.json({ registration: updated, keptTeamPlace: kept > 0 });
   },
 );
 
@@ -162,9 +165,12 @@ export const DELETE = withRoute(
         activity: { select: { title: true } },
       },
     });
-    if (!existing) return NextResponse.json({ ok: true });
+    if (!existing) return NextResponse.json({ ok: true, keptTeamPlace: false });
 
-    await prisma.activityRegistration.delete({ where: { id: existing.id } });
+    const released = await prisma.$transaction(async (tx) => {
+      await tx.activityRegistration.delete({ where: { id: existing.id } });
+      return unseatRegistrant(tx, id, userId);
+    });
     await logAction(
       session.username,
       "ADMIN_UNREGISTER_ACTIVITY",
@@ -174,9 +180,10 @@ export const DELETE = withRoute(
         targetType: "ActivityRegistration",
         targetId: existing.id,
         before: { userId, activityId: id, status: existing.status },
+        after: { teamPlacesRemoved: released.removed, teamPlacesKept: released.kept },
       },
     );
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, keptTeamPlace: released.kept > 0 });
   },
 );

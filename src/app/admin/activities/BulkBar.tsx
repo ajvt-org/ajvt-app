@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { activityRow as texts } from "@/lib/texts";
 
 export default function BulkBar({

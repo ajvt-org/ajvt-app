@@ -4,8 +4,6 @@ import MatchMeta from "./matchCard/MatchMeta";
 import MatchEvents from "./matchCard/MatchEvents";
 import MatchTimeline from "./matchCard/MatchTimeline";
 import MatchCardHead from "./matchCard/MatchCardHead";
-import MatchCardFooter from "./matchCard/MatchCardFooter";
-import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline, withoutScorersAndCards } from "@/lib/matchEvents";
@@ -14,10 +12,9 @@ import { isVoteClosed } from "@/lib/mvpVote";
 import { formatMatchTime } from "@/lib/clubTime";
 import type { DecidedMatch, PublicMatch } from "./publicTypes";
 import type { EntrantKind } from "@/lib/entrant";
-import { matchDisplay } from "@/lib/texts";
+import { matchDisplay, mvpVote as voteTexts } from "@/lib/texts";
 import SeriesScoreline from "@/components/admin/tournament/SeriesScoreline";
 import MatchUnits from "./MatchUnits";
-import { halvesText } from "@/lib/halfPoints";
 import { countedUnits, ladderOf, type LevelRow } from "@/lib/matchLevels";
 
 export default function MatchResult({
@@ -27,7 +24,6 @@ export default function MatchResult({
   football = true,
   levels = [],
   showScorersAndCards = true,
-  tournamentTitle,
   loggedIn,
   myVoteCandidateId,
   manOfTheMatchTeam = null,
@@ -39,7 +35,6 @@ export default function MatchResult({
   football?: boolean;
   levels?: LevelRow[];
   showScorersAndCards?: boolean;
-  tournamentTitle: string;
   loggedIn: boolean;
   myVoteCandidateId: string | null;
   manOfTheMatchTeam?: string | null;
@@ -64,9 +59,16 @@ export default function MatchResult({
     manOfTheMatchTeam,
     hideGoalsOfTeamId,
   });
+  const vote = football && match.mvpVote ? match.mvpVote : null;
+  const voteOpen =
+    vote !== null &&
+    !isVoteClosed({
+      status: vote.status as "OPEN" | "CLOSED",
+      closesAt: vote.closesAt,
+    });
 
   return (
-    <div className="card p-4 space-y-2">
+    <div className="card p-4 space-y-1.5">
       <MatchCardHead time={match.matchDate ? formatMatchTime(match.matchDate) : null}>
         <MatchMeta
           round={round}
@@ -93,7 +95,7 @@ export default function MatchResult({
           photo: match.secondTeam.photo,
         }}
         score={football ? { home: match.homeScore, away: match.awayScore } : null}
-        size="md"
+        size="xl"
         layout="stacked"
         entrant={entrant}
       />
@@ -128,7 +130,23 @@ export default function MatchResult({
           <MatchTimeline
             entries={matchTimeline({ ...match, homeTeamId: match.firstTeam.id, hideGoalsOfTeamId })}
             teams={{ home: match.firstTeam.name, away: match.secondTeam.name }}
-          />
+            badge={voteOpen ? voteTexts.open : null}
+          >
+            {vote && (
+              <MvpVoteWidget
+                matchId={match.id}
+                status={voteOpen ? "OPEN" : "CLOSED"}
+                closesAt={vote.closesAt}
+                candidates={vote.candidates.map((c) => ({
+                  id: c.id,
+                  fullName: c.member.fullName,
+                  voteCount: c._count.votes,
+                }))}
+                loggedIn={loggedIn}
+                initialMyVoteCandidateId={myVoteCandidateId}
+              />
+            )}
+          </MatchTimeline>
         </>
       )}
 
@@ -147,74 +165,6 @@ export default function MatchResult({
           ))}
         </p>
       )}
-
-      {football && match.mvpVote && (
-        <MvpVoteWidget
-          matchId={match.id}
-          status={
-            isVoteClosed({
-              status: match.mvpVote.status as "OPEN" | "CLOSED",
-              closesAt: match.mvpVote.closesAt,
-            })
-              ? "CLOSED"
-              : "OPEN"
-          }
-          closesAt={match.mvpVote.closesAt}
-          candidates={match.mvpVote.candidates.map((c) => ({
-            id: c.id,
-            fullName: c.member.fullName,
-            voteCount: c._count.votes,
-          }))}
-          loggedIn={loggedIn}
-          initialMyVoteCandidateId={myVoteCandidateId}
-        />
-      )}
-
-      <MatchCardFooter>
-        <ShareResultButton
-          homeTeamName={match.firstTeam.name}
-          awayTeamName={match.secondTeam.name}
-          homeTeamLogo={match.firstTeam.logo}
-          awayTeamLogo={match.secondTeam.logo}
-          homeTeamPhoto={match.firstTeam.photo}
-          awayTeamPhoto={match.secondTeam.photo}
-          entrant={entrant}
-          seriesLine={
-            match.series ? halvesText(match.series.sideATotal, match.series.perUnit) : null
-          }
-          seriesAwayLine={
-            match.series ? halvesText(match.series.sideBTotal, match.series.perUnit) : null
-          }
-          homeScore={match.homeScore ?? 0}
-          awayScore={match.awayScore ?? 0}
-          round={match.round}
-          tournamentTitle={tournamentTitle}
-          goals={(football ? match.goals : [])
-            .filter((g) => g.teamId !== hideGoalsOfTeamId)
-            .map((g) => ({
-              memberId: g.member?.id ?? null,
-              fullName: g.member?.fullName ?? matchDisplay.unknownScorer,
-              photo: g.member?.photo ?? null,
-              count: g.count,
-              minute: g.minute,
-              kind: g.kind,
-              isHome: g.teamId === match.firstTeam.id,
-            }))}
-          manOfTheMatch={
-            football && match.manOfTheMatch
-              ? { ...match.manOfTheMatch, team: manOfTheMatchTeam }
-              : null
-          }
-          bookings={(football ? match.bookings : []).map((b) => ({
-            memberId: b.member.id,
-            fullName: b.member.fullName,
-            photo: b.member.photo,
-            cardType: b.cardType as "YELLOW" | "RED",
-            minute: b.minute,
-            isHome: b.teamId === match.firstTeam.id,
-          }))}
-        />
-      </MatchCardFooter>
     </div>
   );
 }

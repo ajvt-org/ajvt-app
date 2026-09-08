@@ -2,7 +2,13 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DonationEditForm from "./DonationEditForm";
-import { bankReference, donationEdit, paymentAccountPicker } from "@/lib/texts";
+import {
+  bankReference,
+  donationEdit,
+  manualDonation,
+  memberPicker,
+  paymentAccountPicker,
+} from "@/lib/texts";
 import { money } from "@/lib/messages";
 import type { MemberOption, Proof } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
@@ -70,20 +76,30 @@ function mockPatch(donation: Record<string, unknown> = {}) {
   return fetchMock;
 }
 
+const SECOND: MemberOption = {
+  ...ACCOUNT,
+  id: "m2",
+  userId: "u2",
+  fullName: "الداه الحسن",
+  memberNumber: "AJVT-2026-0062",
+};
+
 function show(over: Partial<Proof> = {}, linkedMember: MemberOption | undefined = ACCOUNT) {
   const onSaved = vi.fn();
-  const onRelink = vi.fn();
+  const onLink = vi.fn();
   render(
     <DonationEditForm
       proof={proofOf(over)}
       destinations={[]}
       linkedMember={linkedMember}
+      members={[ACCOUNT, SECOND]}
+      busy={false}
       onCancel={vi.fn()}
-      onRelink={onRelink}
+      onLink={onLink}
       onSaved={onSaved}
     />,
   );
-  return { onSaved, onRelink };
+  return { onSaved, onLink };
 }
 
 function bodyOf(fetchMock: ReturnType<typeof mockPatch>) {
@@ -96,16 +112,31 @@ afterEach(() => {
 });
 
 describe("editing a support payment", () => {
-  it("lets the name be corrected even though a member is linked", async () => {
+  it("asks for no name and no phone once a member is linked", () => {
+    show({ userId: "u1" });
+
+    expect(screen.queryByLabelText(donationEdit.donorName)).toBeNull();
+    expect(screen.queryByLabelText(donationEdit.phone)).toBeNull();
+    expect(screen.getByText(donationEdit.contactFromAccount)).toBeTruthy();
+  });
+
+  it("sends neither of them when saving a linked payment", async () => {
     const fetchMock = mockPatch();
     show({ userId: "u1" });
 
-    const field = screen.getByLabelText(donationEdit.donorName);
-    await userEvent.clear(field);
-    await userEvent.type(field, "أبوبكر");
     await userEvent.click(screen.getByText(donationEdit.save));
 
-    expect(bodyOf(fetchMock).donorName).toBe("أبوبكر");
+    const body = bodyOf(fetchMock);
+    expect(body).not.toHaveProperty("donorName");
+    expect(body).not.toHaveProperty("donorPhone");
+  });
+
+  it("still asks for a name and a phone when nothing is linked", () => {
+    show({ userId: null }, undefined);
+
+    expect(screen.getByLabelText(donationEdit.donorName)).toBeTruthy();
+    expect(screen.getByLabelText(donationEdit.phone)).toBeTruthy();
+    expect(screen.queryByText(donationEdit.contactFromAccount)).toBeNull();
   });
 
   it("shows the account name as the one people will see", () => {
@@ -115,15 +146,27 @@ describe("editing a support payment", () => {
     expect(screen.getAllByText("أبوبكر لمرابط").length).toBeGreaterThan(0);
   });
 
-  it("asks for a name only when nothing is linked", async () => {
-    mockPatch();
+  it("records a donation whose giver is not known, with no name at all", async () => {
+    const fetchMock = mockPatch();
     show({ userId: null }, undefined);
 
     const field = screen.getByLabelText(donationEdit.donorName);
     await userEvent.clear(field);
     await userEvent.click(screen.getByText(donationEdit.save));
 
-    expect(screen.getByText(money.nameRequired)).toBeTruthy();
+    await waitFor(() => expect(bodyOf(fetchMock).donorName).toBeNull());
+  });
+
+  it("refuses the display constant typed in as a name", async () => {
+    mockPatch();
+    show({ userId: null }, undefined);
+
+    const field = screen.getByLabelText(donationEdit.donorName);
+    await userEvent.clear(field);
+    await userEvent.type(field, money.anonymousDonor);
+    await userEvent.click(screen.getByText(donationEdit.save));
+
+    expect(screen.getByText(money.nameIsThePlaceholder)).toBeTruthy();
   });
 
   it("keeps a linked payment saveable with no typed name at all", async () => {
@@ -132,7 +175,7 @@ describe("editing a support payment", () => {
 
     await userEvent.click(screen.getByText(donationEdit.save));
 
-    expect(bodyOf(fetchMock).donorName).toBeNull();
+    expect(bodyOf(fetchMock).amount).toBe(2000);
   });
 
   it("hides the giver behind فاعل خير once the toggle is on", async () => {
@@ -166,12 +209,54 @@ describe("editing a support payment", () => {
     expect(screen.getByText(money.amountInvalid)).toBeTruthy();
   });
 
-  it("opens the picker to change a link from inside the form", async () => {
-    const { onRelink } = show({ userId: "u1" });
+  it("opens the picker inside the form and keeps what was typed", async () => {
+    show({ userId: "u1" });
 
+    const amount = screen.getByLabelText(donationEdit.amount);
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "4500");
     await userEvent.click(screen.getByText(donationEdit.changeLink));
 
-    expect(onRelink).toHaveBeenCalled();
+    expect(screen.getByPlaceholderText(memberPicker.search)).toBeDefined();
+    expect((screen.getByLabelText(donationEdit.amount) as HTMLInputElement).value).toBe("4500");
+  });
+
+  it("links the member picked and returns to the form still holding the edit", async () => {
+    const { onLink } = show({ userId: "u1" });
+
+    const amount = screen.getByLabelText(donationEdit.amount);
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "4500");
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "الداه");
+    await userEvent.click(screen.getByText("الداه الحسن"));
+
+    expect(onLink).toHaveBeenCalledWith("u2");
+    expect(screen.queryByPlaceholderText(memberPicker.search)).toBeNull();
+    expect((screen.getByLabelText(donationEdit.amount) as HTMLInputElement).value).toBe("4500");
+  });
+
+  it("saves nothing of its own when a member is picked", async () => {
+    const fetchMock = mockPatch();
+    show({ userId: "u1" });
+
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "الداه");
+    await userEvent.click(screen.getByText("الداه الحسن"));
+
+    const wrote = fetchMock.mock.calls.some(([url]) =>
+      String(url).startsWith("/api/admin/donations/"),
+    );
+    expect(wrote).toBe(false);
+  });
+
+  it("closes the picker again when the link button is pressed twice", async () => {
+    show({ userId: "u1" });
+
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+
+    expect(screen.queryByPlaceholderText(memberPicker.search)).toBeNull();
   });
 
   it("shows who the payment is linked to, not just their name", () => {
@@ -181,12 +266,42 @@ describe("editing a support payment", () => {
   });
 });
 
+describe("what the fields of the donation form are called", () => {
+  it("names every one of them, filled or empty", async () => {
+    mockPatch();
+    show({ userId: null, paymentMethod: "بنكيلي" }, undefined);
+
+    await screen.findByLabelText(paymentAccountPicker.label);
+    for (const label of [
+      donationEdit.donorName,
+      donationEdit.phone,
+      donationEdit.amount,
+      donationEdit.paymentMethod,
+      paymentAccountPicker.label,
+      bankReference.label,
+      donationEdit.destination,
+      donationEdit.anonymous,
+    ]) {
+      expect(screen.getByLabelText(label)).toBeDefined();
+    }
+  });
+
+  it("calls a field the same thing the create dialog calls it", () => {
+    expect(donationEdit.donorName).toBe(manualDonation.donorName);
+    expect(donationEdit.phone).toBe(manualDonation.phone);
+    expect(donationEdit.amount).toBe(manualDonation.amount);
+    expect(donationEdit.paymentMethod).toBe(manualDonation.paymentMethod);
+    expect(donationEdit.destination).toBe(manualDonation.destination);
+    expect(donationEdit.anonymous).toBe(manualDonation.anonymous);
+  });
+});
+
 describe("a method that is no longer offered", () => {
   it("stays on the record an admin is editing", async () => {
     mockPatch();
     show({ paymentMethod: RETIRED });
 
-    const select = await screen.findByLabelText(donationEdit.methodUnset);
+    const select = await screen.findByLabelText(donationEdit.paymentMethod);
     expect(within(select).getByText(RETIRED)).toBeDefined();
     expect((select as HTMLSelectElement).value).toBe(RETIRED);
   });
@@ -205,7 +320,7 @@ describe("the number a payment landed in", () => {
     mockPatch();
     show({ paymentMethod: "نقداً" });
 
-    await screen.findByLabelText(donationEdit.methodUnset);
+    await screen.findByLabelText(donationEdit.paymentMethod);
     expect(screen.queryByLabelText(paymentAccountPicker.label)).toBeNull();
   });
 
@@ -238,8 +353,10 @@ describe("the number a payment landed in", () => {
         }}
         destinations={[]}
         linkedMember={ACCOUNT}
+        members={[ACCOUNT]}
+        busy={false}
         onCancel={vi.fn()}
-        onRelink={vi.fn()}
+        onLink={vi.fn()}
         onSaved={vi.fn()}
       />,
     );
@@ -257,7 +374,7 @@ describe("the number a payment landed in", () => {
     fireEvent.change(picker, { target: { value: "a1" } });
     expect(picker.value).toBe("a1");
 
-    fireEvent.change(screen.getByLabelText(donationEdit.methodUnset), {
+    fireEvent.change(screen.getByLabelText(donationEdit.paymentMethod), {
       target: { value: "مصرفي" },
     });
 

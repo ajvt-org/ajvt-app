@@ -62,7 +62,6 @@ describe("a played match", () => {
         match={MATCH}
         day={{ round: null, venue: null }}
         allMatches={[MATCH]}
-        tournamentTitle="كأس"
         loggedIn={false}
         myVoteCandidateId={null}
       />,

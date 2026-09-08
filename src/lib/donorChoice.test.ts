@@ -28,15 +28,15 @@ describe("validateDonorChoice", () => {
 });
 
 describe("donorNameFor", () => {
-  it("drops the name when the donor asked to stay anonymous", () => {
-    expect(donorNameFor(true, "محمد")).toBeNull();
-  });
-
-  it("keeps the trimmed name otherwise", () => {
-    expect(donorNameFor(false, "  محمد  ")).toBe("محمد");
+  it("keeps the trimmed name", () => {
+    expect(donorNameFor("  محمد  ")).toBe("محمد");
   });
 
   it("treats a blank name as no name at all", () => {
-    expect(donorNameFor(false, "   ")).toBeNull();
+    expect(donorNameFor("   ")).toBeNull();
+  });
+
+  it("keeps a name whatever the donor answered about being shown", () => {
+    expect(donorNameFor("محمد")).toBe("محمد");
   });
 });

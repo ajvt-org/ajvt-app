@@ -13,10 +13,12 @@ import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
-import { DONOR_ACCOUNT_SELECT, donorNameOnRecord, nameAdoptedOnLink } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
 import { viewerOf } from "@/lib/supportViewer";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
+import { donationLogSnapshot, donationWasChanged } from "@/lib/donationChangeLog";
+import { willBeLinked } from "@/lib/linkedDonor";
 import type { SupportViewer } from "@/lib/supportPrivacy";
 import { money as amountText } from "@/lib/money";
 import { releaseUploads } from "@/lib/uploadRelease";
@@ -102,13 +104,11 @@ export const PATCH = withRoute(
       const giver = userId
         ? await prisma.user.findUnique({
             where: { id: userId },
-            select: { id: true, fullName: true },
+            select: { id: true },
           })
         : null;
       if (userId && !giver) return NextResponse.json({ error: members.notFound }, { status: 404 });
       data.userId = giver?.id ?? null;
-      const adopted = nameAdoptedOnLink(giver);
-      if (adopted) data.donorName = adopted;
     }
 
     if (anonymous !== undefined) data.anonymous = anonymous;
@@ -128,6 +128,11 @@ export const PATCH = withRoute(
       const wrong = await accountIdError(named, accountId, existing.accountId);
       if (wrong) return NextResponse.json({ error: wrong }, { status: 400 });
       data.accountId = accountId ?? null;
+    }
+
+    if (willBeLinked(existing.userId, userId)) {
+      data.donorName = null;
+      data.donorPhone = null;
     }
 
     if (tagIds !== undefined) {
@@ -194,13 +199,17 @@ export const PATCH = withRoute(
       );
     }
     if (
-      anonymous !== undefined ||
-      donorName !== undefined ||
-      donorPhone !== undefined ||
-      donorPhoto !== undefined ||
-      amount !== undefined ||
-      paymentMethod !== undefined ||
-      proof !== undefined
+      donationWasChanged({
+        anonymous,
+        donorName,
+        donorPhone,
+        donorPhoto,
+        amount,
+        paymentMethod,
+        accountId,
+        bankReference,
+        proof,
+      })
     ) {
       await logAction(
         session.username,
@@ -209,14 +218,7 @@ export const PATCH = withRoute(
         {
           ...target,
           before: logSnapshotFor(donation, existing),
-          after: logSnapshotFor(donation, {
-            donorName: donation.donorName,
-            donorPhone: donation.donorPhone,
-            donorPhoto: donation.donorPhoto,
-            amount: donation.amount,
-            paymentMethod: donation.paymentMethod,
-            proof: donation.proof,
-          }),
+          after: logSnapshotFor(donation, donationLogSnapshot(donation)),
         },
       );
     }

@@ -55,11 +55,6 @@ export async function writeMembershipFee(
     return;
   }
 
-  const anonymous = choice ?? false;
-  const account = anonymous
-    ? null
-    : await db.user.findUnique({ where: { id: userId }, select: { fullName: true } });
-
   const made = await db.payment.create({
     data: {
       ...columns,
@@ -68,8 +63,7 @@ export async function writeMembershipFee(
       year,
       amount: total,
       feeApplied: fee,
-      anonymous,
-      donorName: account?.fullName ?? null,
+      anonymous: choice ?? false,
     },
   });
   await ensureReceiptsFor(db, { id: made.id });
@@ -108,14 +102,9 @@ export async function setSurplusVisibility(db: Db, userId: string, anonymous: bo
   const membership = await currentMembership(db, userId);
   if (!membership) return;
 
-  const account = await db.user.findUnique({
-    where: { id: userId },
-    select: { fullName: true },
-  });
-
   await db.payment.updateMany({
     where: { userId, year: membership.year, purpose: "MEMBERSHIP" },
-    data: { anonymous, donorName: anonymous ? null : (account?.fullName ?? null) },
+    data: { anonymous },
   });
 }
 

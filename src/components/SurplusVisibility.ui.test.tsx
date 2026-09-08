@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SurplusVisibility from "./SurplusVisibility";
+import { donorNameChoice } from "@/lib/texts";
 
 const patch = vi.fn();
 
@@ -45,7 +46,7 @@ describe("changing how a membership surplus appears", () => {
     const onChanged = vi.fn();
     show({ onChanged });
 
-    await userEvent.click(screen.getByRole("radio", { name: /أفضّل أن أبقى مجهولاً/ }));
+    await userEvent.click(screen.getByRole("radio", { name: donorNameChoice.no }));
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith("/api/members/m1", {
@@ -78,7 +79,7 @@ describe("changing how a membership surplus appears", () => {
     patch.mockRejectedValue(new Error("تعذّر الحفظ"));
     show();
 
-    await userEvent.click(screen.getByRole("radio", { name: /أفضّل أن أبقى مجهولاً/ }));
+    await userEvent.click(screen.getByRole("radio", { name: donorNameChoice.no }));
 
     expect(await screen.findByText("تعذّر الحفظ")).toBeDefined();
   });

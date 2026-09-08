@@ -6,21 +6,27 @@ import { donationCreateSchema } from "./schema";
 const OFFERED = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
 const schema = donationCreateSchema(OFFERED);
 
-const valid = { donorName: "فاعل خير", amount: 500 };
+const valid = { donorName: "خالد الأمين", amount: 500 };
 
 describe("donationCreateSchema", () => {
   it("accepts a name and an amount", () => {
     expect(parse(schema, valid)).toMatchObject({
-      donorName: "فاعل خير",
+      donorName: "خالد الأمين",
     });
+  });
+
+  it("accepts an amount whose giver is not known", () => {
+    expect(parse(schema, { amount: 500 }).donorName).toBeUndefined();
+  });
+
+  it("rejects the display constant, which is a label and not a name", () => {
+    expect(rejectionOf(schema, { ...valid, donorName: "فاعل خير" })).toBe(
+      "«فاعل خير» ليست اسماً، اترك الخانة فارغة إذا كان المتبرع غير معروف",
+    );
   });
 
   it("trims the donor name", () => {
     expect(parse(schema, { ...valid, donorName: "  خالد  " }).donorName).toBe("خالد");
-  });
-
-  it("rejects a missing name", () => {
-    expect(rejectionOf(schema, { amount: 500 })).toBe("الاسم مطلوب");
   });
 
   it("rejects a blank name", () => {

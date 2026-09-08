@@ -9,6 +9,7 @@ export const donorName = z
   .string(money.nameRequired)
   .refine((v) => v.trim().length > 0, money.nameRequired)
   .refine((v) => v.trim().length <= NAME_MAX, money.nameTooLong)
+  .refine((v) => v.trim() !== money.anonymousDonor, money.nameIsThePlaceholder)
   .transform((v) => v.trim());
 
 export const donorPhone = z
@@ -49,14 +50,13 @@ export interface DonationFormValues {
   amount: string;
 }
 
-const withName = z.object({ donorName, donorPhone: donorPhone.nullish(), amount });
-const withoutName = z.object({
+const donationForm = z.object({
   donorName: donorName.optional(),
   donorPhone: donorPhone.nullish(),
   amount,
 });
 
-export function donationFormError(values: DonationFormValues, nameRequired: boolean): string {
-  const result = (nameRequired ? withName : withoutName).safeParse(values);
+export function donationFormError(values: DonationFormValues): string {
+  const result = donationForm.safeParse(values);
   return result.success ? "" : result.error.issues[0].message;
 }
