@@ -1,7 +1,17 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/activities/[id]/register/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
+import {
+  resetDb,
+  post,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+  createUser,
+} from "./helpers";
+import { activities } from "@/lib/messages";
+import { runningYear } from "@/lib/membershipYear";
 
 async function anActivity() {
   return prisma.activity.create({
@@ -70,5 +80,66 @@ describe("an admin registering somebody to an activity", () => {
     });
     expect(row).toMatchObject({ status: "ACTIVE", rejectionReason: null });
     expect(await prisma.activityRegistration.count({ where: { activityId: activity.id } })).toBe(1);
+  });
+});
+
+describe("the same membership rule the member is held to", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  async function refused(over: Record<string, unknown>) {
+    const activity = await anActivity();
+    const account = await makeMember({ fullName: "محمد", age: "البدريين", ...over });
+    const res = await register(activity.id, account.userId);
+    return { status: res.status, error: (await res.json()).error };
+  }
+
+  it("refuses an application that is still waiting, and says which it is", async () => {
+    const { status, error } = await refused({ status: "PENDING" });
+
+    expect(status).toBe(403);
+    expect(error).toBe(activities.membershipNotApproved);
+    expect(await prisma.activityRegistration.count()).toBe(0);
+  });
+
+  it("refuses an application that was turned down", async () => {
+    const { status, error } = await refused({ status: "REJECTED" });
+
+    expect(status).toBe(403);
+    expect(error).toBe(activities.membershipNotApproved);
+  });
+
+  it("refuses somebody who has stopped renewing, and says so", async () => {
+    const { status, error } = await refused({
+      status: "ACTIVE",
+      membershipYear: runningYear() - 1,
+    });
+
+    expect(status).toBe(403);
+    expect(error).toBe(activities.membershipBehind);
+  });
+
+  it("refuses a membership that was ended, and says so", async () => {
+    const activity = await anActivity();
+    const account = await makeMember({ fullName: "محمد", age: "البدريين", status: "ACTIVE" });
+    await prisma.membership.updateMany({
+      where: { userId: account.userId },
+      data: { endedAt: new Date() },
+    });
+
+    const res = await register(activity.id, account.userId);
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe(activities.membershipEnded);
+  });
+
+  it("refuses an account that never applied", async () => {
+    const activity = await anActivity();
+    const account = await createUser("36000099");
+
+    expect((await register(activity.id, account.id)).status).toBe(404);
+    expect(await prisma.activityRegistration.count()).toBe(0);
   });
 });
