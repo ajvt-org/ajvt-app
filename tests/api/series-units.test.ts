@@ -123,7 +123,7 @@ describe("recording the units of a series match", () => {
 
     const body = await (await add(match.id, { sideAPoints: 101, sideBPoints: 74 })).json();
 
-    expect(body.standing.sideATotal).toBe(2);
+    expect(body.standing.sideATotal).toBe(101);
     expect(body.units[0].sideAPoints).toBe(101);
   });
 
@@ -138,8 +138,8 @@ describe("recording the units of a series match", () => {
 
   it("takes a free score with no target", async () => {
     const { match } = await matchOf([
-      { ...MATCH_LEVEL, unitsPerParent: 1 },
-      { singular: "شوط", plural: "أشواط", decision: "SCORE" },
+      { ...MATCH_LEVEL, countedBy: "POINTS", unitCount: 1 },
+      { singular: "شوط", plural: "أشواط" },
     ]);
 
     const res = await add(match.id, { sideAPoints: 3, sideBPoints: 1 });
@@ -381,17 +381,15 @@ describe("a unit recorded under another", () => {
   });
 
   const CARDS: LevelFixture[] = [
-    { ...MATCH_LEVEL, ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },
+    { ...MATCH_LEVEL, unsettled: "DECIDER" },
     {
       singular: "شوط",
       plural: "أشواط",
-      decision: "SCORE",
-      ending: "FIRST_TO",
-      unitsPerParent: 25,
-      unitsToWin: 2,
-      halvesPerUnit: 1,
+      countedBy: "POINTS",
+      endsBy: "TARGET",
+      target: 100,
     },
-    { singular: "نقطة", plural: "نقاط", decision: "SCORE" },
+    { singular: "نقطة", plural: "نقاط" },
   ];
 
   async function unitOf(matchId: string, body: object) {
@@ -401,22 +399,22 @@ describe("a unit recorded under another", () => {
 
   it("takes its score from what sits under it", async () => {
     const { match } = await matchOf(CARDS);
-    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
-    await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
+    const set = await unitOf(match.id, { outcome: "SIDE_B" });
+    await add(match.id, { parentId: set, sideAPoints: 60, sideBPoints: 0 });
 
     const body = await (
-      await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 })
+      await add(match.id, { parentId: set, sideAPoints: 45, sideBPoints: 0 })
     ).json();
 
-    expect(body.units[0].standing.sideATotal).toBe(2);
+    expect(body.units[0].standing.sideATotal).toBe(105);
     expect(body.units[0].standing.over).toBe(true);
     expect(body.standing.sideATotal).toBe(2);
   });
 
   it("counts its own order under its parent rather than across the match", async () => {
     const { match } = await matchOf(CARDS);
-    const one = await unitOf(match.id, { sideAPoints: 2, sideBPoints: 0 });
-    const two = await unitOf(match.id, { sideAPoints: 0, sideBPoints: 2 });
+    const one = await unitOf(match.id, { outcome: "SIDE_A" });
+    const two = await unitOf(match.id, { outcome: "SIDE_B" });
     await add(match.id, { parentId: one, sideAPoints: 1, sideBPoints: 0 });
 
     const body = await (
@@ -430,10 +428,10 @@ describe("a unit recorded under another", () => {
 
   it("refuses a typed score on a unit that has something under it", async () => {
     const { match } = await matchOf(CARDS);
-    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
+    const set = await unitOf(match.id, { outcome: "SIDE_A" });
     await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
 
-    const res = await correct(match.id, set, { sideAPoints: 5, sideBPoints: 5 });
+    const res = await correct(match.id, set, { outcome: "SIDE_B" });
 
     expect(res.status).toBe(409);
     expect((await res.json()).error).toBe(messages.unitTakesItsScoreFromBelow);
@@ -441,7 +439,7 @@ describe("a unit recorded under another", () => {
 
   it("refuses a unit under the level that is recorded", async () => {
     const { match } = await matchOf(CARDS);
-    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
+    const set = await unitOf(match.id, { outcome: "SIDE_A" });
     const point = await unitOf(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
 
     const res = await add(match.id, { parentId: point, sideAPoints: 1, sideBPoints: 0 });
@@ -450,9 +448,35 @@ describe("a unit recorded under another", () => {
     expect((await res.json()).error).toBe(messages.unitLevelMissing);
   });
 
+  it("is over at two to nothing without a third being played", async () => {
+    const { match } = await matchOf(CARDS);
+    await add(match.id, { outcome: "SIDE_A" });
+    const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(body.standing.over).toBe(true);
+    expect(body.standing.winner).toBe("SIDE_A");
+    expect((await add(match.id, { outcome: "SIDE_A" })).status).toBe(409);
+  });
+
+  it("plays a deciding unit where the count ended level", async () => {
+    const { match } = await matchOf(CARDS);
+    await add(match.id, { outcome: "SIDE_A" });
+    await add(match.id, { outcome: "SIDE_B" });
+
+    const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(body.units.map((one: { decider: boolean }) => one.decider)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(body.standing.over).toBe(true);
+    expect(body.standing.winner).toBe("SIDE_A");
+  });
+
   it("takes the children away with the unit above them", async () => {
     const { match } = await matchOf(CARDS);
-    const set = await unitOf(match.id, { sideAPoints: 9, sideBPoints: 9 });
+    const set = await unitOf(match.id, { outcome: "SIDE_A" });
     await add(match.id, { parentId: set, sideAPoints: 1, sideBPoints: 0 });
 
     const body = await (await remove(match.id, set)).json();
@@ -468,38 +492,36 @@ describe("opening a unit that already carries a score", () => {
   });
 
   const NESTED: LevelFixture[] = [
-    { ...MATCH_LEVEL, ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },
+    { ...MATCH_LEVEL, unsettled: "DECIDER" },
     {
       singular: "شوط",
       plural: "أشواط",
-      decision: "SCORE",
-      ending: "FIRST_TO",
-      unitsPerParent: 12,
-      unitsToWin: 2,
-      halvesPerUnit: 1,
+      countedBy: "POINTS",
+      endsBy: "TARGET",
+      target: 100,
     },
-    { singular: "نقطة", plural: "نقاط", decision: "SCORE" },
+    { singular: "نقطة", plural: "نقاط" },
   ];
 
-  it("lets go of the typed score when the first unit is recorded under it", async () => {
+  it("lets go of the typed result when the first unit is recorded under it", async () => {
     const { match } = await matchOf(NESTED);
-    const answer = await (await add(match.id, { sideAPoints: 9, sideBPoints: 4 })).json();
+    const answer = await (await add(match.id, { outcome: "SIDE_B" })).json();
 
     const body = await (
       await add(match.id, { parentId: answer.unit.id, sideAPoints: 101, sideBPoints: 20 })
     ).json();
 
-    expect(body.units[0].sideAPoints).toBeNull();
-    expect(body.units[0].standing.sideATotal).toBe(1);
+    expect(body.units[0].outcome).toBeNull();
+    expect(body.units[0].standing.sideATotal).toBe(101);
   });
 
-  it("keeps the typed score of a unit nothing was recorded under", async () => {
+  it("keeps the typed result of a unit nothing was recorded under", async () => {
     const { match } = await matchOf(NESTED);
-    const answer = await (await add(match.id, { sideAPoints: 9, sideBPoints: 4 })).json();
+    const answer = await (await add(match.id, { outcome: "SIDE_A" })).json();
 
-    const body = await (await add(match.id, { sideAPoints: 3, sideBPoints: 9 })).json();
+    const body = await (await add(match.id, { outcome: "SIDE_B" })).json();
 
     expect(body.units[0].id).toBe(answer.unit.id);
-    expect(body.units[0].sideAPoints).toBe(9);
+    expect(body.units[0].outcome).toBe("SIDE_A");
   });
 });

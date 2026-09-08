@@ -43,7 +43,7 @@ function match(): DecidedMatch {
       },
     ],
     units: [],
-    adjustments: [],
+    moves: [],
     series: null,
     mvpVote: null,
   };

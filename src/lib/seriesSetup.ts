@@ -1,5 +1,5 @@
 import type { Ladder, LevelRow } from "./matchLevels";
-import { isLastLevel, scoredLevel } from "./matchLevels";
+import { isLastLevel } from "./matchLevels";
 
 export interface ColourSetup {
   hasColours: boolean;
@@ -7,28 +7,21 @@ export interface ColourSetup {
   secondColourWord: string | null;
 }
 
-export const MAX_UNITS_PER_PARENT = 99;
+export const MAX_UNIT_COUNT = 99;
 export const MAX_LEVELS = 4;
 
 export type LevelProblem =
   | "words"
-  | "unitsPerParent"
-  | "ending"
-  | "decision"
-  | "endingOnTheLastLevel"
-  | "unitsToWinUnused"
-  | "unitsToWinMissing"
-  | "unitsToWinUnreachable"
-  | "targetUnused"
+  | "countedBy"
+  | "endsBy"
+  | "rulesOnTheLastLevel"
+  | "unitCountMissing"
   | "targetMissing"
-  | "targetWithoutAScoredLevel"
-  | "bothPastTargetUnused"
-  | "deciderTargetOnPlayAll"
+  | "marginMissing"
+  | "continueUnitsMissing"
+  | "deciderTargetWithoutATarget"
   | "creditWithoutAWindow"
-  | "creditWindowTooWide"
-  | "halvesPerUnit"
-  | "worth"
-  | "extensionUnits";
+  | "creditWindowTooWide";
 
 export type LadderProblem = "noLevels" | "tooManyLevels" | "colourWords";
 
@@ -41,67 +34,56 @@ function numberIn(value: number | null, low: number, high: number): boolean {
   return value !== null && Number.isInteger(value) && value >= low && value <= high;
 }
 
-function endingFault(level: LevelRow, last: boolean): LevelProblem | null {
-  if (last) {
-    return level.ending === null && level.unitsPerParent === null ? null : "endingOnTheLastLevel";
-  }
-  if (level.ending === null) return "ending";
-  if (!numberIn(level.unitsPerParent, 1, MAX_UNITS_PER_PARENT)) return "unitsPerParent";
-  return null;
+function ruleless(level: LevelRow): boolean {
+  return (
+    level.countedBy === null &&
+    level.endsBy === null &&
+    level.unitCount === null &&
+    level.target === null &&
+    level.unsettled === null &&
+    level.margin === null &&
+    level.continueUnits === null &&
+    level.deciderTarget === null &&
+    level.startingCredit === 0 &&
+    level.creditWindow === 0
+  );
 }
 
-function thresholdFault(level: LevelRow): LevelProblem | null {
-  if (level.ending === "FIRST_TO") {
-    if (level.target !== null) return "targetUnused";
-    if (!numberIn(level.unitsToWin, 1, MAX_UNITS_PER_PARENT)) return "unitsToWinMissing";
-    if ((level.unitsToWin ?? 0) > (level.unitsPerParent ?? 0)) return "unitsToWinUnreachable";
-    return null;
+function endingFault(level: LevelRow): LevelProblem | null {
+  if (level.countedBy === null) return "countedBy";
+  if (level.endsBy === null) return "endsBy";
+  if (level.endsBy === "COUNT") {
+    return numberIn(level.unitCount, 1, MAX_UNIT_COUNT) ? null : "unitCountMissing";
   }
-  if (level.ending === "FIRST_PAST") {
-    if (level.unitsToWin !== null) return "unitsToWinUnused";
-    if (!numberIn(level.target, 1, Number.MAX_SAFE_INTEGER)) return "targetMissing";
-    if (level.bothPastTarget === null) return "bothPastTargetUnused";
-    return null;
-  }
-  if (level.unitsToWin !== null) return "unitsToWinUnused";
-  if (level.target !== null) return "targetUnused";
-  if (level.deciderTarget !== null) return "deciderTargetOnPlayAll";
+  return numberIn(level.target, 1, Number.MAX_SAFE_INTEGER) ? null : "targetMissing";
+}
+
+function unsettledFault(level: LevelRow): LevelProblem | null {
+  if (level.unsettled !== "CONTINUE") return null;
+  if (!numberIn(level.margin, 1, MAX_UNIT_COUNT)) return "marginMissing";
+  if (!numberIn(level.continueUnits, 1, MAX_UNIT_COUNT)) return "continueUnitsMissing";
   return null;
 }
 
 function creditFault(level: LevelRow): LevelProblem | null {
   if (level.startingCredit < 0 || level.creditWindow < 0) return "creditWithoutAWindow";
   if (level.startingCredit > 0 && level.creditWindow < 1) return "creditWithoutAWindow";
-  if (level.creditWindow > (level.unitsPerParent ?? 0)) return "creditWindowTooWide";
+  if (level.endsBy === "COUNT" && level.creditWindow > (level.unitCount ?? 0)) {
+    return "creditWindowTooWide";
+  }
   return null;
 }
 
-function unitFault(level: LevelRow, first: boolean): LevelProblem | null {
+export function levelProblem(level: LevelRow, last: boolean): LevelProblem | null {
   if (!level.singular.trim() || !level.plural.trim()) return "words";
-  if (first === (level.decision !== null)) return "decision";
-  if (level.halvesPerUnit < 1) return "halvesPerUnit";
-  if (level.wonUnitWorth < 1 || level.doubledWorth < level.wonUnitWorth) return "worth";
-  if (level.extendsWhenLevel && level.extensionUnits < 1) return "extensionUnits";
-  return null;
+  if (last) return ruleless(level) ? null : "rulesOnTheLastLevel";
+  return endingFault(level) ?? unsettledFault(level) ?? creditFault(level);
 }
 
-export function levelProblem(level: LevelRow, first: boolean, last: boolean): LevelProblem | null {
-  const words = unitFault(level, first);
-  if (words) return words;
-  const ending = endingFault(level, last);
-  if (ending) return ending;
-  if (last) return null;
-  const threshold = thresholdFault(level);
-  if (threshold) return threshold;
-  return creditFault(level);
-}
-
-export function scoredChildFault(ladder: Ladder, depth: number): LevelProblem | null {
+export function deciderTargetFault(ladder: Ladder, depth: number): LevelProblem | null {
   const level = ladder[depth];
-  if (!scoredLevel(level)) return null;
-  const child = ladder[depth + 1];
-  if (!child || child.decision !== "SCORE") return "targetWithoutAScoredLevel";
-  return null;
+  if (level.deciderTarget === null) return null;
+  return level.endsBy === "TARGET" ? null : "deciderTargetWithoutATarget";
 }
 
 export function ladderProblem(ladder: Ladder): LadderProblem | LevelFault | null {
@@ -109,8 +91,7 @@ export function ladderProblem(ladder: Ladder): LadderProblem | LevelFault | null
   if (ladder.length > MAX_LEVELS) return "tooManyLevels";
   for (let depth = 0; depth < ladder.length; depth += 1) {
     const problem =
-      levelProblem(ladder[depth], depth === 0, isLastLevel(ladder, depth)) ??
-      scoredChildFault(ladder, depth);
+      levelProblem(ladder[depth], isLastLevel(ladder, depth)) ?? deciderTargetFault(ladder, depth);
     if (problem) return { order: ladder[depth].order, problem };
   }
   return null;

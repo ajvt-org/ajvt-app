@@ -1,57 +1,70 @@
 "use client";
 
-import Disclosure from "@/components/admin/Disclosure";
 import { matchLevelsSetup as texts } from "@/lib/texts";
+import { tournament as messages } from "@/lib/messages";
+import IconLabel from "@/components/IconLabel";
 import type { LevelDraft } from "./levelDraft";
+import type { FaultField, LevelFix } from "./levelFaults";
 
 type Change = (patch: Partial<LevelDraft>) => void;
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Fault({ fix, onFix }: { fix: LevelFix; onFix: () => void }) {
   return (
-    <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-      <span className="block mb-1">{label}</span>
-      {children}
-    </label>
+    <span className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold">
+      <span style={{ color: "#991b1b" }}>{messages.seriesSetup[fix.problem]}</span>
+      {fix.patch && (
+        <button onClick={onFix} className="btn btn-sm">
+          {texts.offerFix}
+        </button>
+      )}
+    </span>
   );
 }
 
-function Switch({
+function Field({
   label,
-  checked,
-  disabled,
-  onChange,
+  field,
+  fix,
+  onFix,
+  children,
 }: {
   label: string;
-  checked: boolean;
-  disabled: boolean;
-  onChange: (value: boolean) => void;
+  field: FaultField;
+  fix: LevelFix | null;
+  onFix: () => void;
+  children: React.ReactNode;
 }) {
+  const shown = fix && fix.field === field ? fix : null;
   return (
-    <label className="flex items-center gap-2 text-xs" style={{ color: "var(--text-main)" }}>
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span>{label}</span>
-    </label>
+    <div>
+      <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
+        <span className="block mb-1">{label}</span>
+        {children}
+      </label>
+      {shown && <Fault fix={shown} onFix={onFix} />}
+    </div>
   );
 }
 
 function Num({
   label,
+  field,
   value,
   disabled,
+  fix,
+  onFix,
   onChange,
 }: {
   label: string;
+  field: FaultField;
   value: string;
   disabled: boolean;
+  fix: LevelFix | null;
+  onFix: () => void;
   onChange: (value: string) => void;
 }) {
   return (
-    <Field label={label}>
+    <Field label={label} field={field} fix={fix} onFix={onFix}>
       <input
         type="number"
         inputMode="numeric"
@@ -66,215 +79,182 @@ function Num({
   );
 }
 
-function EndingFields({
-  draft,
-  disabled,
-  onChange,
-}: {
-  draft: LevelDraft;
-  disabled: boolean;
-  onChange: Change;
-}) {
-  return (
-    <div className="space-y-2 mt-2">
-      <Field label={texts.ending}>
-        <select
-          value={draft.ending}
-          disabled={disabled}
-          onChange={(e) => onChange({ ending: e.target.value as LevelDraft["ending"] })}
-          className="input input-sm w-full"
-        >
-          <option value="PLAY_ALL">{texts.endingPlayAll}</option>
-          <option value="FIRST_TO">{texts.endingFirstTo}</option>
-          <option value="FIRST_PAST">{texts.endingFirstPast}</option>
-        </select>
-      </Field>
-
-      <Num
-        label={texts.unitsPerParent}
-        value={draft.unitsPerParent}
-        disabled={disabled}
-        onChange={(unitsPerParent) => onChange({ unitsPerParent })}
-      />
-
-      {draft.ending === "FIRST_TO" && (
-        <Num
-          label={texts.unitsToWin}
-          value={draft.unitsToWin}
-          disabled={disabled}
-          onChange={(unitsToWin) => onChange({ unitsToWin })}
-        />
-      )}
-
-      {draft.ending === "FIRST_PAST" && (
-        <>
-          <Num
-            label={texts.target}
-            value={draft.target}
-            disabled={disabled}
-            onChange={(target) => onChange({ target })}
-          />
-          <Field label={texts.bothPastTarget}>
-            <select
-              value={draft.bothPastTarget}
-              disabled={disabled}
-              onChange={(e) =>
-                onChange({ bothPastTarget: e.target.value as LevelDraft["bothPastTarget"] })
-              }
-              className="input input-sm w-full"
-            >
-              <option value="HIGHER_TOTAL">{texts.higherTotal}</option>
-              <option value="PLAY_ON">{texts.playOn}</option>
-            </select>
-          </Field>
-        </>
-      )}
-
-      {draft.ending !== "PLAY_ALL" && (
-        <Num
-          label={texts.deciderTarget}
-          value={draft.deciderTarget}
-          disabled={disabled}
-          onChange={(deciderTarget) => onChange({ deciderTarget })}
-        />
-      )}
-
-      <Num
-        label={texts.halvesPerUnit}
-        value={draft.halvesPerUnit}
-        disabled={disabled}
-        onChange={(halvesPerUnit) => onChange({ halvesPerUnit })}
-      />
-
-      <Switch
-        label={texts.extendsWhenLevel}
-        checked={draft.extendsWhenLevel}
-        disabled={disabled}
-        onChange={(extendsWhenLevel) => onChange({ extendsWhenLevel })}
-      />
-      {draft.extendsWhenLevel && (
-        <Num
-          label={texts.extensionUnits}
-          value={draft.extensionUnits}
-          disabled={disabled}
-          onChange={(extensionUnits) => onChange({ extensionUnits })}
-        />
-      )}
-
-      <Num
-        label={texts.startingCredit}
-        value={draft.startingCredit}
-        disabled={disabled}
-        onChange={(startingCredit) => onChange({ startingCredit })}
-      />
-      {draft.startingCredit.trim() !== "" && draft.startingCredit.trim() !== "0" && (
-        <Num
-          label={texts.creditWindow}
-          value={draft.creditWindow}
-          disabled={disabled}
-          onChange={(creditWindow) => onChange({ creditWindow })}
-        />
-      )}
-    </div>
-  );
-}
-
-function UnitFields({
-  draft,
-  disabled,
-  onChange,
-}: {
-  draft: LevelDraft;
-  disabled: boolean;
-  onChange: Change;
-}) {
-  return (
-    <div className="space-y-2 mt-2">
-      <Field label={texts.decision}>
-        <select
-          value={draft.decision}
-          disabled={disabled}
-          onChange={(e) => onChange({ decision: e.target.value as LevelDraft["decision"] })}
-          className="input input-sm w-full"
-        >
-          <option value="OUTCOME">{texts.decisionOutcome}</option>
-          <option value="SCORE">{texts.decisionScore}</option>
-        </select>
-      </Field>
-
-      <Num
-        label={texts.wonUnitWorth}
-        value={draft.wonUnitWorth}
-        disabled={disabled}
-        onChange={(wonUnitWorth) => onChange({ wonUnitWorth })}
-      />
-      <Num
-        label={texts.doubledWorth}
-        value={draft.doubledWorth}
-        disabled={disabled}
-        onChange={(doubledWorth) => onChange({ doubledWorth })}
-      />
-      <Switch
-        label={texts.doublesOnBlankOpponent}
-        checked={draft.doublesOnBlankOpponent}
-        disabled={disabled}
-        onChange={(doublesOnBlankOpponent) => onChange({ doublesOnBlankOpponent })}
-      />
-      <Switch
-        label={texts.doublesOnRecoveredCredit}
-        checked={draft.doublesOnRecoveredCredit}
-        disabled={disabled}
-        onChange={(doublesOnRecoveredCredit) => onChange({ doublesOnRecoveredCredit })}
-      />
-    </div>
-  );
-}
-
 export default function LevelFields({
   draft,
-  first,
+  own,
+  under,
   last,
   disabled,
-  locked = false,
+  locked,
+  fix,
   onChange,
 }: {
   draft: LevelDraft;
-  first: boolean;
+  own: string;
+  under: { singular: string; plural: string } | null;
   last: boolean;
   disabled: boolean;
-  locked?: boolean;
+  locked: boolean;
+  fix: LevelFix | null;
   onChange: Change;
 }) {
+  const apply = () => fix?.patch && onChange(fix.patch);
+  const frozen = disabled || locked;
+  const words = under ?? { singular: "", plural: "" };
+  const wordsFault = fix && fix.field === "words" ? fix : null;
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2">
-        <Field label={texts.singular}>
+        <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
+          <span className="block mb-1">{texts.singular}</span>
           <input
             value={draft.singular}
             disabled={disabled}
             onChange={(e) => onChange({ singular: e.target.value })}
             className="input input-sm w-full"
           />
-        </Field>
-        <Field label={texts.plural}>
+        </label>
+        <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
+          <span className="block mb-1">{texts.plural}</span>
           <input
             value={draft.plural}
             disabled={disabled}
             onChange={(e) => onChange({ plural: e.target.value })}
             className="input input-sm w-full"
           />
-        </Field>
+        </label>
       </div>
+      {wordsFault && <Fault fix={wordsFault} onFix={apply} />}
 
-      <Disclosure
-        title={<span className="text-xs">{texts.rules}</span>}
-        color="var(--mint-700)"
-        className="rounded-lg px-2.5 py-2"
-        surface={{ background: "var(--surface-2)" }}
-      >
-        {!last && <EndingFields draft={draft} disabled={disabled || locked} onChange={onChange} />}
-        {!first && <UnitFields draft={draft} disabled={disabled || locked} onChange={onChange} />}
-      </Disclosure>
+      {!last && under && (
+        <div className="space-y-2 rounded-lg p-2.5" style={{ background: "var(--surface-2)" }}>
+          <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
+            <IconLabel name="list">{texts.rulesAbout(own, words.plural)}</IconLabel>
+          </p>
+
+          <Field label={texts.countedBy(words.plural)} field="countedBy" fix={fix} onFix={apply}>
+            <select
+              value={draft.countedBy}
+              disabled={frozen}
+              onChange={(e) => onChange({ countedBy: e.target.value as LevelDraft["countedBy"] })}
+              className="input input-sm w-full"
+            >
+              <option value="">{texts.unsettledNever}</option>
+              <option value="OUTCOME">{texts.countedByOutcome}</option>
+              <option value="POINTS">{texts.countedByPoints}</option>
+            </select>
+          </Field>
+
+          <Field label={texts.endsBy} field="endsBy" fix={fix} onFix={apply}>
+            <select
+              value={draft.endsBy}
+              disabled={frozen}
+              onChange={(e) => onChange({ endsBy: e.target.value as LevelDraft["endsBy"] })}
+              className="input input-sm w-full"
+            >
+              <option value="">{texts.unsettledNever}</option>
+              <option value="COUNT">{texts.endsByCount}</option>
+              <option value="TARGET">{texts.endsByTarget}</option>
+            </select>
+          </Field>
+
+          {draft.endsBy === "COUNT" && (
+            <Num
+              label={texts.unitCount(words.singular)}
+              field="unitCount"
+              value={draft.unitCount}
+              disabled={frozen}
+              fix={fix}
+              onFix={apply}
+              onChange={(unitCount) => onChange({ unitCount })}
+            />
+          )}
+
+          {draft.endsBy === "TARGET" && (
+            <>
+              <Num
+                label={texts.target}
+                field="target"
+                value={draft.target}
+                disabled={frozen}
+                fix={fix}
+                onFix={apply}
+                onChange={(target) => onChange({ target })}
+              />
+              <Num
+                label={texts.deciderTarget}
+                field="deciderTarget"
+                value={draft.deciderTarget}
+                disabled={frozen}
+                fix={fix}
+                onFix={apply}
+                onChange={(deciderTarget) => onChange({ deciderTarget })}
+              />
+            </>
+          )}
+
+          <Field label={texts.unsettled} field="unsettled" fix={fix} onFix={apply}>
+            <select
+              value={draft.unsettled}
+              disabled={frozen}
+              onChange={(e) => onChange({ unsettled: e.target.value as LevelDraft["unsettled"] })}
+              className="input input-sm w-full"
+            >
+              <option value="">{texts.unsettledNever}</option>
+              <option value="CONTINUE">{texts.unsettledContinue}</option>
+              <option value="DECIDER">{texts.unsettledDecider}</option>
+              <option value="DRAW">{texts.unsettledDraw}</option>
+            </select>
+          </Field>
+
+          {draft.unsettled === "CONTINUE" && (
+            <>
+              <Num
+                label={texts.margin}
+                field="margin"
+                value={draft.margin}
+                disabled={frozen}
+                fix={fix}
+                onFix={apply}
+                onChange={(margin) => onChange({ margin })}
+              />
+              <Num
+                label={texts.continueUnits(words.singular)}
+                field="continueUnits"
+                value={draft.continueUnits}
+                disabled={frozen}
+                fix={fix}
+                onFix={apply}
+                onChange={(continueUnits) => onChange({ continueUnits })}
+              />
+            </>
+          )}
+
+          <Num
+            label={texts.startingCredit}
+            field="startingCredit"
+            value={draft.startingCredit}
+            disabled={frozen}
+            fix={fix}
+            onFix={apply}
+            onChange={(startingCredit) => onChange({ startingCredit })}
+          />
+          {draft.startingCredit.trim() !== "" && draft.startingCredit.trim() !== "0" && (
+            <Num
+              label={texts.creditWindow(words.singular)}
+              field="creditWindow"
+              value={draft.creditWindow}
+              disabled={frozen}
+              fix={fix}
+              onFix={apply}
+              onChange={(creditWindow) => onChange({ creditWindow })}
+            />
+          )}
+        </div>
+      )}
+
+      {last && fix && fix.field !== "words" && <Fault fix={fix} onFix={apply} />}
     </div>
   );
 }

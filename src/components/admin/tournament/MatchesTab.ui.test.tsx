@@ -32,7 +32,7 @@ const match = (over: Partial<Match> = {}): Match => ({
   penaltyKicks: [],
   bookings: [],
   units: [],
-  adjustments: [],
+  moves: [],
   series: null,
   mvpVote: null,
   ...over,

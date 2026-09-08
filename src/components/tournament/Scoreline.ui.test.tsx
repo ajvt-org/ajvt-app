@@ -25,7 +25,7 @@ const MATCH: DecidedMatch = {
   penaltyKicks: [],
   bookings: [],
   units: [],
-  adjustments: [],
+  moves: [],
   series: null,
   mvpVote: null,
 };

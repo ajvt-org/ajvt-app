@@ -5,9 +5,7 @@ import { tournament as messages } from "./messages";
 import { isSeriesConfigured } from "./seriesSetup";
 import { isFootball } from "./matchShape";
 import { colourOfPart } from "./seriesColours";
-import { ruleProblem, type RuleShape } from "./adjustmentRules";
-import { isUniqueViolation } from "./prismaError";
-import { ladderOf, type LevelRow } from "./matchLevels";
+import { countsPoints, ladderOf, type LevelRow } from "./matchLevels";
 import type { SeriesStanding } from "./matchSeries";
 import {
   flatten,
@@ -15,7 +13,7 @@ import {
   resolveMatch,
   rulesAt,
   toNodes,
-  type AdjustmentRow,
+  type MoveRow,
   type UnitRow,
 } from "./seriesTree";
 
@@ -24,22 +22,16 @@ export const LEVEL_FIELDS = {
   order: true,
   singular: true,
   plural: true,
-  ending: true,
-  unitsPerParent: true,
-  unitsToWin: true,
+  countedBy: true,
+  endsBy: true,
+  unitCount: true,
   target: true,
+  unsettled: true,
+  margin: true,
+  continueUnits: true,
   deciderTarget: true,
-  bothPastTarget: true,
-  extendsWhenLevel: true,
-  extensionUnits: true,
   startingCredit: true,
   creditWindow: true,
-  halvesPerUnit: true,
-  decision: true,
-  wonUnitWorth: true,
-  doubledWorth: true,
-  doublesOnBlankOpponent: true,
-  doublesOnRecoveredCredit: true,
 } as const;
 
 export const LEVELS_SELECT = { orderBy: { order: "asc" }, select: LEVEL_FIELDS } as const;
@@ -61,9 +53,19 @@ export const UNIT_FIELDS = {
 
 export const UNITS_SELECT = { orderBy: { order: "asc" }, select: UNIT_FIELDS } as const;
 
+export const MOVE_FIELDS = {
+  id: true,
+  name: true,
+  levelId: true,
+  unitsToSelf: true,
+  unitsFromOther: true,
+  endsUnit: true,
+  unitWorth: true,
+} as const;
+
 export const MATCH_WITH_SERIES = {
   units: UNITS_SELECT,
-  adjustments: { orderBy: { createdAt: "asc" }, include: { rule: true } },
+  moves: { orderBy: { createdAt: "asc" }, include: { rule: true } },
   activity: {
     select: {
       matchShape: true,
@@ -99,9 +101,9 @@ export function rulesOf(ladder: LevelRow[], depth = 0) {
 export function standingOf(
   activity: { levels: LevelRow[] },
   units: UnitRow[],
-  adjustments: AdjustmentRow[] = [],
+  moves: MoveRow[] = [],
 ): SeriesStanding {
-  return resolveMatch(activity.levels, units, adjustments).standing;
+  return resolveMatch(activity.levels, units, moves).standing;
 }
 
 export interface UnitInput {
@@ -127,7 +129,7 @@ function readWorth(given: unknown): number | null {
 
 export function readUnit(
   input: UnitInput,
-  level: LevelRow,
+  parent: LevelRow,
 ): {
   abandoned: boolean;
   outcome: "SIDE_A" | "SIDE_B" | "DRAW" | null;
@@ -145,7 +147,7 @@ export function readUnit(
   if (input.abandoned === true) {
     return { abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null, ...credit };
   }
-  if (level.decision === "OUTCOME") {
+  if (!countsPoints(parent)) {
     if (typeof input.outcome !== "string" || !OUTCOMES.has(input.outcome)) {
       throw new ValidationError(messages.partWantsAnOutcome);
     }
@@ -201,7 +203,7 @@ function parentIdOf(input: UnitInput): string | null {
 }
 
 function standingUnder(match: LoadedMatch, parentId: string | null): SeriesStanding | null {
-  const resolved = resolveMatch(match.activity.levels, match.units, match.adjustments);
+  const resolved = resolveMatch(match.activity.levels, match.units, match.moves);
   if (parentId === null) return resolved.standing;
   const parent = flatten(resolved.units).find((unit) => unit.row.id === parentId);
   if (!parent) throw new NotFoundError(messages.partNotFound);
@@ -211,13 +213,14 @@ function standingUnder(match: LoadedMatch, parentId: string | null): SeriesStand
 export async function addUnit(matchId: string, input: UnitInput) {
   const match = await loadSeriesMatch(matchId);
   const parentId = parentIdOf(input);
-  const level = levelAtDepth(match, depthOf(match, parentId) + 1);
+  const depth = depthOf(match, parentId);
+  const level = levelAtDepth(match, depth + 1);
 
   if (standingUnder(match, parentId)?.over) {
     throw new ConflictError(messages.matchTakesNoMoreParts);
   }
 
-  const result = readUnit(input, level);
+  const result = readUnit(input, levelAtDepth(match, depth));
   const order = nextOrderUnder(match.units, parentId);
   const sideAColour =
     parentId === null && match.activity.hasColours && match.sideAOpensAs
@@ -252,9 +255,9 @@ export async function correctUnit(matchId: string, unitId: string, input: UnitIn
     throw new ConflictError(messages.unitTakesItsScoreFromBelow);
   }
 
-  const level = ladderFor(match).find((row) => row.id === unit.levelId);
-  if (!level) throw new ValidationError(messages.unitLevelMissing);
-  const result = readUnit(input, level);
+  const depth = ladderFor(match).findIndex((row) => row.id === unit.levelId);
+  if (depth < 1) throw new ValidationError(messages.unitLevelMissing);
+  const result = readUnit(input, levelAtDepth(match, depth - 1));
   return prisma.matchUnit.update({ where: { id: unitId }, data: result });
 }
 
@@ -265,78 +268,54 @@ export async function removeUnit(matchId: string, unitId: string) {
   return unit;
 }
 
-export async function recordAdjustment(
-  matchId: string,
-  ruleId: string,
-  side: MatchSide,
-  unitId: string,
-) {
+function actedOn(match: LoadedMatch, typedInto: UnitRow, levelId: string): UnitRow {
+  if (typedInto.levelId === levelId) return typedInto;
+  const parent = typedInto.parentId === null ? null : unitOf(match, typedInto.parentId);
+  if (!parent || parent.levelId !== levelId) {
+    throw new ValidationError(messages.moveWantsItsOwnLevel);
+  }
+  return parent;
+}
+
+export async function recordMove(matchId: string, ruleId: string, side: MatchSide, unitId: string) {
   const match = await loadSeriesMatch(matchId);
-  const unit = unitOf(match, unitId);
+  const typedInto = unitOf(match, unitId);
+
+  const rule = await prisma.moveRule.findFirst({
+    where: { id: ruleId, activityId: match.activityId },
+  });
+  if (!rule) throw new NotFoundError(messages.moveRuleNotFound);
+
+  const unit = actedOn(match, typedInto, rule.levelId);
   if (standingUnder(match, unit.parentId)?.over) {
     throw new ConflictError(messages.matchTakesNoMoreParts);
   }
 
-  const rule = await prisma.adjustmentRule.findFirst({
-    where: { id: ruleId, activityId: match.activityId },
+  return prisma.$transaction(async (tx) => {
+    if (typedInto.id !== unit.id) {
+      await tx.matchUnit.update({
+        where: { id: typedInto.id },
+        data: { abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null },
+      });
+    }
+    return tx.matchMove.create({ data: { matchId, ruleId, side, unitId: unit.id } });
   });
-  if (!rule) throw new NotFoundError(messages.adjustmentRuleNotFound);
-  if (rule.levelId !== null && rule.levelId !== unit.levelId) {
-    throw new ValidationError(messages.moveWantsItsOwnLevel);
-  }
-
-  return prisma.matchAdjustment.create({ data: { matchId, ruleId, side, unitId } });
 }
 
-export async function undoAdjustment(matchId: string, adjustmentId: string) {
+export async function undoMove(matchId: string, moveId: string) {
   const match = await loadSeriesMatch(matchId);
-  const recorded = match.adjustments.find((row) => row.id === adjustmentId);
-  if (!recorded) throw new NotFoundError(messages.adjustmentNotFound);
+  const recorded = match.moves.find((row) => row.id === moveId);
+  if (!recorded) throw new NotFoundError(messages.moveNotFound);
 
-  await prisma.matchAdjustment.delete({ where: { id: adjustmentId } });
+  await prisma.matchMove.delete({ where: { id: moveId } });
   return recorded;
 }
 
-export async function listAdjustmentRules(activityId: string) {
-  return prisma.adjustmentRule.findMany({ where: { activityId }, orderBy: { createdAt: "asc" } });
-}
-
-export async function declareAdjustmentRule(activityId: string, input: RuleShape) {
-  const problem = ruleProblem(input);
-  if (problem) throw new ValidationError(messages.adjustmentRule[problem]);
-  if (input.levelId) {
-    const level = await prisma.matchLevel.findFirst({ where: { id: input.levelId, activityId } });
-    if (!level) throw new NotFoundError(messages.levelNotInTournament);
-  }
-  try {
-    return await prisma.adjustmentRule.create({
-      data: {
-        activityId,
-        name: input.name.trim(),
-        unitsToSelf: input.unitsToSelf,
-        unitsFromOther: input.unitsFromOther,
-        levelId: input.levelId ?? null,
-        endsUnit: input.endsUnit ?? false,
-      },
-    });
-  } catch (err) {
-    if (isUniqueViolation(err)) throw new ConflictError(messages.adjustmentNameTaken);
-    throw err;
-  }
-}
-
-export async function withdrawAdjustmentRule(activityId: string, ruleId: string) {
-  const rule = await prisma.adjustmentRule.findFirst({ where: { id: ruleId, activityId } });
-  if (!rule) throw new NotFoundError(messages.adjustmentRuleNotFound);
-  await prisma.adjustmentRule.delete({ where: { id: ruleId } });
-  return rule;
-}
-
 export function seriesStateOf(match: LoadedMatch) {
-  const resolved = resolveMatch(match.activity.levels, match.units, match.adjustments);
+  const resolved = resolveMatch(match.activity.levels, match.units, match.moves);
   return {
     units: toNodes(resolved.units),
-    adjustments: match.adjustments,
+    moves: match.moves,
     levels: ladderFor(match),
     standing: resolved.standing,
   };

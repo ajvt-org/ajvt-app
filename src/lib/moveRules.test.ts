@@ -1,26 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { asAdjustments, ruleProblem } from "./adjustmentRules";
+import { asMoves, ruleProblem } from "./moveRules";
 import { deriveSeries, type SeriesRules } from "./matchSeries";
 
-const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2 };
+const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2, levelId: "unit" };
 
 const COUNTED: SeriesRules = {
-  ending: "FIRST_TO",
-  unitsPerParent: 3,
-  unitsToWin: 2,
-  target: null,
+  countedBy: "OUTCOME",
+  endsBy: "TARGET",
+  unitCount: null,
+  target: 2,
+  unsettled: null,
+  margin: null,
+  continueUnits: null,
   deciderTarget: null,
-  bothPastTarget: null,
-  extendsWhenLevel: false,
-  extensionUnits: 2,
   startingCredit: 0,
   creditWindow: 0,
-  halvesPerUnit: 2,
-  decision: "SCORE",
-  wonUnitWorth: 1,
-  doubledWorth: 1,
-  doublesOnBlankOpponent: false,
-  doublesOnRecoveredCredit: false,
 };
 
 describe("what a tournament may declare", () => {
@@ -44,12 +38,25 @@ describe("what a tournament may declare", () => {
   it("refuses a move that does nothing", () => {
     expect(ruleProblem({ ...TEYSSE, unitsToSelf: 0, unitsFromOther: 0 })).toBe("noEffect");
   });
+
+  it("wants the level the move acts in", () => {
+    expect(ruleProblem({ ...TEYSSE, levelId: "" })).toBe("level");
+  });
+
+  it("takes a move whose only effect is what the unit counts as", () => {
+    expect(ruleProblem({ ...TEYSSE, unitsToSelf: 0, unitsFromOther: 0, unitWorth: 2 })).toBeNull();
+  });
+
+  it("wants a whole positive count where a move sets one", () => {
+    expect(ruleProblem({ ...TEYSSE, unitWorth: 0 })).toBe("worth");
+    expect(ruleProblem({ ...TEYSSE, unitWorth: 1.5 })).toBe("worth");
+  });
 });
 
 describe("what a match records", () => {
   it("turns a declared move into halves on each side", () => {
     expect(
-      asAdjustments([{ order: 1, side: "SIDE_A", rule: { unitsToSelf: 2, unitsFromOther: 2 } }], 2),
+      asMoves([{ order: 1, side: "SIDE_A", rule: { unitsToSelf: 2, unitsFromOther: 2 } }], 2),
     ).toEqual([{ order: 1, side: "SIDE_A", selfHalves: 4, otherHalves: 4 }]);
   });
 
@@ -57,7 +64,7 @@ describe("what a match records", () => {
     const standing = deriveSeries(
       COUNTED,
       [{ order: 1, abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null }],
-      asAdjustments([{ order: 1, side: "SIDE_A", rule: TEYSSE }], 2),
+      asMoves([{ order: 1, side: "SIDE_A", rule: TEYSSE }], 2),
     );
 
     expect(standing.over).toBe(true);
@@ -68,9 +75,9 @@ describe("what a match records", () => {
 
   it("drives the other side below nothing", () => {
     const standing = deriveSeries(
-      { ...COUNTED, unitsToWin: 3, unitsPerParent: 5 },
+      { ...COUNTED, target: 3 },
       [{ order: 1, abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null }],
-      asAdjustments([{ order: 1, side: "SIDE_B", rule: TEYSSE }], 2),
+      asMoves([{ order: 1, side: "SIDE_B", rule: TEYSSE }], 2),
     );
 
     expect(standing.sideATotal).toBe(-4);

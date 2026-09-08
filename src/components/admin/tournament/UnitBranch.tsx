@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { seriesResult as texts } from "@/lib/texts";
-import { offerableRules } from "@/lib/adjustmentRules";
-import MatchAdjustments from "./MatchAdjustments";
+import { offerableRules } from "@/lib/moveRules";
+import MatchMoves from "./MatchMoves";
 import UnitBlock from "./UnitBlock";
 import UnitEditor, { EMPTY_DRAFT, bodyOf, draftOf, type UnitDraft } from "./UnitEditor";
 import { UnitsEmpty } from "./UnitRow";
@@ -27,13 +27,14 @@ export default function UnitBranch({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const level = levelAt(api, depth);
-  if (!level) return null;
+  const parent = levelAt(api, depth - 1);
+  if (!level || !parent) return null;
 
   const editable = api.open && !full;
   const rules = offerableRules(api.rules, [level.id]);
 
   function submit() {
-    const body = bodyOf(draft, level!);
+    const body = bodyOf(draft, parent!);
     if (editingId) api.onCorrect(editingId, body);
     else api.onAdd(parentId, body);
     setDraft(EMPTY_DRAFT);
@@ -68,7 +69,7 @@ export default function UnitBranch({
       )}
 
       {rules.length > 0 && units.length > 0 && (
-        <MatchAdjustments
+        <MatchMoves
           rules={rules}
           recorded={movesOn(api, units)}
           sides={api.sides}
@@ -85,6 +86,7 @@ export default function UnitBranch({
         <UnitEditor
           draft={draft}
           level={level}
+          parent={parent}
           sides={api.sides}
           busy={api.busy}
           editing={false}

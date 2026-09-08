@@ -1,18 +1,19 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import MatchAdjustments, { effectOf } from "./MatchAdjustments";
+import MatchMoves, { effectOf } from "./MatchMoves";
 import { CHESS_CONFIG } from "@tests/ui/ladders";
-import type { AdjustmentRuleRow, RecordedAdjustmentRow, UnitRow } from "./seriesTypes";
+import type { MoveRuleRow, RecordedMoveRow, UnitRow } from "./seriesTypes";
 
 const UNIT = CHESS_CONFIG.unit;
 
-const TEYSSE: AdjustmentRuleRow = {
+const TEYSSE: MoveRuleRow = {
   id: "r1",
   name: "تيس",
   unitsToSelf: 2,
   unitsFromOther: 2,
-  levelId: null,
+  levelId: "unit",
   endsUnit: false,
+  unitWorth: null,
 };
 
 const UNITS: UnitRow[] = [
@@ -35,7 +36,7 @@ const UNITS: UnitRow[] = [
   },
 ];
 
-const RECORDED: RecordedAdjustmentRow = {
+const RECORDED: RecordedMoveRow = {
   id: "a1",
   unitId: "u1",
   side: "SIDE_A",
@@ -44,11 +45,11 @@ const RECORDED: RecordedAdjustmentRow = {
 
 const SIDES = ["فريق القرية", "فريق الوادي"];
 
-function show(props: Partial<Parameters<typeof MatchAdjustments>[0]> = {}) {
+function show(props: Partial<Parameters<typeof MatchMoves>[0]> = {}) {
   const onRecord = vi.fn();
   const onUndo = vi.fn();
   const result = render(
-    <MatchAdjustments
+    <MatchMoves
       rules={[TEYSSE]}
       recorded={[]}
       sides={SIDES}
@@ -87,7 +88,7 @@ describe("the moves of a match", () => {
     const { onRecord } = show();
 
     fireEvent.change(screen.getByLabelText("تسجيل حركة"), { target: { value: "r1" } });
-    fireEvent.change(screen.getByLabelText("الوحدة التي وقعت فيها الحركة"), {
+    fireEvent.change(screen.getByLabelText("الوحدة التي تقع عليها الحركة"), {
       target: { value: "u1" },
     });
     fireEvent.change(screen.getByLabelText("اختر الطرف..."), { target: { value: "SIDE_B" } });

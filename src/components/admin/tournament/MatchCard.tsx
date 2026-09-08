@@ -121,8 +121,8 @@ export default function MatchCard({
               units={match.units}
               standing={match.series}
               unitWord={series.unit.singular}
-              extensionUnits={countedUnits(series.match.extensionUnits, series.unit)}
-              adjustments={match.adjustments}
+              extensionUnits={countedUnits(series.match.continueUnits ?? 0, series.unit)}
+              moves={match.moves}
               sides={[teamName(match.firstTeam), teamName(match.secondTeam)]}
             />
           </div>

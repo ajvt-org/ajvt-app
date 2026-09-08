@@ -35,11 +35,12 @@ export const seriesResult = {
   moveOf: (name: string, side: string) => `${name} من ${side}`,
   moveEffect: (name: string, gained: string, lost: string) =>
     `${name} تضيف ${gained} وتخصم ${lost}`,
+  moveWorth: (name: string, worth: string) => `${name} تُحتسب بـ${worth}`,
   movesSeparator: "، ",
   recordMove: "تسجيل حركة",
   pickMove: "اختر الحركة...",
   pickSide: "اختر الطرف...",
-  pickUnit: "الوحدة التي وقعت فيها الحركة",
+  pickUnit: "الوحدة التي تقع عليها الحركة",
   pickUnitPrompt: "اختر الوحدة...",
   undoMove: "تراجع",
   noMoves: "لا حركات معرّفة في هذه البطولة",

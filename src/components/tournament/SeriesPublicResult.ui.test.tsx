@@ -63,7 +63,7 @@ const MATCH: DecidedMatch = {
       standing: null,
     },
   ],
-  adjustments: [],
+  moves: [],
   series: {
     sideATotal: 3,
     sideBTotal: 1,
@@ -78,6 +78,7 @@ const MATCH: DecidedMatch = {
     target: null,
     over: true,
     level: false,
+    unsettled: false,
     extending: false,
     winner: "SIDE_A",
   },

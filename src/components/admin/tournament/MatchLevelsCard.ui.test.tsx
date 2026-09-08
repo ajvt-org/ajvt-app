@@ -3,18 +3,15 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import MatchLevelsCard from "./MatchLevelsCard";
 import { levelRow } from "@tests/ui/ladders";
 import type { LevelRow } from "@/lib/matchLevels";
+import type { MoveRuleRow } from "./seriesTypes";
 
 const getMock = vi.fn();
 const putMock = vi.fn();
-const postMock = vi.fn();
-const delMock = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   api: {
     get: (...args: unknown[]) => getMock(...args),
     put: (...args: unknown[]) => putMock(...args),
-    post: (...args: unknown[]) => postMock(...args),
-    del: (...args: unknown[]) => delMock(...args),
   },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
@@ -26,8 +23,10 @@ const MATCH: LevelRow = levelRow({
   order: 0,
   singular: "المباراة",
   plural: "المباريات",
-  ending: "PLAY_ALL",
-  unitsPerParent: 2,
+  countedBy: "OUTCOME",
+  endsBy: "COUNT",
+  unitCount: 2,
+  unsettled: "DRAW",
 });
 
 const GAME: LevelRow = levelRow({
@@ -35,31 +34,45 @@ const GAME: LevelRow = levelRow({
   order: 1,
   singular: "لعبة",
   plural: "ألعاب",
-  decision: "OUTCOME",
 });
 
-function answering(levels: LevelRow[], rules: unknown[] = []) {
-  getMock.mockImplementation(async (url: string) =>
-    String(url).includes("adjustment-rules") ? { rules } : { levels },
-  );
+const TEYSSE: MoveRuleRow = {
+  id: "r1",
+  levelId: "game",
+  name: "تيس",
+  unitsToSelf: 2,
+  unitsFromOther: 2,
+  endsUnit: true,
+  unitWorth: null,
+};
+
+function answering(
+  levels: LevelRow[],
+  moves: MoveRuleRow[] = [],
+  lock: "RECORDED" | "STARTED" | null = null,
+) {
+  getMock.mockImplementation(async () => ({ levels, moves, lock }));
 }
 
 beforeEach(() => {
   getMock.mockReset();
   putMock.mockReset();
-  postMock.mockReset();
-  delMock.mockReset();
   answering([MATCH, GAME]);
 });
 
 const show = () => render(<MatchLevelsCard activityId="a1" />);
+
+const saveButton = () => screen.getByRole("button", { name: "حفظ المستويات" });
+
+async function openMoves(name: string) {
+  fireEvent.click(await screen.findByRole("button", { name: `حركات ${name}` }));
+}
 
 describe("the match levels card", () => {
   it("names the first level as the match itself", async () => {
     show();
 
     expect((await screen.findAllByText("المباراة")).length).toBeGreaterThan(0);
-    expect(screen.getByText("المستوى 2")).toBeDefined();
   });
 
   it("shows the words of every level it was given", async () => {
@@ -69,31 +82,63 @@ describe("the match levels card", () => {
     expect(screen.getByDisplayValue("ألعاب")).toBeDefined();
   });
 
-  it("sends the whole ladder back when it is saved", async () => {
+  it("reads a level back as one sentence in the words the admin typed", async () => {
+    show();
+
+    expect(
+      await screen.findByText("تُلعب 2 ألعاب تُحسب بنتيجتها، وإن تعادلا انتهى متعادلاً"),
+    ).toBeDefined();
+  });
+
+  it("names the level under it on the fields that are about it", async () => {
+    show();
+
+    expect(await screen.findByText("بم تُحسب ألعاب")).toBeDefined();
+    expect(screen.getByText("كم لعبة")).toBeDefined();
+    expect(screen.getByText("قواعد المباراة عن ألعاب")).toBeDefined();
+  });
+
+  it("sends the levels and the moves back in one write", async () => {
+    answering([MATCH, GAME], [TEYSSE]);
     show();
     fireEvent.click(await screen.findByRole("button", { name: "حفظ المستويات" }));
 
     await waitFor(() => expect(putMock).toHaveBeenCalled());
-    const body = putMock.mock.calls[0][1] as { levels: LevelRow[] };
+    const body = putMock.mock.calls[0][1] as {
+      levels: { endsBy: string | null; key: string }[];
+      moves: { name: string; levelKey: string; endsUnit: boolean }[];
+    };
     expect(body.levels).toHaveLength(2);
-    expect(body.levels[0].ending).toBe("PLAY_ALL");
-    expect(body.levels[1].ending).toBeNull();
+    expect(body.levels[0].endsBy).toBe("COUNT");
+    expect(body.levels[1].endsBy).toBeNull();
+    expect(body.moves).toEqual([
+      expect.objectContaining({ name: "تيس", levelKey: "game", endsUnit: true }),
+    ]);
   });
 
   it("refuses to save a level with no word for its unit", async () => {
     show();
     fireEvent.change(await screen.findByDisplayValue("لعبة"), { target: { value: "  " } });
 
-    expect(screen.getByRole("button", { name: "حفظ المستويات" }).hasAttribute("disabled")).toBe(
-      true,
-    );
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
   });
 
-  it("says which level the ladder was refused for", async () => {
+  it("puts the fault on the field that caused it", async () => {
     show();
-    fireEvent.change(await screen.findByDisplayValue("لعبة"), { target: { value: "" } });
+    fireEvent.change(await screen.findByLabelText("كم لعبة"), { target: { value: "" } });
 
-    expect(screen.getByText(/^المستوى 2 حدد اسم الوحدة/)).toBeDefined();
+    const field = screen.getByLabelText("كم لعبة").closest("div");
+    expect(field?.textContent).toContain("حدد عدد الوحدات التي تُلعب في هذا المستوى");
+  });
+
+  it("offers the change a rule needs rather than refusing the save", async () => {
+    show();
+    fireEvent.change(await screen.findByLabelText("الرصيد الابتدائي"), { target: { value: "26" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "أصلحها" }));
+
+    expect((screen.getByLabelText("يُكتسب في كم لعبة") as HTMLInputElement).value).toBe("1");
+    expect(saveButton().hasAttribute("disabled")).toBe(false);
   });
 
   it("adds a level at the end", async () => {
@@ -107,7 +152,7 @@ describe("the match levels card", () => {
     show();
     fireEvent.click(await screen.findByLabelText("حذف المستوى 2"));
 
-    expect(screen.queryByText("المستوى 2")).toBeNull();
+    expect(screen.queryByDisplayValue("لعبة")).toBeNull();
   });
 
   it("moves a level up", async () => {
@@ -118,55 +163,74 @@ describe("the match levels card", () => {
     const words = screen.getAllByDisplayValue(/المباراة|لعبة/);
     expect((words[0] as HTMLInputElement).value).toBe("لعبة");
   });
+});
 
-  it("offers only the levels the tournament declared to a move", async () => {
+describe("the moves of a level", () => {
+  it("reads them where the level they act on is", async () => {
+    answering([MATCH, GAME], [TEYSSE]);
     show();
-    const picker = (await screen.findByLabelText("المستوى الذي تُسجَّل فيه")) as HTMLSelectElement;
+    await openMoves("لعبة");
 
-    expect([...picker.options].map((option) => option.textContent)).toEqual([
-      "أي مستوى",
-      "المباراة",
-      "لعبة",
-    ]);
+    expect(screen.getByDisplayValue("تيس")).toBeDefined();
   });
 
-  it("declares a move against a level", async () => {
+  it("adds one against the level it sits under", async () => {
     show();
-    fireEvent.change(await screen.findByLabelText("اسم الحركة"), { target: { value: "تيس" } });
-    fireEvent.change(screen.getByLabelText("المستوى الذي تُسجَّل فيه"), {
-      target: { value: "game" },
-    });
-    fireEvent.click(screen.getByLabelText("تنهي الوحدة التي تقع فيها"));
+    await openMoves("لعبة");
+    fireEvent.click(screen.getByRole("button", { name: "إضافة حركة" }));
+    fireEvent.change(screen.getByLabelText("اسم الحركة"), { target: { value: "تيس" } });
+    fireEvent.click(screen.getByLabelText("تنهي الوحدة التي تقع عليها"));
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    const body = putMock.mock.calls[0][1] as { moves: { levelKey: string }[] };
+    expect(body.moves[0]).toMatchObject({ name: "تيس", levelKey: "game", endsUnit: true });
+  });
+
+  it("holds back the save while a move has no name", async () => {
+    show();
+    await openMoves("لعبة");
     fireEvent.click(screen.getByRole("button", { name: "إضافة حركة" }));
 
-    await waitFor(() => expect(postMock).toHaveBeenCalled());
-    expect(postMock.mock.calls[0][1]).toMatchObject({
-      name: "تيس",
-      levelId: "game",
-      endsUnit: true,
-    });
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
+  });
+
+  it("takes a move away with the level it acts on", async () => {
+    answering([MATCH, GAME], [TEYSSE]);
+    show();
+    fireEvent.click(await screen.findByLabelText("حذف المستوى 2"));
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    expect((putMock.mock.calls[0][1] as { moves: unknown[] }).moves).toEqual([]);
   });
 });
 
-describe("a level that has units recorded in it", () => {
-  beforeEach(() => {
-    getMock.mockImplementation(async (url: string) =>
-      String(url).includes("adjustment-rules")
-        ? { rules: [] }
-        : { levels: [MATCH, GAME], played: ["game"] },
-    );
-  });
-
-  it("cannot be removed or moved", async () => {
+describe("a configuration that is closed", () => {
+  it("says a result is in the way and freezes the whole ladder", async () => {
+    answering([MATCH, GAME], [], "RECORDED");
     show();
 
-    expect((await screen.findByLabelText("حذف المستوى 2")).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByLabelText("تقديم المستوى 2").hasAttribute("disabled")).toBe(true);
+    expect(
+      await screen.findByText("سُجّلت نتائج في هذه البطولة، فلا تتغير قواعد المباراة"),
+    ).toBeDefined();
+    expect(screen.getByDisplayValue("لعبة").hasAttribute("disabled")).toBe(true);
+    expect(screen.getByLabelText("حذف المستوى 2").hasAttribute("disabled")).toBe(true);
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
   });
 
-  it("keeps its words editable", async () => {
+  it("says a date is in the way when nothing has been recorded", async () => {
+    answering([MATCH, GAME], [], "STARTED");
+    show();
+
+    expect(await screen.findByText("بدأت البطولة، فلا تتغير قواعد المباراة")).toBeDefined();
+    expect(screen.getByRole("button", { name: "إضافة مستوى" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("leaves it open while nothing closed it", async () => {
     show();
 
     expect((await screen.findByDisplayValue("لعبة")).hasAttribute("disabled")).toBe(false);
+    expect(saveButton().hasAttribute("disabled")).toBe(false);
   });
 });

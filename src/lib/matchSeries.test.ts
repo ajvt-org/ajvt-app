@@ -2,39 +2,32 @@ import { describe, it, expect } from "vitest";
 import {
   deriveSeries,
   nextUnitOrder,
-  targetHalves,
+  targetOf,
   type PlayedUnit,
-  type RecordedAdjustment,
+  type RecordedMove,
   type SeriesRules,
 } from "./matchSeries";
 
 const BASE: SeriesRules = {
-  ending: "PLAY_ALL",
-  unitsPerParent: 2,
-  unitsToWin: null,
+  countedBy: "OUTCOME",
+  endsBy: "COUNT",
+  unitCount: 2,
   target: null,
+  unsettled: "DRAW",
+  margin: null,
+  continueUnits: null,
   deciderTarget: null,
-  bothPastTarget: null,
-  extendsWhenLevel: false,
-  extensionUnits: 2,
   startingCredit: 0,
   creditWindow: 0,
-  halvesPerUnit: 2,
-  decision: "OUTCOME",
-  wonUnitWorth: 1,
-  doubledWorth: 1,
-  doublesOnBlankOpponent: false,
-  doublesOnRecoveredCredit: false,
 };
 
 const CHESS: SeriesRules = BASE;
 
 const COUNTED: SeriesRules = {
   ...BASE,
-  ending: "FIRST_TO",
-  unitsPerParent: 3,
-  unitsToWin: 2,
-  decision: "SCORE",
+  endsBy: "TARGET",
+  unitCount: null,
+  target: 2,
 };
 
 function won(order: number, side: "SIDE_A" | "SIDE_B"): PlayedUnit {
@@ -53,12 +46,12 @@ function abandoned(order: number): PlayedUnit {
   return { order, abandoned: true, outcome: null, sideAPoints: null, sideBPoints: null };
 }
 
-function teysse(order: number, side: "SIDE_A" | "SIDE_B"): RecordedAdjustment {
+function teysse(order: number, side: "SIDE_A" | "SIDE_B"): RecordedMove {
   return { order, side, selfHalves: 4, otherHalves: 4 };
 }
 
-describe("a match played out in full", () => {
-  it("stands at nothing before a part is recorded", () => {
+describe("a level that ends by a count of units", () => {
+  it("stands at nothing before a unit is recorded", () => {
     const standing = deriveSeries(CHESS, []);
 
     expect(standing.sideATotal).toBe(0);
@@ -67,7 +60,7 @@ describe("a match played out in full", () => {
     expect(standing.unitsLeft).toBe(2);
   });
 
-  it("gives a whole part to the side that won it", () => {
+  it("gives a whole unit to the side that won it", () => {
     const standing = deriveSeries(CHESS, [won(1, "SIDE_A")]);
 
     expect(standing.sideATotal).toBe(2);
@@ -75,14 +68,14 @@ describe("a match played out in full", () => {
     expect(standing.over).toBe(false);
   });
 
-  it("splits a drawn part in half", () => {
+  it("splits a drawn unit in half", () => {
     const standing = deriveSeries(CHESS, [drawn(1)]);
 
     expect(standing.sideATotal).toBe(1);
     expect(standing.sideBTotal).toBe(1);
   });
 
-  it("is over when every part has been recorded", () => {
+  it("is over when the count has been played", () => {
     const standing = deriveSeries(CHESS, [won(1, "SIDE_A"), drawn(2)]);
 
     expect(standing.over).toBe(true);
@@ -91,7 +84,7 @@ describe("a match played out in full", () => {
     expect(standing.sideBTotal).toBe(1);
   });
 
-  it("ends level when the two sides finish equal", () => {
+  it("ends level when the two sides finish equal and nothing follows", () => {
     const standing = deriveSeries(CHESS, [drawn(1), drawn(2)]);
 
     expect(standing.over).toBe(true);
@@ -100,40 +93,44 @@ describe("a match played out in full", () => {
   });
 });
 
-describe("a match that stops when one side has enough", () => {
-  it("carries the target it has to reach", () => {
-    expect(targetHalves(COUNTED)).toBe(4);
-    expect(targetHalves(CHESS)).toBeNull();
+describe("a level that ends at a number of units", () => {
+  it("carries the number it has to reach", () => {
+    expect(targetOf(COUNTED)).toBe(4);
+    expect(targetOf(CHESS)).toBeNull();
   });
 
-  it("gives a part to whoever scored more inside it", () => {
-    const standing = deriveSeries(COUNTED, [scored(1, 101, 74)]);
+  it("counts a won unit towards it", () => {
+    const standing = deriveSeries(COUNTED, [won(1, "SIDE_A")]);
 
     expect(standing.sideATotal).toBe(2);
     expect(standing.over).toBe(false);
   });
 
-  it("stops as soon as a side reaches the target", () => {
-    const standing = deriveSeries(COUNTED, [scored(1, 101, 74), scored(2, 100, 60)]);
+  it("stops as soon as a side reaches the number", () => {
+    const standing = deriveSeries(COUNTED, [won(1, "SIDE_A"), won(2, "SIDE_A")]);
 
     expect(standing.over).toBe(true);
     expect(standing.winner).toBe("SIDE_A");
-    expect(standing.unitsLeft).toBe(1);
+    expect(standing.unitsLeft).toBe(0);
   });
 
-  it("does not count a part played after the match was already over", () => {
-    const standing = deriveSeries(COUNTED, [
-      scored(1, 101, 74),
-      scored(2, 100, 60),
-      scored(3, 10, 100),
-    ]);
+  it("takes no ceiling on how many units fit under it", () => {
+    const standing = deriveSeries(COUNTED, [drawn(1), drawn(2), drawn(3)]);
+
+    expect(standing.over).toBe(false);
+    expect(standing.unitsRecorded).toBe(3);
+    expect(standing.unitsAllowed).toBe(4);
+  });
+
+  it("does not count a unit played after the level was already over", () => {
+    const standing = deriveSeries(COUNTED, [won(1, "SIDE_A"), won(2, "SIDE_A"), won(3, "SIDE_B")]);
 
     expect(standing.sideBTotal).toBe(0);
     expect(standing.unitsRecorded).toBe(2);
   });
 });
 
-describe("an abandoned part", () => {
+describe("an abandoned unit", () => {
   it("scores nothing for either side", () => {
     const standing = deriveSeries(CHESS, [abandoned(1)]);
 
@@ -141,7 +138,7 @@ describe("an abandoned part", () => {
     expect(standing.sideBTotal).toBe(0);
   });
 
-  it("still counts as one of the parts the match holds", () => {
+  it("still counts as one of the units the level holds", () => {
     const standing = deriveSeries(CHESS, [won(1, "SIDE_A"), abandoned(2)]);
 
     expect(standing.unitsRecorded).toBe(2);
@@ -150,7 +147,7 @@ describe("an abandoned part", () => {
   });
 });
 
-describe("an adjustment", () => {
+describe("a move", () => {
   it("swings both sides at once", () => {
     const standing = deriveSeries(CHESS, [], [teysse(1, "SIDE_A")]);
 
@@ -159,24 +156,27 @@ describe("an adjustment", () => {
   });
 
   it("drives a side below nothing rather than flooring at zero", () => {
-    const standing = deriveSeries(COUNTED, [scored(1, 101, 74)], [teysse(2, "SIDE_B")]);
+    const standing = deriveSeries(
+      { ...COUNTED, target: 4 },
+      [won(1, "SIDE_A")],
+      [teysse(2, "SIDE_B")],
+    );
 
     expect(standing.sideATotal).toBe(-2);
     expect(standing.sideBTotal).toBe(4);
   });
 
-  it("wins the match on its own when the swing reaches the target", () => {
+  it("wins the level on its own when the swing reaches the number", () => {
     const standing = deriveSeries(COUNTED, [abandoned(1)], [teysse(1, "SIDE_A")]);
 
     expect(standing.over).toBe(true);
     expect(standing.winner).toBe("SIDE_A");
-    expect(standing.unitsLeft).toBe(3);
   });
 
-  it("lands before the part it happened in, which scores nothing anyway", () => {
+  it("lands before the unit it happened in, which scores nothing anyway", () => {
     const standing = deriveSeries(
-      { ...COUNTED, unitsToWin: 3 },
-      [scored(1, 101, 20), abandoned(2)],
+      { ...COUNTED, target: 3 },
+      [won(1, "SIDE_A"), abandoned(2)],
       [teysse(2, "SIDE_B")],
     );
 
@@ -187,7 +187,7 @@ describe("an adjustment", () => {
 
   it("takes one from each side and leaves them where they started", () => {
     const standing = deriveSeries(
-      { ...COUNTED, unitsToWin: 3, unitsPerParent: 5 },
+      { ...COUNTED, target: 3 },
       [abandoned(1), abandoned(2)],
       [teysse(1, "SIDE_A"), teysse(2, "SIDE_B")],
     );
@@ -198,7 +198,7 @@ describe("an adjustment", () => {
 
   it("takes two by one side to a win", () => {
     const standing = deriveSeries(
-      { ...COUNTED, unitsToWin: 4, unitsPerParent: 5 },
+      { ...COUNTED, target: 4 },
       [abandoned(1), abandoned(2)],
       [teysse(1, "SIDE_A"), teysse(2, "SIDE_A")],
     );
@@ -208,10 +208,10 @@ describe("an adjustment", () => {
     expect(standing.winner).toBe("SIDE_A");
   });
 
-  it("is walked in order with the parts rather than added on at the end", () => {
+  it("is walked in order with the units rather than added on at the end", () => {
     const early = deriveSeries(
-      { ...COUNTED, unitsToWin: 2, unitsPerParent: 4 },
-      [abandoned(1), scored(2, 100, 10), scored(3, 100, 10)],
+      COUNTED,
+      [abandoned(1), won(2, "SIDE_A"), won(3, "SIDE_A")],
       [teysse(1, "SIDE_B")],
     );
 
@@ -230,10 +230,15 @@ describe("the next unit order", () => {
   });
 });
 
-describe("a level knockout match", () => {
-  const KNOCKOUT = { ...CHESS, extendsWhenLevel: true };
+describe("a level whose units are continued while it stays unsettled", () => {
+  const KNOCKOUT: SeriesRules = {
+    ...CHESS,
+    unsettled: "CONTINUE",
+    margin: 1,
+    continueUnits: 2,
+  };
 
-  it("stands as a result in a group stage", () => {
+  it("stands as a result where nothing is continued", () => {
     const standing = deriveSeries(CHESS, [drawn(1), drawn(2)]);
 
     expect(standing.over).toBe(true);
@@ -241,7 +246,7 @@ describe("a level knockout match", () => {
     expect(standing.extending).toBe(false);
   });
 
-  it("is extended by another pair rather than left level", () => {
+  it("is continued by another pair rather than left level", () => {
     const standing = deriveSeries(KNOCKOUT, [drawn(1), drawn(2)]);
 
     expect(standing.over).toBe(false);
@@ -250,14 +255,14 @@ describe("a level knockout match", () => {
     expect(standing.unitsLeft).toBe(2);
   });
 
-  it("is extended again while it stays level", () => {
+  it("is continued again while it stays level", () => {
     const standing = deriveSeries(KNOCKOUT, [drawn(1), drawn(2), drawn(3), drawn(4)]);
 
     expect(standing.unitsAllowed).toBe(6);
     expect(standing.over).toBe(false);
   });
 
-  it("stops as soon as the extension breaks the tie", () => {
+  it("stops as soon as the continuation breaks the tie", () => {
     const standing = deriveSeries(KNOCKOUT, [drawn(1), drawn(2), won(3, "SIDE_A"), drawn(4)]);
 
     expect(standing.over).toBe(true);
@@ -265,23 +270,29 @@ describe("a level knockout match", () => {
     expect(standing.extending).toBe(true);
   });
 
-  it("is not extended when one side is already ahead", () => {
+  it("is not continued when one side is already ahead", () => {
     const standing = deriveSeries(KNOCKOUT, [won(1, "SIDE_A"), drawn(2)]);
 
     expect(standing.over).toBe(true);
     expect(standing.extending).toBe(false);
   });
+
+  it("takes the count of units to continue with off the level", () => {
+    const standing = deriveSeries({ ...KNOCKOUT, continueUnits: 3 }, [drawn(1), drawn(2)]);
+
+    expect(standing.unitsAllowed).toBe(5);
+    expect(standing.unitsLeft).toBe(3);
+  });
 });
 
-describe("a level whose units are scored past a total", () => {
+describe("a level whose units are counted by their points", () => {
   const SCORED: SeriesRules = {
     ...BASE,
-    ending: "FIRST_PAST",
-    unitsPerParent: 20,
+    countedBy: "POINTS",
+    endsBy: "TARGET",
+    unitCount: null,
     target: 100,
-    bothPastTarget: "HIGHER_TOTAL",
-    decision: "SCORE",
-    halvesPerUnit: 1,
+    unsettled: "DRAW",
   };
 
   it("adds up what the units under it scored", () => {
@@ -293,7 +304,7 @@ describe("a level whose units are scored past a total", () => {
     expect(standing.over).toBe(false);
   });
 
-  it("ends when a side passes the total", () => {
+  it("ends when a side passes the number", () => {
     const standing = deriveSeries(SCORED, [scored(1, 60, 12), scored(2, 45, 40)]);
 
     expect(standing.over).toBe(true);
@@ -307,36 +318,84 @@ describe("a level whose units are scored past a total", () => {
     expect(standing.winner).toBe("SIDE_B");
   });
 
-  it("plays another unit when both are past and level", () => {
-    const standing = deriveSeries({ ...SCORED, bothPastTarget: "PLAY_ON" }, [scored(1, 101, 101)]);
+  it("plays another unit when both are past and neither leads by the margin", () => {
+    const rules: SeriesRules = { ...SCORED, unsettled: "CONTINUE", margin: 1, continueUnits: 1 };
+    const standing = deriveSeries(rules, [scored(1, 101, 101)]);
 
     expect(standing.over).toBe(false);
     expect(standing.winner).toBeNull();
   });
 
-  it("stops level when the tie is not played on", () => {
+  it("stops level when nothing follows the tie", () => {
     const standing = deriveSeries(SCORED, [scored(1, 101, 101)]);
 
     expect(standing.over).toBe(true);
     expect(standing.level).toBe(true);
     expect(standing.winner).toBeNull();
   });
+
+  it("waits for the margin the level asks for", () => {
+    const rules: SeriesRules = { ...SCORED, unsettled: "CONTINUE", margin: 2, continueUnits: 1 };
+    const standing = deriveSeries(rules, [scored(1, 101, 100)]);
+
+    expect(standing.over).toBe(false);
+    expect(standing.winner).toBeNull();
+  });
 });
 
-describe("the extension count", () => {
-  it("comes off the level rather than a constant", () => {
-    const rules = { ...CHESS, extendsWhenLevel: true, extensionUnits: 3 };
-    const standing = deriveSeries(rules, [drawn(1), drawn(2)]);
+describe("a level that plays a deciding unit", () => {
+  const DECIDED: SeriesRules = { ...CHESS, unsettled: "DECIDER" };
 
-    expect(standing.unitsAllowed).toBe(5);
-    expect(standing.unitsLeft).toBe(3);
+  it("reads as unsettled once the count is played and nothing is settled", () => {
+    const standing = deriveSeries(DECIDED, [drawn(1), drawn(2)]);
+
+    expect(standing.unsettled).toBe(true);
+    expect(standing.over).toBe(false);
+    expect(standing.unitsLeft).toBe(1);
+  });
+
+  it("reads as settled where one side came out of the count ahead", () => {
+    const standing = deriveSeries(DECIDED, [won(1, "SIDE_A"), drawn(2)]);
+
+    expect(standing.unsettled).toBe(false);
+    expect(standing.over).toBe(true);
+  });
+
+  it("is over once the deciding unit has been played", () => {
+    const standing = deriveSeries(DECIDED, [drawn(1), drawn(2), won(3, "SIDE_A")]);
+
+    expect(standing.over).toBe(true);
+    expect(standing.winner).toBe("SIDE_A");
+    expect(standing.unsettled).toBe(false);
+  });
+
+  it("takes only one deciding unit even where it too ends level", () => {
+    const standing = deriveSeries(DECIDED, [drawn(1), drawn(2), drawn(3)]);
+
+    expect(standing.over).toBe(true);
+    expect(standing.unsettled).toBe(false);
+    expect(standing.winner).toBeNull();
+  });
+
+  it("reads as unsettled on a level ending at a number when both are past it", () => {
+    const rules: SeriesRules = {
+      ...BASE,
+      countedBy: "POINTS",
+      endsBy: "TARGET",
+      unitCount: null,
+      target: 100,
+      unsettled: "DECIDER",
+    };
+    const standing = deriveSeries(rules, [scored(1, 101, 101)]);
+
+    expect(standing.unsettled).toBe(true);
+    expect(standing.over).toBe(false);
   });
 });
 
 describe("a unit worth more than one", () => {
   it("counts what the row says it was worth", () => {
-    const rules = { ...COUNTED, unitsToWin: 2 };
-    const standing = deriveSeries(rules, [{ ...scored(1, 101, 20), worth: 2 }]);
+    const standing = deriveSeries(COUNTED, [{ ...won(1, "SIDE_A"), worth: 2 }]);
 
     expect(standing.sideATotal).toBe(4);
     expect(standing.over).toBe(true);
@@ -344,22 +403,16 @@ describe("a unit worth more than one", () => {
   });
 });
 
-describe("the threshold a level plays to", () => {
-  it("counts won units through the halves a unit is worth", () => {
-    expect(targetHalves(COUNTED)).toBe(4);
-    expect(targetHalves(CHESS)).toBeNull();
-  });
-});
-
-describe("a unit that starts with a credit", () => {
+describe("a level that starts with a credit", () => {
   const POINT: SeriesRules = {
     ...BASE,
-    ending: "FIRST_PAST",
-    unitsPerParent: 20,
+    countedBy: "POINTS",
+    endsBy: "TARGET",
+    unitCount: null,
     target: 100,
-    bothPastTarget: "PLAY_ON",
-    decision: "SCORE",
-    halvesPerUnit: 1,
+    unsettled: "CONTINUE",
+    margin: 1,
+    continueUnits: 1,
     startingCredit: 26,
     creditWindow: 2,
   };
@@ -410,5 +463,12 @@ describe("a unit that starts with a credit", () => {
 
     expect(standing.sideBTotal).toBe(0);
     expect(standing.sideBLostCredit).toBe(false);
+  });
+
+  it("counts the credit in the units the level counts by", () => {
+    const rules: SeriesRules = { ...COUNTED, startingCredit: 1, creditWindow: 1 };
+    const standing = deriveSeries(rules, []);
+
+    expect(standing.sideATotal).toBe(2);
   });
 });

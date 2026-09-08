@@ -1,6 +1,6 @@
 import type {
   UnitRow,
-  RecordedAdjustmentRow,
+  RecordedMoveRow,
   SeriesStandingRow,
 } from "@/components/admin/tournament/seriesTypes";
 
@@ -52,7 +52,7 @@ export type PublicMatch = {
   penaltyKicks: MatchKick[];
   bookings: MatchBooking[];
   units: UnitRow[];
-  adjustments: RecordedAdjustmentRow[];
+  moves: RecordedMoveRow[];
   series: SeriesStandingRow | null;
   mvpVote: {
     id: string;

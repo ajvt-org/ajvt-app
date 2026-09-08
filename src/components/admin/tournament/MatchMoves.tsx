@@ -4,11 +4,12 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { countedUnits, type LevelRow } from "@/lib/matchLevels";
-import { offerableRules } from "@/lib/adjustmentRules";
+import { marksAWorth, offerableRules } from "@/lib/moveRules";
 import { seriesResult as texts } from "@/lib/texts";
-import type { AdjustmentRuleRow, RecordedAdjustmentRow, UnitRow } from "./seriesTypes";
+import type { MoveRuleRow, RecordedMoveRow, UnitRow } from "./seriesTypes";
 
-export function effectOf(rule: AdjustmentRuleRow, unit: LevelRow): string {
+export function effectOf(rule: MoveRuleRow, unit: LevelRow): string {
+  if (marksAWorth(rule)) return texts.moveWorth(rule.name, String(rule.unitWorth));
   return texts.moveEffect(
     rule.name,
     countedUnits(rule.unitsToSelf, unit),
@@ -16,7 +17,7 @@ export function effectOf(rule: AdjustmentRuleRow, unit: LevelRow): string {
   );
 }
 
-export default function MatchAdjustments({
+export default function MatchMoves({
   rules,
   recorded,
   sides,
@@ -27,8 +28,8 @@ export default function MatchAdjustments({
   onRecord,
   onUndo,
 }: {
-  rules: AdjustmentRuleRow[];
-  recorded: RecordedAdjustmentRow[];
+  rules: MoveRuleRow[];
+  recorded: RecordedMoveRow[];
   sides: string[];
   unit: LevelRow;
   units: UnitRow[];

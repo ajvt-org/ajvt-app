@@ -9,12 +9,7 @@ import {
   unitNode,
 } from "@tests/ui/ladders";
 import type { SeriesConfig } from "./seriesConfig";
-import type {
-  AdjustmentRuleRow,
-  RecordedAdjustmentRow,
-  SeriesStandingRow,
-  UnitRow,
-} from "./seriesTypes";
+import type { MoveRuleRow, RecordedMoveRow, SeriesStandingRow, UnitRow } from "./seriesTypes";
 
 const getMock = vi.fn();
 const postMock = vi.fn();
@@ -35,8 +30,8 @@ const CHESS = CHESS_CONFIG;
 const SCORED = SCORED_CONFIG;
 
 const DEEP = ladderConfig(
-  { unitsPerParent: 3, ending: "FIRST_TO", unitsToWin: 2 },
-  { singular: "شوط", plural: "أشواط", decision: "SCORE" },
+  { countedBy: "POINTS", endsBy: "TARGET", unitCount: null, target: 200 },
+  { singular: "شوط", plural: "أشواط", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
 );
 const DEEP_LADDER = [
   ...DEEP.ladder,
@@ -46,7 +41,9 @@ const DEEP_LADDER = [
     order: 2,
     singular: "نقطة",
     plural: "نقاط",
-    decision: "SCORE" as const,
+    countedBy: null,
+    endsBy: null,
+    target: null,
   },
 ];
 
@@ -64,15 +61,15 @@ function mockSeries(state: {
   units: UnitRow[];
   standing: SeriesStandingRow;
   levels?: SeriesConfig["ladder"];
-  adjustments?: RecordedAdjustmentRow[];
-  rules?: AdjustmentRuleRow[];
+  moves?: RecordedMoveRow[];
+  rules?: MoveRuleRow[];
 }) {
   getMock.mockImplementation(async (url: string) =>
-    String(url).includes("adjustment-rules")
+    String(url).includes("moves")
       ? { rules: state.rules ?? [] }
       : {
           units: state.units,
-          adjustments: state.adjustments ?? [],
+          moves: state.moves ?? [],
           levels: state.levels ?? CHESS.ladder,
           standing: state.standing,
         },
@@ -232,13 +229,14 @@ describe("opening a unit onto the level under it", () => {
 
 describe("a unit a rule ended", () => {
   it("reads as ended by that rule rather than as a score", async () => {
-    const rule: AdjustmentRuleRow = {
+    const rule: MoveRuleRow = {
       id: "r1",
       name: "تيس",
       unitsToSelf: 2,
       unitsFromOther: 2,
       levelId: "unit",
       endsUnit: true,
+      unitWorth: null,
     };
     mockSeries({
       units: [unit("u1", 1, { outcome: "SIDE_A", endedBy: rule })],
@@ -302,13 +300,14 @@ describe("correcting and removing", () => {
 });
 
 describe("the moves of a level", () => {
-  const teysse: AdjustmentRuleRow = {
+  const teysse: MoveRuleRow = {
     id: "r1",
     name: "تيس",
     unitsToSelf: 2,
     unitsFromOther: 2,
     levelId: "unit",
     endsUnit: false,
+    unitWorth: null,
   };
 
   it("offers only the rules declared for that level", async () => {

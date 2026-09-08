@@ -60,7 +60,7 @@ describe("tournamentPanels", () => {
           goals: [],
           bookings: [],
           penaltyKicks: [],
-          adjustments: [],
+          moves: [],
           units: [],
           firstTeam: null,
           secondTeam: null,
