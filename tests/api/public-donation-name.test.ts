@@ -70,11 +70,24 @@ describe("a donation from someone with no account", () => {
     expect((await prisma.donation.findFirstOrThrow()).donorName).toBeNull();
   });
 
-  it("ignores a name typed before the donor switched to anonymous", async () => {
+  it("keeps a name the donor gave even though they asked to stay anonymous", async () => {
     const res = await DONATE(form({ ...base, anonymous: "true", donorName: "محمد" }, nextIp()));
 
     expect(res.status).toBe(201);
-    expect((await prisma.donation.findFirstOrThrow()).donorName).toBeNull();
+    const donation = await prisma.donation.findFirstOrThrow();
+    expect(donation.donorName).toBe("محمد");
+    expect(donation.anonymous).toBe(true);
+  });
+
+  it("keeps that name off the supporters board", async () => {
+    await DONATE(form({ ...base, anonymous: "true", donorName: "محمد" }, nextIp()));
+    await prisma.donation.updateMany({ data: { status: "ACTIVE" } });
+    await prisma.payment.updateMany({ data: { status: "ACTIVE" } });
+    const { getLeaderboardData } = await import("@/lib/donationsServer");
+
+    const { leaderboard } = await getLeaderboardData({});
+
+    expect(leaderboard.map((e) => e.name)).not.toContain("محمد");
   });
 
   it("still lands as pending, whichever way the donor answered", async () => {
