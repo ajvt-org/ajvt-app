@@ -7,7 +7,7 @@ import HeaderIdentity from "@/components/HeaderIdentity";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import type { ScoreCurve } from "@/lib/competitionConfig";
-import StandingsBoard, { type BoardRow } from "./StandingsBoard";
+import StandingsBoard, { type BoardRow } from "@/components/StandingsBoard";
 import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 import RoundRecap from "./RoundRecap";

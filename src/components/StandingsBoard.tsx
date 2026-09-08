@@ -2,7 +2,7 @@
 
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import NumericRanges from "@/components/NumericRanges";
-import { countedNoun, POINTS } from "@/lib/arabicPlural";
+import { standingsBoard as texts } from "@/lib/texts";
 
 export interface BoardRow {
   rank: number;
@@ -41,7 +41,7 @@ export default function StandingsBoard({
       </p>
 
       {podium.length === 3 && (
-        <div className="flex items-end justify-center gap-3 pb-2" aria-label="المنصة">
+        <div className="flex items-end justify-center gap-3 pb-2" aria-label={texts.podium}>
           {podium.map((row) => {
             const first = row.rank === 1;
             return (
@@ -154,7 +154,7 @@ export default function StandingsBoard({
           className="text-xs font-bold rounded-xl p-2"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <NumericRanges>{`ترتيبك ${mine.rank} بمجموع ${countedNoun(mine.total, POINTS)}`}</NumericRanges>
+          <NumericRanges>{texts.myPlace(mine.rank, mine.total)}</NumericRanges>
         </p>
       )}
     </section>
