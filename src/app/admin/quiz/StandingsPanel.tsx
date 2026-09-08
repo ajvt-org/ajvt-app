@@ -2,15 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import StandingsBoard, { type BoardRow } from "@/components/StandingsBoard";
 import { blockLabel } from "@/lib/quizRanking";
 import { quizStandings as texts } from "@/lib/texts";
-
-interface BoardRow {
-  rank: number;
-  userId: string;
-  name: string;
-  total: number;
-}
 
 interface Board {
   id: string;
@@ -109,28 +103,7 @@ export default function StandingsPanel({ competitionId }: { competitionId: strin
         </select>
       )}
 
-      {rows.length === 0 && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.empty}
-        </p>
-      )}
-
-      <div className="space-y-1">
-        {rows.map((row) => (
-          <div
-            key={row.userId}
-            className="flex items-center justify-between rounded-lg p-2 text-xs"
-            style={{ background: "var(--surface-2)" }}
-          >
-            <span style={{ color: "var(--text-main)" }}>
-              {row.rank} · {row.name}
-            </span>
-            <span className="font-bold" style={{ color: "var(--mint-700)" }}>
-              {row.total}
-            </span>
-          </div>
-        ))}
-      </div>
+      <StandingsBoard rows={rows} mine={null} meId={null} empty={texts.empty} />
     </div>
   );
 }
