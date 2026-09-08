@@ -26,6 +26,7 @@
   --cream-dark: #ede7dc;
   --text-main: #1a2e24;
   --text-muted: #5a7868;
+  --surface-2: var(--mint-50);
 }
 
 * {
