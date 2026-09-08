@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { acceptPayment, attachProof, freshPerson, openAdmin, signUp } from "./helpers";
+import { donorNameChoice } from "../../src/lib/texts/donorNameChoice";
 
 const BASE_MEMBER = {
   fullName: "أحمد ولد الفائض",
@@ -8,7 +9,7 @@ const BASE_MEMBER = {
   paymentMethod: "بنكيلي",
 };
 
-const QUESTION = "هل تريد ذكر اسمك مع التبرع؟";
+const QUESTION = donorNameChoice.question;
 
 test("a member who pays above the fee says how the surplus appears", async ({ page }) => {
   const member = freshPerson(BASE_MEMBER);
@@ -29,7 +30,7 @@ test("a member who pays above the fee says how the surplus appears", async ({ pa
   await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
   await expect(page.getByText("يرجى اختيار كيف تظهر مساهمتك")).toBeVisible();
 
-  await page.getByRole("radio", { name: "أفضّل أن أبقى مجهولاً" }).click();
+  await page.getByRole("radio", { name: donorNameChoice.no }).click();
   await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
   await expect(page.getByText(member.fullName).first()).toBeVisible();
 

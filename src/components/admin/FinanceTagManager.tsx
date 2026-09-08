@@ -5,8 +5,8 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
-import { counted } from "@/lib/arabicCount";
-import { EXPENSE } from "@/lib/messages";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { financeTags as texts } from "@/lib/texts";
 
 export type FinanceTagRow = { id: string; name: string; count: number; total: number };
 
@@ -24,6 +24,7 @@ export default function FinanceTagManager({
   const [editingName, setEditingName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [asking, setAsking] = useState<FinanceTagRow | null>(null);
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -56,11 +57,7 @@ export default function FinanceTagManager({
   }
 
   async function remove(tag: FinanceTagRow) {
-    const warning =
-      tag.count > 0
-        ? `سيُزال هذا التصنيف من ${counted(tag.count, EXPENSE)}. المصاريف نفسها تبقى. متابعة؟`
-        : "حذف هذا التصنيف؟";
-    if (!confirm(warning)) return;
+    setAsking(null);
     await run(() => api.del(`/api/admin/finance-tags/${tag.id}`));
   }
 
@@ -68,9 +65,9 @@ export default function FinanceTagManager({
     <div className="card p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="font-black text-sm" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="tag">تصنيفات المصاريف</IconLabel>
+          <IconLabel name="tag">{texts.title}</IconLabel>
         </p>
-        <button type="button" onClick={onClose} className="btn-icon" aria-label="إغلاق">
+        <button type="button" onClick={onClose} className="btn-icon" aria-label={texts.close}>
           <Icon name="close" size={16} />
         </button>
       </div>
@@ -80,12 +77,12 @@ export default function FinanceTagManager({
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
-          placeholder="تصنيف جديد"
+          placeholder={texts.newTagPlaceholder}
           className="input flex-1 min-w-0"
-          aria-label="اسم التصنيف الجديد"
+          aria-label={texts.newTagLabel}
         />
         <button type="submit" disabled={busy || !name.trim()} className="btn btn-sm btn-ghost">
-          <IconLabel name="plus">إضافة</IconLabel>
+          <IconLabel name="plus">{texts.add}</IconLabel>
         </button>
       </form>
 
@@ -97,7 +94,7 @@ export default function FinanceTagManager({
 
       {tags.length === 0 ? (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          لا توجد تصنيفات بعد
+          {texts.empty}
         </p>
       ) : (
         <ul className="space-y-1.5">
@@ -114,7 +111,7 @@ export default function FinanceTagManager({
                     onChange={(e) => setEditingName(e.target.value)}
                     maxLength={30}
                     className="input flex-1 min-w-0"
-                    aria-label="الاسم الجديد"
+                    aria-label={texts.renameLabel}
                   />
                   <button
                     type="button"
@@ -122,14 +119,14 @@ export default function FinanceTagManager({
                     disabled={busy}
                     className="btn btn-sm btn-ghost"
                   >
-                    <IconLabel name="check">حفظ</IconLabel>
+                    <IconLabel name="check">{texts.save}</IconLabel>
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
                     className="btn btn-sm btn-ghost"
                   >
-                    إلغاء
+                    {texts.cancel}
                   </button>
                 </>
               ) : (
@@ -145,16 +142,16 @@ export default function FinanceTagManager({
                       setEditingName(tag.name);
                     }}
                     className="btn-icon"
-                    aria-label={`تعديل ${tag.name}`}
+                    aria-label={texts.editOf(tag.name)}
                   >
                     <Icon name="pencil" size={14} />
                   </button>
                   <button
                     type="button"
-                    onClick={() => remove(tag)}
+                    onClick={() => setAsking(tag)}
                     disabled={busy}
                     className="btn-icon"
-                    aria-label={`حذف ${tag.name}`}
+                    aria-label={texts.deleteOf(tag.name)}
                     style={{ color: "#991b1b" }}
                   >
                     <Icon name="trash" size={14} />
@@ -164,6 +161,18 @@ export default function FinanceTagManager({
             </li>
           ))}
         </ul>
+      )}
+
+      {asking && (
+        <ConfirmDialog
+          title={texts.confirmDeleteTitle}
+          message={asking.count > 0 ? texts.confirmDeleteInUse(asking.count) : texts.confirmDelete}
+          confirmLabel={texts.delete}
+          danger
+          loading={busy}
+          onConfirm={() => remove(asking)}
+          onClose={() => setAsking(null)}
+        />
       )}
     </div>
   );

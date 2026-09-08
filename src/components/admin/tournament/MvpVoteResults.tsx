@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import Notice from "@/components/Notice";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { isVoteClosed, mvpWinner } from "@/lib/mvpVote";
 import { countdownLabel } from "@/lib/voteCountdown";
 import { mvpVote as texts } from "@/lib/texts";
@@ -19,6 +21,8 @@ export default function MvpVoteResults({
   onChange: () => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [asking, setAsking] = useState(false);
 
   const closed = isVoteClosed(vote);
   const countdown = closed ? null : countdownLabel(vote.closesAt);
@@ -30,24 +34,26 @@ export default function MvpVoteResults({
 
   async function send(body: Record<string, unknown>) {
     setLoading(true);
+    setError("");
     try {
       await api.patch(`/api/admin/matches/${matchId}/mvp-vote`, body);
       onChange();
     } catch (e) {
-      alert(errorMessage(e));
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
   }
 
   async function remove() {
-    if (!confirm(texts.confirmRemove)) return;
+    setAsking(false);
     setLoading(true);
+    setError("");
     try {
       await api.del(`/api/admin/matches/${matchId}/mvp-vote`);
       onChange();
     } catch (e) {
-      alert(errorMessage(e));
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -82,7 +88,7 @@ export default function MvpVoteResults({
             {texts.extend}
           </button>
           <button
-            onClick={remove}
+            onClick={() => setAsking(true)}
             disabled={loading}
             className="text-xs px-2.5 py-1 rounded-lg font-bold"
             style={{ background: "#fee2e2", color: "#991b1b" }}
@@ -127,6 +133,20 @@ export default function MvpVoteResults({
         <p className="text-xs font-semibold" style={{ color: "#92400e" }}>
           {texts.tie}
         </p>
+      )}
+
+      {error && <Notice tone="error">{error}</Notice>}
+
+      {asking && (
+        <ConfirmDialog
+          title={texts.confirmRemoveTitle}
+          message={texts.confirmRemove}
+          confirmLabel={texts.remove}
+          danger
+          loading={loading}
+          onConfirm={remove}
+          onClose={() => setAsking(false)}
+        />
       )}
     </div>
   );

@@ -165,11 +165,15 @@ describe("a bracket that has not been drawn at all", () => {
     expect(document.querySelector(".card")).toBeNull();
   });
 
-  it("tells the confirm what happens to whoever finds no opponent", () => {
+  it("tells the question what happens to whoever finds no opponent", () => {
     const onAction = show([], "KNOCKOUT", false);
     fireEvent.click(screen.getByText(texts.draw));
 
-    expect(onAction).toHaveBeenCalledWith("draw", texts.entrant.team.confirmDraw);
+    expect(onAction).toHaveBeenCalledWith("draw", {
+      title: texts.draw,
+      message: texts.entrant.team.confirmDraw,
+      confirmLabel: texts.draw,
+    });
     expect(texts.entrant.team.confirmDraw).toContain("الدور التالي");
   });
 
@@ -187,6 +191,10 @@ describe("a bracket that has not been drawn at all", () => {
     );
     fireEvent.click(screen.getByText(texts.draw));
 
-    expect(onAction).toHaveBeenCalledWith("draw", texts.entrant.player.confirmDraw);
+    expect(onAction).toHaveBeenCalledWith("draw", {
+      title: texts.draw,
+      message: texts.entrant.player.confirmDraw,
+      confirmLabel: texts.draw,
+    });
   });
 });
