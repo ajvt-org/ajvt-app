@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/lib/prisma";
 import { getUploadDir } from "@/lib/uploadDir";
 import { processImage } from "@/lib/imageProcessing";
-import { ACCEPTED_UPLOAD_TYPES, MAX_UPLOAD_SIZE } from "@/lib/uploadLimits";
+import { MAX_UPLOAD_SIZE, READABLE_UPLOAD_TYPES } from "@/lib/uploadLimits";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import { getUserSession } from "@/lib/auth";
 import { payableMethodNames } from "@/lib/paymentMethodsServer";
@@ -47,7 +47,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   const paymentMethodRaw = formData.get("paymentMethod");
 
   if (!file) return NextResponse.json({ error: money.proofRequired }, { status: 400 });
-  if (!ACCEPTED_UPLOAD_TYPES.includes(file.type)) {
+  if (!READABLE_UPLOAD_TYPES.includes(file.type)) {
     return NextResponse.json({ error: uploads.unsupportedType }, { status: 400 });
   }
   if (file.size > MAX_UPLOAD_SIZE) {

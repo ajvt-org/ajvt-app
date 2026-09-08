@@ -19,6 +19,12 @@ describe("what an upload may be", () => {
     }
   });
 
+  it("keeps a converted format out of what the routes let through", () => {
+    for (const type of CONVERTED_UPLOAD_TYPES) {
+      expect(READABLE_UPLOAD_TYPES).not.toContain(type);
+    }
+  });
+
   it("reads the four the processor decodes, whatever the case", () => {
     expect(serverCanRead("image/jpeg")).toBe(true);
     expect(serverCanRead("IMAGE/PNG")).toBe(true);
