@@ -68,7 +68,7 @@ export default function MatchResult({
     });
 
   return (
-    <div className="card p-4 space-y-2">
+    <div className="card p-4 space-y-1.5">
       <MatchCardHead time={match.matchDate ? formatMatchTime(match.matchDate) : null}>
         <MatchMeta
           round={round}
@@ -95,7 +95,7 @@ export default function MatchResult({
           photo: match.secondTeam.photo,
         }}
         score={football ? { home: match.homeScore, away: match.awayScore } : null}
-        size="md"
+        size="xl"
         layout="stacked"
         entrant={entrant}
       />
