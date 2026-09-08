@@ -79,8 +79,10 @@ export const tournament = {
   unitWorthInvalid: "قيمة الوحدة يجب أن تكون رقماً صحيحاً موجباً",
   unitTakesItsScoreFromBelow: "هذه الوحدة تأخذ نتيجتها مما تحتها، فلا تقبل نتيجة مكتوبة",
   levelsFootballOnly: "المستويات لا تكون إلا في بطولة تُحتسب مبارياتها بجولاتها",
-  levelPlayedCannotGo: "هذا المستوى سُجّلت فيه وحدات، فلا يُحذف ولا يُنقل من موضعه",
-  levelPlayedCannotChange: "هذا المستوى سُجّلت فيه وحدات، فلا تتغير قواعده",
+  configurationLocked: {
+    RECORDED: "سُجّلت نتائج في هذه البطولة، فلا تتغير قواعد المباراة",
+    STARTED: "بدأت البطولة، فلا تتغير قواعد المباراة",
+  },
   seriesNotConfigured: "أكمل إعداد جولات البطولة قبل تسجيل نتيجة",
   matchTakesNoMoreParts: "انتهت المباراة، لا تقبل جولة أخرى",
   partNotFound: "الجولة غير موجودة",

@@ -46,8 +46,12 @@ const TEYSSE: MoveRuleRow = {
   unitWorth: null,
 };
 
-function answering(levels: LevelRow[], moves: MoveRuleRow[] = [], played: string[] = []) {
-  getMock.mockImplementation(async () => ({ levels, moves, played }));
+function answering(
+  levels: LevelRow[],
+  moves: MoveRuleRow[] = [],
+  lock: "RECORDED" | "STARTED" | null = null,
+) {
+  getMock.mockImplementation(async () => ({ levels, moves, lock }));
 }
 
 beforeEach(() => {
@@ -202,21 +206,31 @@ describe("the moves of a level", () => {
   });
 });
 
-describe("a level that has units recorded in it", () => {
-  beforeEach(() => {
-    answering([MATCH, GAME], [], ["game"]);
-  });
-
-  it("cannot be removed or moved", async () => {
+describe("a configuration that is closed", () => {
+  it("says a result is in the way and freezes the whole ladder", async () => {
+    answering([MATCH, GAME], [], "RECORDED");
     show();
 
-    expect((await screen.findByLabelText("حذف المستوى 2")).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByLabelText("تقديم المستوى 2").hasAttribute("disabled")).toBe(true);
+    expect(
+      await screen.findByText("سُجّلت نتائج في هذه البطولة، فلا تتغير قواعد المباراة"),
+    ).toBeDefined();
+    expect(screen.getByDisplayValue("لعبة").hasAttribute("disabled")).toBe(true);
+    expect(screen.getByLabelText("حذف المستوى 2").hasAttribute("disabled")).toBe(true);
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
   });
 
-  it("keeps its words editable", async () => {
+  it("says a date is in the way when nothing has been recorded", async () => {
+    answering([MATCH, GAME], [], "STARTED");
+    show();
+
+    expect(await screen.findByText("بدأت البطولة، فلا تتغير قواعد المباراة")).toBeDefined();
+    expect(screen.getByRole("button", { name: "إضافة مستوى" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("leaves it open while nothing closed it", async () => {
     show();
 
     expect((await screen.findByDisplayValue("لعبة")).hasAttribute("disabled")).toBe(false);
+    expect(saveButton().hasAttribute("disabled")).toBe(false);
   });
 });
