@@ -2,15 +2,16 @@
 
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
+import { PAYMENT_KIND_LABEL } from "@/lib/texts";
 import type { ProofKind } from "./paymentTypes";
 
 export type KindFilter = "ALL" | ProofKind;
 
-const TABS: { key: KindFilter; label: string; icon?: IconName }[] = [
-  { key: "ALL", label: "الكل" },
-  { key: "MEMBERSHIP", label: "انتساب", icon: "card" },
-  { key: "ACTIVITY", label: "الأنشطة", icon: "trophy" },
-  { key: "DONATION", label: "دعم", icon: "heart" },
+const TABS: { key: KindFilter; icon?: IconName }[] = [
+  { key: "ALL" },
+  { key: "MEMBERSHIP", icon: "card" },
+  { key: "ACTIVITY", icon: "trophy" },
+  { key: "DONATION", icon: "heart" },
 ];
 
 export default function KindTabs({
@@ -32,7 +33,11 @@ export default function KindTabs({
             color: active === tab.key ? "white" : "var(--mint-700)",
           }}
         >
-          {tab.icon ? <IconLabel name={tab.icon}>{tab.label}</IconLabel> : tab.label}
+          {tab.icon ? (
+            <IconLabel name={tab.icon}>{PAYMENT_KIND_LABEL[tab.key]}</IconLabel>
+          ) : (
+            PAYMENT_KIND_LABEL[tab.key]
+          )}
         </button>
       ))}
     </div>

@@ -64,7 +64,32 @@ export const paymentsPage = {
   sortOldest: "الأقدم دفعاً",
   sortLargest: "الأكبر مبلغاً",
   sortSmallest: "الأصغر مبلغاً",
+  filter: "تصفية",
+  kindAll: "الكل",
+  kindMembership: "انتساب",
+  kindActivity: "الأنشطة",
+  kindDonation: "دعم",
+  kind: "نوع الدفعة",
+  status: "الحالة",
+  allStatuses: "كل الحالات",
+  paymentDate: "تاريخ الدفع",
+  account: "الرقم المستلم",
+  receipt: "الوصل",
+  anyReceipt: "بوصل وبدونه",
+  withReceipt: "يحمل وصلاً",
+  withoutReceipt: "بدون وصل",
+  linked: "الربط بعضو",
+  anyLink: "مرتبط وغير مرتبط",
+  isLinked: "مرتبط بعضو",
+  notLinked: "غير مرتبط",
 } as const;
+
+export const PAYMENT_KIND_LABEL: Record<string, string> = {
+  ALL: paymentsPage.kindAll,
+  MEMBERSHIP: paymentsPage.kindMembership,
+  ACTIVITY: paymentsPage.kindActivity,
+  DONATION: paymentsPage.kindDonation,
+};
 
 export const PAYMENT_SORT_LABEL: Record<string, string> = {
   newest: paymentsPage.sortNewest,
