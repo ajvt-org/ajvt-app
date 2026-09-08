@@ -4,10 +4,10 @@ import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import {
+  configurationLock,
   declareConfiguration,
   listLevels,
   listMoves,
-  playedLevelIds,
 } from "@/lib/matchLevelsServer";
 import { levelsSchema } from "./schema";
 
@@ -18,12 +18,12 @@ export const GET = withRoute(
   async (_req: NextRequest, { params }: Params) => {
     const { id } = await params;
     await requireActivityAccess(id);
-    const [levels, moves, played] = await Promise.all([
+    const [levels, moves, lock] = await Promise.all([
       listLevels(id),
       listMoves(id),
-      playedLevelIds(id),
+      configurationLock(id),
     ]);
-    return NextResponse.json({ levels, moves, played });
+    return NextResponse.json({ levels, moves, lock });
   },
 );
 
@@ -37,6 +37,6 @@ export const PUT = withRoute(
     const saved = await declareConfiguration(id, body.levels, body.moves);
     await logAction(session.username, "DECLARE_MATCH_LEVELS", String(saved.levels.length));
 
-    return NextResponse.json({ ...saved, played: await playedLevelIds(id) });
+    return NextResponse.json({ ...saved, lock: await configurationLock(id) });
   },
 );

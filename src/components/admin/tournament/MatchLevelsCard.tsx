@@ -8,6 +8,8 @@ import Disclosure from "@/components/admin/Disclosure";
 import { useToast } from "@/components/Toast";
 import { matchLevelsSetup as texts } from "@/lib/texts";
 import { readBackOf } from "@/lib/levelReadBack";
+import { tournament as messages } from "@/lib/messages";
+import type { ConfigurationLock } from "@/lib/configurationLock";
 import type { LevelRow } from "@/lib/matchLevels";
 import type { MoveRuleRow } from "./seriesTypes";
 import LevelFields from "./LevelFields";
@@ -37,7 +39,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
   const showToast = useToast();
   const [drafts, setDrafts] = useState<LevelDraft[] | null>(null);
   const [moves, setMoves] = useState<MoveDraft[]>([]);
-  const [played, setPlayed] = useState<string[]>([]);
+  const [lock, setLock] = useState<ConfigurationLock | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,10 +47,12 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
 
   const load = useCallback(async () => {
     try {
-      const saved = await api.get<{ levels: LevelRow[]; moves: MoveRuleRow[]; played: string[] }>(
-        `${base}/levels`,
-      );
-      setPlayed(saved.played ?? []);
+      const saved = await api.get<{
+        levels: LevelRow[];
+        moves: MoveRuleRow[];
+        lock: ConfigurationLock | null;
+      }>(`${base}/levels`);
+      setLock(saved.lock ?? null);
       setDrafts(saved.levels.map(draftOfLevel));
       setMoves((saved.moves ?? []).map(draftOfMove));
     } catch {
@@ -78,7 +82,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
     drafts.map((draft) => draft.key),
   );
   const holds = configurationHolds(drafts, moves);
-  const locked = (draft: LevelDraft) => draft.id !== null && played.includes(draft.id);
+  const frozen = busy || lock !== null;
 
   const patch = (index: number, next: Partial<LevelDraft>) =>
     setDrafts(drafts.map((draft, at) => (at === index ? { ...draft, ...next } : draft)));
@@ -111,6 +115,12 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
         <IconLabel name="list">{texts.heading}</IconLabel>
       </p>
+
+      {lock && (
+        <p className="text-xs font-semibold" style={{ color: "var(--copper-600)" }}>
+          <IconLabel name="lock">{messages.configurationLocked[lock]}</IconLabel>
+        </p>
+      )}
 
       {drafts.length === 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -147,7 +157,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
                 <button
                   aria-label={texts.moveUp(index + 1)}
                   onClick={() => setDrafts(movedDraft(drafts, index, index - 1))}
-                  disabled={busy || index === 0 || locked(draft)}
+                  disabled={frozen || index === 0}
                   className="btn btn-icon btn-sm"
                 >
                   <Icon name="chevronUp" size={13} />
@@ -155,7 +165,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
                 <button
                   aria-label={texts.moveDown(index + 1)}
                   onClick={() => setDrafts(movedDraft(drafts, index, index + 1))}
-                  disabled={busy || index === drafts.length - 1 || locked(draft)}
+                  disabled={frozen || index === drafts.length - 1}
                   className="btn btn-icon btn-sm"
                 >
                   <Icon name="chevronDown" size={13} />
@@ -163,7 +173,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
                 <button
                   aria-label={texts.removeLevel(index + 1)}
                   onClick={() => dropLevel(index)}
-                  disabled={busy || locked(draft)}
+                  disabled={frozen}
                   className="btn btn-icon btn-sm"
                   style={{ color: "#991b1b" }}
                 >
@@ -180,8 +190,8 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
                 own={own}
                 under={under}
                 last={index === drafts.length - 1}
-                disabled={busy}
-                locked={locked(draft)}
+                disabled={frozen}
+                locked={false}
                 fix={fixes[index]}
                 onChange={(next) => patch(index, next)}
               />
@@ -197,7 +207,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
                     moves={here}
                     faults={here.map((move) => faults[moves.indexOf(move)])}
                     under={own}
-                    disabled={busy || locked(draft)}
+                    disabled={frozen}
                     onChange={(key, next) =>
                       setMoves(
                         moves.map((move) => (move.key === key ? { ...move, ...next } : move)),
@@ -221,12 +231,12 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setDrafts([...drafts, blankDraft(`new-${drafts.length}-${Date.now()}`)])}
-          disabled={busy}
+          disabled={frozen}
           className="btn btn-sm"
         >
           <IconLabel name="plus">{texts.addLevel}</IconLabel>
         </button>
-        <button onClick={save} disabled={busy || !holds} className="btn btn-primary btn-sm">
+        <button onClick={save} disabled={frozen || !holds} className="btn btn-primary btn-sm">
           <IconLabel name="save">{texts.save}</IconLabel>
         </button>
       </div>

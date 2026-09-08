@@ -148,49 +148,59 @@ describe("declaring the levels of a series tournament", () => {
     expect((await res.json()).error).toBe(messages.levelsFootballOnly);
   });
 
-  it("refuses removing a level that has units recorded in it", async () => {
+  it("locks the whole configuration once a unit has been recorded", async () => {
     const activity = await seriesTournament();
     await save(activity.id, DEEP_LEVELS);
     const levels = (await (await read(activity.id)).json()).levels as { id: string }[];
     await playedMatch(activity.id, levels[2].id);
 
     const res = await save(activity.id, [
-      { ...CHESS_LEVELS[0], id: levels[0].id },
-      { ...CHESS_LEVELS[1], id: levels[1].id },
+      { ...DEEP_LEVELS[0], id: levels[0].id, key: levels[0].id },
+      { ...DEEP_LEVELS[1], id: levels[1].id, key: levels[1].id, singular: "دور" },
+      { ...DEEP_LEVELS[2], id: levels[2].id, key: levels[2].id },
     ]);
 
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toBe(messages.levelPlayedCannotGo);
+    expect((await res.json()).error).toBe(messages.configurationLocked.RECORDED);
   });
 
-  it("refuses changing the rules of a level that has units recorded in it", async () => {
+  it("locks it once the tournament has started, before anything is recorded", async () => {
     const activity = await seriesTournament();
-    await save(activity.id, DEEP_LEVELS);
-    const levels = (await (await read(activity.id)).json()).levels as { id: string }[];
-    await playedMatch(activity.id, levels[1].id);
+    await save(activity.id, CHESS_LEVELS);
+    await prisma.activity.update({
+      where: { id: activity.id },
+      data: { startsAt: new Date(Date.now() - 60_000) },
+    });
 
-    const res = await save(activity.id, [
-      { ...DEEP_LEVELS[0], id: levels[0].id },
-      { ...DEEP_LEVELS[1], id: levels[1].id, target: 9 },
-      { ...DEEP_LEVELS[2], id: levels[2].id },
-    ]);
+    const res = await save(activity.id, CHESS_LEVELS);
 
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toBe(messages.levelPlayedCannotChange);
+    expect((await res.json()).error).toBe(messages.configurationLocked.STARTED);
   });
 
-  it("takes a new word for a level that has units recorded in it", async () => {
+  it("says a result is in the way rather than a date when both are", async () => {
     const activity = await seriesTournament();
     await save(activity.id, CHESS_LEVELS);
     const levels = (await (await read(activity.id)).json()).levels as { id: string }[];
     await playedMatch(activity.id, levels[1].id);
+    await prisma.activity.update({
+      where: { id: activity.id },
+      data: { startsAt: new Date(Date.now() - 60_000) },
+    });
 
-    const res = await save(activity.id, [
-      { ...CHESS_LEVELS[0], id: levels[0].id },
-      { ...CHESS_LEVELS[1], id: levels[1].id, singular: "دور", plural: "أدوار" },
-    ]);
+    expect((await (await read(activity.id)).json()).lock).toBe("RECORDED");
+  });
 
-    expect(res.status).toBe(200);
+  it("stays open while the tournament has not started", async () => {
+    const activity = await seriesTournament();
+    await save(activity.id, CHESS_LEVELS);
+    await prisma.activity.update({
+      where: { id: activity.id },
+      data: { startsAt: new Date(Date.now() + 60_000) },
+    });
+
+    expect((await (await read(activity.id)).json()).lock).toBeNull();
+    expect((await save(activity.id, CHESS_LEVELS)).status).toBe(200);
   });
 
   it("keeps the id of a level it was given back", async () => {
