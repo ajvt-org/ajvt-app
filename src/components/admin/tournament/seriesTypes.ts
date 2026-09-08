@@ -34,6 +34,7 @@ export interface SeriesStandingRow {
   target: number | null;
   over: boolean;
   level: boolean;
+  unsettled: boolean;
   extending: boolean;
   winner: "SIDE_A" | "SIDE_B" | null;
 }

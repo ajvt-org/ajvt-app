@@ -379,6 +379,59 @@ describe("the deciding unit of a level", () => {
     expect(standing.winner).toBe("SIDE_A");
     expect(standing.unitsLeft).toBe(0);
   });
+
+  it("is the only one, however many units follow it", () => {
+    const rows = sets([
+      ["SIDE_A", "SIDE_A"],
+      ["SIDE_B", "SIDE_B"],
+      ["SIDE_A", "SIDE_A"],
+      ["SIDE_B", "SIDE_B"],
+    ]);
+
+    const { units } = resolveMatch(DECIDED, rows);
+
+    expect(units.map((one) => one.decider)).toEqual([false, false, true, false]);
+  });
+
+  it("is played where a level ending at a number leaves both sides past it", () => {
+    const ladder = CARDS.map((level) =>
+      level.id === "point" ? { ...level, unsettled: "DECIDER" as const } : level,
+    );
+    const rows = [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1 }),
+      unit({
+        id: "r1",
+        levelId: "round",
+        parentId: "p1",
+        order: 1,
+        sideAPoints: 60,
+        sideBPoints: 60,
+      }),
+      unit({
+        id: "r2",
+        levelId: "round",
+        parentId: "p1",
+        order: 2,
+        sideAPoints: 45,
+        sideBPoints: 45,
+      }),
+      unit({
+        id: "r3",
+        levelId: "round",
+        parentId: "p1",
+        order: 3,
+        sideAPoints: 10,
+        sideBPoints: 0,
+      }),
+    ];
+
+    const { units } = resolveMatch(ladder, rows);
+    const rounds = units[0].children[0].children;
+
+    expect(rounds.map((one) => one.decider)).toEqual([false, false, true]);
+    expect(units[0].children[0].standing?.winner).toBe("SIDE_A");
+  });
 });
 
 describe("a rule that ends the unit it lands in", () => {

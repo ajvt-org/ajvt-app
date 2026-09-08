@@ -448,6 +448,32 @@ describe("a unit recorded under another", () => {
     expect((await res.json()).error).toBe(messages.unitLevelMissing);
   });
 
+  it("is over at two to nothing without a third being played", async () => {
+    const { match } = await matchOf(CARDS);
+    await add(match.id, { outcome: "SIDE_A" });
+    const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(body.standing.over).toBe(true);
+    expect(body.standing.winner).toBe("SIDE_A");
+    expect((await add(match.id, { outcome: "SIDE_A" })).status).toBe(409);
+  });
+
+  it("plays a deciding unit where the count ended level", async () => {
+    const { match } = await matchOf(CARDS);
+    await add(match.id, { outcome: "SIDE_A" });
+    await add(match.id, { outcome: "SIDE_B" });
+
+    const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(body.units.map((one: { decider: boolean }) => one.decider)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(body.standing.over).toBe(true);
+    expect(body.standing.winner).toBe("SIDE_A");
+  });
+
   it("takes the children away with the unit above them", async () => {
     const { match } = await matchOf(CARDS);
     const set = await unitOf(match.id, { outcome: "SIDE_A" });
