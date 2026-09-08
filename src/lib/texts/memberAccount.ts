@@ -8,7 +8,18 @@ export const memberAccount = {
 } as const;
 
 export const tempPassword = {
-  handOver: "كلمة المرور المؤقتة — سلّمها للعضو",
-  validFor: (hours: string) => `صالحة ${hours}، وسيُطلب منه تغييرها عند الدخول`,
   copy: "نسخ",
+  send: "إرسال عبر واتساب",
+  message: (password: string, hours: string) =>
+    [
+      "السلام عليكم",
+      "",
+      "تم إعداد كلمة مرور مؤقتة لحسابك",
+      "في رابطة شباب قرية التاكلالت",
+      "",
+      password,
+      "",
+      `صالحة ${hours}`,
+      "ويطلب منك تغييرها عند أول دخول",
+    ].join("\n"),
 } as const;

@@ -5,6 +5,7 @@ export const activityRegistrants = {
   loadingMembers: "جارٍ تحميل الأعضاء...",
   more: (count: number) => `و${count} غيرهم — حدّد بحثك أكثر`,
   allRegistered: "كل الأعضاء مسجلون في هذا النشاط",
+  noMemberToAdd: "لا يوجد عضو مجدَّد الاشتراك يمكن تسجيله",
   pending: "طلبات قيد المراجعة",
   confirmed: "مسجَّلون مؤكَّدون",
   noneConfirmed: "لا يوجد مسجلون مؤكَّدون بعد",

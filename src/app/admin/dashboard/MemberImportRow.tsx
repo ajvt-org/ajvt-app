@@ -107,7 +107,7 @@ export default function MemberImportRow({
           value={villages.includes(row.values.village) ? row.values.village : ""}
           onChange={(e) => onEdit({ village: e.target.value })}
           className="input text-xs py-1"
-          style={{ minWidth: "7rem" }}
+          style={{ minWidth: "8.5rem" }}
         >
           <option value="" disabled>
             {row.values.village}
@@ -127,7 +127,7 @@ export default function MemberImportRow({
             value={ageGroups.includes(row.values.age) ? row.values.age : ""}
             onChange={(e) => onEdit({ age: e.target.value })}
             className="input text-xs py-1"
-            style={{ minWidth: "7rem" }}
+            style={{ minWidth: "8.5rem" }}
           >
             <option value="" disabled>
               {row.values.age}

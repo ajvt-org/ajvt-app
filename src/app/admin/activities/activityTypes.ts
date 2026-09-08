@@ -41,7 +41,6 @@ export interface MemberOption {
   photo: string | null;
   age: string | null;
   village: string | null;
-  status: "PENDING" | "ACTIVE" | "REJECTED";
 }
 
 export interface NewActivityDraft {

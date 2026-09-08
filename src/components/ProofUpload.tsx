@@ -4,19 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import IconLabel from "./IconLabel";
 import { proofUpload } from "@/lib/texts";
+import { uploads } from "@/lib/messages";
+import { prepareImageForUpload } from "@/lib/imageForUpload";
+import { ACCEPTED_UPLOAD_TYPES, MAX_UPLOAD_SIZE } from "@/lib/uploadLimits";
 
-const MAX_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-];
-const COMPRESS_THRESHOLD = 2 * 1024 * 1024;
-const COMPRESS_MAX_DIMENSION = 1600;
-const COMPRESS_QUALITY = 0.75;
 const UPLOAD_TIMEOUT_MS = 30_000;
 
 type Status = "idle" | "preparing" | "uploading" | "error" | "done";
@@ -27,27 +18,6 @@ interface ProofUploadProps {
   label?: string;
   required?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
-}
-
-async function compressForUpload(file: File): Promise<File | Blob> {
-  if (file.size <= COMPRESS_THRESHOLD) return file;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, COMPRESS_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return file;
-    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    const blob: Blob | null = await new Promise((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", COMPRESS_QUALITY),
-    );
-    if (!blob || blob.size >= file.size) return file;
-    return blob;
-  } catch {
-    return file;
-  }
 }
 
 function uploadWithProgress(
@@ -107,23 +77,21 @@ export default function ProofUpload({
     setStatus("preparing");
     setProgress(0);
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setError(proofUpload.unsupportedType);
+    if (!ACCEPTED_UPLOAD_TYPES.includes(file.type)) {
+      setError(uploads.unsupportedType);
       setStatus("error");
       return;
     }
-    if (file.size > MAX_SIZE) {
-      setError(proofUpload.tooLarge);
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setError(uploads.tooLarge);
       setStatus("error");
       return;
     }
 
-    const toSend = await compressForUpload(file);
-
-    setStatus("uploading");
     try {
       const fd = new FormData();
-      fd.append("file", toSend, file.name);
+      fd.append("file", await prepareImageForUpload(file), file.name);
+      setStatus("uploading");
       const { filename } = await uploadWithProgress(fd, setProgress);
       setStatus("done");
       onUploaded(filename);
@@ -268,8 +236,6 @@ export default function ProofUpload({
         </div>
       )}
 
-      {/* capture opens the camera directly on mobile; the gallery input has
-          no capture attribute, so it always opens the normal file picker. */}
       <input
         ref={cameraInputRef}
         type="file"

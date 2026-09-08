@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import ActivityRegistrations from "./ActivityRegistrations";
 import { ToastProvider } from "./Toast";
 import type { Activity, EligibleMember } from "./activityTypes";
+import { activityRegistration } from "@/lib/texts";
 
 const activity: Activity = {
   id: "a1",
@@ -84,7 +85,11 @@ describe("ActivityRegistrations", () => {
 
   it("shows a pending request with the way to call it off", () => {
     setup({
-      member: { registrations: [{ activityId: "a1", status: "PENDING", rejectionReason: null }] },
+      member: {
+        registrations: [
+          { activityId: "a1", status: "PENDING", rejectionReason: null, chosenTeamId: null },
+        ],
+      },
     });
 
     expect(screen.getByText("قيد المراجعة")).toBeDefined();
@@ -94,7 +99,14 @@ describe("ActivityRegistrations", () => {
   it("offers another go after a refusal, with the reason that was given", () => {
     setup({
       member: {
-        registrations: [{ activityId: "a1", status: "REJECTED", rejectionReason: "اكتمل العدد" }],
+        registrations: [
+          {
+            activityId: "a1",
+            status: "REJECTED",
+            rejectionReason: "اكتمل العدد",
+            chosenTeamId: null,
+          },
+        ],
       },
     });
 
@@ -129,7 +141,11 @@ describe("ActivityRegistrations", () => {
         playersBuildTeams: true,
         joinableTeams: [{ id: "t1", name: "الفريق الأول" }],
       },
-      member: { registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }] },
+      member: {
+        registrations: [
+          { activityId: "a1", status: "ACTIVE", rejectionReason: null, chosenTeamId: null },
+        ],
+      },
     });
 
     await waitFor(() => expect(screen.getByLabelText(/أنشئ فريقك/)).toBeDefined());
@@ -138,7 +154,11 @@ describe("ActivityRegistrations", () => {
   it("offers no team block on a tournament the admin arranges", () => {
     setup({
       activity: { isTournament: true, joinableTeams: [{ id: "t1", name: "الفريق الأول" }] },
-      member: { registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }] },
+      member: {
+        registrations: [
+          { activityId: "a1", status: "ACTIVE", rejectionReason: null, chosenTeamId: null },
+        ],
+      },
     });
 
     expect(screen.queryByRole("button", { name: "الفريق الأول" })).toBeNull();
@@ -166,7 +186,14 @@ describe("a membership a year behind", () => {
         member={{
           ...member,
           canJoinNew: false,
-          registrations: [{ activityId: activity.id, status: "PENDING", rejectionReason: null }],
+          registrations: [
+            {
+              activityId: activity.id,
+              status: "PENDING",
+              rejectionReason: null,
+              chosenTeamId: null,
+            },
+          ],
         }}
         activity={activity}
         onReload={() => {}}
@@ -233,7 +260,9 @@ describe("picking a team while registering", () => {
     setup({
       activity: { isTournament: true, joinableTeams: [] },
       member: {
-        registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }],
+        registrations: [
+          { activityId: "a1", status: "ACTIVE", rejectionReason: null, chosenTeamId: null },
+        ],
         teamMemberships: [
           { teamId: "t1", teamName: "محمد ولد أحمد", activityId: "a1", status: "ACTIVE" },
         ],
@@ -242,5 +271,67 @@ describe("picking a team while registering", () => {
 
     expect(screen.queryByText(/فريقك/)).toBeNull();
     expect(screen.queryByText("تم التأكيد — لا يمكن تغييره")).toBeNull();
+  });
+});
+
+describe("choosing a team while registering", () => {
+  const tournament = {
+    isTournament: true,
+    joinableTeams: [
+      { id: "t1", name: "فريق النجم" },
+      { id: "t2", name: "فريق الوحدة" },
+    ],
+  };
+
+  it("asks the question through a label tied to the picker", () => {
+    setup({ activity: tournament });
+
+    const picker = screen.getByLabelText(activityRegistration.chooseTeamAtRegistration);
+
+    expect(picker.tagName).toBe("SELECT");
+  });
+
+  it("keeps having no team yet as an answer the member may pick", () => {
+    setup({ activity: tournament });
+
+    const none = screen.getByRole("option", {
+      name: activityRegistration.noTeamYet,
+    }) as HTMLOptionElement;
+
+    expect(none.disabled).toBe(false);
+    expect(none.value).toBe("");
+  });
+
+  it("tells a member who picked a team that they join it once accepted", () => {
+    setup({
+      activity: tournament,
+      member: {
+        registrations: [
+          { activityId: "a1", status: "PENDING", rejectionReason: null, chosenTeamId: "t1" },
+        ],
+      },
+    });
+
+    expect(screen.getByText(activityRegistration.chosenTeamPending("فريق النجم"))).toBeTruthy();
+  });
+
+  it("says nothing about a team to a member who picked none", () => {
+    setup({
+      activity: tournament,
+      member: {
+        registrations: [
+          { activityId: "a1", status: "PENDING", rejectionReason: null, chosenTeamId: null },
+        ],
+      },
+    });
+
+    expect(screen.queryByText(/تنضم إليه/)).toBeNull();
+  });
+
+  it("offers no picker on an activity that is not a tournament", () => {
+    setup();
+
+    expect(screen.queryByLabelText(activityRegistration.chooseTeamAtRegistration)).toBeNull();
+    expect(screen.getByRole("button", { name: activityRegistration.register })).toBeTruthy();
   });
 });

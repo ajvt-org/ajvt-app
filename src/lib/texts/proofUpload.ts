@@ -2,8 +2,6 @@ export const proofUpload = {
   uploadFailed: "فشل رفع الصورة",
   connectionLost: "انقطع الاتصال بالإنترنت أثناء الرفع",
   tooSlow: "استغرق الرفع وقتاً طويلاً — تحقق من اتصالك",
-  unsupportedType: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)",
-  tooLarge: "حجم الملف يتجاوز 10 ميغابايت",
   unexpected: "خطأ غير متوقع",
   label: "كابتير — صورة تأكيد الدفع",
   imageAlt: "الكابتير",

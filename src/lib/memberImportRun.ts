@@ -1,6 +1,7 @@
 import * as bcrypt from "bcryptjs";
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { generateTempPassword, issueMembership } from "./member";
+import { issueMembership } from "./member";
+import { generateTempPassword } from "./tempPassword";
 import { addMembership } from "./membershipCreate";
 import { ageForVillage } from "./villages";
 import type { RowValues } from "./memberImportValues";

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
-import { generateTempPassword } from "@/lib/member";
+import { generateTempPassword } from "@/lib/tempPassword";
 import { tempPasswordExpiry } from "@/lib/tempPassword";
 import { getAppSettings } from "@/lib/settingsServer";
 import * as bcrypt from "bcryptjs";

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/people/import/route";
+import { TEMP_PASSWORD_LENGTH } from "@/lib/tempPassword";
 import { prisma } from "@/lib/prisma";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import { memberImportRun } from "@/lib/messages";
@@ -103,7 +104,7 @@ describe("POST /api/admin/people/import", () => {
       await run([values({ fullName: "أحمد", phone: "36000123" }), values({ fullName: "محمد" })])
     ).json();
 
-    expect(data.results[0].tempPassword).toMatch(/^\d{6}$/);
+    expect(data.results[0].tempPassword).toHaveLength(TEMP_PASSWORD_LENGTH);
     expect(data.results[1].tempPassword).toBeUndefined();
 
     const withoutPhone = await prisma.user.findFirstOrThrow({ where: { fullName: "محمد" } });

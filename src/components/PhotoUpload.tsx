@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { type IconName } from "./Icon";
 import { AvatarFrame, CoverFrame, HeroFrame, TileFrame, type FrameProps } from "./PhotoFrames";
 import { photoUpload as texts } from "@/lib/texts";
+import { uploadFile } from "@/lib/upload";
 
 interface PhotoUploadProps {
   photo: string | null;
@@ -50,13 +51,7 @@ export default function PhotoUpload({
     setPreviewUrl(URL.createObjectURL(file));
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
-      const uploaded = await upRes.json();
-      if (!upRes.ok) throw new Error(uploaded.error || texts.uploadFailed);
-
-      await onUpload(uploaded.filename);
+      await onUpload(await uploadFile(file));
     } catch (err) {
       setError(err instanceof Error ? err.message : texts.unexpectedError);
       setPreviewUrl(null);

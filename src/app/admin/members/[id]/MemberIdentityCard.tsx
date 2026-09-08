@@ -213,7 +213,7 @@ export default function MemberIdentityCard({
         </div>
       )}
 
-      {temp && <TempPasswordBox value={temp.password} hours={temp.hours} />}
+      {temp && <TempPasswordBox value={temp.password} hours={temp.hours} phone={phone} />}
 
       {asking && (
         <MemberPhotoDialogs

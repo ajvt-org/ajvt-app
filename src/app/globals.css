@@ -131,7 +131,7 @@ body {
 }
 .input[readonly],
 .input:disabled {
-  background: var(--mint-50);
+  background-color: var(--mint-50);
   color: var(--text-muted);
 }
 .input:disabled {
@@ -139,6 +139,18 @@ body {
 }
 .input[dir="ltr"] {
   text-align: right;
+}
+
+select.input {
+  appearance: none;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234a9c7e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+  background-repeat: no-repeat;
+  background-position: left 0.85em center;
+  background-size: 1.15em;
+  padding-inline-end: 2.6em;
+}
+select.input[dir="ltr"] {
+  background-position: right 0.85em center;
 }
 
 /* Visible keyboard-navigation indicator — was missing everywhere except

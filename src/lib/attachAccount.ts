@@ -1,7 +1,7 @@
 import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { validatePhone } from "@/lib/utils";
-import { generateTempPassword } from "@/lib/member";
+import { generateTempPassword } from "@/lib/tempPassword";
 import { tempPasswordExpiry } from "@/lib/tempPassword";
 import { getAppSettings } from "@/lib/settingsServer";
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
