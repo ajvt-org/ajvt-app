@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MembershipCard from "./MembershipCard";
 import {
@@ -7,10 +7,62 @@ import {
   memberDecision,
   membershipEnding,
   membershipSummary as texts,
+  renewForm,
 } from "@/lib/texts";
 import type { MemberProfile } from "@/components/admin/profileTypes";
+import type { MembershipHistory } from "./membershipTypes";
+
+const get = vi.fn();
+
+vi.mock("@/lib/api", () => ({
+  api: {
+    get: (...args: unknown[]) => get(...args),
+    post: vi.fn(),
+    put: vi.fn(),
+    del: vi.fn(),
+  },
+  errorMessage: (e: unknown) => (e as Error).message,
+}));
 
 type Member = MemberProfile["member"];
+
+const NO_YEARS: MembershipHistory = {
+  memberships: [],
+  currentYear: 2026,
+  refusal: "underReview",
+};
+
+function historyOf(over: Partial<MembershipHistory> = {}): MembershipHistory {
+  return { ...NO_YEARS, ...over };
+}
+
+function yearOf(over: Partial<MembershipHistory["memberships"][number]> = {}) {
+  return {
+    id: "y1",
+    year: 2025,
+    status: "ACTIVE" as const,
+    rejectionReason: null,
+    paidAmount: 100,
+    supportAmount: 0,
+    paymentMethod: null,
+    recordedBy: null,
+    createdAt: "2026-08-20T09:00:00.000Z",
+    ...over,
+  };
+}
+
+beforeEach(() => {
+  get.mockReset();
+  get.mockImplementation((url: string) =>
+    url.includes("/memberships") ? Promise.resolve(NO_YEARS) : Promise.resolve({ methods: [] }),
+  );
+});
+
+function historyLands(history: MembershipHistory) {
+  get.mockImplementation((url: string) =>
+    url.includes("/memberships") ? Promise.resolve(history) : Promise.resolve({ methods: [] }),
+  );
+}
 
 function memberOf(over: Partial<Member> = {}): Member {
   return {
@@ -159,5 +211,73 @@ describe("one card for one membership year", () => {
 
     expect(screen.getByLabelText(membershipEnding.reasonLabel)).toBeTruthy();
     expect(screen.getByRole("button", { name: new RegExp(texts.toPayment) })).toBeTruthy();
+  });
+});
+
+describe("one card for the standing and the years", () => {
+  it("draws the standing before the years have arrived", () => {
+    get.mockImplementation(() => new Promise(() => {}));
+    show();
+
+    expect(screen.getByText(texts.title)).toBeTruthy();
+    expect(screen.getByText(texts.states.APPLIED)).toBeTruthy();
+  });
+
+  it("holds the years under the same heading once they land", async () => {
+    historyLands(
+      historyOf({ memberships: [yearOf({ year: 2025 }), yearOf({ id: "y2", year: 2024 })] }),
+    );
+    show();
+
+    await waitFor(() => expect(screen.getByText("2025")).toBeTruthy());
+    expect(screen.getByText("2024")).toBeTruthy();
+    expect(screen.getAllByText(texts.title)).toHaveLength(1);
+  });
+
+  it("offers the renewal where nothing refuses it", async () => {
+    historyLands(historyOf({ refusal: null }));
+    show({ status: "ACTIVE" });
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: new RegExp(renewForm.renew(2026)) })).toBeTruthy(),
+    );
+  });
+
+  it("offers the amount instead where the year is already paid", async () => {
+    historyLands(historyOf({ refusal: "alreadyRenewed", memberships: [yearOf({ year: 2026 })] }));
+    show({ status: "ACTIVE" });
+
+    await waitFor(() => expect(screen.getByLabelText("المبلغ المسدد")).toBeTruthy());
+    expect(screen.queryByRole("button", { name: new RegExp(renewForm.renew(2026)) })).toBeNull();
+  });
+
+  it("offers neither form, and no reason, where renewal is refused", async () => {
+    historyLands(historyOf({ refusal: "notActive", memberships: [yearOf()] }));
+    show();
+
+    await waitFor(() => expect(screen.getByText("2025")).toBeTruthy());
+    expect(screen.queryByRole("button", { name: new RegExp(renewForm.renew(2026)) })).toBeNull();
+    expect(screen.queryByLabelText("المبلغ المسدد")).toBeNull();
+  });
+
+  it("asks the page and the years again once an amount is saved", async () => {
+    const onChanged = vi.fn();
+    historyLands(historyOf({ refusal: "alreadyRenewed", memberships: [yearOf({ year: 2026 })] }));
+    render(
+      <MembershipCard
+        member={memberOf({ status: "ACTIVE" })}
+        currentYear={2026}
+        onChanged={onChanged}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByLabelText("المبلغ المسدد")).toBeTruthy());
+    const asked = () => get.mock.calls.filter((c) => String(c[0]).includes("/memberships")).length;
+    const before = asked();
+
+    await userEvent.click(screen.getByRole("button", { name: /حفظ/ }));
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    expect(asked()).toBeGreaterThan(before);
   });
 });

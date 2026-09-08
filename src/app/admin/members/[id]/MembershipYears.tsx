@@ -2,7 +2,7 @@
 
 import { formatDate } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
-import { STATUS_BADGE, STATUS_ICON, STATUS_LABEL } from "./constants";
+import { STATUS_BADGE, STATUS_ICON, STATUS_LABEL } from "@/app/admin/dashboard/constants";
 import type { MembershipYear } from "./membershipTypes";
 import Money from "@/components/Money";
 

@@ -1,6 +1,6 @@
 import type { RenewalRefusal } from "@/lib/renewal";
 
-import type { Status } from "./types";
+import type { Status } from "@/app/admin/dashboard/types";
 
 export interface MembershipYear {
   id: string;
