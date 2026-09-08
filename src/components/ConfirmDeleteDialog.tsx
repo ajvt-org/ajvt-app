@@ -9,12 +9,18 @@ export default function ConfirmDeleteDialog({
   name,
   consequence,
   loading,
+  title = texts.title,
+  nameField = texts.nameField,
+  confirmLabel = texts.confirm,
   onConfirm,
   onClose,
 }: {
   name: string;
   consequence: string;
   loading: boolean;
+  title?: string;
+  nameField?: string;
+  confirmLabel?: string;
   onConfirm: (confirmName: string) => void;
   onClose: () => void;
 }) {
@@ -23,7 +29,7 @@ export default function ConfirmDeleteDialog({
   const matches = confirmationMatches(typed, name);
 
   return (
-    <ConfirmDialogShell title={texts.title} onClose={onClose}>
+    <ConfirmDialogShell title={title} onClose={onClose}>
       {step === 1 ? (
         <>
           <p className="text-sm" style={{ color: "var(--text-main)" }}>
@@ -48,7 +54,7 @@ export default function ConfirmDeleteDialog({
             onChange={(e) => setTyped(e.target.value)}
             className="input text-sm"
             autoFocus
-            aria-label={texts.nameField}
+            aria-label={nameField}
           />
           <button
             onClick={() => onConfirm(typed)}
@@ -56,7 +62,7 @@ export default function ConfirmDeleteDialog({
             className="btn w-full text-sm font-bold disabled:opacity-40"
             style={{ background: "#dc2626", color: "white" }}
           >
-            {loading ? "..." : texts.confirm}
+            {loading ? "..." : confirmLabel}
           </button>
         </>
       )}
