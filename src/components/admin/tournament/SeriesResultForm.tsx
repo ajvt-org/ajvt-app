@@ -8,7 +8,7 @@ import SeriesStanding from "./SeriesStanding";
 import UnitBranch from "./UnitBranch";
 import type { SeriesConfig } from "./seriesConfig";
 import type { EditorApi } from "./unitEditorApi";
-import type { AdjustmentRuleRow, SeriesState } from "./seriesTypes";
+import type { MoveRuleRow, SeriesState } from "./seriesTypes";
 
 export default function SeriesResultForm({
   matchId,
@@ -24,7 +24,7 @@ export default function SeriesResultForm({
   onSaved: () => void;
 }) {
   const [state, setState] = useState<SeriesState | null>(null);
-  const [rules, setRules] = useState<AdjustmentRuleRow[]>([]);
+  const [rules, setRules] = useState<MoveRuleRow[]>([]);
   const [opened, setOpened] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -35,9 +35,7 @@ export default function SeriesResultForm({
     try {
       const [next, declared] = await Promise.all([
         api.get<SeriesState>(base),
-        api.get<{ rules: AdjustmentRuleRow[] }>(
-          `/api/admin/activities/${activityId}/adjustment-rules`,
-        ),
+        api.get<{ rules: MoveRuleRow[] }>(`/api/admin/activities/${activityId}/moves`),
       ]);
       setState(next);
       setRules(declared.rules);
@@ -82,7 +80,7 @@ export default function SeriesResultForm({
     busy,
     open: !state.standing.over,
     rules,
-    adjustments: state.adjustments,
+    moves: state.moves,
     opened,
     onToggle: (unitId) =>
       setOpened(
@@ -92,9 +90,8 @@ export default function SeriesResultForm({
     onCorrect: (unitId, body) => run(() => api.patch(`${base}/${unitId}`, body)),
     onRemove: (unitId) => run(() => api.del(`${base}/${unitId}`)),
     onRecordMove: (ruleId, side, unitId) =>
-      run(() => api.post(`/api/admin/matches/${matchId}/adjustments`, { ruleId, side, unitId })),
-    onUndoMove: (adjustmentId) =>
-      run(() => api.del(`/api/admin/matches/${matchId}/adjustments/${adjustmentId}`)),
+      run(() => api.post(`/api/admin/matches/${matchId}/moves`, { ruleId, side, unitId })),
+    onUndoMove: (moveId) => run(() => api.del(`/api/admin/matches/${matchId}/moves/${moveId}`)),
   };
 
   return (

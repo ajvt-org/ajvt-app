@@ -110,7 +110,7 @@ model Activity {
   hasColours             Boolean                @default(false)
   firstColourWord        String?
   secondColourWord       String?
-  adjustmentRules        AdjustmentRule[]
+  moves                  MoveRule[]
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
@@ -233,7 +233,7 @@ model Match {
   sideATeam           Team?              @relation("SideATeam", fields: [sideATeamId], references: [id], onDelete: Cascade)
   sideBTeamId         String?
   sideBTeam           Team?              @relation("SideBTeam", fields: [sideBTeamId], references: [id], onDelete: Cascade)
-  sideAOpensAs        PartColour?
+  sideAOpensAs        UnitColour?
   matchDate           DateTime?
   dayId               String?
   day                 TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
@@ -259,7 +259,7 @@ model Match {
   bookings            MatchBooking[]
   penaltyKicks        MatchPenaltyKick[]
   units               MatchUnit[]
-  adjustments         MatchAdjustment[]
+  moves               MatchMove[]
   mvpVote             MatchMvpVote?
 
   @@index([activityId])
@@ -335,25 +335,25 @@ enum GoalPeriod {
 // an OWN_GOAL's member belongs to the other team. Scores derive from these
 // rows when a result is saved with events.
 model MatchUnit {
-  id              String            @id @default(cuid())
+  id              String       @id @default(cuid())
   matchId         String
-  match           Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match           Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
   parentId        String?
-  parent          MatchUnit?        @relation("UnitChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children        MatchUnit[]       @relation("UnitChildren")
+  parent          MatchUnit?   @relation("UnitChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children        MatchUnit[]  @relation("UnitChildren")
   levelId         String
-  level           MatchLevel        @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  level           MatchLevel   @relation(fields: [levelId], references: [id], onDelete: Cascade)
   order           Int
-  abandoned       Boolean           @default(false)
-  outcome         PartOutcome?
+  abandoned       Boolean      @default(false)
+  outcome         UnitOutcome?
   sideAPoints     Int?
   sideBPoints     Int?
-  sideAColour     PartColour?
+  sideAColour     UnitColour?
   worth           Int?
-  sideALostCredit Boolean           @default(false)
-  sideBLostCredit Boolean           @default(false)
-  adjustments     MatchAdjustment[]
-  createdAt       DateTime          @default(now())
+  sideALostCredit Boolean      @default(false)
+  sideBLostCredit Boolean      @default(false)
+  moves           MatchMove[]
+  createdAt       DateTime     @default(now())
 
   @@unique([matchId, parentId, order])
   @@index([matchId])
@@ -362,9 +362,9 @@ model MatchUnit {
 }
 
 model MatchLevel {
-  id                       String           @id @default(cuid())
+  id                       String          @id @default(cuid())
   activityId               String
-  activity                 Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity                 Activity        @relation(fields: [activityId], references: [id], onDelete: Cascade)
   order                    Int
   singular                 String
   plural                   String
@@ -374,52 +374,52 @@ model MatchLevel {
   target                   Int?
   deciderTarget            Int?
   bothPastTarget           BothPastTarget?
-  extendsWhenLevel         Boolean          @default(false)
-  extensionUnits           Int              @default(0)
-  startingCredit           Int              @default(0)
-  creditWindow             Int              @default(0)
-  halvesPerUnit            Int              @default(2)
+  extendsWhenLevel         Boolean         @default(false)
+  extensionUnits           Int             @default(0)
+  startingCredit           Int             @default(0)
+  creditWindow             Int             @default(0)
+  halvesPerUnit            Int             @default(2)
   decision                 PartDecision?
-  wonUnitWorth             Int              @default(1)
-  doubledWorth             Int              @default(1)
-  doublesOnBlankOpponent   Boolean          @default(false)
-  doublesOnRecoveredCredit Boolean          @default(false)
-  createdAt                DateTime         @default(now())
-  rules                    AdjustmentRule[]
+  wonUnitWorth             Int             @default(1)
+  doubledWorth             Int             @default(1)
+  doublesOnBlankOpponent   Boolean         @default(false)
+  doublesOnRecoveredCredit Boolean         @default(false)
+  createdAt                DateTime        @default(now())
+  moves                    MoveRule[]
   units                    MatchUnit[]
 
   @@unique([activityId, order])
   @@index([activityId])
 }
 
-model AdjustmentRule {
-  id             String            @id @default(cuid())
+model MoveRule {
+  id             String      @id @default(cuid())
   activityId     String
-  activity       Activity          @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity       Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
   levelId        String?
-  level          MatchLevel?       @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  level          MatchLevel? @relation(fields: [levelId], references: [id], onDelete: SetNull)
   name           String
   unitsToSelf    Int
   unitsFromOther Int
-  endsUnit       Boolean           @default(false)
-  createdAt      DateTime          @default(now())
-  recorded       MatchAdjustment[]
+  endsUnit       Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  recorded       MatchMove[]
 
   @@unique([activityId, name])
   @@index([activityId])
   @@index([levelId])
 }
 
-model MatchAdjustment {
-  id        String         @id @default(cuid())
+model MatchMove {
+  id        String    @id @default(cuid())
   matchId   String
-  match     Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match     Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
   unitId    String
-  unit      MatchUnit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unit      MatchUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
   ruleId    String
-  rule      AdjustmentRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  rule      MoveRule  @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   side      MatchSide
-  createdAt DateTime       @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([matchId])
   @@index([unitId])
@@ -1072,13 +1072,13 @@ enum PartDecision {
   SCORE
 }
 
-enum PartOutcome {
+enum UnitOutcome {
   SIDE_A
   SIDE_B
   DRAW
 }
 
-enum PartColour {
+enum UnitColour {
   FIRST
   SECOND
 }

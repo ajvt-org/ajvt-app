@@ -6,7 +6,7 @@ import { DEFAULT_MVP_VOTE_MINUTES } from "./mvpVote";
 import { matchSideTeams } from "./matchSides";
 import { isFootball } from "./matchShape";
 import { LEVELS_SELECT, UNITS_SELECT } from "./matchSeriesServer";
-import { resolveMatch, toNodes, type AdjustmentRow, type UnitRow } from "./seriesTree";
+import { resolveMatch, toNodes, type MoveRow, type UnitRow } from "./seriesTree";
 import type { LevelRow } from "./matchLevels";
 
 interface SeriesActivity {
@@ -58,7 +58,7 @@ export const MATCH_INCLUDE = {
     },
   },
   units: UNITS_SELECT,
-  adjustments: { orderBy: { createdAt: "asc" }, include: { rule: true } },
+  moves: { orderBy: { createdAt: "asc" }, include: { rule: true } },
   mvpVote: {
     select: {
       id: true,
@@ -78,12 +78,9 @@ export const MATCH_INCLUDE = {
 
 export type LoadedMatch = Prisma.MatchGetPayload<{ include: typeof MATCH_INCLUDE }>;
 
-function seriesOf(
-  match: { units: UnitRow[]; adjustments: AdjustmentRow[] },
-  activity: SeriesActivity,
-) {
+function seriesOf(match: { units: UnitRow[]; moves: MoveRow[] }, activity: SeriesActivity) {
   if (isFootball(activity.matchShape)) return { units: [], series: null };
-  const resolved = resolveMatch(activity.levels, match.units, match.adjustments);
+  const resolved = resolveMatch(activity.levels, match.units, match.moves);
   return { units: toNodes(resolved.units), series: resolved.standing };
 }
 

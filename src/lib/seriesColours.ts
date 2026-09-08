@@ -1,19 +1,19 @@
-import type { PartColour } from "@prisma/client";
+import type { UnitColour } from "@prisma/client";
 
 export const COLOURS_IN_ROTATION = 2;
 
-export const OTHER_COLOUR: Record<PartColour, PartColour> = {
+export const OTHER_COLOUR: Record<UnitColour, UnitColour> = {
   FIRST: "SECOND",
   SECOND: "FIRST",
 };
 
-export function colourOfPart(opensAs: PartColour, order: number): PartColour {
+export function colourOfPart(opensAs: UnitColour, order: number): UnitColour {
   return order % COLOURS_IN_ROTATION === 1 ? opensAs : OTHER_COLOUR[opensAs];
 }
 
 export interface ColouredPart {
   order: number;
-  sideAColour: PartColour | null;
+  sideAColour: UnitColour | null;
 }
 
 export function colourTally(parts: ColouredPart[]): { sideA: number; sideB: number } {
@@ -38,13 +38,13 @@ export function canBalance(unitsPerParent: number): boolean {
 export function evenlyDrawnOpeners<T>(
   matches: { sideA: T; sideB: T }[],
   held: Map<T, number> = new Map(),
-): PartColour[] {
+): UnitColour[] {
   const running = new Map(held);
   const owed = (side: T) => running.get(side) ?? 0;
   const bump = (side: T, by: number) => running.set(side, owed(side) + by);
 
   return matches.map((match) => {
-    const opensAs: PartColour = owed(match.sideA) <= owed(match.sideB) ? "FIRST" : "SECOND";
+    const opensAs: UnitColour = owed(match.sideA) <= owed(match.sideB) ? "FIRST" : "SECOND";
     if (opensAs === "FIRST") {
       bump(match.sideA, 1);
       bump(match.sideB, -1);

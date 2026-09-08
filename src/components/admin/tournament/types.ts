@@ -1,4 +1,4 @@
-import type { UnitRow, RecordedAdjustmentRow, SeriesStandingRow } from "./seriesTypes";
+import type { UnitRow, RecordedMoveRow, SeriesStandingRow } from "./seriesTypes";
 
 export type TournamentFormat = "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
 
@@ -106,7 +106,7 @@ export interface Match {
   bookings: MatchBooking[];
   penaltyKicks: PenaltyKick[];
   units: UnitRow[];
-  adjustments: RecordedAdjustmentRow[];
+  moves: RecordedMoveRow[];
   series: SeriesStandingRow | null;
   mvpVote: MvpVote | null;
 }

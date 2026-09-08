@@ -63,7 +63,7 @@ const MATCH: DecidedMatch = {
       standing: null,
     },
   ],
-  adjustments: [],
+  moves: [],
   series: {
     sideATotal: 3,
     sideBTotal: 1,

@@ -18,7 +18,7 @@ import {
   movedDraft,
   type LevelDraft,
 } from "./levelDraft";
-import type { AdjustmentRuleRow } from "./seriesTypes";
+import type { MoveRuleRow } from "./seriesTypes";
 
 export function ladderFault(drafts: LevelDraft[]): string | null {
   const problem = ladderProblem(ladderOfDrafts(drafts));
@@ -32,7 +32,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
   const [drafts, setDrafts] = useState<LevelDraft[] | null>(null);
   const [levels, setLevels] = useState<LevelRow[]>([]);
   const [played, setPlayed] = useState<string[]>([]);
-  const [rules, setRules] = useState<AdjustmentRuleRow[]>([]);
+  const [rules, setRules] = useState<MoveRuleRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,7 +42,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
     try {
       const [ladder, declared] = await Promise.all([
         api.get<{ levels: LevelRow[]; played: string[] }>(`${base}/levels`),
-        api.get<{ rules: AdjustmentRuleRow[] }>(`${base}/adjustment-rules`),
+        api.get<{ rules: MoveRuleRow[] }>(`${base}/moves`),
       ]);
       setLevels(ladder.levels);
       setPlayed(ladder.played ?? []);
@@ -180,8 +180,8 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
           rules={rules}
           levels={levels}
           busy={busy}
-          onDeclare={(move) => run(() => api.post(`${base}/adjustment-rules`, move))}
-          onWithdraw={(ruleId) => run(() => api.del(`${base}/adjustment-rules/${ruleId}`))}
+          onDeclare={(move) => run(() => api.post(`${base}/moves`, move))}
+          onWithdraw={(ruleId) => run(() => api.del(`${base}/moves/${ruleId}`))}
         />
       </div>
 

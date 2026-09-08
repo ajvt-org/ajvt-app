@@ -9,12 +9,7 @@ import {
   unitNode,
 } from "@tests/ui/ladders";
 import type { SeriesConfig } from "./seriesConfig";
-import type {
-  AdjustmentRuleRow,
-  RecordedAdjustmentRow,
-  SeriesStandingRow,
-  UnitRow,
-} from "./seriesTypes";
+import type { MoveRuleRow, RecordedMoveRow, SeriesStandingRow, UnitRow } from "./seriesTypes";
 
 const getMock = vi.fn();
 const postMock = vi.fn();
@@ -64,15 +59,15 @@ function mockSeries(state: {
   units: UnitRow[];
   standing: SeriesStandingRow;
   levels?: SeriesConfig["ladder"];
-  adjustments?: RecordedAdjustmentRow[];
-  rules?: AdjustmentRuleRow[];
+  moves?: RecordedMoveRow[];
+  rules?: MoveRuleRow[];
 }) {
   getMock.mockImplementation(async (url: string) =>
-    String(url).includes("adjustment-rules")
+    String(url).includes("moves")
       ? { rules: state.rules ?? [] }
       : {
           units: state.units,
-          adjustments: state.adjustments ?? [],
+          moves: state.moves ?? [],
           levels: state.levels ?? CHESS.ladder,
           standing: state.standing,
         },
@@ -232,7 +227,7 @@ describe("opening a unit onto the level under it", () => {
 
 describe("a unit a rule ended", () => {
   it("reads as ended by that rule rather than as a score", async () => {
-    const rule: AdjustmentRuleRow = {
+    const rule: MoveRuleRow = {
       id: "r1",
       name: "تيس",
       unitsToSelf: 2,
@@ -302,7 +297,7 @@ describe("correcting and removing", () => {
 });
 
 describe("the moves of a level", () => {
-  const teysse: AdjustmentRuleRow = {
+  const teysse: MoveRuleRow = {
     id: "r1",
     name: "تيس",
     unitsToSelf: 2,

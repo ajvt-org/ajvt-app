@@ -2,17 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { loadSeriesMatch, seriesStateOf, undoAdjustment } from "@/lib/matchSeriesServer";
+import { loadSeriesMatch, seriesStateOf, undoMove } from "@/lib/matchSeriesServer";
 
-type Params = { params: Promise<{ matchId: string; adjustmentId: string }> };
+type Params = { params: Promise<{ matchId: string; moveId: string }> };
 
 export const DELETE = withRoute(
-  "DELETE /api/admin/matches/[matchId]/adjustments/[adjustmentId]",
+  "DELETE /api/admin/matches/[matchId]/moves/[moveId]",
   async (_req: NextRequest, { params }: Params) => {
-    const { matchId, adjustmentId } = await params;
+    const { matchId, moveId } = await params;
     const session = await requireMatchAccess(matchId);
 
-    const undone = await undoAdjustment(matchId, adjustmentId);
+    const undone = await undoMove(matchId, moveId);
     await logAction(session.username, "UNDO_MATCH_ADJUSTMENT", undone.unitId);
 
     return NextResponse.json(seriesStateOf(await loadSeriesMatch(matchId)));

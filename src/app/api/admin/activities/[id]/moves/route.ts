@@ -4,21 +4,21 @@ import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { common } from "@/lib/messages";
-import { declareAdjustmentRule, listAdjustmentRules } from "@/lib/matchSeriesServer";
+import { declareMoveRule, listMoveRules } from "@/lib/matchSeriesServer";
 
 type Params = { params: Promise<{ id: string }> };
 
 export const GET = withRoute(
-  "GET /api/admin/activities/[id]/adjustment-rules",
+  "GET /api/admin/activities/[id]/moves",
   async (_req: NextRequest, { params }: Params) => {
     const { id } = await params;
     await requireActivityAccess(id);
-    return NextResponse.json({ rules: await listAdjustmentRules(id) });
+    return NextResponse.json({ rules: await listMoveRules(id) });
   },
 );
 
 export const POST = withRoute(
-  "POST /api/admin/activities/[id]/adjustment-rules",
+  "POST /api/admin/activities/[id]/moves",
   async (req: NextRequest, { params }: Params) => {
     const { id } = await params;
     const session = await requireActivityAccess(id);
@@ -36,7 +36,7 @@ export const POST = withRoute(
       throw new ValidationError(common.invalidBody);
     }
 
-    const rule = await declareAdjustmentRule(id, {
+    const rule = await declareMoveRule(id, {
       name: typeof body.name === "string" ? body.name : "",
       unitsToSelf: Number(body.unitsToSelf),
       unitsFromOther: Number(body.unitsFromOther),
