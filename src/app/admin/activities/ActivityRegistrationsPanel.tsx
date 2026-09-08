@@ -5,7 +5,7 @@ import { matchesSearch, searchTokens } from "@/lib/arabicText";
 import { activityRegistrants as texts } from "@/lib/texts";
 import PendingRegistrationCard from "./PendingRegistrationCard";
 import ConfirmedRegistrantCard from "./ConfirmedRegistrantCard";
-import RegistrantSection from "./RegistrantSection";
+import RegistrantHeading from "./RegistrantHeading";
 import AddMemberToActivityForm from "./AddMemberToActivityForm";
 import FilterChips from "./FilterChips";
 import TeamFilter from "./TeamFilter";
@@ -98,7 +98,8 @@ export default function ActivityRegistrationsPanel({
       )}
 
       {pending.length > 0 && (
-        <RegistrantSection icon="clock" title={texts.pending} count={pending.length}>
+        <div className="space-y-1.5">
+          <RegistrantHeading icon="clock" title={texts.pending} />
           <div className="space-y-2">
             {pending.map((r) => (
               <PendingRegistrationCard
@@ -111,10 +112,11 @@ export default function ActivityRegistrationsPanel({
               />
             ))}
           </div>
-        </RegistrantSection>
+        </div>
       )}
 
-      <RegistrantSection icon="check" title={texts.confirmed} count={active.length}>
+      <div className="space-y-1.5">
+        <RegistrantHeading icon="check" title={texts.confirmed} />
         {active.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             {tokens.length || hasTeamFilter(team) ? texts.noneMatch : texts.noneConfirmed}
@@ -131,7 +133,7 @@ export default function ActivityRegistrationsPanel({
             ))}
           </div>
         )}
-      </RegistrantSection>
+      </div>
     </div>
   );
 }

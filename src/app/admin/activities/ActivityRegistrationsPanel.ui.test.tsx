@@ -255,16 +255,11 @@ describe("the list of registrants", () => {
     expect(screen.getByText("بلا فريق")).toBeTruthy();
   });
 
-  it("folds a section away and back", async () => {
+  it("names each list without offering a way to fold it away", () => {
     show([], [registration()]);
 
-    const heading = screen.getByRole("button", { name: /مسجَّلون مؤكَّدون/ });
-    expect(screen.getByText("سالم ولد علي")).toBeTruthy();
-
-    await userEvent.click(heading);
-    expect(screen.queryByText("سالم ولد علي")).toBeNull();
-
-    await userEvent.click(heading);
+    expect(screen.getByText(texts.confirmed)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /مسجَّلون مؤكَّدون/ })).toBeNull();
     expect(screen.getByText("سالم ولد علي")).toBeTruthy();
   });
 
@@ -292,11 +287,20 @@ describe("the list of registrants", () => {
     expect(screen.getByText("سالم")).toBeTruthy();
   });
 
-  it("counts what each section holds", () => {
+  it("heads both lists without a count, since a searched list would count matches", () => {
     show([], [registration(), registration({ id: "r2", status: "PENDING" })]);
 
-    expect(screen.getByRole("button", { name: /مسجَّلون مؤكَّدون \(1\)/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /طلبات قيد المراجعة \(1\)/ })).toBeTruthy();
+    expect(screen.getByText(texts.confirmed)).toBeTruthy();
+    expect(screen.getByText(texts.pending)).toBeTruthy();
+    expect(document.body.textContent).not.toContain(`${texts.confirmed} (1)`);
+  });
+
+  it("heads the confirmed list even when nothing is confirmed", () => {
+    show([], []);
+
+    expect(screen.getByText(texts.confirmed)).toBeTruthy();
+    expect(screen.getByText(texts.noneConfirmed)).toBeTruthy();
+    expect(screen.queryByText(texts.pending)).toBeNull();
   });
 });
 
