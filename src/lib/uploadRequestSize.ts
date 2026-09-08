@@ -1,4 +1,4 @@
-import { MAX_UPLOAD_SIZE } from "./imageProcessing";
+import { MAX_UPLOAD_SIZE } from "./uploadLimits";
 
 const MULTIPART_ENVELOPE = 8 * 1024;
 

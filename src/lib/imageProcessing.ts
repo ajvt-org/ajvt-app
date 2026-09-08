@@ -4,16 +4,7 @@ const MAX_DIMENSION = 1400;
 const THUMB_SIZE = 300;
 const WEBP_QUALITY = 75;
 
-export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 export const MAX_DECODED_PIXELS = 50_000_000;
-export const ALLOWED_UPLOAD_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-];
 
 export interface ProcessedImage {
   full: Buffer;

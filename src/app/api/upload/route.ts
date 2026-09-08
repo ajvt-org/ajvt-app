@@ -3,7 +3,8 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { getAdminSession, getUserSession } from "@/lib/auth";
-import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/imageProcessing";
+import { processImage } from "@/lib/imageProcessing";
+import { ACCEPTED_UPLOAD_TYPES, MAX_UPLOAD_SIZE } from "@/lib/uploadLimits";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { proofHash } from "@/lib/proofHash";
@@ -27,7 +28,7 @@ export const POST = withRoute("POST /api/upload", async (req: NextRequest) => {
     const file = formData.get("file") as File | null;
 
     if (!file) throw new ValidationError(uploads.noFile);
-    if (!ALLOWED_UPLOAD_TYPES.includes(file.type))
+    if (!ACCEPTED_UPLOAD_TYPES.includes(file.type))
       throw new ValidationError(uploads.unsupportedType);
     if (file.size > MAX_UPLOAD_SIZE) throw new ValidationError(uploads.tooLarge);
 
