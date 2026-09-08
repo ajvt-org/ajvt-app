@@ -3,6 +3,7 @@ export const uploads = {
   noFile: "لم يتم إرفاق ملف",
   unsupportedType: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)",
   tooLarge: "حجم الملف يتجاوز 10 ميغابايت",
+  cannotConvert: "تعذّرت قراءة هذه الصورة على هذا الجهاز، اختر صورة بصيغة JPG أو PNG",
   processingFailed: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى",
   notYourUpload: "لم يتم التعرف على الصورة، أعد رفعها",
 } as const;
