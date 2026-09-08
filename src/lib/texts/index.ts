@@ -51,6 +51,7 @@ export { daysTab } from "./daysTab";
 export { lists } from "./lists";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
+export { donationForm } from "./donationForm";
 export { donorNameChoice } from "./donorNameChoice";
 export { donationActions, donationEdit } from "./donationEdit";
 export { dataExport, dataPage, siteVisits } from "./dataPage";

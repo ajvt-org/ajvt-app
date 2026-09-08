@@ -7,6 +7,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
+import { readBankReference } from "@/lib/bankReference";
 import { donationCreateSchema } from "./schema";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { members } from "@/lib/messages";
@@ -27,6 +28,8 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     donorPhoto,
     paymentMethod,
     accountId,
+    bankReference,
+    anonymous,
     activityId,
     competitionId,
     userId,
@@ -44,7 +47,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
   const donation = await prisma.donation.create({
     include: { user: { select: DONOR_ACCOUNT_SELECT } },
     data: {
-      anonymous: false,
+      anonymous: anonymous ?? false,
       donorName: donorName ?? null,
       donorPhone: donorPhone ?? null,
       amount,
@@ -52,6 +55,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       donorPhoto: donorPhoto ?? null,
       paymentMethod: paymentMethod || null,
       accountId: accountId || null,
+      bankReference: readBankReference(bankReference) || null,
       activityId: destination.activityId,
       competitionId: destination.competitionId,
       userId: giver?.id ?? null,
@@ -69,10 +73,13 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       targetType: "Donation",
       targetId: donation.id,
       after: logSnapshotFor(donation, {
+        anonymous: donation.anonymous,
         donorName: donation.donorName,
         donorPhone: donation.donorPhone,
         amount: donation.amount,
         paymentMethod: donation.paymentMethod,
+        accountId: donation.accountId,
+        bankReference: donation.bankReference,
         status: donation.status,
         source: donation.source,
         userId: donation.userId,
