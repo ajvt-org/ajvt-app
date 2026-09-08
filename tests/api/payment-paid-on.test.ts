@@ -45,7 +45,7 @@ describe("the day a payment was made", () => {
   it("takes the day the admin recording it by hand gives", async () => {
     const { donation } = await (await record({ paidOn: "2026-06-11" })).json();
 
-    expect(await paidOnOf(donation.id)).toEqual(new Date("2026-06-11"));
+    expect(await paidOnOf(donation.id)).toEqual(new Date("2026-06-11T12:00:00.000Z"));
   });
 
   it("falls back to today when an admin records one without a day", async () => {
@@ -73,7 +73,7 @@ describe("the day a payment was made", () => {
       withId(donation.id),
     );
 
-    expect(await paidOnOf(donation.id)).toEqual(new Date("2026-06-11"));
+    expect(await paidOnOf(donation.id)).toEqual(new Date("2026-06-11T12:00:00.000Z"));
   });
 
   it("moves when the admin corrects the day", async () => {
@@ -85,8 +85,8 @@ describe("the day a payment was made", () => {
       )
     ).json();
 
-    expect(await paidOnOf(donation.id)).toEqual(new Date("2026-06-20"));
-    expect(body.donation.paidOn).toBe(new Date("2026-06-20").toISOString());
+    expect(await paidOnOf(donation.id)).toEqual(new Date("2026-06-20T12:00:00.000Z"));
+    expect(body.donation.paidOn).toBe(new Date("2026-06-20T12:00:00.000Z").toISOString());
   });
 
   it("refuses a day it cannot read", async () => {

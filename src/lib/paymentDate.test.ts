@@ -41,8 +41,12 @@ describe("paidWithin", () => {
 });
 
 describe("readPaidOn", () => {
-  it("reads the day a date field sends", () => {
-    expect(readPaidOn("2026-07-14")).toEqual(new Date("2026-07-14"));
+  it("anchors the day a date field sends at midday, so no clock reads it as the day before", () => {
+    expect(readPaidOn("2026-07-14")).toEqual(new Date("2026-07-14T12:00:00.000Z"));
+  });
+
+  it("leaves a full timestamp alone", () => {
+    expect(readPaidOn("2026-07-14T06:30:00.000Z")).toEqual(new Date("2026-07-14T06:30:00.000Z"));
   });
 
   it("reads an empty field as no date rather than as an invalid one", () => {
