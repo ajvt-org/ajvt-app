@@ -8,7 +8,7 @@ import { usePayableMethods } from "@/lib/usePayableMethods";
 import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
 import { errorMessage } from "@/lib/api";
-import { validateDonorChoice } from "@/lib/donorChoice";
+import { DONOR_NAME_MAX, validateDonorChoice } from "@/lib/donorChoice";
 import DonorNameChoice from "@/components/DonorNameChoice";
 import DonateThanks from "./DonateThanks";
 import Icon from "@/components/Icon";
@@ -121,7 +121,7 @@ function DonatePageInner() {
         if (wantsName === false) fd.append("anonymous", "true");
       } else {
         fd.append("anonymous", wantsName === false ? "true" : "false");
-        if (wantsName === true) fd.append("donorName", donorName.trim());
+        if (donorName.trim()) fd.append("donorName", donorName.trim());
       }
 
       const res = await fetch("/api/donations", { method: "POST", body: fd });
@@ -258,14 +258,33 @@ function DonatePageInner() {
             />
           </div>
 
+          {!lockedMember && (
+            <div>
+              <label
+                className="block text-sm font-bold mb-1.5"
+                style={{ color: "var(--text-main)" }}
+                htmlFor="donate-donor-name"
+              >
+                {texts.nameLabel}
+              </label>
+              <input
+                id="donate-donor-name"
+                type="text"
+                value={donorName}
+                onChange={(e) => setDonorName(e.target.value)}
+                placeholder={texts.namePlaceholder}
+                maxLength={DONOR_NAME_MAX}
+                className="input"
+              />
+              <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+                {texts.nameHint}
+              </p>
+            </div>
+          )}
+
           <DonorNameChoice
             wantsName={wantsName}
-            onPick={(wants) => {
-              setWantsName(wants);
-              if (!wants) setDonorName("");
-            }}
-            donorName={donorName}
-            onDonorName={setDonorName}
+            onPick={setWantsName}
             memberName={lockedMember?.fullName}
           />
 
