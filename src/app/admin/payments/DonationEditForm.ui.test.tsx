@@ -40,7 +40,7 @@ function proofOf(over: Partial<Proof> = {}): Proof {
     donorPhone: null,
     donorPhoto: null,
     anonymous: false,
-    uploadedAt: "2026-08-20T09:00:00.000Z",
+    paidOn: "2026-08-18T12:00:00.000Z",
     submittedAt: "2026-08-20T09:00:00.000Z",
     ...over,
   };

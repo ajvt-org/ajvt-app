@@ -26,6 +26,10 @@ import { DANGER, QUIET } from "./donationTones";
 import { destinationOf, type DestinationOption } from "@/lib/moneyDestination";
 import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 const EMPTY = {
   donorName: "",
   donorPhone: "",
@@ -36,6 +40,7 @@ const EMPTY = {
   bankReference: "",
   destinationId: "",
   proof: "",
+  paidOn: "",
   anonymous: false,
 };
 
@@ -51,7 +56,7 @@ export default function ManualDonationDialog({
   onCreated: (proof: Proof) => void;
 }) {
   const { methods } = usePaymentMethods();
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState({ ...EMPTY, paidOn: today() });
   const [account, setAccount] = useState<MemberOption | null>(null);
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState("");
@@ -78,6 +83,7 @@ export default function ManualDonationDialog({
         bankReference: form.bankReference.trim() || null,
         ...destinationOf(destinations, form.destinationId),
         proof: form.proof || null,
+        paidOn: form.paidOn || null,
         anonymous: form.anonymous,
         userId: account?.userId ?? null,
       });
@@ -202,6 +208,20 @@ export default function ManualDonationDialog({
             required
             className="input"
           />
+        </FormField>
+
+        <FormField id="manual-paid-on" label={manualDonation.paidOn}>
+          <input
+            id="manual-paid-on"
+            type="date"
+            dir="ltr"
+            value={form.paidOn}
+            onChange={(e) => set({ paidOn: e.target.value })}
+            className="input"
+          />
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {manualDonation.paidOnHint}
+          </p>
         </FormField>
 
         <FormField id="manual-payment-method" label={manualDonation.paymentMethod}>

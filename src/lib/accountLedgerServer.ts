@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { orderedMethodNames } from "./paymentMethodsServer";
 import { ledgerOf, type AccountSum, type MethodLedger } from "./accountLedger";
 import { UNSPECIFIED_METHOD } from "./treasury";
+import { paidWithin } from "./paymentDate";
 
 export interface LedgerRange {
   from?: Date;
@@ -29,7 +30,7 @@ export async function getAccountLedger(range: LedgerRange = {}): Promise<MethodL
   const [received, paid, accounts, order] = await Promise.all([
     prisma.payment.groupBy({
       by: ["method", "accountId"],
-      where: { status: "ACTIVE", ...(when ? { createdAt: when } : {}) },
+      where: { status: "ACTIVE", ...paidWithin(when) },
       _sum: { amount: true },
     }),
     prisma.expense.groupBy({

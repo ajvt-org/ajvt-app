@@ -55,11 +55,48 @@ export const renewForm = {
 export const paymentsPage = {
   title: (count: number) => `كل الدفعات (${count})`,
   addDonation: "تسجيل تبرع يدوياً",
-  search: "بحث بالاسم أو النشاط...",
+  search: "بحث بالاسم أو النشاط أو رقم الوصل أو المرجع البنكي...",
   allAccounts: "كل الأرقام",
   accountFilter: "تصفية حسب الرقم",
   noResults: "لا توجد نتائج",
+  sortBy: "الترتيب",
+  sortNewest: "الأحدث دفعاً",
+  sortOldest: "الأقدم دفعاً",
+  sortLargest: "الأكبر مبلغاً",
+  sortSmallest: "الأصغر مبلغاً",
+  filter: "تصفية",
+  kindAll: "الكل",
+  kindMembership: "انتساب",
+  kindActivity: "الأنشطة",
+  kindDonation: "دعم",
+  kind: "نوع الدفعة",
+  status: "الحالة",
+  allStatuses: "كل الحالات",
+  paymentDate: "تاريخ الدفع",
+  account: "الرقم المستلم",
+  receipt: "الوصل",
+  anyReceipt: "بوصل وبدونه",
+  withReceipt: "يحمل وصلاً",
+  withoutReceipt: "بدون وصل",
+  linked: "الربط بعضو",
+  anyLink: "مرتبط وغير مرتبط",
+  isLinked: "مرتبط بعضو",
+  notLinked: "غير مرتبط",
 } as const;
+
+export const PAYMENT_KIND_LABEL: Record<string, string> = {
+  ALL: paymentsPage.kindAll,
+  MEMBERSHIP: paymentsPage.kindMembership,
+  ACTIVITY: paymentsPage.kindActivity,
+  DONATION: paymentsPage.kindDonation,
+};
+
+export const PAYMENT_SORT_LABEL: Record<string, string> = {
+  newest: paymentsPage.sortNewest,
+  oldest: paymentsPage.sortOldest,
+  largest: paymentsPage.sortLargest,
+  smallest: paymentsPage.sortSmallest,
+};
 
 export const byAccount = {
   title: "حسب الرقم المستلم",

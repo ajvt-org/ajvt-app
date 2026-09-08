@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { accountId, amount, donorName, donorPhone, optionalText, paymentMethodIn } from "../schema";
+import {
+  accountId,
+  amount,
+  donorName,
+  donorPhone,
+  optionalText,
+  paidOn,
+  paymentMethodIn,
+} from "../schema";
 import { common } from "@/lib/messages";
 import { MAX_BANK_REFERENCE } from "@/lib/bankReference";
 
@@ -22,6 +30,7 @@ export function donationUpdateSchema(accepted: readonly string[]) {
       tagIds: z.array(z.string(INVALID), INVALID).optional(),
       activityId: z.string(INVALID).nullish(),
       competitionId: z.string(INVALID).nullish(),
+      paidOn: paidOn.optional(),
     })
     .refine((v) => Object.values(v).some((field) => field !== undefined), INVALID);
 }

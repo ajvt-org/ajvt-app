@@ -16,6 +16,7 @@ import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import { viewerOf } from "@/lib/supportViewer";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
 import { money } from "@/lib/money";
+import { readPaidOn } from "@/lib/paymentDate";
 
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
@@ -33,6 +34,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     activityId,
     competitionId,
     userId,
+    paidOn,
   } = parse(donationCreateSchema(await offeredMethodNames()), await req.json());
   const destination = await resolveMoneyDestination({ activityId, competitionId });
 
@@ -63,7 +65,8 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       status: "ACTIVE",
     },
   });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
+  const madeOn = readPaidOn(paidOn) ?? new Date();
+  await mirrorDonation(prisma, donationMirrorOf(donation, undefined, madeOn));
   await logAction(
     session.username,
     "CREATE_DONATION_MANUAL",
@@ -87,5 +90,8 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     },
   );
 
-  return NextResponse.json({ donation: donationView(donation, viewer) }, { status: 201 });
+  return NextResponse.json(
+    { donation: { ...donationView(donation, viewer), paidOn: madeOn } },
+    { status: 201 },
+  );
 });

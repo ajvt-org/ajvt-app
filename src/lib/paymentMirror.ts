@@ -26,6 +26,7 @@ export interface DonationMirror {
   userId: string | null;
   activityId: string | null;
   competitionId: string | null;
+  paidOn?: Date | null;
   tagIds?: string[];
 }
 
@@ -46,7 +47,11 @@ export interface MirroredDonation {
   competitionId: string | null;
 }
 
-export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]): DonationMirror {
+export function donationMirrorOf(
+  donation: MirroredDonation,
+  tagIds?: string[],
+  paidOn?: Date | null,
+): DonationMirror {
   return {
     donationId: donation.id,
     amount: donation.amount,
@@ -62,6 +67,7 @@ export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]):
     userId: donation.userId,
     activityId: donation.activityId,
     competitionId: donation.competitionId,
+    ...(paidOn === undefined ? {} : { paidOn }),
     ...(tagIds ? { tagIds } : {}),
   };
 }
@@ -100,7 +106,11 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
   if (existing) {
     await db.payment.update({
       where: { id: existing.id },
-      data: { ...data, ...(d.tagIds ? { tags: { set: d.tagIds.map((id) => ({ id })) } } : {}) },
+      data: {
+        ...data,
+        ...(d.paidOn === undefined ? {} : { paidOn: d.paidOn }),
+        ...(d.tagIds ? { tags: { set: d.tagIds.map((id) => ({ id })) } } : {}),
+      },
     });
     await syncReceiptsFor(db, { id: existing.id });
     return;
@@ -109,6 +119,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     data: {
       ...data,
       id: d.donationId,
+      paidOn: d.paidOn ?? new Date(),
       ...(d.tagIds ? { tags: { connect: d.tagIds.map((id) => ({ id })) } } : {}),
     },
   });

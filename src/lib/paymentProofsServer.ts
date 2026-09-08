@@ -9,6 +9,7 @@ import {
   withoutFields,
   type SupportViewer,
 } from "./supportPrivacy";
+import { paymentDate } from "./paymentDate";
 
 const HIDDEN_ON_A_PROOF = ["memberName", "proof", "donorName", "donorPhone", "donorPhoto"];
 
@@ -32,6 +33,10 @@ function isRepeated(seenTwice: Set<string>, reference: string | null): boolean {
   return reference !== null && seenTwice.has(reference);
 }
 
+function whenPaid(proof: { paidOn: Date | null; submittedAt: Date }): Date {
+  return paymentDate({ paidOn: proof.paidOn, createdAt: proof.submittedAt });
+}
+
 const MEMBERSHIP_PAYMENT_SELECT = {
   userId: true,
   year: true,
@@ -40,8 +45,8 @@ const MEMBERSHIP_PAYMENT_SELECT = {
   bankReference: true,
   proof: true,
   status: true,
+  paidOn: true,
   createdAt: true,
-  updatedAt: true,
   user: { select: DONOR_ACCOUNT_SELECT },
 } as const;
 
@@ -51,7 +56,6 @@ const REGISTRATION_SELECT = {
   paymentProof: true,
   status: true,
   createdAt: true,
-  updatedAt: true,
   user: { select: DONOR_ACCOUNT_SELECT },
   activity: { select: { title: true } },
 } as const;
@@ -78,7 +82,6 @@ const DONATION_SELECT = {
   user: { select: DONOR_ACCOUNT_SELECT },
   tags: { select: { id: true, name: true } },
   createdAt: true,
-  updatedAt: true,
 } as const;
 
 function yearKey(userId: string, year: number): string {
@@ -98,18 +101,13 @@ async function membershipProofPayments() {
 }
 
 async function membershipTimes(userIds: string[]) {
-  const times = new Map<string, { createdAt: Date; updatedAt: Date }>();
+  const times = new Map<string, Date>();
   if (userIds.length === 0) return times;
   const rows = await prisma.membership.findMany({
     where: { userId: { in: userIds } },
-    select: { userId: true, year: true, createdAt: true, updatedAt: true },
+    select: { userId: true, year: true, createdAt: true },
   });
-  for (const row of rows) {
-    times.set(yearKey(row.userId, row.year), {
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    });
-  }
+  for (const row of rows) times.set(yearKey(row.userId, row.year), row.createdAt);
   return times;
 }
 
@@ -137,7 +135,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       ? prisma.activityRegistration.findMany({
           where: { paymentProof: { not: null } },
           select: REGISTRATION_SELECT,
-          orderBy: { updatedAt: "desc" },
+          orderBy: { createdAt: "desc" },
         })
       : Promise.resolve([]),
     scope.donations
@@ -149,11 +147,19 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       : Promise.resolve([]),
   ]);
 
-  const receipts = await prisma.receipt.findMany({
-    where: { paymentId: { in: donations.map((d) => d.id) } },
-    select: { paymentId: true, number: true, status: true, token: true },
-  });
+  const donationIds = donations.map((d) => d.id);
+  const [receipts, mirrored] = await Promise.all([
+    prisma.receipt.findMany({
+      where: { paymentId: { in: donationIds } },
+      select: { paymentId: true, number: true, status: true, token: true },
+    }),
+    prisma.payment.findMany({
+      where: { id: { in: donationIds } },
+      select: { id: true, paidOn: true },
+    }),
+  ]);
   const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
+  const paidOnOf = new Map(mirrored.map((p) => [p.id, p.paidOn]));
 
   const receiptFor = (id: string, named: boolean) => {
     const receipt = receiptOf.get(id);
@@ -185,8 +191,8 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
         activityTitle: null as string | null,
         amount: null as number | null,
         status: m.status,
-        uploadedAt: recorded?.updatedAt ?? m.updatedAt,
-        submittedAt: recorded?.createdAt ?? m.createdAt,
+        paidOn: m.paidOn,
+        submittedAt: recorded ?? m.createdAt,
         named: seesPaymentIdentity(viewer, {
           userId: m.userId,
           user: m.user,
@@ -204,7 +210,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       activityTitle: r.activity.title,
       amount: null as number | null,
       status: r.status,
-      uploadedAt: r.updatedAt,
+      paidOn: null as Date | null,
       submittedAt: r.createdAt,
       named: true,
     })),
@@ -232,13 +238,13 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       donorPhoto: d.donorPhoto,
       tags: d.tags,
       receipt: receiptFor(d.id, seesSupporterName(viewer, d)),
-      uploadedAt: d.updatedAt,
+      paidOn: paidOnOf.get(d.id) ?? null,
       submittedAt: d.createdAt,
       named: seesSupporterName(viewer, d),
     })),
   ];
 
   return proofs
-    .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())
+    .sort((a, b) => whenPaid(b).getTime() - whenPaid(a).getTime())
     .map(({ named, ...row }) => (named ? row : hideIdentity(row)));
 }

@@ -11,6 +11,7 @@ import {
   proofReuse,
 } from "@/lib/texts";
 import { money } from "@/lib/money";
+import { formatDate } from "@/lib/utils";
 import type { MemberOption, Proof } from "./paymentTypes";
 
 const ACCOUNT: MemberOption = {
@@ -48,7 +49,7 @@ function proofOf(over: Partial<Proof> = {}): Proof {
     amount: 500,
     status: "PENDING",
     source: "PUBLIC",
-    uploadedAt: "2026-08-20T09:00:00.000Z",
+    paidOn: "2026-08-18T12:00:00.000Z",
     submittedAt: "2026-08-20T09:00:00.000Z",
     ...over,
   };
@@ -140,7 +141,7 @@ describe("the other kinds on the same list", () => {
     const { container } = show({ amount: 2000 });
 
     expect(container.textContent).toContain(money(2000));
-    expect(screen.getByText(paymentCard.statusPending).textContent).toBe(paymentCard.statusPending);
+    expect(container.textContent).not.toContain(paymentCard.statusPending);
   });
 
   it("drops the name typed by hand once the gift is linked to an account", () => {
@@ -192,14 +193,14 @@ describe("the other kinds on the same list", () => {
     mockFetch([]);
     show({ anonymous: true });
 
-    expect(screen.getByText(paymentCard.hiddenOnBoard)).toBeTruthy();
+    expect(screen.getByLabelText(paymentCard.hiddenOnBoard)).toBeTruthy();
   });
 
   it("says nothing about hiding a gift that is named", () => {
     mockFetch([]);
     show({ anonymous: false });
 
-    expect(screen.queryByText(paymentCard.hiddenOnBoard)).toBeNull();
+    expect(screen.queryByLabelText(paymentCard.hiddenOnBoard)).toBeNull();
   });
 
   it("shows who the gift is linked to, with enough to confirm it", () => {
@@ -316,8 +317,12 @@ describe("the order a list of payments reads in", () => {
     expect(text.indexOf(paymentCard.statusPending)).toBeLessThan(
       text.indexOf(paymentCard.generalSupport),
     );
-    expect(text.indexOf(paymentCard.generalSupport)).toBeLessThan(text.indexOf("2026/08/20"));
-    expect(text.indexOf("2026/08/20")).toBeLessThan(text.indexOf("R-2026-0243"));
+    expect(text.indexOf(paymentCard.generalSupport)).toBeLessThan(
+      text.indexOf(formatDate("2026-08-18T12:00:00.000Z")),
+    );
+    expect(text.indexOf(formatDate("2026-08-18T12:00:00.000Z"))).toBeLessThan(
+      text.indexOf("R-2026-0243"),
+    );
   });
 });
 

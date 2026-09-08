@@ -28,7 +28,7 @@ export function proofFromDonation(
     donorName: donation.donorName ?? null,
     donorPhone: donation.donorPhone ?? null,
     donorPhoto: donation.donorPhoto ?? null,
-    uploadedAt: donation.updatedAt,
+    paidOn: donation.paidOn,
     submittedAt: donation.createdAt,
   };
 }

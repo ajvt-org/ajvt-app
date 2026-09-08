@@ -27,7 +27,7 @@ export interface Proof {
   donorPhoto?: string | null;
   tags?: FinanceTag[];
   receipt?: { number: string; status: string; token?: string } | null;
-  uploadedAt: string;
+  paidOn: string | null;
   submittedAt: string;
 }
 
@@ -50,6 +50,7 @@ export interface DonationResponse {
     anonymous: boolean;
     activityId: string | null;
     competitionId: string | null;
+    paidOn: string | null;
     createdAt: string;
     updatedAt: string;
   };

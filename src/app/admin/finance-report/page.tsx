@@ -5,7 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
 import { tagTotal, type TagRow } from "@/lib/financeReport";
-import { financeReport as texts } from "@/lib/texts";
+import { financeReport as texts, paymentDates } from "@/lib/texts";
 
 interface MonthRow {
   month: string;
@@ -144,6 +144,9 @@ export default function FinanceReportPage() {
             </p>
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               {texts.splitDetail(report.totals.membershipFees, report.totals.support)}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              {paymentDates.groupedByPaidOn}
             </p>
           </div>
 

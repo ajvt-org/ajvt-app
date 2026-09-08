@@ -3,8 +3,11 @@
 import { Suspense, useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
-import { paymentAccountPicker, paymentsPage as texts } from "@/lib/texts";
+import { PAYMENT_SORT_LABEL, paymentsPage as texts } from "@/lib/texts";
+import Icon from "@/components/Icon";
 import KindTabs from "./KindTabs";
+import PaymentsFilterChips from "./PaymentsFilterChips";
+import PaymentsFilterSheet from "./PaymentsFilterSheet";
 import ManualDonationDialog from "./ManualDonationDialog";
 import PaymentsList from "./PaymentsList";
 import { usePaymentsData } from "./usePaymentsData";
@@ -14,26 +17,14 @@ import { paginate, pageCount } from "@/lib/listUrlState";
 import {
   PAYMENTS_FILTER_KEYS,
   accountOptionsOf,
-  matchesAccount,
+  activePaymentsFilterCount,
+  matchesPaymentsFilters,
   readPaymentsFilters,
-  NO_ACCOUNT,
   pageHolding,
   writePaymentsFilters,
-  type PaymentsFilters,
 } from "./paymentsFilters";
-import { PAGE_SIZE, type Proof } from "./paymentTypes";
-
-function match(proof: Proof, filters: PaymentsFilters) {
-  if (filters.kind !== "ALL" && proof.kind !== filters.kind) return false;
-  if (!matchesAccount(proof, filters.account)) return false;
-  const query = filters.q.trim();
-  if (!query) return true;
-  return (
-    proof.memberName.includes(query) ||
-    (proof.activityTitle || "").includes(query) ||
-    (proof.bankReference || "").includes(query)
-  );
-}
+import { PAYMENT_SORTS, readPaymentSort, sortPayments } from "./paymentsSort";
+import { PAGE_SIZE } from "./paymentTypes";
 
 function AdminPaymentsPageInner() {
   const { proofs, members, destinations, tags, loading, setProofs, reload } = usePaymentsData();
@@ -43,6 +34,7 @@ function AdminPaymentsPageInner() {
     writeFilters: writePaymentsFilters,
   });
   const [adding, setAdding] = useState(false);
+  const [filtering, setFiltering] = useState(false);
 
   const actions = useDonationActions({
     patch: (id, changes) =>
@@ -56,7 +48,10 @@ function AdminPaymentsPageInner() {
   if (loading) return <PageLoading />;
 
   const accountOptions = accountOptionsOf(proofs);
-  const filtered = proofs.filter((p) => match(p, filters));
+  const filtered = sortPayments(
+    proofs.filter((p) => matchesPaymentsFilters(p, filters)),
+    filters.sort,
+  );
   const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const holding = pageHolding(
     filtered.map((p) => p.id),
@@ -65,6 +60,7 @@ function AdminPaymentsPageInner() {
   );
   const current = Math.min(page === 1 && holding ? holding : page, totalPages);
   const shown = paginate(filtered, current, PAGE_SIZE);
+  const activeCount = activePaymentsFilterCount(filters);
 
   return (
     <div className="admin-page space-y-3">
@@ -94,22 +90,36 @@ function AdminPaymentsPageInner() {
         className="input text-sm"
       />
 
-      {accountOptions.length > 0 && (
+      <div className="flex items-center gap-2">
         <select
-          aria-label={texts.accountFilter}
-          value={filters.account}
-          onChange={(e) => go({ ...filters, focus: "", account: e.target.value })}
+          aria-label={texts.sortBy}
+          value={filters.sort}
+          onChange={(e) => go({ ...filters, focus: "", sort: readPaymentSort(e.target.value) })}
           className="input text-sm"
         >
-          <option value="">{texts.allAccounts}</option>
-          {accountOptions.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.code}
+          {PAYMENT_SORTS.map((sort) => (
+            <option key={sort} value={sort}>
+              {PAYMENT_SORT_LABEL[sort]}
             </option>
           ))}
-          <option value={NO_ACCOUNT}>{paymentAccountPicker.unknown}</option>
         </select>
-      )}
+        <button
+          onClick={() => setFiltering(true)}
+          className="text-xs px-3 py-2 rounded-lg font-bold shrink-0 flex items-center gap-1.5"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <Icon name="filter" size={14} />
+          {texts.filter}
+          {activeCount > 0 && <span className="badge badge-numeral">{activeCount}</span>}
+        </button>
+      </div>
+
+      <PaymentsFilterChips
+        filters={filters}
+        accountOptions={accountOptions}
+        resultCount={filtered.length}
+        onChange={go}
+      />
 
       <PaymentsList
         proofs={shown}
@@ -132,6 +142,16 @@ function AdminPaymentsPageInner() {
         onMembershipChanged={reload}
         pagination={{ page: current, totalPages, onGo: goToPage }}
       />
+
+      {filtering && (
+        <PaymentsFilterSheet
+          filters={filters}
+          accountOptions={accountOptions}
+          resultCount={filtered.length}
+          onChange={go}
+          onClose={() => setFiltering(false)}
+        />
+      )}
 
       {adding && (
         <ManualDonationDialog
