@@ -5,9 +5,10 @@ import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
 import Sheet from "@/components/Sheet";
 import MembershipActions from "@/app/admin/payments/MembershipActions";
-import { formatDate, formatTime, toThumbUrl } from "@/lib/utils";
+import { toThumbUrl } from "@/lib/utils";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
-import { membershipSummary as texts, paymentCard } from "@/lib/texts";
+import { membershipSummary as texts } from "@/lib/texts";
+import PaymentDateLine from "@/components/admin/PaymentDateLine";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -89,9 +90,11 @@ export default function MembershipPaymentDialog({
           )}
         </dl>
 
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {paymentCard.uploadedAt(formatDate(member.updatedAt), formatTime(member.updatedAt))}
-        </p>
+        {member.paymentRecordedAt && (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            <PaymentDateLine paidOn={member.paymentPaidOn} recordedAt={member.paymentRecordedAt} />
+          </p>
+        )}
 
         <MembershipActions
           userId={member.id}

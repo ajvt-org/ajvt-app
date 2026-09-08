@@ -29,6 +29,8 @@ function memberOf(over: Partial<Member> = {}): Member {
     accountId: null,
     account: null,
     paymentProof: null,
+    paymentPaidOn: "2026-08-18T12:00:00.000Z",
+    paymentRecordedAt: "2026-08-20T09:00:00.000Z",
     membershipYear: 2026,
     endedAt: null,
     endedReason: null,
