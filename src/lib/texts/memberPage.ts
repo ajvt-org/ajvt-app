@@ -11,11 +11,8 @@ export const memberPage = {
   groupParticipation: "المشاركة",
   groupRecord: "السجل",
   activities: (count: number) => `الأنشطة (${count})`,
-  noActivities: "لم يشارك في أي نشاط",
   teams: (count: number) => `الفرق (${count})`,
-  noTeams: "ليس في أي فريق",
   donations: (count: number) => `التبرعات (${count})`,
-  noDonations: "لا توجد تبرعات",
   history: (count: number) => `سجل التغييرات (${count})`,
   noHistory: "لا توجد تغييرات مسجلة",
 } as const;
