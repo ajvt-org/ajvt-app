@@ -1,26 +1,20 @@
-import type { BothPastTarget, MatchEnding, PartDecision } from "@prisma/client";
+import type { CountedBy, EndsBy, Unsettled } from "@prisma/client";
 
 export interface LevelRow {
   id: string;
   order: number;
   singular: string;
   plural: string;
-  ending: MatchEnding | null;
-  unitsPerParent: number | null;
-  unitsToWin: number | null;
+  countedBy: CountedBy | null;
+  endsBy: EndsBy | null;
+  unitCount: number | null;
   target: number | null;
+  unsettled: Unsettled | null;
+  margin: number | null;
+  continueUnits: number | null;
   deciderTarget: number | null;
-  bothPastTarget: BothPastTarget | null;
-  extendsWhenLevel: boolean;
-  extensionUnits: number;
   startingCredit: number;
   creditWindow: number;
-  halvesPerUnit: number;
-  decision: PartDecision | null;
-  wonUnitWorth: number;
-  doubledWorth: number;
-  doublesOnBlankOpponent: boolean;
-  doublesOnRecoveredCredit: boolean;
 }
 
 export type Ladder = LevelRow[];
@@ -49,6 +43,6 @@ export function definiteUnits(level: LevelRow): string {
   return level.plural.startsWith("ال") ? level.plural : `ال${level.plural}`;
 }
 
-export function scoredLevel(level: LevelRow): boolean {
-  return level.ending === "FIRST_PAST";
+export function countsPoints(level: LevelRow): boolean {
+  return level.countedBy === "POINTS";
 }

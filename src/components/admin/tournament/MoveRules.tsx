@@ -140,7 +140,6 @@ export default function MoveRules({
             onChange={(e) => setDraft({ ...draft, levelId: e.target.value })}
             className="input input-sm w-full"
           >
-            <option value="">{texts.moveAnyLevel}</option>
             {levels.map((level) => (
               <option key={level.id} value={level.id}>
                 {level.singular}

@@ -9,11 +9,11 @@ import type { SeriesStandingRow } from "./seriesTypes";
 
 export function stateLine(standing: SeriesStandingRow, config: SeriesConfig, sides: string[]) {
   if (standing.extending && !standing.over) {
-    return texts.extending(countedUnits(config.match.extensionUnits, config.unit));
+    return texts.extending(countedUnits(config.match.continueUnits ?? 0, config.unit));
   }
   if (!standing.over) {
-    return config.match.ending === "FIRST_TO" && config.match.unitsToWin !== null
-      ? texts.endsAt(countedUnits(config.match.unitsToWin, config.unit))
+    return config.match.endsBy === "TARGET" && config.match.target !== null
+      ? texts.endsAt(countedUnits(config.match.target, config.unit))
       : texts.endsWhenAllPlayed(definiteUnits(config.unit));
   }
   if (standing.winner === null) return texts.level;

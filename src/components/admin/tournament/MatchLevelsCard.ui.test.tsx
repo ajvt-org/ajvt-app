@@ -26,8 +26,10 @@ const MATCH: LevelRow = levelRow({
   order: 0,
   singular: "المباراة",
   plural: "المباريات",
-  ending: "PLAY_ALL",
-  unitsPerParent: 2,
+  countedBy: "OUTCOME",
+  endsBy: "COUNT",
+  unitCount: 2,
+  unsettled: "DRAW",
 });
 
 const GAME: LevelRow = levelRow({
@@ -35,7 +37,6 @@ const GAME: LevelRow = levelRow({
   order: 1,
   singular: "لعبة",
   plural: "ألعاب",
-  decision: "OUTCOME",
 });
 
 function answering(levels: LevelRow[], rules: unknown[] = []) {
@@ -76,8 +77,8 @@ describe("the match levels card", () => {
     await waitFor(() => expect(putMock).toHaveBeenCalled());
     const body = putMock.mock.calls[0][1] as { levels: LevelRow[] };
     expect(body.levels).toHaveLength(2);
-    expect(body.levels[0].ending).toBe("PLAY_ALL");
-    expect(body.levels[1].ending).toBeNull();
+    expect(body.levels[0].endsBy).toBe("COUNT");
+    expect(body.levels[1].endsBy).toBeNull();
   });
 
   it("refuses to save a level with no word for its unit", async () => {
@@ -121,19 +122,15 @@ describe("the match levels card", () => {
 
   it("offers only the levels the tournament declared to a move", async () => {
     show();
-    const picker = (await screen.findByLabelText("المستوى الذي تُسجَّل فيه")) as HTMLSelectElement;
+    const picker = (await screen.findByLabelText("المستوى الذي تقع فيه")) as HTMLSelectElement;
 
-    expect([...picker.options].map((option) => option.textContent)).toEqual([
-      "أي مستوى",
-      "المباراة",
-      "لعبة",
-    ]);
+    expect([...picker.options].map((option) => option.textContent)).toEqual(["المباراة", "لعبة"]);
   });
 
   it("declares a move against a level", async () => {
     show();
     fireEvent.change(await screen.findByLabelText("اسم الحركة"), { target: { value: "تيس" } });
-    fireEvent.change(screen.getByLabelText("المستوى الذي تُسجَّل فيه"), {
+    fireEvent.change(screen.getByLabelText("المستوى الذي تقع فيه"), {
       target: { value: "game" },
     });
     fireEvent.click(screen.getByLabelText("تنهي الوحدة التي تقع فيها"));

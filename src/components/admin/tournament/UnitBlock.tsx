@@ -31,6 +31,7 @@ export default function UnitBlock({
 }) {
   const [warning, setWarning] = useState(false);
   const level = levelAt(api, depth)!;
+  const parent = levelAt(api, depth - 1)!;
   const under = levelAt(api, depth + 1);
   const opened = api.opened.includes(unit.id);
   const nests = opensOnto(api, depth);
@@ -82,6 +83,7 @@ export default function UnitBlock({
         <UnitEditor
           draft={draft}
           level={level}
+          parent={parent}
           sides={api.sides}
           busy={api.busy}
           editing

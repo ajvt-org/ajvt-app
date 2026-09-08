@@ -40,7 +40,7 @@ export const POST = withRoute(
       name: typeof body.name === "string" ? body.name : "",
       unitsToSelf: Number(body.unitsToSelf),
       unitsFromOther: Number(body.unitsFromOther),
-      levelId: typeof body.levelId === "string" ? body.levelId : null,
+      levelId: typeof body.levelId === "string" ? body.levelId : "",
       endsUnit: body.endsUnit === true,
     });
     await logAction(session.username, "DECLARE_ADJUSTMENT_RULE", rule.name);

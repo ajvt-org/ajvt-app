@@ -2,7 +2,7 @@
 
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
-import type { LevelRow } from "@/lib/matchLevels";
+import { countsPoints, type LevelRow } from "@/lib/matchLevels";
 import type { UnitRow } from "./seriesTypes";
 
 export interface UnitDraft {
@@ -21,13 +21,13 @@ export function draftOf(unit: UnitRow): UnitDraft {
   };
 }
 
-export function bodyOf(draft: UnitDraft, level: LevelRow): Record<string, unknown> {
-  if (level.decision === "OUTCOME") return { outcome: draft.outcome };
+export function bodyOf(draft: UnitDraft, parent: LevelRow): Record<string, unknown> {
+  if (!countsPoints(parent)) return { outcome: draft.outcome };
   return { sideAPoints: Number(draft.sideAPoints), sideBPoints: Number(draft.sideBPoints) };
 }
 
-export function draftIsReady(draft: UnitDraft, level: LevelRow): boolean {
-  if (level.decision === "OUTCOME") return draft.outcome !== "";
+export function draftIsReady(draft: UnitDraft, parent: LevelRow): boolean {
+  if (!countsPoints(parent)) return draft.outcome !== "";
   return (
     Number.isInteger(Number(draft.sideAPoints)) &&
     Number.isInteger(Number(draft.sideBPoints)) &&
@@ -39,6 +39,7 @@ export function draftIsReady(draft: UnitDraft, level: LevelRow): boolean {
 export default function UnitEditor({
   draft,
   level,
+  parent,
   sides,
   busy,
   editing,
@@ -48,6 +49,7 @@ export default function UnitEditor({
 }: {
   draft: UnitDraft;
   level: LevelRow;
+  parent: LevelRow;
   sides: string[];
   busy: boolean;
   editing: boolean;
@@ -57,7 +59,7 @@ export default function UnitEditor({
 }) {
   return (
     <div className="space-y-2">
-      {level.decision === "OUTCOME" ? (
+      {!countsPoints(parent) ? (
         <select
           aria-label={texts.outcomeOf(level.singular)}
           value={draft.outcome}
@@ -102,7 +104,7 @@ export default function UnitEditor({
       <div className="flex gap-2">
         <button
           onClick={onSubmit}
-          disabled={busy || !draftIsReady(draft, level)}
+          disabled={busy || !draftIsReady(draft, parent)}
           className="btn btn-primary btn-sm"
         >
           <IconLabel name={editing ? "save" : "plus"}>

@@ -247,7 +247,7 @@ export async function drawBracket(activityId: string, redo = false) {
     created,
     label,
     coloursBalance: hasColours
-      ? canBalance(ladderOf(activity?.levels ?? [])[0]?.unitsPerParent ?? 0)
+      ? canBalance(ladderOf(activity?.levels ?? [])[0]?.unitCount ?? 0)
       : null,
   };
 }
@@ -409,9 +409,7 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
     created,
     label,
     problem,
-    coloursBalance: setup.hasColours
-      ? canBalance(ladderOf(setup.levels)[0]?.unitsPerParent ?? 0)
-      : null,
+    coloursBalance: setup.hasColours ? canBalance(ladderOf(setup.levels)[0]?.unitCount ?? 0) : null,
   };
 }
 

@@ -30,8 +30,8 @@ const CHESS = CHESS_CONFIG;
 const SCORED = SCORED_CONFIG;
 
 const DEEP = ladderConfig(
-  { unitsPerParent: 3, ending: "FIRST_TO", unitsToWin: 2 },
-  { singular: "شوط", plural: "أشواط", decision: "SCORE" },
+  { countedBy: "POINTS", endsBy: "TARGET", unitCount: null, target: 200 },
+  { singular: "شوط", plural: "أشواط", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
 );
 const DEEP_LADDER = [
   ...DEEP.ladder,
@@ -41,7 +41,9 @@ const DEEP_LADDER = [
     order: 2,
     singular: "نقطة",
     plural: "نقاط",
-    decision: "SCORE" as const,
+    countedBy: null,
+    endsBy: null,
+    target: null,
   },
 ];
 
@@ -234,6 +236,7 @@ describe("a unit a rule ended", () => {
       unitsFromOther: 2,
       levelId: "unit",
       endsUnit: true,
+      unitWorth: null,
     };
     mockSeries({
       units: [unit("u1", 1, { outcome: "SIDE_A", endedBy: rule })],
@@ -304,6 +307,7 @@ describe("the moves of a level", () => {
     unitsFromOther: 2,
     levelId: "unit",
     endsUnit: false,
+    unitWorth: null,
   };
 
   it("offers only the rules declared for that level", async () => {

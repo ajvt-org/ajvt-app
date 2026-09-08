@@ -7,37 +7,37 @@ const BLANK: LevelRow = {
   order: 0,
   singular: "المباراة",
   plural: "المباريات",
-  ending: null,
-  unitsPerParent: null,
-  unitsToWin: null,
+  countedBy: null,
+  endsBy: null,
+  unitCount: null,
   target: null,
+  unsettled: null,
+  margin: null,
+  continueUnits: null,
   deciderTarget: null,
-  bothPastTarget: null,
-  extendsWhenLevel: false,
-  extensionUnits: 0,
   startingCredit: 0,
   creditWindow: 0,
-  halvesPerUnit: 2,
-  decision: null,
-  wonUnitWorth: 1,
-  doubledWorth: 1,
-  doublesOnBlankOpponent: false,
-  doublesOnRecoveredCredit: false,
 };
 
 const CARDS: LevelRow[] = [
-  { ...BLANK, id: "match", order: 0, ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },
+  {
+    ...BLANK,
+    id: "match",
+    order: 0,
+    countedBy: "OUTCOME",
+    endsBy: "COUNT",
+    unitCount: 2,
+    unsettled: "DECIDER",
+  },
   {
     ...BLANK,
     id: "set",
     order: 1,
     singular: "شوط",
     plural: "أشواط",
-    decision: "SCORE",
-    ending: "FIRST_TO",
-    unitsPerParent: 25,
-    unitsToWin: 12,
-    halvesPerUnit: 1,
+    countedBy: "OUTCOME",
+    endsBy: "TARGET",
+    target: 12,
   },
   {
     ...BLANK,
@@ -45,14 +45,14 @@ const CARDS: LevelRow[] = [
     order: 2,
     singular: "نقطة",
     plural: "نقاط",
-    decision: "SCORE",
-    ending: "FIRST_PAST",
-    unitsPerParent: 20,
+    countedBy: "POINTS",
+    endsBy: "TARGET",
     target: 100,
-    bothPastTarget: "PLAY_ON",
-    halvesPerUnit: 1,
+    unsettled: "CONTINUE",
+    margin: 1,
+    continueUnits: 1,
   },
-  { ...BLANK, id: "round", order: 3, singular: "دور", plural: "أدوار", decision: "SCORE" },
+  { ...BLANK, id: "round", order: 3, singular: "دور", plural: "أدوار" },
 ];
 
 function unit(over: Partial<UnitRow> & { id: string; levelId: string; order: number }): UnitRow {
@@ -71,10 +71,10 @@ function unit(over: Partial<UnitRow> & { id: string; levelId: string; order: num
 }
 
 describe("a unit with nothing under it", () => {
-  it("keeps the score the admin typed", () => {
+  it("keeps the result the admin typed", () => {
     const rows = [
-      unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 12, sideBPoints: 9 }),
-      unit({ id: "s2", levelId: "set", order: 2, sideAPoints: 12, sideBPoints: 4 }),
+      unit({ id: "s1", levelId: "set", order: 1, outcome: "SIDE_A" }),
+      unit({ id: "s2", levelId: "set", order: 2, outcome: "SIDE_A" }),
     ];
 
     const { units, standing } = resolveMatch(CARDS, rows);
@@ -85,7 +85,7 @@ describe("a unit with nothing under it", () => {
   });
 
   it("is a complete record rather than a broken one", () => {
-    const rows = [unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 12, sideBPoints: 9 })];
+    const rows = [unit({ id: "s1", levelId: "set", order: 1, outcome: "SIDE_A" })];
 
     const { standing } = resolveMatch(CARDS, rows);
 
@@ -98,29 +98,15 @@ describe("a unit with nothing under it", () => {
 describe("a unit with something under it", () => {
   it("takes its score from its children rather than from what was typed", () => {
     const rows = [
-      unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 99, sideBPoints: 0 }),
-      unit({
-        id: "p1",
-        levelId: "point",
-        parentId: "s1",
-        order: 1,
-        sideAPoints: 101,
-        sideBPoints: 20,
-      }),
-      unit({
-        id: "p2",
-        levelId: "point",
-        parentId: "s1",
-        order: 2,
-        sideAPoints: 30,
-        sideBPoints: 101,
-      }),
+      unit({ id: "s1", levelId: "set", order: 1, outcome: "SIDE_A" }),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1, outcome: "SIDE_A" }),
+      unit({ id: "p2", levelId: "point", parentId: "s1", order: 2, outcome: "SIDE_B" }),
     ];
 
     const { units } = resolveMatch(CARDS, rows);
 
-    expect(units[0].standing?.sideATotal).toBe(1);
-    expect(units[0].standing?.sideBTotal).toBe(1);
+    expect(units[0].standing?.sideATotal).toBe(2);
+    expect(units[0].standing?.sideBTotal).toBe(2);
   });
 
   it("counts a point out of its rounds", () => {
@@ -150,7 +136,7 @@ describe("a unit with something under it", () => {
 
     expect(point.standing?.sideATotal).toBe(105);
     expect(point.standing?.over).toBe(true);
-    expect(units[0].standing?.sideATotal).toBe(1);
+    expect(units[0].standing?.sideATotal).toBe(2);
   });
 
   it("leaves a unit still being played out of the level above", () => {
@@ -180,12 +166,13 @@ describe("a move recorded in a unit", () => {
     name: "تيس",
     unitsToSelf: 1,
     unitsFromOther: 1,
-    levelId: null,
+    levelId: "set",
     endsUnit: false,
+    unitWorth: null,
   };
 
   it("swings the level above the unit it sits in, before that unit is scored", () => {
-    const rows = [unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 12, sideBPoints: 4 })];
+    const rows = [unit({ id: "s1", levelId: "set", order: 1, outcome: "SIDE_A" })];
     const moves: MoveRow[] = [{ id: "a1", unitId: "s1", side: "SIDE_B", rule }];
 
     const { standing } = resolveMatch(CARDS, rows, moves);
@@ -196,7 +183,7 @@ describe("a move recorded in a unit", () => {
   });
 
   it("takes a side below nothing rather than flooring at zero", () => {
-    const rows = [unit({ id: "s1", levelId: "set", order: 1, sideAPoints: 4, sideBPoints: 12 })];
+    const rows = [unit({ id: "s1", levelId: "set", order: 1, outcome: "SIDE_B" })];
     const moves: MoveRow[] = [{ id: "a1", unitId: "s1", side: "SIDE_B", rule }];
 
     const { standing } = resolveMatch(CARDS, rows, moves);
@@ -261,8 +248,7 @@ describe("losing the starting credit", () => {
         levelId: "point",
         parentId: "s1",
         order: 1,
-        sideAPoints: 101,
-        sideBPoints: 0,
+        outcome: "SIDE_A",
         sideBLostCredit: true,
       }),
     ];
@@ -274,100 +260,18 @@ describe("losing the starting credit", () => {
 });
 
 describe("what a won unit is worth", () => {
-  const DOUBLING = CARDS.map((level) =>
-    level.id === "point"
-      ? {
-          ...level,
-          startingCredit: 26,
-          creditWindow: 2,
-          doubledWorth: 2,
-          doublesOnBlankOpponent: true,
-          doublesOnRecoveredCredit: true,
-        }
-      : level,
-  );
-
-  function point(rounds: [number, number][]) {
-    return [
+  it("counts one where nothing marked it as more", () => {
+    const rows = [
       unit({ id: "s1", levelId: "set", order: 1 }),
-      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1 }),
-      ...rounds.map(([a, b], index) =>
-        unit({
-          id: `r${index + 1}`,
-          levelId: "round",
-          parentId: "p1",
-          order: index + 1,
-          sideAPoints: a,
-          sideBPoints: b,
-        }),
-      ),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1, outcome: "SIDE_A" }),
     ];
-  }
-
-  it("counts two against a side that was blank when the last round began", () => {
-    const rows = point([
-      [40, 0],
-      [30, 0],
-      [20, 0],
-      [11, 15],
-    ]);
-
-    const { units } = resolveMatch(DOUBLING, rows);
-
-    expect(units[0].children[0].played.worth).toBe(2);
-  });
-
-  it("counts one where the losing side had already scored before the last round", () => {
-    const rows = point([
-      [40, 10],
-      [30, 5],
-      [40, 5],
-    ]);
-
-    const { units } = resolveMatch(DOUBLING, rows);
-
-    expect(units[0].children[0].played.worth).toBe(1);
-  });
-
-  it("counts two for a side that lost its credit and won anyway", () => {
-    const rows = point([
-      [0, 30],
-      [0, 20],
-      [101, 5],
-    ]);
-
-    const { units } = resolveMatch(DOUBLING, rows);
-
-    expect(units[0].children[0].standing?.sideALostCredit).toBe(true);
-    expect(units[0].children[0].played.worth).toBe(2);
-  });
-
-  it("counts one where the level doubles on neither condition", () => {
-    const rows = point([
-      [40, 0],
-      [30, 0],
-      [40, 0],
-    ]);
 
     const { units } = resolveMatch(CARDS, rows);
-
-    expect(units[0].children[0].played.worth).toBe(1);
-  });
-
-  it("carries a doubled point through to the score of the set", () => {
-    const rows = point([
-      [40, 0],
-      [30, 0],
-      [20, 0],
-      [11, 15],
-    ]);
-
-    const { units } = resolveMatch(DOUBLING, rows);
 
     expect(units[0].standing?.sideATotal).toBe(2);
   });
 
-  it("takes the worth from the row when the point has nothing under it", () => {
+  it("takes the worth marked on the row", () => {
     const rows = [
       unit({ id: "s1", levelId: "set", order: 1 }),
       unit({
@@ -375,98 +279,105 @@ describe("what a won unit is worth", () => {
         levelId: "point",
         parentId: "s1",
         order: 1,
-        sideAPoints: 101,
-        sideBPoints: 0,
+        outcome: "SIDE_A",
         worth: 2,
       }),
     ];
 
-    const { units } = resolveMatch(DOUBLING, rows);
+    const { units } = resolveMatch(CARDS, rows);
 
-    expect(units[0].standing?.sideATotal).toBe(2);
+    expect(units[0].standing?.sideATotal).toBe(4);
+  });
+
+  it("carries the worth of a point that was played out of its rounds", () => {
+    const rows = [
+      unit({ id: "s1", levelId: "set", order: 1 }),
+      unit({ id: "p1", levelId: "point", parentId: "s1", order: 1, worth: 2 }),
+      unit({
+        id: "r1",
+        levelId: "round",
+        parentId: "p1",
+        order: 1,
+        sideAPoints: 101,
+        sideBPoints: 20,
+      }),
+    ];
+
+    const { units } = resolveMatch(CARDS, rows);
+
+    expect(units[0].standing?.sideATotal).toBe(4);
   });
 });
 
 describe("the deciding unit of a level", () => {
-  const SHORT = CARDS.map((level) => (level.id === "set" ? { ...level, unitsToWin: 2 } : level));
+  const SHORT = CARDS.map((level) => (level.id === "set" ? { ...level, target: 2 } : level));
   const DECIDED = SHORT.map((level) =>
     level.id === "set" ? { ...level, deciderTarget: 3 } : level,
   );
 
-  function sets(scores: [number, number][][]) {
-    return scores.flatMap(([...points], index) => [
+  function sets(results: ("SIDE_A" | "SIDE_B")[][]) {
+    return results.flatMap((points, index) => [
       unit({ id: `s${index + 1}`, levelId: "set", order: index + 1 }),
-      ...points.map(([a, b], at) =>
+      ...points.map((side, at) =>
         unit({
           id: `s${index + 1}p${at + 1}`,
           levelId: "point",
           parentId: `s${index + 1}`,
           order: at + 1,
-          sideAPoints: a,
-          sideBPoints: b,
+          outcome: side,
         }),
       ),
     ]);
   }
 
-  it("plays to the ordinary target while the level above is not level", () => {
-    const rows = sets([
-      [
-        [101, 20],
-        [101, 30],
-      ],
-    ]);
+  it("plays to the ordinary number while the level above is not level", () => {
+    const rows = sets([["SIDE_A", "SIDE_A"]]);
 
     const { units } = resolveMatch(DECIDED, rows);
 
     expect(units[0].decider).toBe(false);
     expect(units[0].standing?.over).toBe(true);
-    expect(units[0].standing?.target).toBe(2);
+    expect(units[0].standing?.target).toBe(4);
   });
 
-  it("plays to its own target when the level above is level after the others", () => {
+  it("plays to its own number when the level above is level after the others", () => {
     const rows = sets([
-      [
-        [101, 20],
-        [101, 30],
-      ],
-      [
-        [20, 101],
-        [30, 101],
-      ],
-      [
-        [101, 20],
-        [101, 30],
-      ],
+      ["SIDE_A", "SIDE_A"],
+      ["SIDE_B", "SIDE_B"],
+      ["SIDE_A", "SIDE_A"],
     ]);
 
     const { units } = resolveMatch(DECIDED, rows);
 
     expect(units[2].decider).toBe(true);
-    expect(units[2].standing?.target).toBe(3);
+    expect(units[2].standing?.target).toBe(6);
     expect(units[2].standing?.over).toBe(false);
   });
 
-  it("uses the ordinary target where the level declares no second one", () => {
+  it("uses the ordinary number where the level declares no second one", () => {
     const rows = sets([
-      [
-        [101, 20],
-        [101, 30],
-      ],
-      [
-        [20, 101],
-        [30, 101],
-      ],
-      [
-        [101, 20],
-        [101, 30],
-      ],
+      ["SIDE_A", "SIDE_A"],
+      ["SIDE_B", "SIDE_B"],
+      ["SIDE_A", "SIDE_A"],
     ]);
 
     const { units } = resolveMatch(SHORT, rows);
 
-    expect(units[2].standing?.target).toBe(2);
+    expect(units[2].standing?.target).toBe(4);
     expect(units[2].standing?.over).toBe(true);
+  });
+
+  it("is not played where the level above settles inside its count", () => {
+    const rows = sets([
+      ["SIDE_A", "SIDE_A"],
+      ["SIDE_A", "SIDE_A"],
+    ]);
+
+    const { standing } = resolveMatch(DECIDED, rows);
+
+    expect(standing.over).toBe(true);
+    expect(standing.winner).toBe("SIDE_A");
+    expect(standing.unitsLeft).toBe(0);
   });
 });
 
@@ -478,6 +389,7 @@ describe("a rule that ends the unit it lands in", () => {
     unitsFromOther: 2,
     levelId: "round",
     endsUnit: true,
+    unitWorth: null,
   };
 
   const rows = [
@@ -492,14 +404,7 @@ describe("a rule that ends the unit it lands in", () => {
       sideBPoints: 10,
     }),
     unit({ id: "r2", levelId: "round", parentId: "p1", order: 2, sideAPoints: 30, sideBPoints: 5 }),
-    unit({
-      id: "p2",
-      levelId: "point",
-      parentId: "s1",
-      order: 2,
-      sideAPoints: 101,
-      sideBPoints: 4,
-    }),
+    unit({ id: "p2", levelId: "point", parentId: "s1", order: 2, outcome: "SIDE_A" }),
   ];
   const moves: MoveRow[] = [{ id: "a1", unitId: "r2", side: "SIDE_B", rule: teysse }];
 
@@ -519,8 +424,8 @@ describe("a rule that ends the unit it lands in", () => {
   it("moves the score of the level above the one that ended", () => {
     const { units } = resolveMatch(CARDS, rows, moves);
 
-    expect(units[0].standing?.sideBTotal).toBe(2);
-    expect(units[0].standing?.sideATotal).toBe(-1);
+    expect(units[0].standing?.sideBTotal).toBe(4);
+    expect(units[0].standing?.sideATotal).toBe(-2);
   });
 
   it("leaves the point scoring where the rule does not end a unit", () => {

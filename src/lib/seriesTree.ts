@@ -1,5 +1,5 @@
 import type { UnitColour, UnitOutcome } from "@prisma/client";
-import { deriveSeries, type PlayedUnit, type SeriesStanding } from "./matchSeries";
+import { deriveSeries, perUnitOf, type PlayedUnit, type SeriesStanding } from "./matchSeries";
 import { ladderOf, type Ladder, type LevelRow } from "./matchLevels";
 import { asMoves, type RecordedInstance } from "./moveRules";
 import type { SeriesRules } from "./matchSeries";
@@ -24,8 +24,9 @@ export interface MoveRule {
   name: string;
   unitsToSelf: number;
   unitsFromOther: number;
-  levelId: string | null;
+  levelId: string;
   endsUnit: boolean;
+  unitWorth: number | null;
 }
 
 export interface MoveRow {
@@ -59,24 +60,17 @@ export interface ResolvedMatch {
 
 export function rulesAt(ladder: Ladder, depth: number): SeriesRules {
   const level = ladder[depth] ?? null;
-  const child = ladder[depth + 1] ?? null;
   return {
-    ending: level?.ending ?? "PLAY_ALL",
-    unitsPerParent: level?.unitsPerParent ?? 0,
-    unitsToWin: level?.unitsToWin ?? null,
+    countedBy: level?.countedBy ?? "OUTCOME",
+    endsBy: level?.endsBy ?? "COUNT",
+    unitCount: level?.unitCount ?? 0,
     target: level?.target ?? null,
+    unsettled: level?.unsettled ?? null,
+    margin: level?.margin ?? null,
+    continueUnits: level?.continueUnits ?? null,
     deciderTarget: level?.deciderTarget ?? null,
-    bothPastTarget: level?.bothPastTarget ?? null,
-    extendsWhenLevel: level?.extendsWhenLevel ?? false,
-    extensionUnits: level?.extensionUnits ?? 0,
     startingCredit: level?.startingCredit ?? 0,
     creditWindow: level?.creditWindow ?? 0,
-    halvesPerUnit: level?.halvesPerUnit ?? 2,
-    decision: child?.decision ?? "OUTCOME",
-    wonUnitWorth: child?.wonUnitWorth ?? 1,
-    doubledWorth: child?.doubledWorth ?? 1,
-    doublesOnBlankOpponent: child?.doublesOnBlankOpponent ?? false,
-    doublesOnRecoveredCredit: child?.doublesOnRecoveredCredit ?? false,
   };
 }
 
@@ -94,12 +88,7 @@ function typedPlay(row: UnitRow, endedByRule: boolean): PlayedUnit {
   };
 }
 
-function computedPlay(
-  row: UnitRow,
-  standing: SeriesStanding,
-  worth: number | null,
-  endedByRule: boolean,
-): PlayedUnit {
+function computedPlay(row: UnitRow, standing: SeriesStanding, endedByRule: boolean): PlayedUnit {
   const decided = standing.over;
   return {
     order: row.order,
@@ -107,51 +96,11 @@ function computedPlay(
     outcome: standing.winner ?? (decided ? "DRAW" : null),
     sideAPoints: standing.sideATotal,
     sideBPoints: standing.sideBTotal,
-    worth,
+    worth: row.worth,
     sideALostCredit: standing.sideALostCredit,
     sideBLostCredit: standing.sideBLostCredit,
     endedByRule,
   };
-}
-
-function other(side: "SIDE_A" | "SIDE_B"): "SIDE_A" | "SIDE_B" {
-  return side === "SIDE_A" ? "SIDE_B" : "SIDE_A";
-}
-
-function totalOf(standing: SeriesStanding, side: "SIDE_A" | "SIDE_B"): number {
-  return side === "SIDE_A" ? standing.sideATotal : standing.sideBTotal;
-}
-
-function lostCreditOf(standing: SeriesStanding, side: "SIDE_A" | "SIDE_B"): boolean {
-  return side === "SIDE_A" ? standing.sideALostCredit : standing.sideBLostCredit;
-}
-
-export function computedWorth(
-  ladder: Ladder,
-  depth: number,
-  container: string | null,
-  children: ResolvedUnit[],
-  standing: SeriesStanding,
-  placements: Placement[],
-  decider = false,
-): number {
-  const own = ladder[depth];
-  if (!own || standing.winner === null) return own?.wonUnitWorth ?? 1;
-  if (own.doublesOnRecoveredCredit && lostCreditOf(standing, standing.winner)) {
-    return own.doubledWorth;
-  }
-  if (own.doublesOnBlankOpponent && standing.unitsRecorded > 0) {
-    const before = standingUnder(
-      ladder,
-      depth,
-      container,
-      children.slice(0, standing.unitsRecorded - 1),
-      placements,
-      decider,
-    );
-    if (totalOf(before, other(standing.winner)) === 0) return own.doubledWorth;
-  }
-  return own.wonUnitWorth;
 }
 
 function byParent(rows: UnitRow[]): Map<string | null, UnitRow[]> {
@@ -192,7 +141,8 @@ export function decidesItsParent(
   index: number,
   before: SeriesStanding,
 ): boolean {
-  return index === rules.unitsPerParent - 1 && before.level && !before.over;
+  if (rules.unsettled !== "DECIDER") return false;
+  return index === (rules.unitCount ?? 0) && before.level && !before.over;
 }
 
 export function resolveMatch(
@@ -222,7 +172,6 @@ export function resolveMatch(
       };
     }
     const standing = standingUnder(ladder, depth, row.id, children, placements, decider);
-    const worth = computedWorth(ladder, depth, row.id, children, standing, placements, decider);
     return {
       row,
       depth,
@@ -230,7 +179,7 @@ export function resolveMatch(
       endedBy,
       children,
       standing,
-      played: computedPlay(row, standing, worth, endedBy !== null),
+      played: computedPlay(row, standing, endedBy !== null),
     };
   };
 
@@ -264,7 +213,7 @@ function standingUnder(
   return deriveSeries(
     rules,
     children.map((child) => child.played),
-    asMoves(movesIn(container, placements), rules.halvesPerUnit),
+    asMoves(movesIn(container, placements), perUnitOf(rules)),
     decider,
   );
 }

@@ -15,30 +15,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Switch({
-  label,
-  checked,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  disabled: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 text-xs" style={{ color: "var(--text-main)" }}>
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span>{label}</span>
-    </label>
-  );
-}
-
 function Num({
   label,
   value,
@@ -66,7 +42,7 @@ function Num({
   );
 }
 
-function EndingFields({
+function RuleFields({
   draft,
   disabled,
   onChange,
@@ -77,36 +53,40 @@ function EndingFields({
 }) {
   return (
     <div className="space-y-2 mt-2">
-      <Field label={texts.ending}>
+      <Field label={texts.countedBy}>
         <select
-          value={draft.ending}
+          value={draft.countedBy}
           disabled={disabled}
-          onChange={(e) => onChange({ ending: e.target.value as LevelDraft["ending"] })}
+          onChange={(e) => onChange({ countedBy: e.target.value as LevelDraft["countedBy"] })}
           className="input input-sm w-full"
         >
-          <option value="PLAY_ALL">{texts.endingPlayAll}</option>
-          <option value="FIRST_TO">{texts.endingFirstTo}</option>
-          <option value="FIRST_PAST">{texts.endingFirstPast}</option>
+          <option value="OUTCOME">{texts.countedByOutcome}</option>
+          <option value="POINTS">{texts.countedByPoints}</option>
         </select>
       </Field>
 
-      <Num
-        label={texts.unitsPerParent}
-        value={draft.unitsPerParent}
-        disabled={disabled}
-        onChange={(unitsPerParent) => onChange({ unitsPerParent })}
-      />
-
-      {draft.ending === "FIRST_TO" && (
-        <Num
-          label={texts.unitsToWin}
-          value={draft.unitsToWin}
+      <Field label={texts.endsBy}>
+        <select
+          value={draft.endsBy}
           disabled={disabled}
-          onChange={(unitsToWin) => onChange({ unitsToWin })}
+          onChange={(e) => onChange({ endsBy: e.target.value as LevelDraft["endsBy"] })}
+          className="input input-sm w-full"
+        >
+          <option value="COUNT">{texts.endsByCount}</option>
+          <option value="TARGET">{texts.endsByTarget}</option>
+        </select>
+      </Field>
+
+      {draft.endsBy === "COUNT" && (
+        <Num
+          label={texts.unitCount}
+          value={draft.unitCount}
+          disabled={disabled}
+          onChange={(unitCount) => onChange({ unitCount })}
         />
       )}
 
-      {draft.ending === "FIRST_PAST" && (
+      {draft.endsBy === "TARGET" && (
         <>
           <Num
             label={texts.target}
@@ -114,51 +94,44 @@ function EndingFields({
             disabled={disabled}
             onChange={(target) => onChange({ target })}
           />
-          <Field label={texts.bothPastTarget}>
-            <select
-              value={draft.bothPastTarget}
-              disabled={disabled}
-              onChange={(e) =>
-                onChange({ bothPastTarget: e.target.value as LevelDraft["bothPastTarget"] })
-              }
-              className="input input-sm w-full"
-            >
-              <option value="HIGHER_TOTAL">{texts.higherTotal}</option>
-              <option value="PLAY_ON">{texts.playOn}</option>
-            </select>
-          </Field>
+          <Num
+            label={texts.deciderTarget}
+            value={draft.deciderTarget}
+            disabled={disabled}
+            onChange={(deciderTarget) => onChange({ deciderTarget })}
+          />
         </>
       )}
 
-      {draft.ending !== "PLAY_ALL" && (
-        <Num
-          label={texts.deciderTarget}
-          value={draft.deciderTarget}
+      <Field label={texts.unsettled}>
+        <select
+          value={draft.unsettled}
           disabled={disabled}
-          onChange={(deciderTarget) => onChange({ deciderTarget })}
-        />
-      )}
+          onChange={(e) => onChange({ unsettled: e.target.value as LevelDraft["unsettled"] })}
+          className="input input-sm w-full"
+        >
+          <option value="">{texts.unsettledNever}</option>
+          <option value="CONTINUE">{texts.unsettledContinue}</option>
+          <option value="DECIDER">{texts.unsettledDecider}</option>
+          <option value="DRAW">{texts.unsettledDraw}</option>
+        </select>
+      </Field>
 
-      <Num
-        label={texts.halvesPerUnit}
-        value={draft.halvesPerUnit}
-        disabled={disabled}
-        onChange={(halvesPerUnit) => onChange({ halvesPerUnit })}
-      />
-
-      <Switch
-        label={texts.extendsWhenLevel}
-        checked={draft.extendsWhenLevel}
-        disabled={disabled}
-        onChange={(extendsWhenLevel) => onChange({ extendsWhenLevel })}
-      />
-      {draft.extendsWhenLevel && (
-        <Num
-          label={texts.extensionUnits}
-          value={draft.extensionUnits}
-          disabled={disabled}
-          onChange={(extensionUnits) => onChange({ extensionUnits })}
-        />
+      {draft.unsettled === "CONTINUE" && (
+        <>
+          <Num
+            label={texts.margin}
+            value={draft.margin}
+            disabled={disabled}
+            onChange={(margin) => onChange({ margin })}
+          />
+          <Num
+            label={texts.continueUnits}
+            value={draft.continueUnits}
+            disabled={disabled}
+            onChange={(continueUnits) => onChange({ continueUnits })}
+          />
+        </>
       )}
 
       <Num
@@ -179,67 +152,14 @@ function EndingFields({
   );
 }
 
-function UnitFields({
-  draft,
-  disabled,
-  onChange,
-}: {
-  draft: LevelDraft;
-  disabled: boolean;
-  onChange: Change;
-}) {
-  return (
-    <div className="space-y-2 mt-2">
-      <Field label={texts.decision}>
-        <select
-          value={draft.decision}
-          disabled={disabled}
-          onChange={(e) => onChange({ decision: e.target.value as LevelDraft["decision"] })}
-          className="input input-sm w-full"
-        >
-          <option value="OUTCOME">{texts.decisionOutcome}</option>
-          <option value="SCORE">{texts.decisionScore}</option>
-        </select>
-      </Field>
-
-      <Num
-        label={texts.wonUnitWorth}
-        value={draft.wonUnitWorth}
-        disabled={disabled}
-        onChange={(wonUnitWorth) => onChange({ wonUnitWorth })}
-      />
-      <Num
-        label={texts.doubledWorth}
-        value={draft.doubledWorth}
-        disabled={disabled}
-        onChange={(doubledWorth) => onChange({ doubledWorth })}
-      />
-      <Switch
-        label={texts.doublesOnBlankOpponent}
-        checked={draft.doublesOnBlankOpponent}
-        disabled={disabled}
-        onChange={(doublesOnBlankOpponent) => onChange({ doublesOnBlankOpponent })}
-      />
-      <Switch
-        label={texts.doublesOnRecoveredCredit}
-        checked={draft.doublesOnRecoveredCredit}
-        disabled={disabled}
-        onChange={(doublesOnRecoveredCredit) => onChange({ doublesOnRecoveredCredit })}
-      />
-    </div>
-  );
-}
-
 export default function LevelFields({
   draft,
-  first,
   last,
   disabled,
   locked = false,
   onChange,
 }: {
   draft: LevelDraft;
-  first: boolean;
   last: boolean;
   disabled: boolean;
   locked?: boolean;
@@ -266,15 +186,16 @@ export default function LevelFields({
         </Field>
       </div>
 
-      <Disclosure
-        title={<span className="text-xs">{texts.rules}</span>}
-        color="var(--mint-700)"
-        className="rounded-lg px-2.5 py-2"
-        surface={{ background: "var(--surface-2)" }}
-      >
-        {!last && <EndingFields draft={draft} disabled={disabled || locked} onChange={onChange} />}
-        {!first && <UnitFields draft={draft} disabled={disabled || locked} onChange={onChange} />}
-      </Disclosure>
+      {!last && (
+        <Disclosure
+          title={<span className="text-xs">{texts.rules}</span>}
+          color="var(--mint-700)"
+          className="rounded-lg px-2.5 py-2"
+          surface={{ background: "var(--surface-2)" }}
+        >
+          <RuleFields draft={draft} disabled={disabled || locked} onChange={onChange} />
+        </Disclosure>
+      )}
     </div>
   );
 }
