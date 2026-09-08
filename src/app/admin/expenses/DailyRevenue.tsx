@@ -4,6 +4,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
 import { formatDayKey } from "@/lib/utils";
+import { dailyRevenue as texts, paymentDates } from "@/lib/texts";
 import { groupDayRecords, type DayRecord, type FinanceDay } from "./types";
 
 const KINDS = ["دعم", "انتساب"] as const;
@@ -41,7 +42,7 @@ function DayDetail({ records }: { records: DayRecord[] }) {
   if (records.length === 0) {
     return (
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        لا توجد تفاصيل
+        {texts.noDetail}
       </p>
     );
   }
@@ -84,13 +85,16 @@ export default function DailyRevenue({
 }) {
   return (
     <div className="card p-4">
-      <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
-        الإيرادات اليومية (آخر 30 يوماً)
+      <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+        {texts.title}
+      </p>
+      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+        {paymentDates.groupedByPaidOn}
       </p>
 
       {days.length === 0 ? (
         <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
-          لا توجد إيرادات في هذه الفترة
+          {texts.empty}
         </p>
       ) : (
         <div className="space-y-1.5 max-h-80 overflow-y-auto">

@@ -5,7 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import ActivityReportTable from "@/components/admin/ActivityReportTable";
 import ActivityReportBreakdown from "@/components/admin/ActivityReportBreakdown";
-import { activityReport as texts } from "@/lib/texts";
+import { activityReport as texts, paymentDates } from "@/lib/texts";
 import type { ActivityReportRow, ActivityReportTotals } from "@/lib/activityReport";
 
 interface Report {
@@ -88,6 +88,9 @@ export default function ActivityReportPage() {
             </p>
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               {texts.reconciles(report.totals.income, report.totals.spending)}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              {paymentDates.groupedByPaidOn}
             </p>
           </div>
 

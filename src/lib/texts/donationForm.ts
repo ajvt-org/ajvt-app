@@ -8,6 +8,8 @@ export const donationForm = {
   amount: `المبلغ (${ouguiya.singular})`,
   paymentMethod: "طريقة الدفع",
   methodUnset: "غير محددة",
+  paidOn: "تاريخ الدفع",
+  paidOnHint: "اليوم الذي وصل فيه المال، لا يوم تسجيله",
   destination: "وجهة الدعم",
   anonymous: "إظهاره باسم فاعل خير",
   contactFromAccount: "الاسم ورقم الهاتف مأخوذان من حساب العضو المرتبط",

@@ -55,7 +55,13 @@ export { donationForm } from "./donationForm";
 export { donorNameChoice } from "./donorNameChoice";
 export { donationActions, donationEdit } from "./donationEdit";
 export { dataExport, dataPage, siteVisits } from "./dataPage";
-export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from "./expenses";
+export {
+  dailyRevenue,
+  expenseDestinations,
+  expenseForm,
+  expenseProofs,
+  expensesPage,
+} from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
 export { landingActivities, landingHero } from "./landing";
@@ -69,6 +75,7 @@ export { memberDrawer } from "./memberDrawer";
 export { memberPicker } from "./memberPicker";
 export { memberSearch } from "./memberSearch";
 export { paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "./paymentCard";
+export { paymentDates } from "./paymentDates";
 export { memberForm } from "./memberForm";
 export { memberImport } from "./memberImport";
 export { memberImportDialog } from "./memberImportDialog";
