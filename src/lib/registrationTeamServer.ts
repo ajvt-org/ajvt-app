@@ -1,6 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import { nameOf } from "./person";
 import { isSinglesActivity, type EntrantActivity } from "./entrant";
+import { sortTeamPlaces, type TeamPlace } from "./teamPlaces";
+import { appearedForTeam } from "./teamPlacesServer";
 
 type Tx = Prisma.TransactionClient;
 
@@ -86,14 +88,52 @@ async function removeAutoSeat(tx: Tx, activityId: string, userId: string): Promi
   return true;
 }
 
+export interface PlaceRelease {
+  removed: number;
+  kept: number;
+}
+
+async function placesOf(tx: Tx, activityId: string, userId: string): Promise<TeamPlace[]> {
+  const rows = await tx.teamMember.findMany({
+    where: { userId, team: { activityId } },
+    select: { id: true, teamId: true, team: { select: { captainUserId: true } } },
+  });
+
+  return Promise.all(
+    rows.map(async (row) => ({
+      id: row.id,
+      userId,
+      teamId: row.teamId,
+      captain: row.team.captainUserId === userId,
+      appeared: await appearedForTeam(tx, userId, row.teamId),
+    })),
+  );
+}
+
+export async function releaseTeamPlaces(
+  tx: Tx,
+  activityId: string,
+  userId: string,
+): Promise<PlaceRelease> {
+  const { remove, captains, appeared } = sortTeamPlaces(await placesOf(tx, activityId, userId));
+  if (remove.length > 0) {
+    await tx.teamMember.deleteMany({ where: { id: { in: remove.map((place) => place.id) } } });
+  }
+  return { removed: remove.length, kept: captains.length + appeared.length };
+}
+
 export async function unseatRegistrant(
   tx: Tx,
   activityId: string,
   userId: string,
-): Promise<boolean> {
+): Promise<PlaceRelease> {
   const activity = await shapeOf(tx, activityId);
-  if (!activity || !isSinglesActivity(activity)) return false;
-  return removeAutoSeat(tx, activityId, userId);
+  if (!activity) return { removed: 0, kept: 0 };
+  if (isSinglesActivity(activity)) {
+    const gone = await removeAutoSeat(tx, activityId, userId);
+    return { removed: gone ? 1 : 0, kept: 0 };
+  }
+  return releaseTeamPlaces(tx, activityId, userId);
 }
 
 export interface SeatReconciliation {
