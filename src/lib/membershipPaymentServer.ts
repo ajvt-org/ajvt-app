@@ -21,6 +21,7 @@ export interface MembershipFee {
   reviewedAt?: Date | null;
   recordedBy?: string | null;
   anonymous?: boolean;
+  paidOn?: Date | null;
 }
 
 export async function writeMembershipFee(
@@ -44,12 +45,17 @@ export async function writeMembershipFee(
     return;
   }
 
-  const { anonymous: choice, ...columns } = fields;
+  const { anonymous: choice, paidOn, ...columns } = fields;
 
   if (standing) {
     await db.payment.update({
       where: { id: standing.id },
-      data: { ...columns, amount: total, feeApplied: fee },
+      data: {
+        ...columns,
+        ...(paidOn === undefined ? {} : { paidOn }),
+        amount: total,
+        feeApplied: fee,
+      },
     });
     await syncReceiptsFor(db, { id: standing.id });
     return;
@@ -63,6 +69,7 @@ export async function writeMembershipFee(
       year,
       amount: total,
       feeApplied: fee,
+      paidOn: paidOn ?? new Date(),
       anonymous: choice ?? false,
     },
   });
