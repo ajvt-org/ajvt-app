@@ -14,6 +14,7 @@ import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import DestinationSelect from "@/components/admin/DestinationSelect";
 import DonationShownAs from "./DonationShownAs";
+import LinkMemberPanel from "./LinkMemberPanel";
 import { proofFromDonation } from "./donationProof";
 import { DANGER, FIELD, PRIMARY, QUIET } from "./donationTones";
 import { destinationOf, destinationValue, type DestinationOption } from "@/lib/moneyDestination";
@@ -38,21 +39,26 @@ export default function DonationEditForm({
   proof,
   destinations,
   linkedMember,
+  members,
+  busy,
   onCancel,
-  onRelink,
+  onLink,
   onSaved,
 }: {
   proof: Proof;
   destinations: DestinationOption[];
   linkedMember?: MemberOption;
+  members: MemberOption[];
+  busy: boolean;
   onCancel: () => void;
-  onRelink: () => void;
+  onLink: (userId: string) => void;
   onSaved: (changes: Partial<Proof>) => void;
 }) {
   const [form, setForm] = useState(initial(proof));
   const { methods } = usePaymentMethods(form.paymentMethod);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [picking, setPicking] = useState(false);
   const linked = !!proof.userId;
 
   const set = (changes: Partial<typeof form>) => setForm((p) => ({ ...p, ...changes }));
@@ -105,7 +111,7 @@ export default function DonationEditForm({
           name={shownAs}
           linked={linked}
           linkedMember={linkedMember}
-          onRelink={onRelink}
+          onRelink={() => setPicking((open) => !open)}
         />
 
         <PhotoUpload
@@ -125,6 +131,17 @@ export default function DonationEditForm({
           onUpload={(filename) => set({ donorPhoto: filename })}
         />
       </div>
+
+      {picking && (
+        <LinkMemberPanel
+          members={members}
+          busy={busy}
+          onPick={(userId) => {
+            onLink(userId);
+            setPicking(false);
+          }}
+        />
+      )}
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 items-start">
         {linked ? (
