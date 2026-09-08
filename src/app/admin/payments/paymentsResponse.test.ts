@@ -18,7 +18,6 @@ const MEMBERSHIP_PROOF = {
   amount: null,
   status: "PENDING",
   paidOn: null,
-  uploadedAt: "2026-08-31T03:12:08.330Z",
   submittedAt: "2026-08-31T03:12:08.330Z",
 };
 
@@ -32,7 +31,6 @@ const ACTIVITY_PROOF = {
   amount: null,
   status: "PENDING",
   paidOn: null,
-  uploadedAt: "2026-08-31T03:12:08.386Z",
   submittedAt: "2026-08-31T03:12:08.386Z",
 };
 
@@ -59,7 +57,6 @@ const DONATION_PROOF = {
   tags: [],
   receipt: null,
   paidOn: "2026-08-30T00:00:00.000Z",
-  uploadedAt: "2026-08-31T03:12:08.416Z",
   submittedAt: "2026-08-31T03:12:08.416Z",
 };
 

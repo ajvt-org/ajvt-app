@@ -47,7 +47,6 @@ const MEMBERSHIP_PAYMENT_SELECT = {
   status: true,
   paidOn: true,
   createdAt: true,
-  updatedAt: true,
   user: { select: DONOR_ACCOUNT_SELECT },
 } as const;
 
@@ -57,7 +56,6 @@ const REGISTRATION_SELECT = {
   paymentProof: true,
   status: true,
   createdAt: true,
-  updatedAt: true,
   user: { select: DONOR_ACCOUNT_SELECT },
   activity: { select: { title: true } },
 } as const;
@@ -84,7 +82,6 @@ const DONATION_SELECT = {
   user: { select: DONOR_ACCOUNT_SELECT },
   tags: { select: { id: true, name: true } },
   createdAt: true,
-  updatedAt: true,
 } as const;
 
 function yearKey(userId: string, year: number): string {
@@ -104,18 +101,13 @@ async function membershipProofPayments() {
 }
 
 async function membershipTimes(userIds: string[]) {
-  const times = new Map<string, { createdAt: Date; updatedAt: Date }>();
+  const times = new Map<string, Date>();
   if (userIds.length === 0) return times;
   const rows = await prisma.membership.findMany({
     where: { userId: { in: userIds } },
-    select: { userId: true, year: true, createdAt: true, updatedAt: true },
+    select: { userId: true, year: true, createdAt: true },
   });
-  for (const row of rows) {
-    times.set(yearKey(row.userId, row.year), {
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    });
-  }
+  for (const row of rows) times.set(yearKey(row.userId, row.year), row.createdAt);
   return times;
 }
 
@@ -143,7 +135,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       ? prisma.activityRegistration.findMany({
           where: { paymentProof: { not: null } },
           select: REGISTRATION_SELECT,
-          orderBy: { updatedAt: "desc" },
+          orderBy: { createdAt: "desc" },
         })
       : Promise.resolve([]),
     scope.donations
@@ -200,8 +192,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
         amount: null as number | null,
         status: m.status,
         paidOn: m.paidOn,
-        uploadedAt: recorded?.updatedAt ?? m.updatedAt,
-        submittedAt: recorded?.createdAt ?? m.createdAt,
+        submittedAt: recorded ?? m.createdAt,
         named: seesPaymentIdentity(viewer, {
           userId: m.userId,
           user: m.user,
@@ -220,7 +211,6 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       amount: null as number | null,
       status: r.status,
       paidOn: null as Date | null,
-      uploadedAt: r.updatedAt,
       submittedAt: r.createdAt,
       named: true,
     })),
@@ -249,7 +239,6 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       tags: d.tags,
       receipt: receiptFor(d.id, seesSupporterName(viewer, d)),
       paidOn: paidOnOf.get(d.id) ?? null,
-      uploadedAt: d.updatedAt,
       submittedAt: d.createdAt,
       named: seesSupporterName(viewer, d),
     })),
