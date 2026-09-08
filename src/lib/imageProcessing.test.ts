@@ -1,11 +1,7 @@
 import { describe, it, expect } from "vitest";
 import sharp from "sharp";
-import {
-  processImage,
-  toBaseFilename,
-  MAX_UPLOAD_SIZE,
-  MAX_DECODED_PIXELS,
-} from "./imageProcessing";
+import { processImage, toBaseFilename, MAX_DECODED_PIXELS } from "./imageProcessing";
+import { MAX_UPLOAD_SIZE } from "./uploadLimits";
 
 const MINT = { r: 16, g: 39, b: 31 };
 

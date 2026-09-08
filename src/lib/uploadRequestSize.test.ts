@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { MAX_UPLOAD_SIZE } from "./imageProcessing";
+import { MAX_UPLOAD_SIZE } from "./uploadLimits";
 import { MAX_UPLOAD_REQUEST_SIZE, declaredBodyTooLarge } from "./uploadRequestSize";
 
 describe("declaredBodyTooLarge", () => {

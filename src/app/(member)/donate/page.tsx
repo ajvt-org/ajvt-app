@@ -16,6 +16,7 @@ import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { donate as texts } from "@/lib/texts";
 import { withFrom } from "@/lib/backLink";
+import { prepareImageForUpload } from "@/lib/imageForUpload";
 
 export default function DonatePage() {
   return (
@@ -113,7 +114,7 @@ function DonatePageInner() {
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append("file", selectedFile);
+      fd.append("file", await prepareImageForUpload(selectedFile), selectedFile.name);
       fd.append("amount", amount.trim());
       fd.append("paymentMethod", paymentMethod);
       if (lockedMember) {
