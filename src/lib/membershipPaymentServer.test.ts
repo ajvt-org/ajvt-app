@@ -78,20 +78,18 @@ describe("the payment a membership fee is written to", () => {
     });
   });
 
-  it("names the payer on a new one unless the surplus is anonymous", async () => {
+  it("records the visibility answer on a new one and no name of its own", async () => {
     const named = fakeDb();
     await writeMembershipFee(named.db, "u1", 2026, 3000, 1000, FEE);
-    expect(only(named.calls, "create")[0].args.data).toMatchObject({
-      anonymous: false,
-      donorName: "محمد",
-    });
+    const shown = only(named.calls, "create")[0].args.data as Record<string, unknown>;
+    expect(shown.anonymous).toBe(false);
+    expect(shown).not.toHaveProperty("donorName");
 
     const hidden = fakeDb();
     await writeMembershipFee(hidden.db, "u1", 2026, 3000, 1000, { ...FEE, anonymous: true });
-    expect(only(hidden.calls, "create")[0].args.data).toMatchObject({
-      anonymous: true,
-      donorName: null,
-    });
+    const kept = only(hidden.calls, "create")[0].args.data as Record<string, unknown>;
+    expect(kept.anonymous).toBe(true);
+    expect(kept).not.toHaveProperty("donorName");
   });
 
   it("corrects the one already standing rather than adding a second", async () => {
