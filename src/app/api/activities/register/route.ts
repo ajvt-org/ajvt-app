@@ -96,10 +96,10 @@ export const DELETE = withRoute("DELETE /api/activities/register", async (req: N
 
   if (userId !== session.userId) throw new NotFoundError(members.notFound);
 
-  await prisma.$transaction(async (tx) => {
+  const released = await prisma.$transaction(async (tx) => {
     await tx.activityRegistration.deleteMany({ where: { userId: session.userId, activityId } });
-    await unseatRegistrant(tx, activityId, session.userId);
+    return unseatRegistrant(tx, activityId, session.userId);
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, keptTeamPlace: released.kept > 0 });
 });
