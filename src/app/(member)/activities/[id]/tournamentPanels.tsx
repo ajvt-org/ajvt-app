@@ -140,7 +140,6 @@ export async function tournamentPanels(
           football={football}
           levels={activity.levels}
           showScorersAndCards={activity.showScorersAndCards}
-          tournamentTitle={activity.title}
           loggedIn={!!userId}
           myVoteByVoteId={myVoteByVoteId}
           teams={activity.teams}

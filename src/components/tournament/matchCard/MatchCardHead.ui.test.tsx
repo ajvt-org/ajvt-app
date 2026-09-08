@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import MatchCardHead from "./MatchCardHead";
-import MatchCardFooter from "./MatchCardFooter";
 import MatchMeta from "./MatchMeta";
 
 describe("MatchCardHead", () => {
@@ -50,18 +49,5 @@ describe("MatchCardHead", () => {
     const { container } = render(<MatchCardHead time="16:00" tone="dark" />);
 
     expect(container.querySelector(".match-time")?.className).toContain("match-time-dark");
-  });
-});
-
-describe("MatchCardFooter", () => {
-  it("pushes what it carries to the end of the card", () => {
-    cleanup();
-    const { container } = render(
-      <MatchCardFooter>
-        <button>مشاركة</button>
-      </MatchCardFooter>,
-    );
-
-    expect((container.firstElementChild as HTMLElement).className).toContain("justify-end");
   });
 });

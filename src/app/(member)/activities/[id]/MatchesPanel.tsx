@@ -15,7 +15,6 @@ export default function MatchesPanel({
   football,
   levels,
   showScorersAndCards,
-  tournamentTitle,
   loggedIn,
   myVoteByVoteId,
   teams,
@@ -27,7 +26,6 @@ export default function MatchesPanel({
   football: boolean;
   levels: LevelRow[];
   showScorersAndCards: boolean;
-  tournamentTitle: string;
   loggedIn: boolean;
   myVoteByVoteId: Map<string, string>;
   teams: { name: string; members: { member: { id: string } }[] }[];
@@ -56,7 +54,6 @@ export default function MatchesPanel({
                 football={football}
                 levels={levels}
                 showScorersAndCards={showScorersAndCards}
-                tournamentTitle={tournamentTitle}
                 loggedIn={loggedIn}
                 entrant={entrant}
                 manOfTheMatchTeam={memberTeamName(match.manOfTheMatch?.id, teams)}
