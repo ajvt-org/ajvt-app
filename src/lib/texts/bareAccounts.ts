@@ -2,6 +2,9 @@ import { countedNoun, DAYS } from "../arabicPlural";
 
 export const bareAccounts = {
   empty: "لا يوجد أحد بلا طلب",
+  noMatch: "لا يوجد حساب مطابق",
+  searchPlaceholder: "ابحث بالاسم أو الهاتف...",
+  searchLabel: "البحث في الحسابات بلا طلب",
   addedByHand: "أضافه مشرف — لا يملك رقماً للدخول",
   noAgeGroup: "بدون عصر",
   signedUpToday: "سجّل اليوم",

@@ -11,13 +11,23 @@ import { GRAVE, LEAD, SAFE } from "@/components/admin/verbTones";
 import { push } from "@/lib/messages";
 import { daysWaiting } from "@/lib/waitingRequests";
 import { personDetails } from "@/lib/personDetails";
+import { matchesSearch, searchTokens } from "@/lib/arabicText";
 import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import TempPasswordBox from "@/components/admin/TempPasswordBox";
 import { bareAccounts as texts, confirmDelete as confirmDeleteTexts } from "@/lib/texts";
 import type { BareAccount } from "./types";
 
+interface TempPassword {
+  password: string;
+  hours: number;
+}
+
 function identify(user: BareAccount): string {
   return user.fullName?.trim() || user.phone || user.id;
+}
+
+function accountText(user: BareAccount): string {
+  return [user.fullName, user.phone].filter(Boolean).join(" ");
 }
 
 function daysSince(createdAt: string): string {
@@ -66,16 +76,19 @@ function NudgeButton({ user }: { user: BareAccount }) {
 
 function Row({
   user,
+  temp,
+  onIssued,
   onFill,
   onDelete,
 }: {
   user: BareAccount;
+  temp: TempPassword | null;
+  onIssued: (temp: TempPassword) => void;
   onFill: () => void;
   onDelete: () => void;
 }) {
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState("");
-  const [temp, setTemp] = useState<{ password: string; hours: number } | null>(null);
 
   const age = ageForVillage(user.village, user.age);
   const details = personDetails({
@@ -93,7 +106,7 @@ function Row({
         "/api/admin/reset-password",
         { userId: user.id },
       );
-      setTemp({ password: data.tempPassword, hours: data.hours });
+      onIssued({ password: data.tempPassword, hours: data.hours });
     } catch (e) {
       setResetError(errorMessage(e));
     } finally {
@@ -174,6 +187,8 @@ export default function BareAccountsSection({
   const [confirmDelete, setConfirmDelete] = useState<BareAccount | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [search, setSearch] = useState("");
+  const [issued, setIssued] = useState<Record<string, TempPassword>>({});
 
   async function deleteUser(id: string, confirmPhone: string) {
     setDeleteLoading(true);
@@ -191,19 +206,38 @@ export default function BareAccountsSection({
 
   if (loading) return <PageLoading />;
 
+  const tokens = searchTokens(search);
+  const shown = tokens.length
+    ? users.filter((user) => matchesSearch(accountText(user), tokens))
+    : users;
+
   return (
     <div className="space-y-2">
       {deleteError && <Notice tone="error">{deleteError}</Notice>}
 
-      {users.length === 0 ? (
+      {users.length > 0 && (
+        <input
+          type="text"
+          placeholder={texts.searchPlaceholder}
+          aria-label={texts.searchLabel}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input input-sm w-full"
+          style={{ background: "white" }}
+        />
+      )}
+
+      {shown.length === 0 ? (
         <div className="card p-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-          {texts.empty}
+          {users.length === 0 ? texts.empty : texts.noMatch}
         </div>
       ) : (
-        users.map((user) => (
+        shown.map((user) => (
           <Row
             key={user.id}
             user={user}
+            temp={issued[user.id] ?? null}
+            onIssued={(temp) => setIssued((held) => ({ ...held, [user.id]: temp }))}
             onFill={() => onFill({ id: user.id, fullName: identify(user) })}
             onDelete={() => setConfirmDelete(user)}
           />
