@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminRole } from "@/lib/auth";
+import { requireAdmin, requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { getAppSettings, saveAppSettings } from "@/lib/settingsServer";
+import { adminSettings } from "@/lib/adminSettings";
 import { appSettingsSchema } from "./schema";
 import { logger } from "@/lib/logger";
 import { settings } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/settings", async () => {
-  await requireAdminRole();
-  return NextResponse.json({ settings: await getAppSettings() });
+  const session = await requireAdmin();
+  return NextResponse.json({ settings: adminSettings(await getAppSettings(), session.role) });
 });
 
 export const PATCH = withRoute("PATCH /api/admin/settings", async (req: NextRequest) => {

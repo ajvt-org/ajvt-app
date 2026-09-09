@@ -63,6 +63,38 @@ describe("GET /api/settings", () => {
     expect(settings.tempPasswordHours).toBe(12);
   });
 
+  it("hands a scoped admin the fields the dashboard and the receipts screen read", async () => {
+    await signInAsAdmin(await createAdmin("super-admin", "SUPER"));
+    await PATCH(post("/api/admin/settings", { ...valid, secretaryName: "الأمين" }));
+    await signInAsAdmin(await createAdmin("activities-admin", "ACTIVITIES"));
+
+    const res = await adminGet();
+    const { settings } = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(Object.keys(settings).sort()).toEqual(
+      ["membershipFee", "membershipYear", "secretaryName", "treasurerName"].sort(),
+    );
+    expect(settings.membershipFee).toBe(250);
+    expect(settings.secretaryName).toBe("الأمين");
+  });
+
+  it("keeps the group link and the password window out of a scoped read", async () => {
+    await signInAsAdmin(await createAdmin("super-admin", "SUPER"));
+    await PATCH(post("/api/admin/settings", valid));
+    await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
+
+    const { settings } = await (await adminGet()).json();
+
+    expect(settings.whatsappGroup).toBeUndefined();
+    expect(settings.tempPasswordHours).toBeUndefined();
+    expect(JSON.stringify(settings)).not.toContain("chat.whatsapp.com");
+  });
+
+  it("refuses an anonymous caller on the admin route", async () => {
+    expect((await adminGet()).status).toBe(401);
+  });
+
   it("returns the saved values once an admin changes them", async () => {
     await signInAsAdmin(await createAdmin());
     await PATCH(post("/api/admin/settings", valid));
