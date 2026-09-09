@@ -3,7 +3,8 @@
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import SquadBar from "./SquadBar";
-import TeamIdentityEditor, { ONTO_FIRST_LINE } from "./TeamIdentityEditor";
+import TeamIdentityEditor, { ROW_ACTION_ICON } from "./TeamIdentityEditor";
+import { SQUARE } from "./MatchCardActions";
 import type { OutsideShare } from "@/lib/squadBar";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
@@ -62,33 +63,21 @@ export default function TeamSummary({
         onRenameTeam={onRenameTeam}
         onSetLogo={onSetLogo}
         controls={
-          <>
-            <span
-              className="h-6 flex items-center shrink-0"
-              style={{ marginBlockStart: ONTO_FIRST_LINE }}
-            >
-              <Icon name="chevronDown" size={16} className="disclosure-chevron" />
-            </span>
-            <span
-              className="h-6 flex items-center shrink-0"
-              style={{ marginBlockStart: ONTO_FIRST_LINE }}
-            >
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDeleteTeam();
-                }}
-                disabled={busy}
-                aria-label={teamsTab.deleteTeam}
-                className="w-9 h-9 rounded-lg flex items-center justify-center"
-                style={{ background: "#fee2e2", color: "#991b1b" }}
-              >
-                <Icon name="trash" size={16} />
-              </button>
-            </span>
-          </>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDeleteTeam();
+            }}
+            disabled={busy}
+            aria-label={teamsTab.deleteTeam}
+            className={SQUARE}
+            style={{ background: "#fee2e2", color: "#991b1b" }}
+          >
+            <Icon name="trash" size={ROW_ACTION_ICON} />
+          </button>
         }
+        marker={<Icon name="chevronDown" size={14} className="disclosure-chevron" />}
       >
         {barred ? (
           <SquadBar count={count} squad={squad} outside={outside} />

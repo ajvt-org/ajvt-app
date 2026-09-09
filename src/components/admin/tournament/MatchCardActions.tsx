@@ -5,7 +5,7 @@ import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts } from "@/lib/texts";
 
 const CHIP = "text-xs px-2.5 py-1.5 rounded-lg font-bold";
-const SQUARE = "w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30";
+export const SQUARE = "w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30";
 
 export default function MatchCardActions({
   played,

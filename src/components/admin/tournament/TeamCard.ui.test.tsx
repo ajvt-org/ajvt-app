@@ -4,7 +4,13 @@ import TeamCard from "./TeamCard";
 import type { Team, TeamMemberEntry } from "./types";
 import type { SquadBreach } from "@/lib/squadRules";
 import { teamsTab } from "@/lib/texts";
-import { CLEAR_OF_THE_CREST, CREST, ONTO_FIRST_LINE } from "./TeamIdentityEditor";
+import {
+  CLEAR_OF_THE_ACTIONS,
+  CLEAR_OF_THE_CREST,
+  CREST,
+  ONTO_FIRST_LINE,
+} from "./TeamIdentityEditor";
+import { SQUARE } from "./MatchCardActions";
 
 function entry(
   id: string,
@@ -236,6 +242,34 @@ describe("TeamCard", () => {
       expect((glyph as HTMLElement).style.marginBlockStart).toBe(lift);
     }
     expect((crest.parentElement?.parentElement as HTMLElement).style.marginBlockStart).toBe("");
+  });
+
+  it("ends the row with the marker and groups the two actions before it", () => {
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 }, null, true);
+
+    const name = screen.getByText("فريق النجم");
+    const nameRow = name.parentElement as HTMLElement;
+    const parts = [...nameRow.children];
+
+    expect(parts).toHaveLength(3);
+    expect(parts[0]).toBe(name);
+
+    const actions = parts[1] as HTMLElement;
+    expect(actions.contains(screen.getByLabelText(teamsTab.renameTeam))).toBe(true);
+    expect(actions.contains(screen.getByLabelText(teamsTab.deleteTeam))).toBe(true);
+    expect(actions.querySelector(".disclosure-chevron")).toBeNull();
+
+    const marker = parts[2] as HTMLElement;
+    expect(marker.querySelector(".disclosure-chevron")).not.toBeNull();
+    expect(marker.style.marginInlineStart).toBe(`${CLEAR_OF_THE_ACTIONS}px`);
+  });
+
+  it("draws the rename and the delete at the box a row action uses", () => {
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 }, null, true);
+
+    for (const label of [teamsTab.renameTeam, teamsTab.deleteTeam]) {
+      expect(screen.getByLabelText(label).className).toBe(SQUARE);
+    }
   });
 
   it("edits the crest and the name with the card closed", () => {
