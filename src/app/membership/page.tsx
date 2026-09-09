@@ -81,13 +81,7 @@ function MembershipPageInner() {
 
   useEffect(() => {
     api
-      .get<{
-        settings: {
-          membershipFee: number;
-          asksBankReference: boolean;
-          showsReferenceCode: boolean;
-        };
-      }>("/api/settings")
+      .get<{ settings: PublicSettings }>("/api/settings")
       .then((d) => setSettings(d.settings))
       .catch(() => {});
   }, []);
