@@ -1,4 +1,4 @@
-import { countedNoun, PLAYERS } from "../arabicPlural";
+import { countedNoun, JOIN_REQUESTS, PENDING_INVITATIONS, PLAYERS } from "../arabicPlural";
 
 const ACCEPT = "قبول";
 const REJECT = "رفض";
@@ -32,8 +32,8 @@ export const teamsTab = {
   squadSize: (size: string) => `حجم الفريق ${size}`,
   rosterCount: (count: number) => countedNoun(count, PLAYERS),
   awaitingCount: (count: number) => `${count} بانتظار الموافقة`,
-  requestCount: (count: number) => `${count} طلب انضمام`,
-  invitationCount: (count: number) => `${count} دعوة لم يُرد عليها`,
+  requestCount: (count: number) => countedNoun(count, JOIN_REQUESTS),
+  invitationCount: (count: number) => countedNoun(count, PENDING_INVITATIONS),
   makeCaptain: (name: string) => `اجعل ${name} قائد الفريق`,
   clearCaptain: (name: string) => `إلغاء قيادة ${name} للفريق`,
   noPlayers: "لا يوجد لاعبون بعد",

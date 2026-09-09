@@ -9,9 +9,41 @@ import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import { toThumbUrl } from "@/lib/utils";
 import { formatDate } from "@/lib/clubTime";
+import { expenseList as texts, expenseReceipts } from "@/lib/texts";
+import ExpenseReceiptsDialog from "./ExpenseReceiptsDialog";
 import type { Expense } from "./types";
 
+const THUMB = "w-12 h-12 rounded-lg object-cover";
+
+function Scan({ filename, alt }: { filename: string; alt: string }) {
+  return (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={toThumbUrl(`/api/files/${filename}`)}
+      alt={alt}
+      width={48}
+      height={48}
+      loading="lazy"
+      decoding="async"
+      className={THUMB}
+      style={{ border: "1px solid var(--mint-100)" }}
+    />
+  );
+}
+
+function Count({ of }: { of: number }) {
+  return (
+    <span
+      className="absolute -top-1 -left-1 text-xs font-black rounded-full px-1.5"
+      style={{ background: "var(--mint-700)", color: "white" }}
+    >
+      {of}
+    </span>
+  );
+}
+
 function Thumb({ expense }: { expense: Expense }) {
+  const [showReceipts, setShowReceipts] = useState(false);
   const proofs = expense.proofs.map((row) => row.filename);
   const first = proofs[0];
 
@@ -26,33 +58,35 @@ function Thumb({ expense }: { expense: Expense }) {
     );
   }
 
+  if (proofs.length === 1) {
+    return (
+      <a
+        href={`/api/files/${first}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="shrink-0"
+      >
+        <Scan filename={first} alt={expense.label} />
+      </a>
+    );
+  }
+
   return (
-    <a
-      href={`/api/files/${first}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="shrink-0 relative"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={toThumbUrl(`/api/files/${first}`)}
-        alt={expense.label}
-        width={48}
-        height={48}
-        loading="lazy"
-        decoding="async"
-        className="w-12 h-12 rounded-lg object-cover"
-        style={{ border: "1px solid var(--mint-100)" }}
-      />
-      {proofs.length > 1 && (
-        <span
-          className="absolute -top-1 -left-1 text-xs font-black rounded-full px-1.5"
-          style={{ background: "var(--mint-700)", color: "white" }}
-        >
-          {proofs.length}
-        </span>
+    <>
+      <button
+        type="button"
+        onClick={() => setShowReceipts(true)}
+        aria-label={expenseReceipts.title}
+        className="shrink-0 relative"
+      >
+        <Scan filename={first} alt={expense.label} />
+        <Count of={proofs.length} />
+      </button>
+
+      {showReceipts && (
+        <ExpenseReceiptsDialog proofs={proofs} onClose={() => setShowReceipts(false)} />
       )}
-    </a>
+    </>
   );
 }
 
@@ -75,11 +109,14 @@ function Row({
         <Thumb expense={expense} />
         <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-bold text-sm truncate" style={{ color: "var(--text-main)" }}>
+            <p
+              className="font-bold text-sm line-clamp-2"
+              style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
+            >
               {expense.label}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              <bdi dir="ltr">{formatDate(expense.date)}</bdi> بواسطة {expense.createdBy}
+              <bdi dir="ltr">{formatDate(expense.date)}</bdi> {texts.recordedBy(expense.createdBy)}
             </p>
             {expense.note && (
               <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
@@ -107,7 +144,10 @@ function Row({
               </div>
             )}
           </div>
-          <p className="font-black text-sm shrink-0" style={{ color: "var(--copper-500)" }}>
+          <p
+            className="font-black text-sm shrink-0 self-start"
+            style={{ color: "var(--copper-500)" }}
+          >
             <Money value={expense.amount} />
           </p>
         </div>
@@ -120,7 +160,7 @@ function Row({
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="pencil">تعديل</IconLabel>
+          <IconLabel name="pencil">{texts.edit}</IconLabel>
         </button>
         <button
           onClick={onDelete}
@@ -128,14 +168,14 @@ function Row({
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          {busy ? "..." : <IconLabel name="trash">حذف</IconLabel>}
+          {busy ? "..." : <IconLabel name="trash">{texts.delete}</IconLabel>}
         </button>
         <button
           onClick={() => setShowHistory(!showHistory)}
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="list">السجل</IconLabel>
+          <IconLabel name="list">{texts.history}</IconLabel>
         </button>
       </div>
 
@@ -171,8 +211,8 @@ export default function ExpenseList({
           onDelete={() => onDelete(expense.id)}
         />
       )}
-      emptyMessage="لا توجد مصاريف مسجلة بعد"
-      emptyFilteredMessage="لا توجد نتائج مطابقة"
+      emptyMessage={texts.empty}
+      emptyFilteredMessage={texts.emptyFiltered}
       isFiltered={filtered}
       pagination={pagination}
     />

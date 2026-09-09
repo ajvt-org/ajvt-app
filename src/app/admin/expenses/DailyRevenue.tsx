@@ -84,11 +84,16 @@ export default function DailyRevenue({
   onToggle: (date: string) => void;
 }) {
   return (
-    <div className="card p-4">
-      <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
-        {texts.title}
-      </p>
-      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+    <details className="card p-4">
+      <summary
+        className="disclosure-summary text-xs font-bold cursor-pointer flex items-center gap-1.5"
+        style={{ color: "var(--text-muted)" }}
+      >
+        <span className="min-w-0 flex-1">{texts.title}</span>
+        <Icon name="chevronDown" size={14} className="disclosure-chevron" />
+      </summary>
+
+      <p className="text-xs mt-2 mb-2" style={{ color: "var(--text-muted)" }}>
         {paymentDates.groupedByPaidOn}
       </p>
 
@@ -131,6 +136,6 @@ export default function DailyRevenue({
           })}
         </div>
       )}
-    </div>
+    </details>
   );
 }

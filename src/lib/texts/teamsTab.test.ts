@@ -18,6 +18,20 @@ describe("teams tab texts", () => {
     expect(teamsTab.rosterCount(12)).toBe("12 لاعباً");
   });
 
+  it("counts the join requests waiting on a team", () => {
+    expect(teamsTab.requestCount(1)).toBe("طلب انضمام واحد");
+    expect(teamsTab.requestCount(2)).toBe("طلبا انضمام");
+    expect(teamsTab.requestCount(3)).toBe("3 طلبات انضمام");
+    expect(teamsTab.requestCount(11)).toBe("11 طلب انضمام");
+  });
+
+  it("counts the invitations nobody answered", () => {
+    expect(teamsTab.invitationCount(1)).toBe("دعوة واحدة لم يُرد عليها");
+    expect(teamsTab.invitationCount(2)).toBe("دعوتان لم يُرد عليهما");
+    expect(teamsTab.invitationCount(3)).toBe("3 دعوات لم يُرد عليها");
+    expect(teamsTab.invitationCount(11)).toBe("11 دعوة لم يُرد عليها");
+  });
+
   it("weaves the name into the lines about one player", () => {
     for (const line of [
       teamsTab.makeCaptain("أحمد"),

@@ -77,6 +77,22 @@ export const PLAYERS: NounForms = {
   other: "لاعب",
 };
 
+export const JOIN_REQUESTS: NounForms = {
+  one: "طلب انضمام واحد",
+  two: "طلبا انضمام",
+  few: "طلبات انضمام",
+  many: "طلب انضمام",
+  other: "طلب انضمام",
+};
+
+export const PENDING_INVITATIONS: NounForms = {
+  one: "دعوة واحدة لم يُرد عليها",
+  two: "دعوتان لم يُرد عليهما",
+  few: "دعوات لم يُرد عليها",
+  many: "دعوة لم يُرد عليها",
+  other: "دعوة لم يُرد عليها",
+};
+
 export const DAYS: NounForms = {
   one: "يوم واحد",
   two: "يومين",

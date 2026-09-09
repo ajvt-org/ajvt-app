@@ -58,10 +58,13 @@ export { donorNameChoice } from "./donorNameChoice";
 export { donationActions, donationEdit } from "./donationEdit";
 export { dataExport, dataPage, siteVisits } from "./dataPage";
 export {
+  byPaymentMethod,
   dailyRevenue,
   expenseDestinations,
   expenseForm,
+  expenseList,
   expenseProofs,
+  expenseReceipts,
   expensesPage,
 } from "./expenses";
 export { financeReport } from "./financeReport";

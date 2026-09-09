@@ -24,16 +24,32 @@ export const expensesPage = {
   confirmDeleteTitle: "حذف مصروف",
   confirmDelete: "هل أنت متأكد من حذف هذا المصروف؟",
   delete: "حذف المصروف",
-  title: "المصاريف والإيرادات",
   exportAction: "تصدير",
   ledger: (count: number) => `سجل المصاريف (${count})`,
   tags: "التصنيفات",
   addExpense: "إضافة مصروف",
   searchPlaceholder: "بحث بالوصف أو المبلغ...",
-  filterBy: "تصفية:",
-  from: "من",
-  to: "إلى",
-  resetFilters: "إعادة تصفير الكل",
+  filter: "تصفية",
+  destination: "الوجهة",
+  expenseDate: "تاريخ المصروف",
+} as const;
+
+export const expenseList = {
+  edit: "تعديل",
+  delete: "حذف",
+  history: "السجل",
+  recordedBy: (name: string) => `بواسطة ${name}`,
+  empty: "لا توجد مصاريف مسجلة بعد",
+  emptyFiltered: "لا توجد نتائج مطابقة",
+} as const;
+
+export const byPaymentMethod = {
+  title: "حسب طريقة الدفع (كل الإيرادات)",
+  empty: "لا توجد بيانات بعد",
+  noEntries: "لا يوجد",
+  membership: "1- انتساب",
+  support: "2- دعم",
+  anonymous: "فاعل خير",
 } as const;
 
 export const dailyRevenue = {
@@ -55,6 +71,11 @@ export const expenseProofs = {
   remove: (at: number) => `حذف الصورة ${at}`,
   open: (at: number) => `فتح الصورة ${at}`,
   none: "لا توجد صور بعد",
+} as const;
+
+export const expenseReceipts = {
+  title: "الفواتير والإيصالات",
+  openOne: (at: number) => `فتح الصورة ${at}`,
 } as const;
 
 export const expenseDestinations = {
