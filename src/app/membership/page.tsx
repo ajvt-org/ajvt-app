@@ -276,9 +276,9 @@ function MembershipPageInner() {
     <div className="app-shell">
       <PageHeader title={renewalTitle(renewing, !!editId)} backHref={cameFrom || "/home"} />
 
-      <div className="px-5 py-6 pb-10">
+      <div className="px-5 py-6 pb-10 space-y-6">
         <div
-          className="rounded-2xl p-4 mb-4 fade-up text-center"
+          className="rounded-2xl p-4 fade-up text-center"
           style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
         >
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
