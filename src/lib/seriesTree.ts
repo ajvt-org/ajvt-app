@@ -15,6 +15,8 @@ export interface UnitRow {
   sideBPoints: number | null;
   sideAColour: UnitColour | null;
   worth: number | null;
+  worthRuleId: string | null;
+  worthKept: boolean;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
 }
@@ -255,6 +257,8 @@ export interface UnitNode {
   sideBPoints: number | null;
   sideAColour: UnitColour | null;
   worth: number | null;
+  worthRuleId: string | null;
+  worthKept: boolean;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
   decider: boolean;
@@ -275,6 +279,8 @@ export function toNodes(units: ResolvedUnit[]): UnitNode[] {
     sideAColour: row.sideAColour,
     decider,
     worth: played.worth ?? null,
+    worthRuleId: row.worthRuleId,
+    worthKept: row.worthKept,
     sideALostCredit: played.sideALostCredit ?? false,
     sideBLostCredit: played.sideBLostCredit ?? false,
     endedBy,

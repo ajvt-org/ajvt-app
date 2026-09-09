@@ -3,14 +3,17 @@ import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { tournament as messages } from "./messages";
 import { isFootball } from "./matchShape";
 import { ladderProblem } from "./seriesSetup";
-import { LEVEL_FIELDS, MOVE_FIELDS } from "./matchSeriesServer";
+import { LEVEL_FIELDS, MOVE_FIELDS, WORTH_FIELDS } from "./matchSeriesServer";
 import { ruleProblem, type RuleShape } from "./moveRules";
+import { worthRuleProblem, type WorthRuleShape } from "./unitWorth";
 import { lockOf, type ConfigurationLock } from "./configurationLock";
 import type { LevelRow } from "./matchLevels";
 
 export type LevelInput = Omit<LevelRow, "id" | "order"> & { id?: string | null; key: string };
 
 export type MoveInput = Omit<RuleShape, "levelId"> & { id?: string | null; levelKey: string };
+
+export type WorthInput = Omit<WorthRuleShape, "levelId"> & { id?: string | null; levelKey: string };
 
 const PARKED = 1000;
 
@@ -27,6 +30,14 @@ export async function listMoves(activityId: string) {
     where: { activityId },
     orderBy: { createdAt: "asc" },
     select: MOVE_FIELDS,
+  });
+}
+
+export async function listWorthRules(activityId: string) {
+  return prisma.worthRule.findMany({
+    where: { activityId },
+    orderBy: { createdAt: "asc" },
+    select: WORTH_FIELDS,
   });
 }
 
@@ -62,6 +73,24 @@ function moveData(move: MoveInput, levelId: string) {
   };
 }
 
+function worthData(rule: WorthInput, levelId: string) {
+  return { name: rule.name.trim(), levelId, when: rule.when, worth: rule.worth };
+}
+
+function guardWorthRules(rules: WorthInput[], keyed: Set<string>): void {
+  const names = new Set<string>();
+  for (const rule of rules) {
+    const problem = worthRuleProblem({
+      ...rule,
+      levelId: keyed.has(rule.levelKey) ? rule.levelKey : "",
+    });
+    if (problem) throw new ValidationError(messages.worthRule[problem]);
+    const name = rule.name.trim();
+    if (names.has(name)) throw new ConflictError(messages.worthNameTaken);
+    names.add(name);
+  }
+}
+
 function guardMoves(moves: MoveInput[], keyed: Set<string>): void {
   const names = new Set<string>();
   for (const move of moves) {
@@ -80,6 +109,7 @@ export async function declareConfiguration(
   activityId: string,
   wanted: LevelInput[],
   moves: MoveInput[],
+  worthRules: WorthInput[] = [],
 ) {
   const activity = await prisma.activity.findUnique({
     where: { id: activityId },
@@ -91,7 +121,9 @@ export async function declareConfiguration(
   const ladder = wanted.map((level, order) => ({ ...level, id: level.id ?? "", order }));
   const problem = ladderProblem(ladder);
   if (problem) throw new ValidationError(faultMessage(problem));
-  guardMoves(moves, new Set(wanted.map((level) => level.key)));
+  const keyed = new Set(wanted.map((level) => level.key));
+  guardMoves(moves, keyed);
+  guardWorthRules(worthRules, keyed);
 
   const lock = await configurationLock(activityId);
   if (lock) throw new ConflictError(messages.configurationLocked[lock]);
@@ -136,6 +168,17 @@ export async function declareConfiguration(
       }
     }
 
+    const keptWorth = worthRules.map((rule) => rule.id).filter((id): id is string => !!id);
+    await tx.worthRule.deleteMany({ where: { activityId, id: { notIn: keptWorth } } });
+    for (const rule of worthRules) {
+      const levelId = idOfKey.get(rule.levelKey)!;
+      if (rule.id) {
+        await tx.worthRule.update({ where: { id: rule.id }, data: worthData(rule, levelId) });
+      } else {
+        await tx.worthRule.create({ data: { ...worthData(rule, levelId), activityId } });
+      }
+    }
+
     return {
       levels: await tx.matchLevel.findMany({
         where: { activityId },
@@ -146,6 +189,11 @@ export async function declareConfiguration(
         where: { activityId },
         orderBy: { createdAt: "asc" },
         select: MOVE_FIELDS,
+      }),
+      worthRules: await tx.worthRule.findMany({
+        where: { activityId },
+        orderBy: { createdAt: "asc" },
+        select: WORTH_FIELDS,
       }),
     };
   });

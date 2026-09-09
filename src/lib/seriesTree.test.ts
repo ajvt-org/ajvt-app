@@ -61,6 +61,8 @@ function unit(over: Partial<UnitRow> & { id: string; levelId: string; order: num
     sideBPoints: null,
     sideAColour: null,
     worth: null,
+    worthRuleId: null,
+    worthKept: true,
     sideALostCredit: false,
     sideBLostCredit: false,
     ...over,

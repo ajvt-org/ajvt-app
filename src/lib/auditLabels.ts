@@ -53,6 +53,7 @@ export const ACTION_LABELS = {
   UNDO_MATCH_ADJUSTMENT: "تراجع عن حركة في مباراة ",
   ADD_MATCH_PART: "إضافة جولة لمباراة ",
   UPDATE_MATCH_PART: "تعديل جولة مباراة ",
+  UPDATE_MATCH_PART_WORTH: "تعديل ما تُحتسب به وحدة",
   DELETE_MATCH_PART: "حذف جولة مباراة ",
   DELETE_MATCH: "حذف مباراة",
   ENTER_MATCH_RESULT: "إدخال نتيجة مباراة",

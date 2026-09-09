@@ -8,6 +8,7 @@ import {
   declareConfiguration,
   listLevels,
   listMoves,
+  listWorthRules,
 } from "@/lib/matchLevelsServer";
 import { levelsSchema } from "./schema";
 
@@ -18,12 +19,13 @@ export const GET = withRoute(
   async (_req: NextRequest, { params }: Params) => {
     const { id } = await params;
     await requireActivityAccess(id);
-    const [levels, moves, lock] = await Promise.all([
+    const [levels, moves, worthRules, lock] = await Promise.all([
       listLevels(id),
       listMoves(id),
+      listWorthRules(id),
       configurationLock(id),
     ]);
-    return NextResponse.json({ levels, moves, lock });
+    return NextResponse.json({ levels, moves, worthRules, lock });
   },
 );
 
@@ -34,7 +36,7 @@ export const PUT = withRoute(
     const session = await requireActivityAccess(id);
     const body = parse(levelsSchema, await req.json());
 
-    const saved = await declareConfiguration(id, body.levels, body.moves);
+    const saved = await declareConfiguration(id, body.levels, body.moves, body.worthRules);
     await logAction(session.username, "DECLARE_MATCH_LEVELS", String(saved.levels.length));
 
     return NextResponse.json({ ...saved, lock: await configurationLock(id) });
