@@ -1,5 +1,4 @@
 import type { Ladder, LevelRow } from "./matchLevels";
-import { isLastLevel } from "./matchLevels";
 
 export interface ColourSetup {
   hasColours: boolean;
@@ -18,6 +17,7 @@ export type LevelProblem =
   | "unitCountMissing"
   | "targetMissing"
   | "marginMissing"
+  | "marginTooWide"
   | "continueUnitsMissing"
   | "deciderTargetWithoutATarget"
   | "creditWithoutAWindow"
@@ -25,12 +25,19 @@ export type LevelProblem =
 
 export type LadderProblem = "noLevels" | "tooManyLevels" | "colourWords";
 
+export type LevelPlace = "above" | "last" | "only";
+
+export function levelPlace(index: number, count: number): LevelPlace {
+  if (count === 1) return "only";
+  return index === count - 1 ? "last" : "above";
+}
+
 export interface LevelFault {
   order: number;
   problem: LevelProblem;
 }
 
-function numberIn(value: number | null, low: number, high: number): boolean {
+function numberIn(value: number | null, low: number, high: number): value is number {
   return value !== null && Number.isInteger(value) && value >= low && value <= high;
 }
 
@@ -49,6 +56,10 @@ function ruleless(level: LevelRow): boolean {
   );
 }
 
+function countedOnly(level: LevelRow): boolean {
+  return ruleless({ ...level, countedBy: null });
+}
+
 function endingFault(level: LevelRow): LevelProblem | null {
   if (level.countedBy === null) return "countedBy";
   if (level.endsBy === null) return "endsBy";
@@ -58,9 +69,14 @@ function endingFault(level: LevelRow): LevelProblem | null {
   return numberIn(level.target, 1, Number.MAX_SAFE_INTEGER) ? null : "targetMissing";
 }
 
+function marginCeiling(level: LevelRow): number {
+  return (level.endsBy === "TARGET" ? level.target : level.unitCount) ?? 0;
+}
+
 function unsettledFault(level: LevelRow): LevelProblem | null {
   if (level.unsettled !== "CONTINUE") return null;
-  if (!numberIn(level.margin, 1, MAX_UNIT_COUNT)) return "marginMissing";
+  if (!numberIn(level.margin, 1, Number.MAX_SAFE_INTEGER)) return "marginMissing";
+  if (level.margin > marginCeiling(level)) return "marginTooWide";
   if (level.endsBy === "TARGET") return null;
   if (!numberIn(level.continueUnits, 1, MAX_UNIT_COUNT)) return "continueUnitsMissing";
   return null;
@@ -75,9 +91,10 @@ function creditFault(level: LevelRow): LevelProblem | null {
   return null;
 }
 
-export function levelProblem(level: LevelRow, last: boolean): LevelProblem | null {
+export function levelProblem(level: LevelRow, place: LevelPlace): LevelProblem | null {
   if (!level.singular.trim()) return "words";
-  if (last) return ruleless(level) ? null : "rulesOnTheLastLevel";
+  if (place === "last") return ruleless(level) ? null : "rulesOnTheLastLevel";
+  if (place === "only") return countedOnly(level) ? null : "rulesOnTheLastLevel";
   return endingFault(level) ?? unsettledFault(level) ?? creditFault(level);
 }
 
@@ -92,7 +109,8 @@ export function ladderProblem(ladder: Ladder): LadderProblem | LevelFault | null
   if (ladder.length > MAX_LEVELS) return "tooManyLevels";
   for (let depth = 0; depth < ladder.length; depth += 1) {
     const problem =
-      levelProblem(ladder[depth], isLastLevel(ladder, depth)) ?? deciderTargetFault(ladder, depth);
+      levelProblem(ladder[depth], levelPlace(depth, ladder.length)) ??
+      deciderTargetFault(ladder, depth);
     if (problem) return { order: ladder[depth].order, problem };
   }
   return null;

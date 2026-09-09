@@ -1,5 +1,5 @@
-import { levelProblem, type LevelProblem } from "@/lib/seriesSetup";
-import { isLastLevel, type Ladder } from "@/lib/matchLevels";
+import { levelPlace, levelProblem, type LevelPlace, type LevelProblem } from "@/lib/seriesSetup";
+import type { Ladder } from "@/lib/matchLevels";
 import { ruleProblem, type RuleProblem } from "@/lib/moveRules";
 import type { LevelDraft } from "./levelDraft";
 import type { MoveDraft } from "./moveDraft";
@@ -25,6 +25,7 @@ const FIELD_OF: Record<LevelProblem, FaultField> = {
   unitCountMissing: "unitCount",
   targetMissing: "target",
   marginMissing: "margin",
+  marginTooWide: "margin",
   continueUnitsMissing: "continueUnits",
   deciderTargetWithoutATarget: "deciderTarget",
   creditWithoutAWindow: "creditWindow",
@@ -55,17 +56,26 @@ function patchFor(problem: LevelProblem, draft: LevelDraft): Partial<LevelDraft>
   if (problem === "deciderTargetWithoutATarget") return { deciderTarget: "" };
   if (problem === "creditWithoutAWindow") return { creditWindow: "1" };
   if (problem === "creditWindowTooWide") return { creditWindow: draft.unitCount || "1" };
+  if (problem === "marginTooWide") {
+    return { margin: (draft.endsBy === "TARGET" ? draft.target : draft.unitCount) || "1" };
+  }
   return null;
 }
 
-export function levelFix(level: Ladder[number], draft: LevelDraft, last: boolean): LevelFix | null {
-  const problem = levelProblem(level, last);
+export function levelFix(
+  level: Ladder[number],
+  draft: LevelDraft,
+  place: LevelPlace,
+): LevelFix | null {
+  const problem = levelProblem(level, place);
   if (!problem) return null;
   return { problem, field: FIELD_OF[problem], patch: patchFor(problem, draft) };
 }
 
 export function levelFixes(ladder: Ladder, drafts: LevelDraft[]): (LevelFix | null)[] {
-  return drafts.map((draft, index) => levelFix(ladder[index], draft, isLastLevel(ladder, index)));
+  return drafts.map((draft, index) =>
+    levelFix(ladder[index], draft, levelPlace(index, ladder.length)),
+  );
 }
 
 export function moveFixes(moves: MoveDraft[], keys: string[]): (RuleProblem | null)[] {

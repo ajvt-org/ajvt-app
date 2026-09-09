@@ -65,6 +65,50 @@ describe("what a ladder may be set up as", () => {
   });
 });
 
+describe("a ladder that is one level", () => {
+  const alone: LevelRow = { ...BLANK, singular: "مباراة" };
+
+  it("takes a match that says nothing about itself, which is every one declared so far", () => {
+    expect(ladderProblem([alone])).toBeNull();
+  });
+
+  it("takes a match counted by the points of the one game it is", () => {
+    expect(ladderProblem([{ ...alone, countedBy: "POINTS" }])).toBeNull();
+  });
+
+  it("takes a match counted by who won it", () => {
+    expect(ladderProblem([{ ...alone, countedBy: "OUTCOME" }])).toBeNull();
+  });
+
+  it("still wants a name on it", () => {
+    expect(fault([{ ...alone, singular: " " }])).toBe("words");
+  });
+
+  it("refuses a count of units on it, since it is the unit", () => {
+    expect(fault([{ ...alone, endsBy: "COUNT", unitCount: 2 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses a number that ends it", () => {
+    expect(fault([{ ...alone, endsBy: "TARGET", target: 100 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses what happens when it is not settled", () => {
+    expect(fault([{ ...alone, unsettled: "CONTINUE", margin: 1 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses a starting credit on it", () => {
+    expect(fault([{ ...alone, startingCredit: 26, creditWindow: 2 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses the number of a deciding unit on it", () => {
+    expect(fault([{ ...alone, deciderTarget: 24 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("leaves the last level of a deeper ladder holding nothing at all", () => {
+    expect(fault([match, { ...game, countedBy: "POINTS" }])).toBe("rulesOnTheLastLevel");
+  });
+});
+
 describe("a level that ends at a number", () => {
   const past: LevelRow = {
     ...match,
@@ -121,6 +165,49 @@ describe("a level that is continued while it stays unsettled", () => {
 
     expect(ladderProblem([target, game])).toBeNull();
     expect(fault([{ ...target, margin: null }, game])).toBe("marginMissing");
+  });
+
+  it("still bounds the units it continues by against what a level may play", () => {
+    expect(fault([{ ...knockout, unitCount: 99, continueUnits: 100 }, game])).toBe(
+      "continueUnitsMissing",
+    );
+  });
+});
+
+describe("the margin that settles a level", () => {
+  const target: LevelRow = {
+    ...match,
+    countedBy: "POINTS",
+    endsBy: "TARGET",
+    unitCount: null,
+    target: 500,
+    unsettled: "CONTINUE",
+    continueUnits: null,
+  };
+
+  it("takes a lead in points larger than any count of units, on a level played to a number", () => {
+    expect(ladderProblem([{ ...target, margin: 100 }, game])).toBeNull();
+    expect(ladderProblem([{ ...target, margin: 150 }, game])).toBeNull();
+  });
+
+  it("takes a lead as wide as the number that ends the level", () => {
+    expect(ladderProblem([{ ...target, margin: 500 }, game])).toBeNull();
+  });
+
+  it("refuses a lead the level can never reach", () => {
+    expect(fault([{ ...target, margin: 501 }, game])).toBe("marginTooWide");
+  });
+
+  it("measures it against the units where the level ends on a count of them", () => {
+    const counted: LevelRow = { ...match, unsettled: "CONTINUE", unitCount: 5, continueUnits: 2 };
+
+    expect(ladderProblem([{ ...counted, margin: 5 }, game])).toBeNull();
+    expect(fault([{ ...counted, margin: 6 }, game])).toBe("marginTooWide");
+  });
+
+  it("keeps asking for the margin when there is none", () => {
+    expect(fault([{ ...target, margin: null }, game])).toBe("marginMissing");
+    expect(fault([{ ...target, margin: 0 }, game])).toBe("marginMissing");
   });
 });
 

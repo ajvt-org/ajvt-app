@@ -4,6 +4,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Disclosure from "@/components/admin/Disclosure";
 import { matchLevelsSetup as texts } from "@/lib/texts";
+import { levelPlace } from "@/lib/seriesSetup";
 import type { RuleProblem } from "@/lib/moveRules";
 import LevelFields from "./LevelFields";
 import LevelMoves from "./LevelMoves";
@@ -90,7 +91,7 @@ export default function LevelCard({
 
       <LevelFields
         draft={draft}
-        last={index === count - 1}
+        place={levelPlace(index, count)}
         disabled={frozen}
         locked={false}
         fix={fix}

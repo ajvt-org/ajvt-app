@@ -674,4 +674,78 @@ describe("a match whose ladder is one level", () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(messages.unitLevelMissing);
   });
+
+  it("takes a bare winner where the match says nothing about how it is counted", async () => {
+    const { match } = await matchOf(ALONE);
+
+    const res = await add(match.id, { sideAPoints: 3, sideBPoints: 1 });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.partWantsAnOutcome);
+  });
+});
+
+describe("a match whose ladder is one level counted by points", () => {
+  const SCORED_ALONE: LevelFixture[] = [{ singular: "مباراة", countedBy: "POINTS" }];
+
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("keeps the score of the one game the match is", async () => {
+    const { match } = await matchOf(SCORED_ALONE);
+
+    const res = await add(match.id, { sideAPoints: 3, sideBPoints: 1 });
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.units).toHaveLength(1);
+    expect(body.units[0].sideAPoints).toBe(3);
+    expect(body.units[0].sideBPoints).toBe(1);
+    expect(body.standing.sideATotal).toBe(3);
+    expect(body.standing.sideBTotal).toBe(1);
+    expect(body.standing.winner).toBe("SIDE_A");
+    expect(body.standing.over).toBe(true);
+  });
+
+  it("reads the score back on the match", async () => {
+    const { match } = await matchOf(SCORED_ALONE);
+    await add(match.id, { sideAPoints: 3, sideBPoints: 1 });
+
+    const body = await (await list(match.id)).json();
+
+    expect(body.units[0].sideAPoints).toBe(3);
+    expect(body.units[0].sideBPoints).toBe(1);
+    expect(body.units[0].outcome).toBeNull();
+  });
+
+  it("refuses a bare winner where the match is counted by points", async () => {
+    const { match } = await matchOf(SCORED_ALONE);
+
+    const res = await add(match.id, { outcome: "SIDE_A" });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.partWantsTwoScores);
+  });
+
+  it("corrects the score that was typed", async () => {
+    const { match } = await matchOf(SCORED_ALONE);
+    const added = await (await add(match.id, { sideAPoints: 3, sideBPoints: 1 })).json();
+
+    const res = await correct(match.id, added.unit.id, { sideAPoints: 1, sideBPoints: 3 });
+
+    expect(res.status).toBe(200);
+    const body = await (await list(match.id)).json();
+    expect(body.standing.winner).toBe("SIDE_B");
+  });
+
+  it("ends level where the two scores are equal", async () => {
+    const { match } = await matchOf(SCORED_ALONE);
+
+    const body = await (await add(match.id, { sideAPoints: 2, sideBPoints: 2 })).json();
+
+    expect(body.standing.winner).toBeNull();
+    expect(body.standing.over).toBe(true);
+  });
 });
