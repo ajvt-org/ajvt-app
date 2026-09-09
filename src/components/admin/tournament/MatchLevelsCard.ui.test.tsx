@@ -48,8 +48,9 @@ function answering(
   levels: LevelRow[],
   moves: MoveRuleRow[] = [],
   lock: "RECORDED" | "STARTED" | null = null,
+  worthRules: object[] = [],
 ) {
-  getMock.mockImplementation(async () => ({ levels, moves, lock }));
+  getMock.mockImplementation(async () => ({ levels, moves, worthRules, lock }));
 }
 
 beforeEach(() => {
@@ -316,5 +317,73 @@ describe("a level played to a target", () => {
 
     expect(await screen.findByText("الفارق الذي يحسمه")).toBeDefined();
     expect(screen.getByText("تُستكمل بكم وحدة")).toBeDefined();
+  });
+});
+
+describe("what a level says a unit is worth", () => {
+  it("offers one control where a level declares no such rule", async () => {
+    show();
+
+    expect(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "احتساب لعبة" })).toBeNull();
+  });
+
+  it("asks for a name, a condition and a number", async () => {
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+
+    expect(screen.getByLabelText("اسم القاعدة")).toBeDefined();
+    expect(screen.getByLabelText("متى تقع")).toBeDefined();
+    expect(screen.getByLabelText("العدد الذي تُحتسب به الوحدة")).toBeDefined();
+  });
+
+  it("holds back the save until the rule says what it is", async () => {
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
+
+    fireEvent.change(screen.getByLabelText("اسم القاعدة"), { target: { value: "قاعدة" } });
+    expect(saveButton().hasAttribute("disabled")).toBe(false);
+  });
+
+  it("sends it back with the level it was declared on", async () => {
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+    fireEvent.change(screen.getByLabelText("اسم القاعدة"), { target: { value: "قاعدة" } });
+    fireEvent.change(screen.getByLabelText("العدد الذي تُحتسب به الوحدة"), {
+      target: { value: "3" },
+    });
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    const body = putMock.mock.calls[0][1] as {
+      worthRules: { name: string; levelKey: string; when: string; worth: number }[];
+    };
+    expect(body.worthRules).toEqual([
+      { id: null, name: "قاعدة", levelKey: "game", when: "LOSER_ON_NOTHING", worth: 3 },
+    ]);
+  });
+
+  it("titles the block once where a level declares one", async () => {
+    answering([MATCH, GAME], [], null, [
+      { id: "w1", name: "قاعدة", levelId: "game", when: "LOSER_ON_NOTHING", worth: 2 },
+    ]);
+    show();
+
+    expect(await screen.findByRole("button", { name: "احتساب لعبة" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "إضافة قاعدة احتساب" })).toBeNull();
+  });
+
+  it("takes a rule away with the level it was declared on", async () => {
+    answering([MATCH, GAME], [], null, [
+      { id: "w1", name: "قاعدة", levelId: "game", when: "LOSER_ON_NOTHING", worth: 2 },
+    ]);
+    show();
+    fireEvent.click(await screen.findByLabelText("حذف المستوى 2"));
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    expect((putMock.mock.calls[0][1] as { worthRules: unknown[] }).worthRules).toEqual([]);
   });
 });

@@ -7,14 +7,25 @@ import { matchLevelsSetup as texts } from "@/lib/texts";
 import type { RuleProblem } from "@/lib/moveRules";
 import LevelFields from "./LevelFields";
 import LevelMoves from "./LevelMoves";
+import LevelWorthRules from "./LevelWorthRules";
 import type { LevelDraft } from "./levelDraft";
 import type { LevelFix } from "./levelFaults";
 import type { MoveDraft } from "./moveDraft";
+import type { WorthDraft } from "./worthDraft";
+import type { WorthProblem } from "@/lib/unitWorth";
 
 export interface LevelMovesApi {
   drafts: MoveDraft[];
   faults: (RuleProblem | null)[];
   onChange: (key: string, patch: Partial<MoveDraft>) => void;
+  onAdd: () => void;
+  onRemove: (key: string) => void;
+}
+
+export interface LevelWorthApi {
+  drafts: WorthDraft[];
+  faults: (WorthProblem | null)[];
+  onChange: (key: string, patch: Partial<WorthDraft>) => void;
   onAdd: () => void;
   onRemove: (key: string) => void;
 }
@@ -27,6 +38,7 @@ export default function LevelCard({
   frozen,
   fix,
   moves,
+  worth,
   onChange,
   onMove,
   onRemove,
@@ -38,6 +50,7 @@ export default function LevelCard({
   frozen: boolean;
   fix: LevelFix | null;
   moves: LevelMovesApi;
+  worth: LevelWorthApi;
   onChange: (patch: Partial<LevelDraft>) => void;
   onMove: (to: number) => void;
   onRemove: () => void;
@@ -83,6 +96,30 @@ export default function LevelCard({
         fix={fix}
         onChange={onChange}
       />
+
+      {index > 0 &&
+        (worth.drafts.length === 0 ? (
+          <button onClick={worth.onAdd} disabled={frozen} className="btn btn-sm">
+            <IconLabel name="plus">{texts.addWorthRule}</IconLabel>
+          </button>
+        ) : (
+          <Disclosure
+            defaultOpen={worth.drafts.some((rule) => rule.name.trim() === "")}
+            title={<span className="text-xs">{texts.worthRules(own)}</span>}
+            color="var(--mint-700)"
+            className="rounded-lg px-2.5 py-2"
+            surface={{ background: "var(--surface-2)" }}
+          >
+            <LevelWorthRules
+              rules={worth.drafts}
+              faults={worth.faults}
+              disabled={frozen}
+              onChange={worth.onChange}
+              onAdd={worth.onAdd}
+              onRemove={worth.onRemove}
+            />
+          </Disclosure>
+        ))}
 
       {index > 0 &&
         (moves.drafts.length === 0 ? (

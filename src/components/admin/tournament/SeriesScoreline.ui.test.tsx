@@ -14,6 +14,8 @@ function part(id: string, order: number, extra: Partial<UnitRow> = {}): UnitRow 
     sideBPoints: null,
     sideAColour: null,
     worth: null,
+    worthRuleId: null,
+    worthKept: true,
     sideALostCredit: false,
     sideBLostCredit: false,
     decider: false,
@@ -28,6 +30,8 @@ function standing(extra: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
   return {
     sideATotal: 0,
     sideBTotal: 0,
+    sideAAtClose: 0,
+    sideBAtClose: 0,
     sideALostCredit: false,
     sideBLostCredit: false,
     scored: false,

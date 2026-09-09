@@ -64,6 +64,13 @@ function mockSeries(state: {
   levels?: SeriesConfig["ladder"];
   moves?: RecordedMoveRow[];
   rules?: MoveRuleRow[];
+  worthRules?: {
+    id: string;
+    name: string;
+    levelId: string;
+    when: "LOSER_ON_NOTHING";
+    worth: number;
+  }[];
 }) {
   getMock.mockImplementation(async (url: string) =>
     String(url).includes("/levels")
@@ -72,6 +79,7 @@ function mockSeries(state: {
           units: state.units,
           moves: state.moves ?? [],
           levels: state.levels ?? CHESS.ladder,
+          worthRules: state.worthRules ?? [],
           standing: state.standing,
         },
   );
@@ -393,5 +401,67 @@ describe("a match whose ladder is one level", () => {
     expect(await screen.findByText("النتيجة")).toBeDefined();
     expect(screen.getByText("فوز أحمد")).toBeDefined();
     expect(screen.queryByText("مباراة 1")).toBeNull();
+  });
+});
+
+describe("a unit a declared rule says is worth more", () => {
+  const RULE = {
+    id: "w1",
+    name: "قاعدة",
+    levelId: "unit",
+    when: "LOSER_ON_NOTHING" as const,
+    worth: 2,
+  };
+
+  it("names the rule that was detected rather than only the number", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A", worth: 2, worthRuleId: "w1" })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+
+    expect(await screen.findByText("قاعدة، تُحتسب 2")).toBeDefined();
+  });
+
+  it("offers to turn it off for that unit", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A", worth: 2, worthRuleId: "w1" })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: "لا تُطبَّق هنا" }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/units/u1/worth");
+    expect(patchMock.mock.calls[0][1]).toEqual({ kept: false });
+  });
+
+  it("says it is turned off and offers it back", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A", worthRuleId: "w1", worthKept: false })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+
+    expect(await screen.findByText("قاعدة موقوفة على هذه الوحدة")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "أعِد تطبيقها" }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][1]).toEqual({ kept: true });
+  });
+
+  it("says nothing where no rule was detected", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A" })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+
+    await screen.findByText("لعبة 1");
+    expect(screen.queryByRole("button", { name: "لا تُطبَّق هنا" })).toBeNull();
   });
 });

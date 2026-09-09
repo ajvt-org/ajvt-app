@@ -44,4 +44,12 @@ export const matchLevelsSetup = {
     `${name} تضيف ${toSelf} وتخصم ${fromOther}`,
   moveEndsLine: "تنهي الوحدة",
   moveWorthLine: (worth: string) => `تُحتسب الوحدة بـ${worth}`,
+  worthRules: (own: string) => `احتساب ${own}`,
+  addWorthRule: "إضافة قاعدة احتساب",
+  removeWorthRule: (name: string) => `حذف ${name}`,
+  worthName: "اسم القاعدة",
+  worthWhen: "متى تقع",
+  worthLoserOnNothing: "خصم الفائز لم يكسب شيئاً قبل الوحدة الأخيرة",
+  worthWinnerLostCredit: "الفائز خسر رصيده الابتدائي",
+  worthNumber: "العدد الذي تُحتسب به الوحدة",
 } as const;

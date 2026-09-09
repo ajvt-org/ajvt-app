@@ -21,15 +21,26 @@ import {
   type LevelDraft,
 } from "./levelDraft";
 import { blankMove, draftOfMove, movePayload, type MoveDraft } from "./moveDraft";
+import {
+  blankWorth,
+  draftOfWorth,
+  worthFaults,
+  worthPayload,
+  type WorthDraft,
+  type WorthRuleRow,
+} from "./worthDraft";
 
-export function configurationHolds(drafts: LevelDraft[], moves: MoveDraft[]): boolean {
+export function configurationHolds(
+  drafts: LevelDraft[],
+  moves: MoveDraft[],
+  worth: WorthDraft[] = [],
+): boolean {
   if (drafts.length === 0) return false;
   const ladder = ladderOfDrafts(drafts);
   if (levelFixes(ladder, drafts).some((fix) => fix !== null)) return false;
-  return moveFixes(
-    moves,
-    drafts.map((draft) => draft.key),
-  ).every((problem) => problem === null);
+  const keys = drafts.map((draft) => draft.key);
+  if (worthFaults(worth, keys).some((problem) => problem !== null)) return false;
+  return moveFixes(moves, keys).every((problem) => problem === null);
 }
 
 function nameOf(draft: LevelDraft, index: number): string {
@@ -40,6 +51,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
   const showToast = useToast();
   const [drafts, setDrafts] = useState<LevelDraft[] | null>(null);
   const [moves, setMoves] = useState<MoveDraft[]>([]);
+  const [worth, setWorth] = useState<WorthDraft[]>([]);
   const [lock, setLock] = useState<ConfigurationLock | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -51,11 +63,13 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       const saved = await api.get<{
         levels: LevelRow[];
         moves: MoveRuleRow[];
+        worthRules: WorthRuleRow[];
         lock: ConfigurationLock | null;
       }>(`${base}/levels`);
       setLock(saved.lock ?? null);
       setDrafts(saved.levels.map(draftOfLevel));
       setMoves((saved.moves ?? []).map(draftOfMove));
+      setWorth((saved.worthRules ?? []).map(draftOfWorth));
     } catch (e) {
       setError(refusalMessage(e, texts.loadFailed));
     }
@@ -82,7 +96,11 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
     moves,
     drafts.map((draft) => draft.key),
   );
-  const holds = configurationHolds(drafts, moves);
+  const worthProblems = worthFaults(
+    worth,
+    drafts.map((draft) => draft.key),
+  );
+  const holds = configurationHolds(drafts, moves, worth);
   const frozen = busy || lock !== null;
 
   const patch = (index: number, next: Partial<LevelDraft>) =>
@@ -92,6 +110,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
     const gone = drafts[index].key;
     setDrafts(drafts.filter((_, at) => at !== index));
     setMoves(moves.filter((move) => move.levelKey !== gone));
+    setWorth(worth.filter((rule) => rule.levelKey !== gone));
   };
 
   async function save() {
@@ -101,6 +120,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       await api.put(`${base}/levels`, {
         levels: levelPayload(drafts!),
         moves: moves.map(movePayload),
+        worthRules: worth.map(worthPayload),
       });
       showToast(texts.saved);
       await load();
@@ -132,6 +152,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       <div className="space-y-3">
         {drafts.map((draft, index) => {
           const here = moves.filter((move) => move.levelKey === draft.key);
+          const worthHere = worth.filter((rule) => rule.levelKey === draft.key);
           return (
             <LevelCard
               key={draft.key}
@@ -149,6 +170,15 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
                 onAdd: () =>
                   setMoves([...moves, blankMove(`new-${moves.length}-${Date.now()}`, draft.key)]),
                 onRemove: (key) => setMoves(moves.filter((move) => move.key !== key)),
+              }}
+              worth={{
+                drafts: worthHere,
+                faults: worthHere.map((rule) => worthProblems[worth.indexOf(rule)]),
+                onChange: (key, next) =>
+                  setWorth(worth.map((rule) => (rule.key === key ? { ...rule, ...next } : rule))),
+                onAdd: () =>
+                  setWorth([...worth, blankWorth(`new-${worth.length}-${Date.now()}`, draft.key)]),
+                onRemove: (key) => setWorth(worth.filter((rule) => rule.key !== key)),
               }}
               onChange={(next) => patch(index, next)}
               onMove={(to) => setDrafts(movedDraft(drafts, index, to))}
