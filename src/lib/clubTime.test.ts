@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   CLUB_TIMEZONE,
   clubOffsetMs,
-  formatMatchDateTime,
-  formatMatchTime,
+  formatDate,
+  formatDateTime,
+  formatDayKey,
+  formatTime,
   matchDateKey,
   matchDateToLocalInput,
   parseMatchDate,
@@ -26,15 +28,15 @@ describe("the club's clock", () => {
 
 describe("reading a kickoff typed into the admin form", () => {
   it("keeps the hour that was typed", () => {
-    expect(formatMatchTime(parseMatchDate("2026-08-24T20:00"))).toBe("20:00");
+    expect(formatTime(parseMatchDate("2026-08-24T20:00"))).toBe("20:00");
   });
 
   it("keeps it during Ramadan too", () => {
-    expect(formatMatchTime(parseMatchDate("2026-03-15T20:00"))).toBe("20:00");
+    expect(formatTime(parseMatchDate("2026-03-15T20:00"))).toBe("20:00");
   });
 
   it("accepts seconds", () => {
-    expect(formatMatchTime(parseMatchDate("2026-08-24T20:00:00"))).toBe("20:00");
+    expect(formatTime(parseMatchDate("2026-08-24T20:00:00"))).toBe("20:00");
   });
 
   it("leaves an already-zoned value alone", () => {
@@ -50,7 +52,7 @@ describe("reading a kickoff typed into the admin form", () => {
   it("shows the public page the same hour the form reloads", () => {
     for (const typed of ["2026-01-15T20:00", "2026-03-15T20:00", "2026-08-24T23:30"]) {
       const stored = parseMatchDate(typed);
-      expect(formatMatchTime(stored)).toBe(matchDateToLocalInput(stored).slice(11, 16));
+      expect(formatTime(stored)).toBe(matchDateToLocalInput(stored).slice(11, 16));
     }
   });
 });
@@ -61,10 +63,64 @@ describe("naming the day a kickoff belongs to", () => {
   });
 
   it("spells a kickoff out in full", () => {
-    expect(formatMatchDateTime("2026-08-24T19:00:00Z")).toBe("2026/08/24 19:00");
+    expect(formatDateTime("2026-08-24T19:00:00Z")).toBe("2026/08/24 19:00");
   });
 
   it("reports today as a calendar day", () => {
     expect(todayClubDateKey()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("printing an instant for a reader", () => {
+  it("puts the parts in a fixed order", () => {
+    expect(formatDateTime("2026-08-14T15:18:00Z")).toBe("2026/08/14 15:18");
+  });
+
+  it("pads single digits so rows line up", () => {
+    expect(formatDateTime("2026-01-05T09:04:00Z")).toBe("2026/01/05 09:04");
+  });
+
+  it("emits no directional marks, which is what scrambled the log", () => {
+    expect(formatDateTime("2026-08-14T15:18:00Z")).toMatch(/^[\d/: ]+$/);
+  });
+
+  it("drops the time when only the day is asked for", () => {
+    expect(formatDate("2026-08-14T15:18:00Z")).toBe("2026/08/14");
+  });
+
+  it("uses a 24 hour clock with no am/pm marker to reorder", () => {
+    expect(formatTime("2026-08-14T15:18:00Z")).toBe("15:18");
+  });
+
+  it("pads the hour", () => {
+    expect(formatTime("2026-08-14T09:05:00Z")).toBe("09:05");
+  });
+
+  it("reads a late instant as the club's day, not the reader's", () => {
+    expect(formatDate("2026-08-14T23:30:00Z")).toBe("2026/08/14");
+    expect(formatTime("2026-08-14T23:30:00Z")).toBe("23:30");
+  });
+
+  it("accepts a Date as readily as a string", () => {
+    expect(formatDateTime(new Date("2026-08-14T15:18:00Z"))).toBe("2026/08/14 15:18");
+  });
+});
+
+describe("drawing a rollup key as a date", () => {
+  it("keeps the day the key already names", () => {
+    expect(formatDayKey("2026-08-14")).toBe("2026/08/14");
+  });
+
+  it("does not slip to the previous day", () => {
+    expect(formatDayKey("2026-01-01")).toBe("2026/01/01");
+  });
+
+  it("emits no directional marks, the rows it fills are dir=ltr", () => {
+    expect(formatDayKey("2026-08-14")).toMatch(/^[\d/]+$/);
+  });
+
+  it("draws the same day a key names it", () => {
+    const at = "2026-08-24T23:30:00Z";
+    expect(formatDayKey(matchDateKey(at))).toBe(formatDate(at));
   });
 });

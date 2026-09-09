@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import ProfileSection from "@/components/admin/ProfileSection";
 import Money from "@/components/Money";
 import { moneyDigits } from "@/lib/money";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import { withRunningBalance, type LedgerInput, type LedgerTotals } from "@/lib/activityLedger";
 import { activityFinance as texts } from "@/lib/texts";
 

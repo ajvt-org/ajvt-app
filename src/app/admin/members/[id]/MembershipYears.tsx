@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import IconLabel from "@/components/IconLabel";
 import { STATUS_BADGE, STATUS_ICON, STATUS_LABEL } from "@/app/admin/dashboard/constants";
 import type { MembershipYear } from "./membershipTypes";

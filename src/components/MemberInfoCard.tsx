@@ -1,5 +1,5 @@
 import IconLabel from "@/components/IconLabel";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import type { MemberData } from "@/lib/useMember";
 import PaidAmountRows from "@/components/PaidAmountRows";
 import { membershipEnding, myProfile, villageField } from "@/lib/texts";

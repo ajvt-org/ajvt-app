@@ -9,7 +9,7 @@ import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline, withoutScorersAndCards } from "@/lib/matchEvents";
 import { forfeitLoserTeamId } from "@/lib/forfeit";
 import { isVoteClosed } from "@/lib/mvpVote";
-import { formatMatchTime } from "@/lib/clubTime";
+import { formatTime } from "@/lib/clubTime";
 import type { DecidedMatch, PublicMatch } from "./publicTypes";
 import type { EntrantKind } from "@/lib/entrant";
 import { matchDisplay, mvpVote as voteTexts } from "@/lib/texts";
@@ -69,7 +69,7 @@ export default function MatchResult({
 
   return (
     <div className="card p-4 space-y-1.5">
-      <MatchCardHead time={match.matchDate ? formatMatchTime(match.matchDate) : null}>
+      <MatchCardHead time={match.matchDate ? formatTime(match.matchDate) : null}>
         <MatchMeta
           round={round}
           venue={venue}

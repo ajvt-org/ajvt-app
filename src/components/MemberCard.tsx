@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import IconLabel from "@/components/IconLabel";
 import Logo from "@/components/Logo";
 import { savePdf, savePng, sharePng } from "@/components/pdf/renderPdf";

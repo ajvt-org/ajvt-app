@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
-import { formatMatchDateTime } from "@/lib/clubTime";
+import { formatDateTime } from "@/lib/clubTime";
 import { UNDATED_LABEL } from "@/lib/matchDays";
 import type { ActivityDetail, ActivityRow } from "@/lib/memberActivities";
 import { withFrom } from "@/lib/backLink";
@@ -58,7 +58,7 @@ function line(detail: ActivityDetail): { icon: IconName; text: string } {
 function when(row: ActivityRow): string | null {
   if (row.detail.kind !== "NEXT_MATCH") return null;
   return row.detail.fixture.matchDate
-    ? formatMatchDateTime(row.detail.fixture.matchDate)
+    ? formatDateTime(row.detail.fixture.matchDate)
     : UNDATED_LABEL;
 }
 

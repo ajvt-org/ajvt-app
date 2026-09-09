@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { paymentAccountManager as texts } from "@/lib/texts";
 import { counted } from "@/lib/arabicCount";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import { RECORD } from "@/lib/messages/counts";
 import type { AdminAccountRow } from "@/lib/paymentMethodAdmin";
 

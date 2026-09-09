@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDayKey, loginPathWithNext } from "@/lib/utils";
+import { loginPathWithNext } from "@/lib/utils";
+import { formatDayKey } from "@/lib/clubTime";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { siteVisits as texts } from "@/lib/texts";
