@@ -13,6 +13,7 @@ const KEPT_CLEAN = [
   "src/app/change-password/page.tsx",
   "src/app/change-password/ChangePasswordForm.tsx",
   "src/app/(member)/quiz/QuizPicker.tsx",
+  "src/app/(member)/quiz/CompetitionView.tsx",
   "src/app/admin/quiz/QuestionList.tsx",
   "src/app/admin/quiz/SettingsForm.tsx",
   "src/app/admin/dashboard/FilterSheet.tsx",
