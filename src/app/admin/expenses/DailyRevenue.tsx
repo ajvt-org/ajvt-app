@@ -3,7 +3,7 @@
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
-import { formatDayKey } from "@/lib/utils";
+import { formatDayKey } from "@/lib/clubTime";
 import { dailyRevenue as texts, paymentDates } from "@/lib/texts";
 import { groupDayRecords, type DayRecord, type FinanceDay } from "./types";
 

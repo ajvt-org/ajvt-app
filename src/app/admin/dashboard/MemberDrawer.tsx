@@ -8,7 +8,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import MemberProofForm from "@/components/admin/MemberProofForm";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/clubTime";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 import { villageField } from "@/lib/texts";

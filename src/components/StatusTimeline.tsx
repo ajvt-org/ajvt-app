@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import Icon from "@/components/Icon";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";

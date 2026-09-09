@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
 import { paymentDates } from "@/lib/texts";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/clubTime";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 type Member = MemberProfile["member"];

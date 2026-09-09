@@ -5,7 +5,7 @@ import Icon from "@/components/Icon";
 import { auditActionLabel } from "@/lib/auditLabels";
 import { auditDiff } from "@/lib/auditDiff";
 import { auditFieldLabel, auditTargetLabel, auditValueLabel } from "@/lib/auditFields";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/clubTime";
 import type { AuditLogEntry } from "./auditLogTypes";
 
 export default function AuditLogEntryCard({ log }: { log: AuditLogEntry }) {

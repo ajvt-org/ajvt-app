@@ -52,13 +52,21 @@ export function matchDateToLocalInput(date: string | Date): string {
   return toClubWallClock(date).toISOString().slice(0, 16);
 }
 
-export function formatMatchDateTime(date: string | Date): string {
-  const at = toClubWallClock(date).toISOString();
-  return `${at.slice(0, 4)}/${at.slice(5, 7)}/${at.slice(8, 10)} ${at.slice(11, 16)}`;
+export function formatDayKey(key: string): string {
+  return key.split("-").join("/");
 }
 
-export function formatMatchTime(date: string | Date): string {
+export function formatDate(date: string | Date): string {
+  return formatDayKey(toClubWallClock(date).toISOString().slice(0, 10));
+}
+
+export function formatTime(date: string | Date): string {
   return toClubWallClock(date).toISOString().slice(11, 16);
+}
+
+export function formatDateTime(date: string | Date): string {
+  const at = toClubWallClock(date).toISOString();
+  return `${formatDayKey(at.slice(0, 10))} ${at.slice(11, 16)}`;
 }
 
 export function matchDateKey(date: string | Date): string {

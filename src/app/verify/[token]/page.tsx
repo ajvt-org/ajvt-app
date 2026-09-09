@@ -4,7 +4,7 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import VerifyEnrollments from "@/components/VerifyEnrollments";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import { nameOf } from "@/lib/person";
 import { verifyPage, villageField } from "@/lib/texts";
 import { loadVerifiedMember } from "@/lib/verifyEnrollmentsServer";

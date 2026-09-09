@@ -4,7 +4,7 @@ import StatsToggle from "@/components/tournament/StatsToggle";
 import StandingsTable from "@/components/tournament/StandingsTable";
 import { computeStats } from "@/lib/tournament";
 import type { StandingsRow } from "@/lib/standings";
-import { formatMatchDateTime } from "@/lib/clubTime";
+import { formatDateTime } from "@/lib/clubTime";
 import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import type { Group, Match } from "./types";
 import IconLabel from "@/components/IconLabel";
@@ -66,7 +66,7 @@ export default function StandingsTab({
           `${m.homeScore} - ${m.awayScore}`,
           m.secondTeam.name,
           m.venue || "",
-          m.matchDate ? formatMatchDateTime(m.matchDate) : "",
+          m.matchDate ? formatDateTime(m.matchDate) : "",
         ]);
       });
 

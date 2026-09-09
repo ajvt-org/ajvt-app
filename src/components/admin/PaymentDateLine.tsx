@@ -1,4 +1,4 @@
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/clubTime";
 import { paymentDates } from "@/lib/texts";
 
 export default function PaymentDateLine({

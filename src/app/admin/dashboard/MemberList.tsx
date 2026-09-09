@@ -3,7 +3,8 @@
 import Icon from "@/components/Icon";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import InlineName from "./InlineName";
-import { formatDateTime, toThumbUrl } from "@/lib/utils";
+import { toThumbUrl } from "@/lib/utils";
+import { formatDateTime } from "@/lib/clubTime";
 import { STATUS_LABEL, STATUS_BADGE } from "./constants";
 import type { Member } from "./types";
 

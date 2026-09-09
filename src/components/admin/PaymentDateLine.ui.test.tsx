@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PaymentDateLine from "./PaymentDateLine";
 import { paymentDates } from "@/lib/texts";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/clubTime";
 
 const paid = "2026-06-11T00:00:00.000Z";
 const recorded = "2026-08-02T09:31:00.000Z";

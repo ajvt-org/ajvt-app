@@ -8,7 +8,7 @@ import MatchTimeline from "@/components/tournament/matchCard/MatchTimeline";
 import MatchCardHead from "@/components/tournament/matchCard/MatchCardHead";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline, memberTeamName } from "@/lib/matchEvents";
-import { formatMatchDateTime } from "@/lib/clubTime";
+import { formatDateTime } from "@/lib/clubTime";
 import { bothTeamsKnown, teamName } from "@/lib/fixtureTeams";
 import { resultEntryAllowed } from "@/lib/matchKickoff";
 import type { Match, Team } from "./types";
@@ -84,7 +84,7 @@ export default function MatchCard({
       : [];
   return (
     <div className="card p-4">
-      <MatchCardHead time={match.matchDate ? formatMatchDateTime(match.matchDate) : null}>
+      <MatchCardHead time={match.matchDate ? formatDateTime(match.matchDate) : null}>
         <MatchMeta
           round={match.round}
           venue={match.venue}

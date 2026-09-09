@@ -7,7 +7,8 @@ import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
-import { formatDate, toThumbUrl } from "@/lib/utils";
+import { toThumbUrl } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import type { Expense } from "./types";
 
 function Thumb({ expense }: { expense: Expense }) {

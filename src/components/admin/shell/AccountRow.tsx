@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/clubTime";
 import { adminRoleLabel, ROLE_LABELS } from "@/lib/adminRoles";
 import { settableRoles } from "@/lib/adminRoleChange";
 import IconLabel from "@/components/IconLabel";
