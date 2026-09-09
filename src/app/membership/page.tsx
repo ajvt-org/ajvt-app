@@ -14,7 +14,7 @@ import { members } from "@/lib/messages";
 import { canRenew } from "@/lib/renewal";
 import IconLabel from "@/components/IconLabel";
 import PageHeader from "@/components/PageHeader";
-import { pageTitles, stepPayment } from "@/lib/texts";
+import { membershipForm, pageTitles, stepPayment } from "@/lib/texts";
 import { goAfterAuthChange } from "@/lib/authNav";
 import PageLoading from "@/components/PageLoading";
 import StepPayment from "./StepPayment";
@@ -60,6 +60,7 @@ function MembershipPageInner() {
   const [settings, setSettings] = useState({
     membershipFee: MEMBERSHIP_FEE,
     asksBankReference: false,
+    showsReferenceCode: false,
   });
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -79,7 +80,13 @@ function MembershipPageInner() {
 
   useEffect(() => {
     api
-      .get<{ settings: { membershipFee: number; asksBankReference: boolean } }>("/api/settings")
+      .get<{
+        settings: {
+          membershipFee: number;
+          asksBankReference: boolean;
+          showsReferenceCode: boolean;
+        };
+      }>("/api/settings")
       .then((d) => setSettings(d.settings))
       .catch(() => {});
   }, []);
@@ -174,7 +181,7 @@ function MembershipPageInner() {
   }
 
   async function shareReferenceCode() {
-    const text = `رقم دفتري في رابطة شباب قرية التاكلالت: ${form.referenceCode}`;
+    const text = membershipForm.shareText(form.referenceCode);
     if (navigator.share) {
       try {
         await navigator.share({ text });
@@ -244,12 +251,19 @@ function MembershipPageInner() {
     );
   }
 
+  const referenceRow = renewing
+    ? { label: stepPayment.memberCode, value: memberNumber }
+    : settings.showsReferenceCode
+      ? { label: stepPayment.orderCode, value: form.referenceCode }
+      : null;
+
   if (submitted) {
     return (
       <SubmittedCard
         form={{ ...form, fullName }}
         editing={!!editId}
         renewing={renewing}
+        showsReferenceCode={settings.showsReferenceCode}
         copied={copied}
         onCopy={copyCode}
         onShare={shareReferenceCode}
@@ -268,14 +282,12 @@ function MembershipPageInner() {
           style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
         >
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="trophy">
-              الاشتراك في الرابطة هو ما يتيح لك المشاركة في الأنشطة والفعاليات
-            </IconLabel>
+            <IconLabel name="trophy">{membershipForm.joinNote}</IconLabel>
           </p>
           <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            تريد فقط دعم الرابطة دون الانضمام كعضو؟{" "}
+            {membershipForm.donateInstead}{" "}
             <Link href="/donate" className="font-bold" style={{ color: "var(--mint-600)" }}>
-              تبرّع من هنا
+              {membershipForm.donateLink}
             </Link>
           </p>
         </div>
@@ -297,11 +309,7 @@ function MembershipPageInner() {
           error={error}
           loading={loading}
           proofUploading={proofUploading}
-          reference={
-            renewing
-              ? { label: stepPayment.memberCode, value: memberNumber }
-              : { label: stepPayment.orderCode, value: form.referenceCode }
-          }
+          reference={referenceRow}
           submitLabel={submitLabelOf(renewing, !!editId)}
           onSubmit={handleSubmit}
         />

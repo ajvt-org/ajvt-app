@@ -280,3 +280,47 @@ describe("whether the انتساب form asks for a transaction number", () => {
     expect(screen.getByRole("button", { name: stepPayment.send })).toBeDefined();
   });
 });
+
+describe("the reference row in the transfer panel", () => {
+  beforeEach(() => {
+    globalThis.fetch = offering([
+      { name: "بنكيلي", memberFacing: true, accounts: [{ id: "a1", code: "22200000", label: "" }] },
+    ]);
+  });
+
+  it("shows the row the page hands it", async () => {
+    renderStep(formOf({ paymentMethod: "بنكيلي" }));
+
+    expect(await screen.findByText(stepPayment.orderCode)).toBeDefined();
+  });
+
+  it("draws a finished panel with no row to show", async () => {
+    render(
+      <StepPayment
+        form={formOf({ paymentMethod: "بنكيلي" })}
+        setForm={vi.fn()}
+        fullName="محمد ولد أحمد"
+        membershipFee={2000}
+        asksBankReference={false}
+        copied={null}
+        onCopy={vi.fn()}
+        surplus={0}
+        wantsName={null}
+        setWantsName={vi.fn()}
+        proofFilename={null}
+        setProofFilename={vi.fn()}
+        setProofUploading={vi.fn()}
+        error=""
+        loading={false}
+        proofUploading={false}
+        reference={null}
+        submitLabel={stepPayment.send}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(stepPayment.amount)).toBeDefined();
+    expect(screen.queryByText(stepPayment.orderCode)).toBeNull();
+    expect(screen.queryByText(stepPayment.memberCode)).toBeNull();
+  });
+});

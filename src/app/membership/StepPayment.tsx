@@ -54,7 +54,7 @@ export default function StepPayment({
   error: string;
   loading: boolean;
   proofUploading: boolean;
-  reference: { label: string; value: string };
+  reference: { label: string; value: string } | null;
   submitLabel: string;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
@@ -123,12 +123,14 @@ export default function StepPayment({
               copied={copied === amount}
               onCopy={() => onCopy(amount)}
             />
-            <CopyRow
-              label={reference.label}
-              value={reference.value}
-              copied={copied === reference.value}
-              onCopy={() => onCopy(reference.value)}
-            />
+            {reference && (
+              <CopyRow
+                label={reference.label}
+                value={reference.value}
+                copied={copied === reference.value}
+                onCopy={() => onCopy(reference.value)}
+              />
+            )}
           </div>
           <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
             {texts.payAtLeast(MEMBERSHIP_FEE)}

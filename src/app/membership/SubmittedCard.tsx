@@ -5,11 +5,18 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import type { PaymentValues } from "./constants";
 import Money from "@/components/Money";
+import { membershipSubmitted as texts } from "@/lib/texts";
+
+function headingOf(renewing: boolean, editing: boolean): string {
+  if (renewing) return texts.sentRenewal;
+  return editing ? texts.sentEdits : texts.sent;
+}
 
 export default function SubmittedCard({
   form,
   editing,
   renewing,
+  showsReferenceCode,
   copied,
   onCopy,
   onShare,
@@ -18,11 +25,14 @@ export default function SubmittedCard({
   form: PaymentValues & { fullName: string };
   editing: boolean;
   renewing: boolean;
+  showsReferenceCode: boolean;
   copied: string | null;
   onCopy: (code: string) => void;
   onShare: () => void;
   onProfile: () => void;
 }) {
+  const shown = !renewing && showsReferenceCode;
+
   return (
     <div className="app-shell">
       <div
@@ -32,23 +42,17 @@ export default function SubmittedCard({
         <div className="mb-2 flex justify-center">
           <Icon name="check" size={48} color="white" />
         </div>
-        <h1 className="text-lg font-black text-white">
-          {renewing
-            ? "تم إرسال التجديد بنجاح"
-            : editing
-              ? "تم إرسال التعديلات بنجاح"
-              : "تم إرسال طلبك بنجاح"}
-        </h1>
+        <h1 className="text-lg font-black text-white">{headingOf(renewing, editing)}</h1>
         <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.8)" }}>
-          سيراجع فريق الرابطة طلبك خلال أقل من ساعة
+          {texts.reviewSoon}
         </p>
       </div>
 
       <div className="px-5 py-6 space-y-4">
-        {!renewing && (
+        {shown && (
           <div className="card p-4 fade-up">
             <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>
-              رقم دفترك — احتفظ به للمتابعة
+              {texts.referenceLabel}
             </p>
             <div
               className="flex items-center justify-between rounded-xl px-3 py-2.5"
@@ -72,9 +76,9 @@ export default function SubmittedCard({
                 }}
               >
                 {copied === form.referenceCode ? (
-                  <IconLabel name="check">تم النسخ</IconLabel>
+                  <IconLabel name="check">{texts.copied}</IconLabel>
                 ) : (
-                  "نسخ"
+                  texts.copy
                 )}
               </button>
             </div>
@@ -83,27 +87,27 @@ export default function SubmittedCard({
 
         <div className="card p-4 fade-up delay-1">
           <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
-            ملخص الطلب
+            {texts.summary}
           </p>
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between">
-              <span style={{ color: "var(--text-muted)" }}>الاسم</span>
+              <span style={{ color: "var(--text-muted)" }}>{texts.name}</span>
               <span className="font-bold">{form.fullName}</span>
             </div>
             <div className="flex justify-between">
-              <span style={{ color: "var(--text-muted)" }}>طريقة الدفع</span>
+              <span style={{ color: "var(--text-muted)" }}>{texts.method}</span>
               <span className="font-bold">{form.paymentMethod}</span>
             </div>
             <div className="flex justify-between">
-              <span style={{ color: "var(--text-muted)" }}>المبلغ</span>
+              <span style={{ color: "var(--text-muted)" }}>{texts.amount}</span>
               <Money value={Number(form.paidAmount)} className="font-bold" />
             </div>
           </div>
         </div>
 
-        {!renewing && (
+        {shown && (
           <button type="button" onClick={onShare} className="btn btn-primary fade-up delay-1">
-            <IconLabel name="upload">مشاركة رقم الدفتر</IconLabel>
+            <IconLabel name="upload">{texts.shareReference}</IconLabel>
           </button>
         )}
         <button
@@ -112,7 +116,7 @@ export default function SubmittedCard({
           className="btn fade-up delay-2"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <ArrowLabel>الذهاب إلى حسابي</ArrowLabel>
+          <ArrowLabel>{texts.toProfile}</ArrowLabel>
         </button>
       </div>
     </div>
