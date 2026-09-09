@@ -6,6 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { isValidLeaguePairing } from "@/lib/tournament";
 import { parseMatchDate } from "@/lib/clubTime";
+import { dayForMatchDate } from "@/lib/tournamentDaysServer";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { entrantWording, notify, tournament } from "@/lib/messages";
@@ -61,6 +62,9 @@ export const POST = withRoute(
       return NextResponse.json({ error: tournament.venueNameTooLong }, { status: 400 });
     }
 
+    const when = matchDate ? parseMatchDate(matchDate) : null;
+    const dayId = await dayForMatchDate(id, when);
+
     const maxOrderRow = await prisma.match.findFirst({
       where: { activityId: id },
       orderBy: { order: "desc" },
@@ -71,7 +75,8 @@ export const POST = withRoute(
       data: {
         activityId: id,
         ...sideIdData(activity.matchShape, firstTeamId, secondTeamId),
-        matchDate: matchDate ? parseMatchDate(matchDate) : null,
+        matchDate: when,
+        dayId: dayId ?? null,
         round: round?.trim() || null,
         venue: venue?.trim() || null,
         isKnockout: !!isKnockout,
