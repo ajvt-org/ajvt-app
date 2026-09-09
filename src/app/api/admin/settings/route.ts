@@ -20,16 +20,18 @@ export const PATCH = withRoute("PATCH /api/admin/settings", async (req: NextRequ
 
   const before = await getAppSettings();
   await saveAppSettings(values);
+  const after = await getAppSettings();
+
   logger.info("settings.updated", {
     by: session.username,
-    membershipFee: { from: before.membershipFee, to: values.membershipFee },
+    membershipFee: { from: before.membershipFee, to: after.membershipFee },
   });
-  await logAction(session.username, "UPDATE_SETTINGS", settings.feeAudit(values.membershipFee), {
+  await logAction(session.username, "UPDATE_SETTINGS", settings.feeAudit(after.membershipFee), {
     ...auditContext(session, req),
     targetType: "Settings",
     before,
-    after: values,
+    after,
   });
 
-  return NextResponse.json({ settings: await getAppSettings() });
+  return NextResponse.json({ settings: after });
 });
