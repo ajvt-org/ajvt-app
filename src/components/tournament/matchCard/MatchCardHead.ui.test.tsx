@@ -40,8 +40,8 @@ describe("MatchCardHead", () => {
 
     const pill = container.querySelector(".match-time") as HTMLElement;
     expect(pill.querySelector("svg")).not.toBeNull();
-    expect(pill.querySelector("span")?.getAttribute("dir")).toBe("ltr");
-    expect(pill.querySelector("span")?.className).toContain("optical-numeral");
+    expect(pill.querySelector("bdi")?.getAttribute("dir")).toBe("ltr");
+    expect(pill.querySelector("bdi")?.className).toContain("optical-numeral");
   });
 
   it("dims the pill into a dark card", () => {

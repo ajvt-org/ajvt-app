@@ -150,9 +150,9 @@ export default function VisitsPanel() {
         <div className="space-y-1.5 max-h-64 overflow-y-auto">
           {[...days].reverse().map((d) => (
             <div key={d.date} className="flex items-center justify-between text-xs">
-              <span dir="ltr" style={{ color: "var(--text-main)" }}>
+              <bdi dir="ltr" style={{ color: "var(--text-main)" }}>
                 {formatDayKey(d.date)}
-              </span>
+              </bdi>
               <span>
                 <span className="font-black" style={{ color: "var(--mint-600)" }}>
                   {texts.visitors(d.visitors)}

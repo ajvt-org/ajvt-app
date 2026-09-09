@@ -145,7 +145,7 @@ export default function AdminHome() {
                   {m.matchDate ? (
                     <>
                       {" "}
-                      · <span dir="ltr">{formatTime(m.matchDate)}</span>
+                      · <bdi dir="ltr">{formatTime(m.matchDate)}</bdi>
                     </>
                   ) : null}
                 </span>

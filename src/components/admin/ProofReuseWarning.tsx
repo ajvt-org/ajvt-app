@@ -57,7 +57,7 @@ export default function ProofReuseWarning({
       <ul className="space-y-0.5 mt-1" style={{ color: "#92400e" }}>
         {reuse.map((row) => (
           <li key={`${row.kind}-${row.id}`}>
-            {WHERE[row.kind]} <b>{row.label}</b> <span dir="ltr">({formatDate(row.date)})</span>
+            {WHERE[row.kind]} <b>{row.label}</b> (<bdi dir="ltr">{formatDate(row.date)}</bdi>)
           </li>
         ))}
       </ul>

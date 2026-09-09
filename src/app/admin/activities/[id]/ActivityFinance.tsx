@@ -58,7 +58,9 @@ export default function ActivityFinance({ activityId }: { activityId: string }) 
                 <p className="font-bold truncate" style={{ color: "var(--text-main)" }}>
                   {entry.label}
                 </p>
-                <p style={{ color: "var(--text-muted)" }}>{formatDate(entry.date)}</p>
+                <p style={{ color: "var(--text-muted)" }}>
+                  <bdi dir="ltr">{formatDate(entry.date)}</bdi>
+                </p>
               </div>
               <div className="shrink-0 text-left">
                 <p

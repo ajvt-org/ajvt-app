@@ -50,12 +50,23 @@ export default function MemberInfoCard({
               supportAmount={member.supportAmount}
               Row={InfoRow}
             />
-            <InfoRow label={texts.requestedOn} value={formatDate(member.createdAt)} />
+            <InfoRow
+              label={texts.requestedOn}
+              value={<bdi dir="ltr">{formatDate(member.createdAt)}</bdi>}
+            />
           </>
         )}
-        {!applying && <InfoRow label={texts.acceptedOn} value={formatDate(member.updatedAt)} />}
+        {!applying && (
+          <InfoRow
+            label={texts.acceptedOn}
+            value={<bdi dir="ltr">{formatDate(member.updatedAt)}</bdi>}
+          />
+        )}
         {ended && member.endedAt && (
-          <InfoRow label={membershipEnding.endedOn} value={formatDate(member.endedAt)} />
+          <InfoRow
+            label={membershipEnding.endedOn}
+            value={<bdi dir="ltr">{formatDate(member.endedAt)}</bdi>}
+          />
         )}
       </div>
     </div>

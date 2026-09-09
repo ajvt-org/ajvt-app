@@ -143,7 +143,7 @@ export default function PaymentAccountRow({
         )}
         {closed ? (
           <span className="badge shrink-0">
-            {texts.closedOn(formatDate(account.closedAt ?? new Date()))}
+            {texts.closedOn} <bdi dir="ltr">{formatDate(account.closedAt ?? new Date())}</bdi>
           </span>
         ) : (
           !account.active && <span className="badge shrink-0">{texts.stopped}</span>

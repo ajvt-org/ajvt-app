@@ -37,7 +37,7 @@ export default function MembershipYears({
             {year.paymentMethod ? ` · ${year.paymentMethod}` : ""}
           </span>
           <span style={{ color: "var(--text-muted)" }}>
-            {year.recordedBy ? year.recordedBy : formatDate(year.createdAt)}
+            {year.recordedBy ? year.recordedBy : <bdi dir="ltr">{formatDate(year.createdAt)}</bdi>}
           </span>
           {year.rejectionReason && (
             <span className="w-full text-[11px]" style={{ color: "#991b1b" }}>

@@ -68,7 +68,11 @@ export default function FixtureRow({ fixture }: { fixture: Fixture }) {
       <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
         <span className="flex items-center gap-1">
           <Icon name="calendar" size={12} />
-          {fixture.matchDate ? formatDateTime(fixture.matchDate) : UNDATED_LABEL}
+          {fixture.matchDate ? (
+            <bdi dir="ltr">{formatDateTime(fixture.matchDate)}</bdi>
+          ) : (
+            UNDATED_LABEL
+          )}
         </span>
         {fixture.venue && (
           <span className="flex items-center gap-1 truncate">

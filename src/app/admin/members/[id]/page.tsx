@@ -126,7 +126,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
               ),
               aside: (
                 <>
-                  {d.paymentMethod || d.source} · <span dir="ltr">{formatDate(d.createdAt)}</span>
+                  {d.paymentMethod || d.source} · <bdi dir="ltr">{formatDate(d.createdAt)}</bdi>
                 </>
               ),
             }))}
@@ -146,7 +146,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
                 aside: (
                   <>
                     {registrationStatusLabels[r.status] ?? r.status} ·{" "}
-                    <span dir="ltr">{formatDate(r.createdAt)}</span>
+                    <bdi dir="ltr">{formatDate(r.createdAt)}</bdi>
                   </>
                 ),
               }))}
@@ -186,7 +186,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
             main: <IconLabel name="pencil">{auditActionLabel(h.action)}</IconLabel>,
             aside: (
               <>
-                {h.adminUsername} · <span dir="ltr">{formatDate(h.createdAt)}</span>
+                {h.adminUsername} · <bdi dir="ltr">{formatDate(h.createdAt)}</bdi>
               </>
             ),
           }))}

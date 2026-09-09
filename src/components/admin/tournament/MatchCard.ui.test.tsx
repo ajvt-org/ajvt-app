@@ -159,7 +159,9 @@ describe("a fixture whose teams are not known yet", () => {
   it("names both sides as decided later", () => {
     const { container } = waiting();
 
-    const names = [...container.querySelectorAll("bdi")].map((b) => b.textContent);
+    const names = [...container.querySelectorAll("bdi")]
+      .filter((b) => !b.closest(".match-time"))
+      .map((b) => b.textContent);
     expect(names).toEqual([publicTournament.teamDecidedLater, publicTournament.teamDecidedLater]);
   });
 

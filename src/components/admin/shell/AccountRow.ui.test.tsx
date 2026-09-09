@@ -5,6 +5,7 @@ import { roleTone } from "./roleTone";
 import { OWNER_ROLE, ROLE_LABELS, SUPER_ROLE, adminRoleLabel } from "@/lib/adminRoles";
 import { SCOPED_ROLE } from "@/lib/activityAccess";
 import { adminAccounts } from "@/lib/texts";
+import { formatDateTime } from "@/lib/clubTime";
 import type { AdminAccount, AdminAccountRow } from "./accountTypes";
 
 const ACCOUNT: AdminAccount = {
@@ -253,5 +254,22 @@ describe("a row the viewer is only given a username for", () => {
 
     expect(screen.queryByText(adminAccounts.neverSignedIn)).toBeNull();
     expect(screen.queryByText(new RegExp(adminAccounts.lastLogin))).toBeNull();
+  });
+});
+
+describe("the two stamps on an account", () => {
+  const isolated = (stamp: string) =>
+    [...document.body.querySelectorAll("bdi")].find((b) => b.textContent === stamp);
+
+  it("keeps the day and the hour in one run so they are not drawn apart", () => {
+    renderRow(ACCOUNT);
+
+    expect(isolated(formatDateTime(ACCOUNT.lastLoginAt!))?.getAttribute("dir")).toBe("ltr");
+  });
+
+  it("draws the day it was created the same way", () => {
+    renderRow(ACCOUNT);
+
+    expect(isolated(formatDateTime(ACCOUNT.createdAt))?.getAttribute("dir")).toBe("ltr");
   });
 });
