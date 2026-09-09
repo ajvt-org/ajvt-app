@@ -31,7 +31,7 @@ export default function ProofBadges({ proof }: { proof: Proof }) {
         <Mark name="link" label={paymentCard.linked} tone="badge-active" />
       )}
       {isDonation && proof.anonymous && (
-        <Mark name="ban" label={paymentCard.hiddenOnBoard} tone="badge-pending" />
+        <Mark name="eyeClosed" label={paymentCard.hiddenOnBoard} tone="badge-pending" />
       )}
     </>
   );
