@@ -17,6 +17,7 @@ export type LevelProblem =
   | "unitCountMissing"
   | "targetMissing"
   | "marginMissing"
+  | "marginTooWide"
   | "continueUnitsMissing"
   | "deciderTargetWithoutATarget"
   | "creditWithoutAWindow"
@@ -36,7 +37,7 @@ export interface LevelFault {
   problem: LevelProblem;
 }
 
-function numberIn(value: number | null, low: number, high: number): boolean {
+function numberIn(value: number | null, low: number, high: number): value is number {
   return value !== null && Number.isInteger(value) && value >= low && value <= high;
 }
 
@@ -68,9 +69,14 @@ function endingFault(level: LevelRow): LevelProblem | null {
   return numberIn(level.target, 1, Number.MAX_SAFE_INTEGER) ? null : "targetMissing";
 }
 
+function marginCeiling(level: LevelRow): number {
+  return (level.endsBy === "TARGET" ? level.target : level.unitCount) ?? 0;
+}
+
 function unsettledFault(level: LevelRow): LevelProblem | null {
   if (level.unsettled !== "CONTINUE") return null;
-  if (!numberIn(level.margin, 1, MAX_UNIT_COUNT)) return "marginMissing";
+  if (!numberIn(level.margin, 1, Number.MAX_SAFE_INTEGER)) return "marginMissing";
+  if (level.margin > marginCeiling(level)) return "marginTooWide";
   if (level.endsBy === "TARGET") return null;
   if (!numberIn(level.continueUnits, 1, MAX_UNIT_COUNT)) return "continueUnitsMissing";
   return null;

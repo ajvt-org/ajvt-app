@@ -159,6 +159,27 @@ describe("the match levels card", () => {
     expect(saveButton().hasAttribute("disabled")).toBe(false);
   });
 
+  it("names the field a margin the level cannot reach belongs to", async () => {
+    show();
+    await openRules();
+    fireEvent.change(screen.getByLabelText("إن لم يُحسم"), { target: { value: "CONTINUE" } });
+    fireEvent.change(screen.getByLabelText("الفارق الذي يحسمه"), { target: { value: "5" } });
+
+    const field = screen.getByLabelText("الفارق الذي يحسمه").closest("div");
+    expect(field?.textContent).toContain("أكبر مما ينهيه");
+  });
+
+  it("offers the widest margin the level can reach rather than refusing the save", async () => {
+    show();
+    await openRules();
+    fireEvent.change(screen.getByLabelText("إن لم يُحسم"), { target: { value: "CONTINUE" } });
+    fireEvent.change(screen.getByLabelText("الفارق الذي يحسمه"), { target: { value: "5" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "أصلحها" }));
+
+    expect((screen.getByLabelText("الفارق الذي يحسمه") as HTMLInputElement).value).toBe("2");
+  });
+
   it("adds a level at the end", async () => {
     show();
     fireEvent.click(await screen.findByRole("button", { name: "إضافة مستوى" }));

@@ -166,6 +166,49 @@ describe("a level that is continued while it stays unsettled", () => {
     expect(ladderProblem([target, game])).toBeNull();
     expect(fault([{ ...target, margin: null }, game])).toBe("marginMissing");
   });
+
+  it("still bounds the units it continues by against what a level may play", () => {
+    expect(fault([{ ...knockout, unitCount: 99, continueUnits: 100 }, game])).toBe(
+      "continueUnitsMissing",
+    );
+  });
+});
+
+describe("the margin that settles a level", () => {
+  const target: LevelRow = {
+    ...match,
+    countedBy: "POINTS",
+    endsBy: "TARGET",
+    unitCount: null,
+    target: 500,
+    unsettled: "CONTINUE",
+    continueUnits: null,
+  };
+
+  it("takes a lead in points larger than any count of units, on a level played to a number", () => {
+    expect(ladderProblem([{ ...target, margin: 100 }, game])).toBeNull();
+    expect(ladderProblem([{ ...target, margin: 150 }, game])).toBeNull();
+  });
+
+  it("takes a lead as wide as the number that ends the level", () => {
+    expect(ladderProblem([{ ...target, margin: 500 }, game])).toBeNull();
+  });
+
+  it("refuses a lead the level can never reach", () => {
+    expect(fault([{ ...target, margin: 501 }, game])).toBe("marginTooWide");
+  });
+
+  it("measures it against the units where the level ends on a count of them", () => {
+    const counted: LevelRow = { ...match, unsettled: "CONTINUE", unitCount: 5, continueUnits: 2 };
+
+    expect(ladderProblem([{ ...counted, margin: 5 }, game])).toBeNull();
+    expect(fault([{ ...counted, margin: 6 }, game])).toBe("marginTooWide");
+  });
+
+  it("keeps asking for the margin when there is none", () => {
+    expect(fault([{ ...target, margin: null }, game])).toBe("marginMissing");
+    expect(fault([{ ...target, margin: 0 }, game])).toBe("marginMissing");
+  });
 });
 
 describe("a starting credit", () => {
