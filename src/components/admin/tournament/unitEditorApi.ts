@@ -1,4 +1,4 @@
-import type { LevelRow } from "@/lib/matchLevels";
+import { recordingUnder, type LevelRow, type Recording } from "@/lib/matchLevels";
 import type { MoveRuleRow, RecordedMoveRow, UnitRow } from "./seriesTypes";
 
 export interface EditorApi {
@@ -19,6 +19,10 @@ export interface EditorApi {
 
 export function levelAt(api: EditorApi, depth: number): LevelRow | null {
   return api.ladder[depth] ?? null;
+}
+
+export function recordingAt(api: EditorApi, depth: number): Recording | null {
+  return recordingUnder(api.ladder, depth - 1);
 }
 
 export function opensOnto(api: EditorApi, depth: number): boolean {

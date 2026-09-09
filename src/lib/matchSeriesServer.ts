@@ -5,7 +5,13 @@ import { tournament as messages } from "./messages";
 import { isSeriesConfigured } from "./seriesSetup";
 import { isFootball } from "./matchShape";
 import { colourOfPart } from "./seriesColours";
-import { countsPoints, ladderOf, type LevelRow } from "./matchLevels";
+import {
+  countsPoints,
+  ladderOf,
+  parentOfLevel,
+  recordingUnder,
+  type LevelRow,
+} from "./matchLevels";
 import type { SeriesStanding } from "./matchSeries";
 import {
   flatten,
@@ -192,10 +198,10 @@ function depthOf(match: LoadedMatch, unitId: string | null): number {
   return depth;
 }
 
-function levelAtDepth(match: LoadedMatch, depth: number): LevelRow {
-  const level = ladderFor(match)[depth];
-  if (!level) throw new ValidationError(messages.unitLevelMissing);
-  return level;
+function recordingAt(match: LoadedMatch, depth: number) {
+  const recording = recordingUnder(ladderFor(match), depth);
+  if (!recording) throw new ValidationError(messages.unitLevelMissing);
+  return recording;
 }
 
 function parentIdOf(input: UnitInput): string | null {
@@ -214,13 +220,13 @@ export async function addUnit(matchId: string, input: UnitInput) {
   const match = await loadSeriesMatch(matchId);
   const parentId = parentIdOf(input);
   const depth = depthOf(match, parentId);
-  const level = levelAtDepth(match, depth + 1);
+  const { level, parent } = recordingAt(match, depth);
 
   if (standingUnder(match, parentId)?.over) {
     throw new ConflictError(messages.matchTakesNoMoreParts);
   }
 
-  const result = readUnit(input, levelAtDepth(match, depth));
+  const result = readUnit(input, parent);
   const order = nextOrderUnder(match.units, parentId);
   const sideAColour =
     parentId === null && match.activity.hasColours && match.sideAOpensAs
@@ -255,9 +261,9 @@ export async function correctUnit(matchId: string, unitId: string, input: UnitIn
     throw new ConflictError(messages.unitTakesItsScoreFromBelow);
   }
 
-  const depth = ladderFor(match).findIndex((row) => row.id === unit.levelId);
-  if (depth < 1) throw new ValidationError(messages.unitLevelMissing);
-  const result = readUnit(input, levelAtDepth(match, depth - 1));
+  const parent = parentOfLevel(ladderFor(match), unit.levelId);
+  if (!parent) throw new ValidationError(messages.unitLevelMissing);
+  const result = readUnit(input, parent);
   return prisma.matchUnit.update({ where: { id: unitId }, data: result });
 }
 

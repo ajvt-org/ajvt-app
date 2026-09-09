@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { seriesResult as texts } from "@/lib/texts";
+import { recordsOnItself } from "@/lib/matchLevels";
 import UnitBranch from "./UnitBranch";
 import UnitLine from "./UnitRow";
 import UnitEditor, { type UnitDraft } from "./UnitEditor";
-import { levelAt, opensOnto, typedScore, type EditorApi } from "./unitEditorApi";
+import { levelAt, opensOnto, recordingAt, typedScore, type EditorApi } from "./unitEditorApi";
 import type { UnitRow } from "./seriesTypes";
 
 export default function UnitBlock({
@@ -30,8 +31,7 @@ export default function UnitBlock({
   onSubmit: () => void;
 }) {
   const [warning, setWarning] = useState(false);
-  const level = levelAt(api, depth)!;
-  const parent = levelAt(api, depth - 1)!;
+  const { level, parent } = recordingAt(api, depth)!;
   const under = levelAt(api, depth + 1);
   const opened = api.opened.includes(unit.id);
   const nests = opensOnto(api, depth);
@@ -50,6 +50,7 @@ export default function UnitBlock({
       <UnitLine
         unit={unit}
         level={level}
+        name={recordsOnItself(api.ladder) ? texts.resultRow : undefined}
         sides={api.sides}
         busy={api.busy}
         editable={api.open && unit.children.length === 0}

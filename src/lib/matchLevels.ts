@@ -35,6 +35,34 @@ export function isLastLevel(ladder: Ladder, depth: number): boolean {
   return depth === ladder.length - 1;
 }
 
+export interface Recording {
+  level: LevelRow;
+  parent: LevelRow;
+}
+
+export function recordsOnItself(ladder: Ladder): boolean {
+  return ladder.length === 1;
+}
+
+export function recordingUnder(ladder: Ladder, depth: number): Recording | null {
+  const parent = ladder[depth];
+  if (!parent) return null;
+  if (recordsOnItself(ladder)) return depth === 0 ? { level: parent, parent } : null;
+  const level = ladder[depth + 1];
+  return level ? { level, parent } : null;
+}
+
+export function parentOfLevel(ladder: Ladder, levelId: string): LevelRow | null {
+  const at = ladder.findIndex((level) => level.id === levelId);
+  if (at < 0) return null;
+  if (recordsOnItself(ladder)) return ladder[0];
+  return at < 1 ? null : ladder[at - 1];
+}
+
+export function scorelineUnits<T>(ladder: Ladder, units: T[]): T[] {
+  return recordsOnItself(ladder) ? [] : units;
+}
+
 export function countedUnits(count: number, level: LevelRow): string {
   return count === 1 ? level.singular : `${count} ${level.plural}`;
 }

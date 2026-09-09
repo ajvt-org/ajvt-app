@@ -34,6 +34,7 @@ export function colourText(
 export default function UnitLine({
   unit,
   level,
+  name: given,
   sides,
   busy,
   editable,
@@ -45,6 +46,7 @@ export default function UnitLine({
 }: {
   unit: Unit;
   level: LevelRow;
+  name?: string;
   sides: string[];
   busy: boolean;
   editable: boolean;
@@ -54,7 +56,7 @@ export default function UnitLine({
   onEdit: () => void;
   onRemove: () => void;
 }) {
-  const name = texts.unitNumber(level.singular, unit.order);
+  const name = given ?? texts.unitNumber(level.singular, unit.order);
   const doubled = (unit.worth ?? 1) > 1;
   return (
     <div

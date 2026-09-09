@@ -6,6 +6,7 @@ import {
   CHESS_CONFIG,
   SCORED_CONFIG,
   ladderConfig,
+  levelRow,
   standingRow,
   unitNode,
 } from "@tests/ui/ladders";
@@ -346,5 +347,52 @@ describe("loading the form", () => {
     show();
 
     expect(await screen.findByText("تعذّر تحميل جولات المباراة")).toBeDefined();
+  });
+});
+
+describe("a match whose ladder is one level", () => {
+  const ALONE_LEVEL = levelRow({ id: "match", order: 0, singular: "مباراة", plural: "مباريات" });
+  const ALONE: SeriesConfig = {
+    ladder: [ALONE_LEVEL],
+    match: ALONE_LEVEL,
+    unit: ALONE_LEVEL,
+    hasColours: false,
+    firstColourWord: null,
+    secondColourWord: null,
+  };
+
+  it("offers one place to type the result and no list to add to", async () => {
+    mockSeries({ units: [], standing: standing({ unitsLeft: 1 }), levels: ALONE.ladder });
+    show(ALONE);
+
+    expect(await screen.findByText("نتيجة المباراة")).toBeDefined();
+    expect(screen.getByLabelText("نتيجة مباراة")).toBeDefined();
+    expect(screen.getByRole("button", { name: "تسجيل النتيجة" })).toBeDefined();
+    expect(screen.queryByText("لم تُسجَّل مباريات بعد")).toBeNull();
+  });
+
+  it("records it on the match itself", async () => {
+    mockSeries({ units: [], standing: standing({ unitsLeft: 1 }), levels: ALONE.ladder });
+    show(ALONE);
+    fireEvent.change(await screen.findByLabelText("نتيجة مباراة"), {
+      target: { value: "SIDE_A" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "تسجيل النتيجة" }));
+
+    await waitFor(() => expect(postMock).toHaveBeenCalled());
+    expect(postMock.mock.calls[0][1]).toEqual({ outcome: "SIDE_A", parentId: null });
+  });
+
+  it("shows the recorded result as the result rather than as a numbered unit", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { levelId: "match", outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
+      levels: ALONE.ladder,
+    });
+    show(ALONE);
+
+    expect(await screen.findByText("النتيجة")).toBeDefined();
+    expect(screen.getByText("فوز أحمد")).toBeDefined();
+    expect(screen.queryByText("مباراة 1")).toBeNull();
   });
 });

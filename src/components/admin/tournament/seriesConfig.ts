@@ -17,8 +17,7 @@ export function configOfLadder(
 ): SeriesConfig | null {
   const ladder = ladderOf(levels);
   if (ladderProblem(ladder) !== null) return null;
-  if (ladder.length < 2) return null;
-  return { ladder, match: ladder[0], unit: ladder[1], ...colours };
+  return { ladder, match: ladder[0], unit: ladder[1] ?? ladder[0], ...colours };
 }
 
 export function seriesConfigOf(info: TournamentInfo | null): SeriesConfig | null {

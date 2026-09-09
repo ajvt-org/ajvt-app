@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import { refusalMessage } from "@/lib/apiFailure";
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
+import { recordsOnItself } from "@/lib/matchLevels";
 import SeriesStanding from "./SeriesStanding";
 import UnitBranch from "./UnitBranch";
 import type { SeriesConfig } from "./seriesConfig";
@@ -95,6 +96,8 @@ export default function SeriesResultForm({
     onUndoMove: (moveId) => run(() => api.del(`/api/admin/matches/${matchId}/moves/${moveId}`)),
   };
 
+  const own = recordsOnItself(state.levels);
+
   return (
     <div
       className="mt-3 pt-3 space-y-3"
@@ -102,10 +105,12 @@ export default function SeriesResultForm({
       data-testid="series-result-form"
     >
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="list">{texts.heading(config.unit.plural)}</IconLabel>
+        <IconLabel name="list">
+          {own ? texts.matchResult : texts.heading(config.unit.plural)}
+        </IconLabel>
       </p>
 
-      <SeriesStanding standing={state.standing} config={config} sides={sides} />
+      {!own && <SeriesStanding standing={state.standing} config={config} sides={sides} />}
 
       <UnitBranch api={editor} parentId={null} depth={1} units={state.units} full={false} />
 
