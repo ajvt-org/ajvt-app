@@ -274,3 +274,102 @@ describe("the switches on the انتساب form", () => {
     expect((await (await adminGet()).json()).settings.asksBankReference).toBe(true);
   });
 });
+
+describe("what PATCH /api/admin/settings does to the row", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("super-admin", "SUPER"));
+  });
+
+  it("leaves the fee alone where the caller says nothing about it", async () => {
+    await PATCH(post("/api/admin/settings", valid));
+    const { membershipFee, ...saidNothing } = valid;
+    void membershipFee;
+
+    const res = await PATCH(post("/api/admin/settings", saidNothing));
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).settings.membershipFee).toBe(250);
+  });
+
+  it("leaves the year and the support number alone the same way", async () => {
+    await PATCH(post("/api/admin/settings", valid));
+
+    const res = await PATCH(post("/api/admin/settings", { asksBankReference: true }));
+
+    expect(res.status).toBe(200);
+    const { settings } = await res.json();
+    expect(settings.membershipYear).toBe(valid.membershipYear);
+    expect(settings.supportWhatsapp).toBe("22299887766");
+    expect(settings.tempPasswordHours).toBe(12);
+    expect(settings.asksBankReference).toBe(true);
+  });
+
+  it("empties the group link when the caller sends null and keeps it when the caller omits it", async () => {
+    await PATCH(post("/api/admin/settings", valid));
+    const { whatsappGroup, ...saidNothing } = valid;
+    void whatsappGroup;
+
+    await PATCH(post("/api/admin/settings", saidNothing));
+    expect((await (await adminGet()).json()).settings.whatsappGroup).toBe(
+      "https://chat.whatsapp.com/abc",
+    );
+
+    await PATCH(post("/api/admin/settings", { whatsappGroup: null }));
+    expect((await (await adminGet()).json()).settings.whatsappGroup).toBeNull();
+  });
+
+  it("empties an officer name the same way, so clearing one is not the same as omitting it", async () => {
+    await PATCH(post("/api/admin/settings", { ...valid, secretaryName: "الأمين" }));
+
+    await PATCH(post("/api/admin/settings", { membershipFee: 300 }));
+    expect((await (await adminGet()).json()).settings.secretaryName).toBe("الأمين");
+
+    await PATCH(post("/api/admin/settings", { secretaryName: null }));
+    expect((await (await adminGet()).json()).settings.secretaryName).toBeNull();
+  });
+
+  it("still refuses a value it does not like, whether or not the field is required", async () => {
+    await PATCH(post("/api/admin/settings", valid));
+
+    for (const body of [
+      { membershipFee: 0 },
+      { membershipYear: 2019 },
+      { supportWhatsapp: "+222 41" },
+      { tempPasswordHours: 0 },
+      { asksBankReference: "yes" },
+      { whatsappGroup: "chat.me" },
+    ]) {
+      const res = await PATCH(post("/api/admin/settings", body));
+      expect(res.status, JSON.stringify(body)).toBe(400);
+    }
+    expect((await (await adminGet()).json()).settings.membershipFee).toBe(250);
+  });
+
+  it("takes an empty patch as a request to change nothing and answers with the row", async () => {
+    await PATCH(post("/api/admin/settings", valid));
+
+    const res = await PATCH(post("/api/admin/settings", {}));
+
+    expect(res.status).toBe(200);
+    const { settings } = await res.json();
+    expect(settings.membershipFee).toBe(250);
+    expect(settings.supportWhatsapp).toBe("22299887766");
+    expect(await prisma.appSettings.count()).toBe(1);
+  });
+
+  it("writes down the row that resulted rather than the patch it was handed", async () => {
+    await PATCH(post("/api/admin/settings", valid));
+
+    await PATCH(post("/api/admin/settings", { membershipFee: 300 }));
+
+    const entry = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "UPDATE_SETTINGS" },
+      orderBy: { createdAt: "desc" },
+    });
+    const after = entry.after as Record<string, unknown>;
+    expect(after.membershipFee).toBe(300);
+    expect(after.supportWhatsapp).toBe("22299887766");
+    expect(after.membershipYear).toBe(valid.membershipYear);
+  });
+});

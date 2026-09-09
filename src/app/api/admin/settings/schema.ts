@@ -19,7 +19,8 @@ export const appSettingsSchema = z.object({
         ctx.addIssue({ code: "custom", message: money.amountInvalid });
       }
     })
-    .transform((v) => Number(v)),
+    .transform((v) => Number(v))
+    .optional(),
   membershipYear: z
     .unknown()
     .superRefine((v, ctx) => {
@@ -27,13 +28,15 @@ export const appSettingsSchema = z.object({
         ctx.addIssue({ code: "custom", message: members.yearInvalid });
       }
     })
-    .transform((v) => Number(v)),
+    .transform((v) => Number(v))
+    .optional(),
   asksBankReference: z.boolean(INVALID).optional(),
   showsReferenceCode: z.boolean(INVALID).optional(),
   supportWhatsapp: z
     .string(INVALID)
     .refine((v) => /^\d{8,15}$/.test(v.trim()), settings.whatsappInvalid)
-    .transform((v) => v.trim()),
+    .transform((v) => v.trim())
+    .optional(),
   tempPasswordHours: z
     .unknown()
     .superRefine((v, ctx) => {
@@ -42,7 +45,8 @@ export const appSettingsSchema = z.object({
         ctx.addIssue({ code: "custom", message: auth.tempPasswordHoursInvalid });
       }
     })
-    .transform((v) => Number(v)),
+    .transform((v) => Number(v))
+    .optional(),
   whatsappGroup: z
     .string(INVALID)
     .refine((v) => v === "" || v.startsWith("https://"), settings.groupLinkInvalid)
