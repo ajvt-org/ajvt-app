@@ -16,7 +16,6 @@ describe("what the public settings route hands out", () => {
       [
         "asksBankReference",
         "membershipFee",
-        "membershipYear",
         "showsReferenceCode",
         "supportWhatsapp",
       ].sort(),
@@ -28,6 +27,12 @@ describe("what the public settings route hands out", () => {
 
     expect(published.whatsappGroup).toBeUndefined();
     expect(Object.values(published)).not.toContain("https://chat.whatsapp.com/secret");
+  });
+
+  it("keeps the membership year out of it, an admin screen reads that with a session", () => {
+    const published = publicSettings(SAVED) as unknown as Record<string, unknown>;
+
+    expect(published.membershipYear).toBeUndefined();
   });
 
   it("keeps the officer names and the password window out of it", () => {

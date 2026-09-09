@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { runningYear } from "@/lib/membershipYear";
-import type { PublicSettings } from "@/lib/publicSettings";
+import type { ScopedSettings } from "@/lib/adminSettings";
 
 export function useMembershipSettings() {
   const [fee, setFee] = useState(MEMBERSHIP_FEE);
@@ -12,7 +12,7 @@ export function useMembershipSettings() {
 
   useEffect(() => {
     api
-      .get<{ settings: PublicSettings }>("/api/settings")
+      .get<{ settings: ScopedSettings }>("/api/admin/settings")
       .then(({ settings }) => {
         setFee(settings.membershipFee);
         setYear(settings.membershipYear);
