@@ -525,3 +525,66 @@ describe("opening a unit that already carries a score", () => {
     expect(body.units[0].outcome).toBe("SIDE_A");
   });
 });
+
+describe("a match whose ladder is one level", () => {
+  const ALONE = [{ singular: "مباراة", plural: "مباريات" }];
+
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("takes the result on the match itself", async () => {
+    const { match } = await matchOf(ALONE);
+
+    const res = await add(match.id, { outcome: "SIDE_A" });
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.units).toHaveLength(1);
+    expect(body.units[0].children).toEqual([]);
+    expect(body.standing.winner).toBe("SIDE_A");
+    expect(body.standing.over).toBe(true);
+  });
+
+  it("says the match is waiting for that one result", async () => {
+    const { match } = await matchOf(ALONE);
+
+    const body = await (await list(match.id)).json();
+
+    expect(body.units).toEqual([]);
+    expect(body.standing.unitsLeft).toBe(1);
+    expect(body.standing.over).toBe(false);
+  });
+
+  it("corrects the result that was typed", async () => {
+    const { match } = await matchOf(ALONE);
+    const added = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    const res = await correct(match.id, added.unit.id, { outcome: "SIDE_B" });
+
+    expect(res.status).toBe(200);
+    const body = await (await list(match.id)).json();
+    expect(body.standing.winner).toBe("SIDE_B");
+  });
+
+  it("takes no second result", async () => {
+    const { match } = await matchOf(ALONE);
+    await add(match.id, { outcome: "SIDE_A" });
+
+    const res = await add(match.id, { outcome: "SIDE_B" });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(messages.matchTakesNoMoreParts);
+  });
+
+  it("records nothing inside that result", async () => {
+    const { match } = await matchOf(ALONE);
+    const added = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    const res = await add(match.id, { parentId: added.unit.id, outcome: "SIDE_A" });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.unitLevelMissing);
+  });
+});

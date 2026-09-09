@@ -532,3 +532,36 @@ describe("a rule that ends the unit it acts on", () => {
     expect(units[0].standing?.sideBTotal).toBe(4);
   });
 });
+
+describe("a ladder of one level", () => {
+  const ALONE: LevelRow[] = [{ ...BLANK, id: "match" }];
+
+  it("takes one unit and nothing more", () => {
+    const { standing } = resolveMatch(ALONE, []);
+
+    expect(standing.unitsAllowed).toBe(1);
+    expect(standing.unitsLeft).toBe(1);
+    expect(standing.over).toBe(false);
+    expect(standing.extending).toBe(false);
+  });
+
+  it("is over once that unit carries a winner", () => {
+    const rows = [unit({ id: "u1", levelId: "match", order: 1, outcome: "SIDE_A" })];
+
+    const { standing } = resolveMatch(ALONE, rows);
+
+    expect(standing.over).toBe(true);
+    expect(standing.winner).toBe("SIDE_A");
+    expect(standing.unitsLeft).toBe(0);
+  });
+
+  it("is over and level once that unit is drawn", () => {
+    const rows = [unit({ id: "u1", levelId: "match", order: 1, outcome: "DRAW" })];
+
+    const { standing } = resolveMatch(ALONE, rows);
+
+    expect(standing.over).toBe(true);
+    expect(standing.winner).toBeNull();
+    expect(standing.level).toBe(true);
+  });
+});

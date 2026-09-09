@@ -1,5 +1,8 @@
 export const seriesResult = {
   heading: (units: string) => `${units} المباراة`,
+  matchResult: "نتيجة المباراة",
+  recordResult: "تسجيل النتيجة",
+  resultRow: "النتيجة",
   none: (units: string) => `لم تُسجَّل ${units} بعد`,
   unitNumber: (word: string, order: number) => `${word} ${order}`,
   abandoned: "متوقفة",
