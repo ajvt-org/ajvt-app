@@ -2,11 +2,11 @@
 
 import { Suspense, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PageLoading from "@/components/PageLoading";
-import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import FinanceTagManager from "@/components/admin/FinanceTagManager";
 import FinanceTotals from "./FinanceTotals";
 import ByPaymentMethod from "./ByPaymentMethod";
@@ -14,14 +14,21 @@ import ByAccount from "@/components/admin/ByAccount";
 import UnassignedDonations from "./UnassignedDonations";
 import DailyRevenue from "./DailyRevenue";
 import ExpenseList from "./ExpenseList";
-import ExpenseFiltersBar from "./ExpenseFiltersBar";
+import ExpensesFilterChips from "./ExpensesFilterChips";
+import ExpensesFilterSheet from "./ExpensesFilterSheet";
 import ExpenseFormDialog from "./ExpenseFormDialog";
 import { exportFinance } from "./exportFinance";
 import { expenseBodyOf } from "./expenseBody";
 import { useExpensesData } from "./useExpensesData";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import { paginate, pageCount } from "@/lib/listUrlState";
-import { EXPENSES_FILTER_KEYS, readExpensesFilters, writeExpensesFilters } from "./expensesFilters";
+import {
+  EXPENSES_FILTER_KEYS,
+  activeExpensesFilterCount,
+  expensesAreFiltered,
+  readExpensesFilters,
+  writeExpensesFilters,
+} from "./expensesFilters";
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
 import type { Expense, ExpenseForm } from "./types";
 import { hasFullAccess } from "@/lib/adminRoles";
@@ -53,6 +60,7 @@ function AdminExpensesPageInner() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [heldAccount, setHeldAccount] = useState<Expense["account"]>(null);
   const [showTagManager, setShowTagManager] = useState(false);
+  const [filtering, setFiltering] = useState(false);
   const [form, setForm] = useState<ExpenseForm>(emptyExpenseForm);
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -178,15 +186,11 @@ function AdminExpensesPageInner() {
     if (filters.dateTo && day > filters.dateTo) return false;
     return true;
   });
-  const isFiltered =
-    filters.tagIds.length > 0 ||
-    query.length > 0 ||
-    !!filters.destinationId ||
-    !!filters.dateFrom ||
-    !!filters.dateTo;
+  const isFiltered = expensesAreFiltered(filters);
   const totalPages = pageCount(shownExpenses.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
   const paginated = paginate(shownExpenses, page, PAGE_SIZE);
+  const activeCount = activeExpensesFilterCount(filters);
 
   return (
     <div className="admin-page space-y-5">
@@ -278,33 +282,25 @@ function AdminExpensesPageInner() {
         className="input text-sm"
       />
 
-      <ExpenseFiltersBar
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setFiltering(true)}
+          className="text-xs px-3 py-2 rounded-lg font-bold shrink-0 flex items-center gap-1.5"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <Icon name="filter" size={14} />
+          {expensesPage.filter}
+          {activeCount > 0 && <span className="badge badge-numeral">{activeCount}</span>}
+        </button>
+      </div>
+
+      <ExpensesFilterChips
         filters={filters}
         destinations={destinations}
-        isFiltered={isFiltered}
+        tags={tags}
+        resultCount={shownExpenses.length}
         onChange={go}
-        onReset={() => go({ q: "", tagIds: [], destinationId: "", dateFrom: "", dateTo: "" })}
       />
-
-      {tags.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-            {expensesPage.filterBy}
-          </span>
-          <FinanceTagChips
-            tags={tags}
-            selected={filters.tagIds}
-            onToggle={(id) =>
-              go({
-                ...filters,
-                tagIds: filters.tagIds.includes(id)
-                  ? filters.tagIds.filter((t) => t !== id)
-                  : [...filters.tagIds, id],
-              })
-            }
-          />
-        </div>
-      )}
 
       <ExpenseList
         expenses={paginated}
@@ -314,6 +310,17 @@ function AdminExpensesPageInner() {
         onDelete={setAsking}
         pagination={{ page: currentPage, totalPages, onGo: goToPage }}
       />
+
+      {filtering && (
+        <ExpensesFilterSheet
+          filters={filters}
+          destinations={destinations}
+          tags={tags}
+          resultCount={shownExpenses.length}
+          onChange={go}
+          onClose={() => setFiltering(false)}
+        />
+      )}
 
       {showForm && (
         <ExpenseFormDialog

@@ -30,10 +30,9 @@ export const expensesPage = {
   tags: "التصنيفات",
   addExpense: "إضافة مصروف",
   searchPlaceholder: "بحث بالوصف أو المبلغ...",
-  filterBy: "تصفية:",
-  from: "من",
-  to: "إلى",
-  resetFilters: "إعادة تصفير الكل",
+  filter: "تصفية",
+  destination: "الوجهة",
+  expenseDate: "تاريخ المصروف",
 } as const;
 
 export const expenseList = {
