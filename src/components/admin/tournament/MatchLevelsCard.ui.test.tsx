@@ -345,7 +345,7 @@ const ON_NOTHING = "خصم الفائز لم يكسب شيئاً قبل الوح
 const LOST_CREDIT = "الفائز خسر رصيده الابتدائي";
 
 async function declareRule(name: string, worth: string) {
-  fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+  fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
   fireEvent.change(screen.getByLabelText("اسم القاعدة"), { target: { value: name } });
   fireEvent.change(screen.getByLabelText("العدد الذي تُحتسب به الوحدة"), {
     target: { value: worth },
@@ -360,13 +360,13 @@ describe("what a level says a unit is worth", () => {
   it("offers one control where a level declares no such rule", async () => {
     show();
 
-    expect(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "احتساب لعبة" })).toBeNull();
+    expect(await screen.findByRole("button", { name: "تحديد الاحتساب" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "الاحتساب" })).toBeNull();
   });
 
   it("asks for a name, a condition and a number", async () => {
     show();
-    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+    fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
 
     expect(screen.getByLabelText("اسم القاعدة")).toBeDefined();
     expect(screen.getByText("متى تقع")).toBeDefined();
@@ -377,7 +377,7 @@ describe("what a level says a unit is worth", () => {
 
   it("holds back the save until the rule says what it is", async () => {
     show();
-    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+    fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
 
     expect(saveButton().hasAttribute("disabled")).toBe(true);
 
@@ -387,7 +387,7 @@ describe("what a level says a unit is worth", () => {
 
   it("sends it back with the level it was declared on", async () => {
     show();
-    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+    fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
     fireEvent.change(screen.getByLabelText("اسم القاعدة"), { target: { value: "قاعدة" } });
     fireEvent.change(screen.getByLabelText("العدد الذي تُحتسب به الوحدة"), {
       target: { value: "3" },
@@ -439,8 +439,16 @@ describe("what a level says a unit is worth", () => {
     ]);
     show();
 
-    expect(await screen.findByRole("button", { name: "احتساب لعبة" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "إضافة قاعدة احتساب" })).toBeNull();
+    expect(await screen.findByRole("button", { name: "الاحتساب" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "تحديد الاحتساب" })).toBeNull();
+  });
+
+  it("offers no way to declare a second rule on a level that has one", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+
+    expect(screen.queryByRole("button", { name: "تحديد الاحتساب" })).toBeNull();
+    expect(screen.getAllByLabelText("اسم القاعدة")).toHaveLength(1);
   });
 
   it("takes a rule away with the level it was declared on", async () => {

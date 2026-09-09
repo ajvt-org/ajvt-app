@@ -24,11 +24,11 @@ export interface LevelMovesApi {
 }
 
 export interface LevelWorthApi {
-  drafts: WorthDraft[];
-  faults: (WorthProblem | null)[];
-  onChange: (key: string, patch: Partial<WorthDraft>) => void;
-  onAdd: () => void;
-  onRemove: (key: string) => void;
+  draft: WorthDraft | null;
+  fault: WorthProblem | null;
+  onChange: (patch: Partial<WorthDraft>) => void;
+  onDeclare: () => void;
+  onRemove: () => void;
 }
 
 export default function LevelCard({
@@ -99,24 +99,23 @@ export default function LevelCard({
       />
 
       {index > 0 &&
-        (worth.drafts.length === 0 ? (
-          <button onClick={worth.onAdd} disabled={frozen} className="btn btn-sm">
+        (worth.draft === null ? (
+          <button onClick={worth.onDeclare} disabled={frozen} className="btn btn-sm">
             <IconLabel name="plus">{texts.addWorthRule}</IconLabel>
           </button>
         ) : (
           <Disclosure
-            defaultOpen={worth.drafts.some((rule) => rule.name.trim() === "")}
-            title={<span className="text-xs">{texts.worthRules(own)}</span>}
+            defaultOpen={worth.draft.name.trim() === ""}
+            title={<span className="text-xs">{texts.worthRules}</span>}
             color="var(--mint-700)"
             className="rounded-lg px-2.5 py-2"
             surface={{ background: "var(--surface-2)" }}
           >
             <LevelWorthRules
-              rules={worth.drafts}
-              faults={worth.faults}
+              rule={worth.draft}
+              fault={worth.fault}
               disabled={frozen}
               onChange={worth.onChange}
-              onAdd={worth.onAdd}
               onRemove={worth.onRemove}
             />
           </Disclosure>
