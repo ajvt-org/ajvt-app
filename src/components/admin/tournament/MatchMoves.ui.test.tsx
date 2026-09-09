@@ -119,10 +119,19 @@ describe("the moves of a match", () => {
     expect(onUndo).toHaveBeenCalledWith("a1");
   });
 
-  it("offers no undo once the match is over", () => {
+  it("undoes one once the match is over", () => {
+    const { onUndo } = show({ recorded: [RECORDED], open: false });
+
+    fireEvent.click(screen.getByLabelText("تراجع تيس"));
+
+    expect(onUndo).toHaveBeenCalledWith("a1");
+  });
+
+  it("offers no new move once the match is over", () => {
     show({ recorded: [RECORDED], open: false });
 
-    expect(screen.queryByLabelText("تراجع تيس")).toBeNull();
+    expect(screen.queryByLabelText("تسجيل حركة")).toBeNull();
+    expect(screen.queryByRole("button", { name: "إضافة" })).toBeNull();
     expect(screen.getByText(/تيس من فريق القرية/)).toBeDefined();
   });
 
