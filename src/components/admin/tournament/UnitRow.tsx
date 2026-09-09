@@ -17,7 +17,7 @@ export function scoreText(unit: Unit, sides: string[]): string {
   if (unit.outcome === "DRAW") return texts.drawn;
   if (unit.outcome === "SIDE_A") return texts.wonBy(sides[0]);
   if (unit.outcome === "SIDE_B") return texts.wonBy(sides[1]);
-  if (unit.sideAPoints === null || unit.sideBPoints === null) return texts.abandoned;
+  if (unit.sideAPoints === null || unit.sideBPoints === null) return texts.noResult;
   return `${unit.sideAPoints} — ${unit.sideBPoints}`;
 }
 
