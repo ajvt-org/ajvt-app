@@ -65,6 +65,50 @@ describe("what a ladder may be set up as", () => {
   });
 });
 
+describe("a ladder that is one level", () => {
+  const alone: LevelRow = { ...BLANK, singular: "مباراة" };
+
+  it("takes a match that says nothing about itself, which is every one declared so far", () => {
+    expect(ladderProblem([alone])).toBeNull();
+  });
+
+  it("takes a match counted by the points of the one game it is", () => {
+    expect(ladderProblem([{ ...alone, countedBy: "POINTS" }])).toBeNull();
+  });
+
+  it("takes a match counted by who won it", () => {
+    expect(ladderProblem([{ ...alone, countedBy: "OUTCOME" }])).toBeNull();
+  });
+
+  it("still wants a name on it", () => {
+    expect(fault([{ ...alone, singular: " " }])).toBe("words");
+  });
+
+  it("refuses a count of units on it, since it is the unit", () => {
+    expect(fault([{ ...alone, endsBy: "COUNT", unitCount: 2 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses a number that ends it", () => {
+    expect(fault([{ ...alone, endsBy: "TARGET", target: 100 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses what happens when it is not settled", () => {
+    expect(fault([{ ...alone, unsettled: "CONTINUE", margin: 1 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses a starting credit on it", () => {
+    expect(fault([{ ...alone, startingCredit: 26, creditWindow: 2 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("refuses the number of a deciding unit on it", () => {
+    expect(fault([{ ...alone, deciderTarget: 24 }])).toBe("rulesOnTheLastLevel");
+  });
+
+  it("leaves the last level of a deeper ladder holding nothing at all", () => {
+    expect(fault([match, { ...game, countedBy: "POINTS" }])).toBe("rulesOnTheLastLevel");
+  });
+});
+
 describe("a level that ends at a number", () => {
   const past: LevelRow = {
     ...match,
