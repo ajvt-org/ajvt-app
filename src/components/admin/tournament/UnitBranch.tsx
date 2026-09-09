@@ -101,7 +101,7 @@ export default function UnitBranch({
         />
       )}
 
-      {!editable && units.length > 0 && api.open && (
+      {!editable && units.length > 0 && !own && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {texts.takesNoMore}
         </p>
