@@ -1,5 +1,4 @@
 import type { Ladder, LevelRow } from "./matchLevels";
-import { isLastLevel } from "./matchLevels";
 
 export interface ColourSetup {
   hasColours: boolean;
@@ -25,6 +24,13 @@ export type LevelProblem =
 
 export type LadderProblem = "noLevels" | "tooManyLevels" | "colourWords";
 
+export type LevelPlace = "above" | "last" | "only";
+
+export function levelPlace(index: number, count: number): LevelPlace {
+  if (count === 1) return "only";
+  return index === count - 1 ? "last" : "above";
+}
+
 export interface LevelFault {
   order: number;
   problem: LevelProblem;
@@ -47,6 +53,10 @@ function ruleless(level: LevelRow): boolean {
     level.startingCredit === 0 &&
     level.creditWindow === 0
   );
+}
+
+function countedOnly(level: LevelRow): boolean {
+  return ruleless({ ...level, countedBy: null });
 }
 
 function endingFault(level: LevelRow): LevelProblem | null {
@@ -75,9 +85,10 @@ function creditFault(level: LevelRow): LevelProblem | null {
   return null;
 }
 
-export function levelProblem(level: LevelRow, last: boolean): LevelProblem | null {
+export function levelProblem(level: LevelRow, place: LevelPlace): LevelProblem | null {
   if (!level.singular.trim()) return "words";
-  if (last) return ruleless(level) ? null : "rulesOnTheLastLevel";
+  if (place === "last") return ruleless(level) ? null : "rulesOnTheLastLevel";
+  if (place === "only") return countedOnly(level) ? null : "rulesOnTheLastLevel";
   return endingFault(level) ?? unsettledFault(level) ?? creditFault(level);
 }
 
@@ -92,7 +103,8 @@ export function ladderProblem(ladder: Ladder): LadderProblem | LevelFault | null
   if (ladder.length > MAX_LEVELS) return "tooManyLevels";
   for (let depth = 0; depth < ladder.length; depth += 1) {
     const problem =
-      levelProblem(ladder[depth], isLastLevel(ladder, depth)) ?? deciderTargetFault(ladder, depth);
+      levelProblem(ladder[depth], levelPlace(depth, ladder.length)) ??
+      deciderTargetFault(ladder, depth);
     if (problem) return { order: ladder[depth].order, problem };
   }
   return null;

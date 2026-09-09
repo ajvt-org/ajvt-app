@@ -137,6 +137,43 @@ describe("declaring the levels of a series tournament", () => {
     expect((await res.json()).error).toBe(messages.seriesSetup.rulesOnTheLastLevel);
   });
 
+  it("stores a match of one level counted by the points of that one game", async () => {
+    const activity = await seriesTournament();
+
+    const res = await save(activity.id, [{ singular: "مباراة", countedBy: "POINTS" }]);
+
+    expect(res.status).toBe(200);
+    const stored = await prisma.matchLevel.findFirstOrThrow({
+      where: { activityId: activity.id },
+    });
+    expect(stored.countedBy).toBe("POINTS");
+    expect(stored.endsBy).toBeNull();
+    expect(stored.unitCount).toBeNull();
+  });
+
+  it("stores a match of one level that says nothing about itself", async () => {
+    const activity = await seriesTournament();
+
+    const res = await save(activity.id, [{ singular: "مباراة" }]);
+
+    expect(res.status).toBe(200);
+    const stored = await prisma.matchLevel.findFirstOrThrow({
+      where: { activityId: activity.id },
+    });
+    expect(stored.countedBy).toBeNull();
+  });
+
+  it("refuses anything but the counting on a match of one level", async () => {
+    const activity = await seriesTournament();
+
+    const res = await save(activity.id, [
+      { singular: "مباراة", countedBy: "POINTS", endsBy: "COUNT", unitCount: 2 },
+    ]);
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.seriesSetup.rulesOnTheLastLevel);
+  });
+
   it("refuses a ladder on a football tournament", async () => {
     const activity = await prisma.activity.create({
       data: { title: "بطولة", description: "بطولة", isTournament: true },
