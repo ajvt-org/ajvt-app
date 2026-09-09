@@ -57,6 +57,7 @@ export { donorNameChoice } from "./donorNameChoice";
 export { donationActions, donationEdit } from "./donationEdit";
 export { dataExport, dataPage, siteVisits } from "./dataPage";
 export {
+  byPaymentMethod,
   dailyRevenue,
   expenseDestinations,
   expenseForm,

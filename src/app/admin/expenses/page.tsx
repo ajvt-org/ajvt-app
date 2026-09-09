@@ -196,59 +196,22 @@ function AdminExpensesPageInner() {
     <div className="admin-page space-y-5">
       {pageError && <Notice tone="error">{pageError}</Notice>}
 
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="banknote">{expensesPage.title}</IconLabel>
-        </p>
-        <button
-          onClick={() => exportFinance(summary, expenses)}
-          className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
-          style={{
-            background: "white",
-            color: "var(--mint-700)",
-            border: "1px solid var(--mint-100)",
-          }}
-        >
-          <IconLabel name="download">{expensesPage.exportAction}</IconLabel>
-        </button>
-      </div>
-
-      <FinanceTotals
-        revenue={summary?.totalRevenue ?? 0}
-        expenses={summary?.totalExpenses ?? 0}
-        net={summary?.net ?? 0}
-      />
-
-      <ByPaymentMethod
-        byMethod={byMethod}
-        details={summary?.byMethodDetail || {}}
-        expanded={expandedMethods}
-        onToggle={(method) => setExpandedMethods((prev) => toggleIn(prev, method))}
-      />
-
-      <ByAccount />
-
-      {hasFullAccess(role) && summary && summary.unassigned.length > 0 && (
-        <UnassignedDonations
-          rows={summary.unassigned}
-          chosen={reassignValue}
-          busyId={reassigningId}
-          onChoose={(id, method) => setReassignValue((p) => ({ ...p, [id]: method }))}
-          onSave={reassignPaymentMethod}
-        />
-      )}
-
-      <DailyRevenue
-        days={summary?.days || []}
-        expanded={expandedDays}
-        onToggle={(date) => setExpandedDays((prev) => toggleIn(prev, date))}
-      />
-
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="banknote">{expensesPage.ledger(shownExpenses.length)}</IconLabel>
         </p>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => exportFinance(summary, expenses)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg"
+            style={{
+              background: "white",
+              color: "var(--mint-700)",
+              border: "1px solid var(--mint-100)",
+            }}
+          >
+            <IconLabel name="download">{expensesPage.exportAction}</IconLabel>
+          </button>
           <button
             onClick={() => setShowTagManager((v) => !v)}
             className="text-xs px-3 py-1.5 rounded-lg font-bold"
@@ -265,6 +228,22 @@ function AdminExpensesPageInner() {
           </button>
         </div>
       </div>
+
+      <FinanceTotals
+        revenue={summary?.totalRevenue ?? 0}
+        expenses={summary?.totalExpenses ?? 0}
+        net={summary?.net ?? 0}
+      />
+
+      {hasFullAccess(role) && summary && summary.unassigned.length > 0 && (
+        <UnassignedDonations
+          rows={summary.unassigned}
+          chosen={reassignValue}
+          busyId={reassigningId}
+          onChoose={(id, method) => setReassignValue((p) => ({ ...p, [id]: method }))}
+          onSave={reassignPaymentMethod}
+        />
+      )}
 
       {showTagManager && (
         <FinanceTagManager
@@ -309,6 +288,21 @@ function AdminExpensesPageInner() {
         onEdit={openEdit}
         onDelete={setAsking}
         pagination={{ page: currentPage, totalPages, onGo: goToPage }}
+      />
+
+      <ByPaymentMethod
+        byMethod={byMethod}
+        details={summary?.byMethodDetail || {}}
+        expanded={expandedMethods}
+        onToggle={(method) => setExpandedMethods((prev) => toggleIn(prev, method))}
+      />
+
+      <ByAccount />
+
+      <DailyRevenue
+        days={summary?.days || []}
+        expanded={expandedDays}
+        onToggle={(date) => setExpandedDays((prev) => toggleIn(prev, date))}
       />
 
       {filtering && (
