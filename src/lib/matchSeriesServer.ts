@@ -86,6 +86,7 @@ export const MATCH_WITH_SERIES = {
     select: {
       matchShape: true,
       levels: LEVELS_SELECT,
+      moves: { orderBy: { createdAt: "asc" }, select: MOVE_FIELDS },
       worthRules: { orderBy: { createdAt: "asc" }, select: WORTH_FIELDS },
       hasColours: true,
       firstColourWord: true,
@@ -400,6 +401,7 @@ export function seriesStateOf(match: LoadedMatch) {
     units: toNodes(resolved.units),
     moves: match.moves,
     levels: ladderFor(match),
+    moveRules: match.activity.moves,
     worthRules: match.activity.worthRules,
     standing: resolved.standing,
   };
