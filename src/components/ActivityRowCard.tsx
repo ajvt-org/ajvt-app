@@ -55,11 +55,10 @@ function line(detail: ActivityDetail): { icon: IconName; text: string } {
   }
 }
 
-function when(row: ActivityRow): string | null {
+function when(row: ActivityRow): React.ReactNode {
   if (row.detail.kind !== "NEXT_MATCH") return null;
-  return row.detail.fixture.matchDate
-    ? formatDateTime(row.detail.fixture.matchDate)
-    : UNDATED_LABEL;
+  const at = row.detail.fixture.matchDate;
+  return at ? <bdi dir="ltr">{formatDateTime(at)}</bdi> : UNDATED_LABEL;
 }
 
 export default function ActivityRowCard({ row, from }: { row: ActivityRow; from: string }) {

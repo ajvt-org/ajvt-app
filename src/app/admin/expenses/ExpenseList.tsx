@@ -79,7 +79,7 @@ function Row({
               {expense.label}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              {formatDate(expense.date)} بواسطة {expense.createdBy}
+              <bdi dir="ltr">{formatDate(expense.date)}</bdi> بواسطة {expense.createdBy}
             </p>
             {expense.note && (
               <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>

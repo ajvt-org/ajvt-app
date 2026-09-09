@@ -19,9 +19,9 @@ export default function AuditLogEntryCard({ log }: { log: AuditLogEntry }) {
         <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
           {auditActionLabel(log.action)}
         </p>
-        <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }} dir="ltr">
+        <bdi className="text-xs shrink-0" style={{ color: "var(--text-muted)" }} dir="ltr">
           {formatDateTime(log.createdAt)}
-        </span>
+        </bdi>
       </div>
 
       {log.targetLabel && (

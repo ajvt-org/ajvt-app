@@ -93,7 +93,7 @@ function MemberRow({
         <span>•</span>
         <span>{member.paymentMethod}</span>
         <span>•</span>
-        <span dir="ltr">{formatDateTime(member.createdAt)}</span>
+        <bdi dir="ltr">{formatDateTime(member.createdAt)}</bdi>
       </div>
     </div>
   );

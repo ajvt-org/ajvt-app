@@ -22,7 +22,7 @@ export default function LogTab({ history }: { history: ActivityDetail["history"]
             <li key={h.id} className="flex items-center justify-between gap-2 text-sm">
               <span className="min-w-0 truncate">{auditActionLabel(h.action)}</span>
               <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                {h.adminUsername} · <span dir="ltr">{formatDate(h.createdAt)}</span>
+                {h.adminUsername} · <bdi dir="ltr">{formatDate(h.createdAt)}</bdi>
               </span>
             </li>
           ))}

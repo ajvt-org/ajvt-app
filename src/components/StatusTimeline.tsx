@@ -68,7 +68,7 @@ export default function StatusTimeline({ status, createdAt, updatedAt }: StatusT
               </p>
               {step.date && (
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  {formatDate(step.date)}
+                  <bdi dir="ltr">{formatDate(step.date)}</bdi>
                 </p>
               )}
             </div>

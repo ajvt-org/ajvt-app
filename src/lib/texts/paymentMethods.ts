@@ -39,7 +39,7 @@ export const paymentAccountManager = {
   replaceLabel: "الرقم الجديد",
   replaceWarning: "الرقم القديم يُغلق ويبقى في القائمة. الدفعات السابقة تبقى مسجّلة عليه.",
   closed: "مغلق",
-  closedOn: (date: string) => `مغلق في ${date}`,
+  closedOn: "مغلق في",
   reachesNobody: "لا يظهر للأعضاء",
   moveUp: "تحريك الرقم لأعلى",
   moveDown: "تحريك الرقم لأسفل",

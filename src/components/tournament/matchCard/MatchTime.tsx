@@ -5,9 +5,9 @@ export default function MatchTime({ time, tone = "light" }: { time: string; tone
   return (
     <span className={`match-time ${tone === "dark" ? "match-time-dark" : ""}`.trim()}>
       <Icon name="clock" size={12} />
-      <span dir="ltr" className="optical-numeral">
+      <bdi dir="ltr" className="optical-numeral">
         {time}
-      </span>
+      </bdi>
     </span>
   );
 }
