@@ -5,8 +5,19 @@ import {
   DELETE as REMOVE_DAY,
 } from "@/app/api/admin/activities/[id]/days/[dayId]/route";
 import { POST as ASSIGN } from "@/app/api/admin/activities/[id]/days/assign/route";
+import { PATCH as EDIT_MATCH } from "@/app/api/admin/matches/[matchId]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  post,
+  patch,
+  del,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  withParams,
+} from "./helpers";
 
 const START = new Date("2026-08-24T00:00:00.000Z");
 
@@ -204,6 +215,100 @@ describe("the tournament day spine", () => {
     expect(played.awayPenalties).toBe(3);
     expect(body.unscheduled[0].homeScore).toBe(3);
     expect(body.unscheduled[0].forfeitWinnerTeamId).toBe(home.id);
+  });
+
+  it("moves a match to the day its new date falls on", async () => {
+    const a = await tournament();
+    await matchOn(a.id, "2026-08-24T16:00:00.000Z");
+    const match = await matchOn(a.id, "2026-08-26T17:00:00.000Z");
+    const body = await read(a.id);
+
+    const res = await EDIT_MATCH(
+      patch(`/api/admin/matches/${match.id}`, { matchDate: "2026-08-24T19:00" }),
+      withParams({ matchId: match.id }),
+    );
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.dayId).toBe(body.days[0].id);
+    expect(saved.matchDate?.toISOString()).toBe("2026-08-24T19:00:00.000Z");
+
+    const after = await read(a.id);
+    expect(after.days[0].matches.map((m: { id: string }) => m.id)).toContain(match.id);
+    expect(after.days[2].matches).toHaveLength(0);
+  });
+
+  it("refuses a new date that lands on a rest day and writes nothing", async () => {
+    const a = await tournament();
+    const match = await matchOn(a.id, "2026-08-26T17:00:00.000Z");
+    const body = await read(a.id);
+
+    const res = await EDIT_MATCH(
+      patch(`/api/admin/matches/${match.id}`, { matchDate: "2026-08-25T17:00" }),
+      withParams({ matchId: match.id }),
+    );
+
+    expect(body.days[1].isRest).toBe(true);
+    expect(res.status).toBe(409);
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.dayId).toBe(body.days[2].id);
+    expect(saved.matchDate?.toISOString()).toBe("2026-08-26T17:00:00.000Z");
+  });
+
+  it("refuses a date the tournament has no day for", async () => {
+    const a = await tournament();
+    const match = await matchOn(a.id, "2026-08-24T17:00:00.000Z");
+    const body = await read(a.id);
+
+    const res = await EDIT_MATCH(
+      patch(`/api/admin/matches/${match.id}`, { matchDate: "2026-09-14T17:00" }),
+      withParams({ matchId: match.id }),
+    );
+
+    expect(res.status).toBe(400);
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.dayId).toBe(body.days[0].id);
+    expect(saved.matchDate?.toISOString()).toBe("2026-08-24T17:00:00.000Z");
+  });
+
+  it("sends a match whose date is cleared back to the unscheduled block", async () => {
+    const a = await tournament();
+    const match = await matchOn(a.id, "2026-08-24T17:00:00.000Z");
+    await read(a.id);
+
+    const res = await EDIT_MATCH(
+      patch(`/api/admin/matches/${match.id}`, { matchDate: null }),
+      withParams({ matchId: match.id }),
+    );
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.dayId).toBeNull();
+    expect(saved.matchDate).toBeNull();
+
+    const after = await read(a.id);
+    expect(after.unscheduled.map((m: { id: string }) => m.id)).toEqual([match.id]);
+    expect(after.days.flatMap((d: { matches: unknown[] }) => d.matches)).toHaveLength(0);
+  });
+
+  it("leaves the day alone on an activity that has no day spine", async () => {
+    const a = await prisma.activity.create({
+      data: { title: "ورشة", description: "نشاط", startsAt: START },
+    });
+    const { home, away } = await teamPair(a.id);
+    const match = await prisma.match.create({
+      data: { activityId: a.id, homeTeamId: home.id, awayTeamId: away.id },
+    });
+
+    const res = await EDIT_MATCH(
+      patch(`/api/admin/matches/${match.id}`, { matchDate: "2026-09-14T17:00" }),
+      withParams({ matchId: match.id }),
+    );
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.dayId).toBeNull();
+    expect(saved.matchDate?.toISOString()).toBe("2026-09-14T17:00:00.000Z");
   });
 
   it("refuses to schedule a match onto a rest day", async () => {
