@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import { refusalMessage } from "@/lib/apiFailure";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Disclosure from "@/components/admin/Disclosure";
@@ -55,8 +56,8 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       setLock(saved.lock ?? null);
       setDrafts(saved.levels.map(draftOfLevel));
       setMoves((saved.moves ?? []).map(draftOfMove));
-    } catch {
-      setError(texts.loadFailed);
+    } catch (e) {
+      setError(refusalMessage(e, texts.loadFailed));
     }
   }, [base]);
 
