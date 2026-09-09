@@ -33,7 +33,7 @@ const worthRule = z.object({
   id: z.string().nullish(),
   levelKey: z.string(INVALID),
   name: z.string(INVALID),
-  when: z.enum(["LOSER_ON_NOTHING", "WINNER_LOST_CREDIT"], INVALID),
+  when: z.array(z.enum(["LOSER_ON_NOTHING", "WINNER_LOST_CREDIT"], INVALID)).min(1, INVALID),
   worth: z.number().int(),
 });
 

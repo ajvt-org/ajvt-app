@@ -379,16 +379,16 @@ describe("what a level says a unit is worth", () => {
 
     await waitFor(() => expect(putMock).toHaveBeenCalled());
     const body = putMock.mock.calls[0][1] as {
-      worthRules: { name: string; levelKey: string; when: string; worth: number }[];
+      worthRules: { name: string; levelKey: string; when: string[]; worth: number }[];
     };
     expect(body.worthRules).toEqual([
-      { id: null, name: "قاعدة", levelKey: "game", when: "LOSER_ON_NOTHING", worth: 3 },
+      { id: null, name: "قاعدة", levelKey: "game", when: ["LOSER_ON_NOTHING"], worth: 3 },
     ]);
   });
 
   it("titles the block once where a level declares one", async () => {
     answering([MATCH, GAME], [], null, [
-      { id: "w1", name: "قاعدة", levelId: "game", when: "LOSER_ON_NOTHING", worth: 2 },
+      { id: "w1", name: "قاعدة", levelId: "game", when: ["LOSER_ON_NOTHING"], worth: 2 },
     ]);
     show();
 
@@ -398,7 +398,7 @@ describe("what a level says a unit is worth", () => {
 
   it("takes a rule away with the level it was declared on", async () => {
     answering([MATCH, GAME], [], null, [
-      { id: "w1", name: "قاعدة", levelId: "game", when: "LOSER_ON_NOTHING", worth: 2 },
+      { id: "w1", name: "قاعدة", levelId: "game", when: ["LOSER_ON_NOTHING"], worth: 2 },
     ]);
     show();
     fireEvent.click(await screen.findByLabelText("حذف المستوى 2"));
