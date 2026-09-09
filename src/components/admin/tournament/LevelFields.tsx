@@ -2,6 +2,7 @@
 
 import { matchLevelsSetup as texts } from "@/lib/texts";
 import { tournament as messages } from "@/lib/messages";
+import type { LevelPlace } from "@/lib/seriesSetup";
 import Disclosure from "@/components/admin/Disclosure";
 import type { LevelDraft } from "./levelDraft";
 import type { FaultField, LevelFix } from "./levelFaults";
@@ -79,16 +80,45 @@ function Num({
   );
 }
 
+function CountedBy({
+  draft,
+  frozen,
+  fix,
+  onFix,
+  onChange,
+}: {
+  draft: LevelDraft;
+  frozen: boolean;
+  fix: LevelFix | null;
+  onFix: () => void;
+  onChange: Change;
+}) {
+  return (
+    <Field label={texts.countedBy} field="countedBy" fix={fix} onFix={onFix}>
+      <select
+        value={draft.countedBy}
+        disabled={frozen}
+        onChange={(e) => onChange({ countedBy: e.target.value as LevelDraft["countedBy"] })}
+        className="input input-sm w-full"
+      >
+        <option value="">{texts.unsettledNever}</option>
+        <option value="OUTCOME">{texts.countedByOutcome}</option>
+        <option value="POINTS">{texts.countedByPoints}</option>
+      </select>
+    </Field>
+  );
+}
+
 export default function LevelFields({
   draft,
-  last,
+  place,
   disabled,
   locked,
   fix,
   onChange,
 }: {
   draft: LevelDraft;
-  last: boolean;
+  place: LevelPlace;
   disabled: boolean;
   locked: boolean;
   fix: LevelFix | null;
@@ -111,7 +141,11 @@ export default function LevelFields({
       </label>
       {wordsFault && <Fault fix={wordsFault} onFix={apply} />}
 
-      {!last && (
+      {place === "only" && (
+        <CountedBy draft={draft} frozen={frozen} fix={fix} onFix={apply} onChange={onChange} />
+      )}
+
+      {place === "above" && (
         <Disclosure
           title={<span className="text-xs">{texts.rules}</span>}
           color="var(--mint-700)"
@@ -119,18 +153,7 @@ export default function LevelFields({
           surface={{ background: "var(--surface-2)" }}
         >
           <div className="space-y-2 pt-2">
-            <Field label={texts.countedBy} field="countedBy" fix={fix} onFix={apply}>
-              <select
-                value={draft.countedBy}
-                disabled={frozen}
-                onChange={(e) => onChange({ countedBy: e.target.value as LevelDraft["countedBy"] })}
-                className="input input-sm w-full"
-              >
-                <option value="">{texts.unsettledNever}</option>
-                <option value="OUTCOME">{texts.countedByOutcome}</option>
-                <option value="POINTS">{texts.countedByPoints}</option>
-              </select>
-            </Field>
+            <CountedBy draft={draft} frozen={frozen} fix={fix} onFix={apply} onChange={onChange} />
 
             <Field label={texts.endsBy} field="endsBy" fix={fix} onFix={apply}>
               <select
@@ -242,7 +265,9 @@ export default function LevelFields({
         </Disclosure>
       )}
 
-      {last && fix && fix.field !== "words" && <Fault fix={fix} onFix={apply} />}
+      {place !== "above" && fix && fix.field !== "words" && fix.field !== "countedBy" && (
+        <Fault fix={fix} onFix={apply} />
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { LevelRow } from "@/lib/matchLevels";
+import { levelPlace } from "@/lib/seriesSetup";
 
 export interface LevelDraft {
   key: string;
@@ -62,16 +63,17 @@ export function draftOfLevel(level: LevelRow): LevelDraft {
 }
 
 export function levelOfDraft(draft: LevelDraft, index: number, count: number): LevelRow {
-  const last = index === count - 1;
-  const endsBy = last ? null : draft.endsBy || null;
-  const unsettled = last ? null : draft.unsettled || null;
+  const place = levelPlace(index, count);
+  const rules = place === "above";
+  const endsBy = rules ? draft.endsBy || null : null;
+  const unsettled = rules ? draft.unsettled || null : null;
   const continues = unsettled === "CONTINUE";
   const continuesByCount = continues && endsBy === "COUNT";
   return {
     id: draft.id ?? "",
     order: index,
     singular: draft.singular.trim(),
-    countedBy: last ? null : draft.countedBy || null,
+    countedBy: place === "last" ? null : draft.countedBy || null,
     endsBy,
     unitCount: endsBy === "COUNT" ? asNumber(draft.unitCount) : null,
     target: endsBy === "TARGET" ? asNumber(draft.target) : null,
@@ -79,8 +81,8 @@ export function levelOfDraft(draft: LevelDraft, index: number, count: number): L
     margin: continues ? asNumber(draft.margin) : null,
     continueUnits: continuesByCount ? asNumber(draft.continueUnits) : null,
     deciderTarget: endsBy === "TARGET" ? asNumber(draft.deciderTarget) : null,
-    startingCredit: last ? 0 : (asNumber(draft.startingCredit) ?? 0),
-    creditWindow: last ? 0 : (asNumber(draft.creditWindow) ?? 0),
+    startingCredit: rules ? (asNumber(draft.startingCredit) ?? 0) : 0,
+    creditWindow: rules ? (asNumber(draft.creditWindow) ?? 0) : 0,
   };
 }
 
