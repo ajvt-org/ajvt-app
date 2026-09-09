@@ -55,7 +55,7 @@ export default function UnitBlock({
         onKeepWorth={(kept) => api.onKeepWorth(unit.id, kept)}
         sides={api.sides}
         busy={api.busy}
-        editable={api.open && unit.children.length === 0}
+        editable={unit.children.length === 0}
         openable={nests}
         opened={opened}
         onToggle={toggle}

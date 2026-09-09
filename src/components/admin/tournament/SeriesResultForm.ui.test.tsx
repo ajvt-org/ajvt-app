@@ -306,6 +306,44 @@ describe("correcting and removing", () => {
     await screen.findByText("لعبة 1");
     expect(screen.queryByLabelText("نتيجة لعبة")).toBeNull();
   });
+
+  it("corrects a unit once the match is over", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A" }), unit("u2", 2, { outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
+    });
+    show();
+    fireEvent.click(await screen.findByLabelText("تعديل لعبة 1"));
+    fireEvent.change(screen.getByLabelText("نتيجة لعبة"), { target: { value: "SIDE_B" } });
+    fireEvent.click(screen.getByRole("button", { name: "حفظ" }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/units/u1");
+  });
+
+  it("removes a unit once the match is over", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A" }), unit("u2", 2, { outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
+    });
+    show();
+    fireEvent.click(await screen.findByLabelText("حذف لعبة 1"));
+
+    await waitFor(() => expect(delMock).toHaveBeenCalled());
+    expect(delMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/units/u1");
+  });
+
+  it("offers no new unit once the match is over and says why", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A" }), unit("u2", 2, { outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
+    });
+    show();
+
+    expect(await screen.findByLabelText("تعديل لعبة 1")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "إضافة لعبة" })).toBeNull();
+    expect(screen.getByText("لا تقبل وحدات أخرى")).toBeDefined();
+  });
 });
 
 describe("the moves of a level", () => {
@@ -401,6 +439,31 @@ describe("a match whose ladder is one level", () => {
     expect(await screen.findByText("النتيجة")).toBeDefined();
     expect(screen.getByText("فوز أحمد")).toBeDefined();
     expect(screen.queryByText("مباراة 1")).toBeNull();
+  });
+
+  it("still offers the pencil and the trash once the match is over", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { levelId: "match", outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
+      levels: ALONE.ladder,
+    });
+    show(ALONE);
+
+    expect(await screen.findByLabelText("تعديل النتيجة")).toBeDefined();
+    expect(screen.getByLabelText("حذف النتيجة")).toBeDefined();
+    expect(screen.queryByText("لا تقبل وحدات أخرى")).toBeNull();
+  });
+
+  it("opens the editor on the result that was saved", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { levelId: "match", outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
+      levels: ALONE.ladder,
+    });
+    show(ALONE);
+    fireEvent.click(await screen.findByLabelText("تعديل النتيجة"));
+
+    expect((screen.getByLabelText("نتيجة مباراة") as HTMLSelectElement).value).toBe("SIDE_A");
   });
 });
 
