@@ -8,15 +8,17 @@ export default function Disclosure({
   color,
   surface,
   className,
+  defaultOpen = false,
   children,
 }: {
   title: ReactNode;
   color: string;
   surface?: CSSProperties;
   className?: string;
+  defaultOpen?: boolean;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <div className={className} style={surface}>
