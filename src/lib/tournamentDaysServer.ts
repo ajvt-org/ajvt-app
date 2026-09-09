@@ -4,7 +4,7 @@ import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { isUniqueViolation } from "./prismaError";
 import { logger } from "./logger";
 import { tournament as messages } from "./messages";
-import { DAY_MS, atTime, dayDate, derivePlan, endsAtFor } from "./tournamentDays";
+import { DAY_MS, atTime, dayDate, dayPositionOf, derivePlan, endsAtFor } from "./tournamentDays";
 import { matchSideTeams, type SideTeams } from "./matchSides";
 
 type Tx = Prisma.TransactionClient;
@@ -234,6 +234,35 @@ export async function setDayRest(activityId: string, dayId: string, isRest: bool
   return prisma.tournamentDay.update({ where: { id: dayId }, data: { isRest } });
 }
 
+async function requireStart(activityId: string) {
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: { startsAt: true },
+  });
+  if (!activity.startsAt) throw new ConflictError(messages.startDateMissing);
+  return activity.startsAt;
+}
+
+function requirePlayable(day: { isRest: boolean }) {
+  if (day.isRest) throw new ConflictError(messages.dayIsRest);
+}
+
+export async function dayForMatchDate(activityId: string, matchDate: Date | null) {
+  const days = await prisma.tournamentDay.findMany({
+    where: { activityId },
+    select: { id: true, position: true, isRest: true },
+  });
+  if (days.length === 0) return undefined;
+  if (matchDate === null) return null;
+
+  const startsAt = await requireStart(activityId);
+  const position = dayPositionOf(startsAt, matchDate);
+  const day = days.find((d) => d.position === position);
+  if (!day) throw new ValidationError(messages.dayOutsideTournament);
+  requirePlayable(day);
+  return day.id;
+}
+
 export async function assignMatch(
   activityId: string,
   matchId: string,
@@ -255,16 +284,12 @@ export async function assignMatch(
     select: { activityId: true, position: true, isRest: true },
   });
   if (!day || day.activityId !== activityId) throw new NotFoundError(messages.dayNotFound);
-  if (day.isRest) throw new ConflictError(messages.dayIsRest);
+  requirePlayable(day);
 
-  const activity = await prisma.activity.findUniqueOrThrow({
-    where: { id: activityId },
-    select: { startsAt: true },
-  });
-  if (!activity.startsAt) throw new ConflictError(messages.startDateMissing);
+  const startsAt = await requireStart(activityId);
 
   return prisma.match.update({
     where: { id: matchId },
-    data: { dayId, matchDate: atTime(dayDate(activity.startsAt, day.position), time) },
+    data: { dayId, matchDate: atTime(dayDate(startsAt, day.position), time) },
   });
 }

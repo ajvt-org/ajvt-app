@@ -6,6 +6,7 @@ import { notifyTeams } from "@/lib/tournamentNotify";
 import { serveMatch, suspendedUserIds } from "@/lib/suspensionServer";
 import { isValidLeaguePairing, knockoutToggleAllowed } from "@/lib/tournament";
 import { parseMatchDate } from "@/lib/clubTime";
+import { dayForMatchDate } from "@/lib/tournamentDaysServer";
 import { kickoffPassed } from "@/lib/matchKickoff";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
@@ -143,6 +144,7 @@ export const PATCH = withRoute(
 
     const updateData: {
       matchDate?: Date | null;
+      dayId?: string | null;
       round?: string | null;
       venue?: string | null;
       order?: number;
@@ -194,7 +196,10 @@ export const PATCH = withRoute(
         : null;
 
     if (matchDate !== undefined) {
-      updateData.matchDate = matchDate ? parseMatchDate(matchDate) : null;
+      const when = matchDate ? parseMatchDate(matchDate) : null;
+      updateData.matchDate = when;
+      const dayId = await dayForMatchDate(match.activityId, when);
+      if (dayId !== undefined) updateData.dayId = dayId;
     }
     if (round !== undefined) {
       updateData.round = round?.trim() || null;

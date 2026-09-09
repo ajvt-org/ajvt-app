@@ -27,10 +27,14 @@ export function timeOf(date: Date): string {
   return toClubWallClock(date).toISOString().slice(11, 16);
 }
 
-function clubDayNumber(date: Date): number {
+export function clubDayNumber(date: Date): number {
   const key = matchDateKey(date);
   const [y, m, d] = key.split("-").map(Number);
   return Math.floor(Date.UTC(y, m - 1, d) / DAY_MS);
+}
+
+export function dayPositionOf(startsAt: Date, date: Date): number {
+  return clubDayNumber(date) - clubDayNumber(startsAt) + 1;
 }
 
 export interface DerivedPlan {

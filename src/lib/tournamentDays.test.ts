@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { atTime, dayDate, derivePlan, endsAtFor, timeOf } from "./tournamentDays";
+import { atTime, dayDate, dayPositionOf, derivePlan, endsAtFor, timeOf } from "./tournamentDays";
 
 const AUG_24 = new Date("2026-08-24T00:00:00.000Z");
 
@@ -18,6 +18,19 @@ describe("day arithmetic", () => {
     const at = atTime(dayDate(AUG_24, 2), "16:30");
     expect(at.toISOString()).toBe("2026-08-25T16:30:00.000Z");
     expect(timeOf(at)).toBe("16:30");
+  });
+
+  it("reads back the position of a date on the day spine", () => {
+    expect(dayPositionOf(AUG_24, new Date("2026-08-24T16:00:00.000Z"))).toBe(1);
+    expect(dayPositionOf(AUG_24, new Date("2026-08-26T09:00:00.000Z"))).toBe(3);
+    expect(dayPositionOf(AUG_24, new Date("2026-08-23T23:00:00.000Z"))).toBe(0);
+  });
+
+  it("gives the same position whatever the time of day", () => {
+    const early = dayPositionOf(AUG_24, new Date("2026-08-25T00:05:00.000Z"));
+    const late = dayPositionOf(AUG_24, new Date("2026-08-25T23:55:00.000Z"));
+    expect(early).toBe(2);
+    expect(late).toBe(2);
   });
 });
 
