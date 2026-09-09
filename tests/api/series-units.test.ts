@@ -226,6 +226,50 @@ describe("recording the units of a series match", () => {
     expect((await remove(match.id, "nope")).status).toBe(404);
   });
 
+  it("carries the move rules the tournament declared, in the order it declared them", async () => {
+    const { activity, match } = await matchOf(CHESS);
+    const level = await prisma.matchLevel.findFirstOrThrow({
+      where: { activityId: activity.id, order: 1 },
+    });
+    await prisma.moveRule.create({
+      data: {
+        activityId: activity.id,
+        levelId: level.id,
+        name: "تيس",
+        unitsToSelf: 2,
+        unitsFromOther: 2,
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+    await prisma.moveRule.create({
+      data: {
+        activityId: activity.id,
+        levelId: level.id,
+        name: "قرن",
+        unitsToSelf: 1,
+        unitsFromOther: 0,
+        createdAt: new Date("2026-01-02T00:00:00Z"),
+      },
+    });
+
+    const body = await (await list(match.id)).json();
+
+    expect(body.moveRules.map((rule: { name: string }) => rule.name)).toEqual(["تيس", "قرن"]);
+    expect(body.moveRules[0].levelId).toBe(level.id);
+    expect(body.moveRules[0].unitsToSelf).toBe(2);
+    expect(body.moveRules[0].endsUnit).toBe(false);
+  });
+
+  it("carries no move rules where the tournament declared none", async () => {
+    const { match } = await matchOf(CHESS);
+    await add(match.id, { outcome: "SIDE_A" });
+
+    const body = await (await list(match.id)).json();
+
+    expect(body.moveRules).toEqual([]);
+    expect(body.moves).toEqual([]);
+  });
+
   it("refuses units on a football match", async () => {
     const { match } = await matchOf([], "FOOTBALL");
 

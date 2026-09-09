@@ -71,6 +71,7 @@ export interface WorthRuleRow {
 export interface SeriesState {
   units: UnitRow[];
   moves: RecordedMoveRow[];
+  moveRules: MoveRuleRow[];
   levels: LevelRow[];
   worthRules: WorthRuleRow[];
   standing: SeriesStandingRow;
