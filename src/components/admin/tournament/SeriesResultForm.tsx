@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import { refusalMessage } from "@/lib/apiFailure";
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
 import SeriesStanding from "./SeriesStanding";
@@ -35,12 +36,12 @@ export default function SeriesResultForm({
     try {
       const [next, declared] = await Promise.all([
         api.get<SeriesState>(base),
-        api.get<{ rules: MoveRuleRow[] }>(`/api/admin/activities/${activityId}/moves`),
+        api.get<{ moves: MoveRuleRow[] }>(`/api/admin/activities/${activityId}/levels`),
       ]);
       setState(next);
-      setRules(declared.rules);
-    } catch {
-      setError(texts.loadFailed);
+      setRules(declared.moves);
+    } catch (e) {
+      setError(refusalMessage(e, texts.loadFailed));
     }
   }, [base, activityId]);
 

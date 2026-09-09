@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SeriesResultForm from "./SeriesResultForm";
+import { ApiError } from "@/lib/api";
 import {
   CHESS_CONFIG,
   SCORED_CONFIG,
@@ -16,14 +17,14 @@ const postMock = vi.fn();
 const patchMock = vi.fn();
 const delMock = vi.fn();
 
-vi.mock("@/lib/api", () => ({
+vi.mock("@/lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api")>()),
   api: {
     get: (...args: unknown[]) => getMock(...args),
     post: (...args: unknown[]) => postMock(...args),
     patch: (...args: unknown[]) => patchMock(...args),
     del: (...args: unknown[]) => delMock(...args),
   },
-  errorMessage: (e: unknown) => (e as Error).message,
 }));
 
 const CHESS = CHESS_CONFIG;
@@ -65,8 +66,8 @@ function mockSeries(state: {
   rules?: MoveRuleRow[];
 }) {
   getMock.mockImplementation(async (url: string) =>
-    String(url).includes("moves")
-      ? { rules: state.rules ?? [] }
+    String(url).includes("/levels")
+      ? { moves: state.rules ?? [], levels: state.levels ?? CHESS.ladder, lock: null }
       : {
           units: state.units,
           moves: state.moves ?? [],
@@ -320,5 +321,30 @@ describe("the moves of a level", () => {
 
     const picker = (await screen.findByLabelText("تسجيل حركة")) as HTMLSelectElement;
     expect(picker.options).toHaveLength(2);
+  });
+});
+
+describe("loading the form", () => {
+  it("asks for the declared rules where the tournament serves them", async () => {
+    show();
+
+    await screen.findByText("ألعاب المباراة");
+    expect(getMock.mock.calls.map((call) => String(call[0]))).toEqual(
+      expect.arrayContaining(["/api/admin/matches/m1/units", "/api/admin/activities/a1/levels"]),
+    );
+  });
+
+  it("shows what the server refused with rather than its own sentence", async () => {
+    getMock.mockRejectedValue(new ApiError("أكمل إعداد جولات البطولة قبل تسجيل نتيجة", 409));
+    show();
+
+    expect(await screen.findByText("أكمل إعداد جولات البطولة قبل تسجيل نتيجة")).toBeDefined();
+  });
+
+  it("keeps its own sentence when the answer explained nothing", async () => {
+    getMock.mockRejectedValue(new ApiError("فشلت العملية", 500));
+    show();
+
+    expect(await screen.findByText("تعذّر تحميل جولات المباراة")).toBeDefined();
   });
 });
