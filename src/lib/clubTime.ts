@@ -15,6 +15,14 @@ const PARTS = new Intl.DateTimeFormat("en-US", {
 
 const DAY_KEY = new Intl.DateTimeFormat("en-CA", { timeZone: CLUB_TIMEZONE });
 
+const LONG_DATE = new Intl.DateTimeFormat("ar", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: CLUB_TIMEZONE,
+});
+
 function wallClockMs(date: Date): number {
   const parts = PARTS.formatToParts(date);
   const value = (type: Intl.DateTimeFormatPartTypes) =>
@@ -67,6 +75,11 @@ export function formatTime(date: string | Date): string {
 export function formatDateTime(date: string | Date): string {
   const at = toClubWallClock(date).toISOString();
   return `${formatDayKey(at.slice(0, 10))} ${at.slice(11, 16)}`;
+}
+
+export function formatLongDate(date: string | Date | null): string {
+  if (!date) return "";
+  return LONG_DATE.format(new Date(date));
 }
 
 export function matchDateKey(date: string | Date): string {

@@ -9,7 +9,8 @@ import PageLoading from "@/components/PageLoading";
 import { formatActivityDates } from "@/lib/activityDates";
 import DayCard from "./DayCard";
 import { timeOf } from "@/lib/tournamentDays";
-import { dayLabel, type DaysPayload } from "./daysTypes";
+import { type DaysPayload } from "./daysTypes";
+import { formatLongDate } from "@/lib/clubTime";
 import { fixtureName } from "@/lib/fixtureTeams";
 import { daysTab } from "@/lib/texts";
 
@@ -174,7 +175,7 @@ export default function DaysTab({
                     .filter((d) => !d.isRest)
                     .map((d) => (
                       <option key={d.id} value={d.id}>
-                        {daysTab.dayOption(d.position, dayLabel(d.date))}
+                        {daysTab.dayOption(d.position, formatLongDate(d.date))}
                       </option>
                     ))}
                 </select>

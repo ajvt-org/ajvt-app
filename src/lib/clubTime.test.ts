@@ -5,6 +5,7 @@ import {
   formatDate,
   formatDateTime,
   formatDayKey,
+  formatLongDate,
   formatTime,
   matchDateKey,
   matchDateToLocalInput,
@@ -122,5 +123,35 @@ describe("drawing a rollup key as a date", () => {
   it("draws the same day a key names it", () => {
     const at = "2026-08-24T23:30:00Z";
     expect(formatDayKey(matchDateKey(at))).toBe(formatDate(at));
+  });
+});
+
+describe("heading a day in long Arabic", () => {
+  it("says which year, so two seasons do not head their days alike", () => {
+    expect(formatLongDate("2026-09-07T12:00:00.000Z")).toContain("2026");
+    expect(formatLongDate("2027-09-06T12:00:00.000Z")).toContain("2027");
+  });
+
+  it("keeps the long weekday and month it was written for", () => {
+    const label = formatLongDate("2026-09-07T12:00:00.000Z");
+
+    expect(label).toContain("الاثنين");
+    expect(label).toContain("سبتمبر");
+  });
+
+  it("says it in one sentence with the year last", () => {
+    expect(formatLongDate("2026-09-07T12:00:00.000Z")).toBe("الاثنين، 7 سبتمبر 2026");
+  });
+
+  it("carries no directional marks of its own", () => {
+    expect(formatLongDate("2026-09-07T12:00:00.000Z")).not.toMatch(/[\u200b-\u200f]/);
+  });
+
+  it("reads the club's day, not the reader's", () => {
+    expect(formatLongDate("2026-09-07T23:30:00.000Z")).toContain("7 سبتمبر");
+  });
+
+  it("stays empty when a day has no date yet", () => {
+    expect(formatLongDate(null)).toBe("");
   });
 });

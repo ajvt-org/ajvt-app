@@ -1,5 +1,3 @@
-import { CLUB_TIMEZONE } from "@/lib/clubTime";
-
 export interface DayMatch {
   id: string;
   matchDate: string | null;
@@ -28,17 +26,6 @@ export interface DaysPayload {
   endsAt: string | null;
   days: TournamentDayRow[];
   unscheduled: DayMatch[];
-}
-
-export function dayLabel(date: string | null): string {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("ar", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: CLUB_TIMEZONE,
-  }).format(new Date(date));
 }
 
 export function sharedVenue(day: TournamentDayRow): string | null {

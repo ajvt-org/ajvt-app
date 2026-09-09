@@ -1,4 +1,4 @@
-import { dayLabel } from "./daysTypes";
+import { formatLongDate } from "@/lib/clubTime";
 
 export default function DayHeading({
   position,
@@ -9,7 +9,7 @@ export default function DayHeading({
   date: string | null;
   isRest: boolean;
 }) {
-  const label = dayLabel(date);
+  const label = formatLongDate(date);
 
   return (
     <span className="min-w-0 grow basis-48 flex items-center gap-2">
