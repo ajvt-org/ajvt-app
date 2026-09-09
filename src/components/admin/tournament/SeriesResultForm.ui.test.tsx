@@ -68,7 +68,7 @@ function mockSeries(state: {
     id: string;
     name: string;
     levelId: string;
-    when: "LOSER_ON_NOTHING";
+    when: "LOSER_ON_NOTHING"[];
     worth: number;
   }[];
 }) {
@@ -485,7 +485,7 @@ describe("a unit a declared rule says is worth more", () => {
     id: "w1",
     name: "قاعدة",
     levelId: "unit",
-    when: "LOSER_ON_NOTHING" as const,
+    when: ["LOSER_ON_NOTHING" as const],
     worth: 2,
   };
 

@@ -63,12 +63,12 @@ const show = () => render(<MatchLevelsCard activityId="a1" />);
 
 const saveButton = () => screen.getByRole("button", { name: "حفظ المستويات" });
 
-async function openMoves(name: string) {
-  fireEvent.click(await screen.findByRole("button", { name: `حركات ${name}` }));
+async function openMoves() {
+  fireEvent.click(await screen.findByRole("button", { name: "الحركات" }));
 }
 
 async function openRules() {
-  const folds = await screen.findAllByRole("button", { name: "قواعد هذا المستوى" });
+  const folds = await screen.findAllByRole("button", { name: "القاعدة" });
   folds.forEach((fold) => fireEvent.click(fold));
 }
 
@@ -111,7 +111,7 @@ describe("the match levels card", () => {
     await openRules();
 
     expect(screen.queryByText("قواعد المباراة عن ألعاب")).toBeNull();
-    expect(screen.getAllByText("قواعد هذا المستوى")).toHaveLength(1);
+    expect(screen.getAllByText("القاعدة")).toHaveLength(1);
   });
 
   it("sends the levels and the moves back in one write", async () => {
@@ -208,7 +208,7 @@ describe("the moves of a level", () => {
   it("reads them where the level they act on is", async () => {
     answering([MATCH, GAME], [TEYSSE]);
     show();
-    await openMoves("لعبة");
+    await openMoves();
     fireEvent.click(screen.getByRole("button", { name: "تيس" }));
 
     expect(screen.getByDisplayValue("تيس")).toBeDefined();
@@ -238,21 +238,21 @@ describe("the moves of a level", () => {
 
     expect(await screen.findByRole("button", { name: "إضافة حركة" })).toBeDefined();
     expect(screen.queryByText("لا حركات معرّفة")).toBeNull();
-    expect(screen.queryByRole("button", { name: "حركات لعبة" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "الحركات" })).toBeNull();
   });
 
   it("titles the block once where a level declares one", async () => {
     answering([MATCH, GAME], [TEYSSE]);
     show();
 
-    expect(await screen.findByRole("button", { name: "حركات لعبة" })).toBeDefined();
+    expect(await screen.findByRole("button", { name: "الحركات" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "إضافة حركة" })).toBeNull();
   });
 
   it("folds a declared move away and opens it when it is asked for", async () => {
     answering([MATCH, GAME], [TEYSSE]);
     show();
-    await openMoves("لعبة");
+    await openMoves();
 
     expect(screen.queryByLabelText("ما تضيفه")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "تيس" }));
@@ -341,26 +341,43 @@ describe("a level played to a target", () => {
   });
 });
 
+const ON_NOTHING = "خصم الفائز لم يكسب شيئاً قبل الوحدة الأخيرة";
+const LOST_CREDIT = "الفائز خسر رصيده الابتدائي";
+
+async function declareRule(name: string, worth: string) {
+  fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
+  fireEvent.change(screen.getByLabelText("اسم القاعدة"), { target: { value: name } });
+  fireEvent.change(screen.getByLabelText("العدد الذي تُحتسب به الوحدة"), {
+    target: { value: worth },
+  });
+}
+
+function sentRules() {
+  return (putMock.mock.calls[0][1] as { worthRules: { when: string[] }[] }).worthRules;
+}
+
 describe("what a level says a unit is worth", () => {
   it("offers one control where a level declares no such rule", async () => {
     show();
 
-    expect(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "احتساب لعبة" })).toBeNull();
+    expect(await screen.findByRole("button", { name: "تحديد الاحتساب" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "الاحتساب" })).toBeNull();
   });
 
   it("asks for a name, a condition and a number", async () => {
     show();
-    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+    fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
 
     expect(screen.getByLabelText("اسم القاعدة")).toBeDefined();
-    expect(screen.getByLabelText("متى تقع")).toBeDefined();
+    expect(screen.getByText("متى تقع")).toBeDefined();
+    expect(screen.getByLabelText(ON_NOTHING)).toBeDefined();
+    expect(screen.getByLabelText(LOST_CREDIT)).toBeDefined();
     expect(screen.getByLabelText("العدد الذي تُحتسب به الوحدة")).toBeDefined();
   });
 
   it("holds back the save until the rule says what it is", async () => {
     show();
-    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+    fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
 
     expect(saveButton().hasAttribute("disabled")).toBe(true);
 
@@ -370,7 +387,7 @@ describe("what a level says a unit is worth", () => {
 
   it("sends it back with the level it was declared on", async () => {
     show();
-    fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+    fireEvent.click(await screen.findByRole("button", { name: "تحديد الاحتساب" }));
     fireEvent.change(screen.getByLabelText("اسم القاعدة"), { target: { value: "قاعدة" } });
     fireEvent.change(screen.getByLabelText("العدد الذي تُحتسب به الوحدة"), {
       target: { value: "3" },
@@ -379,26 +396,64 @@ describe("what a level says a unit is worth", () => {
 
     await waitFor(() => expect(putMock).toHaveBeenCalled());
     const body = putMock.mock.calls[0][1] as {
-      worthRules: { name: string; levelKey: string; when: string; worth: number }[];
+      worthRules: { name: string; levelKey: string; when: string[]; worth: number }[];
     };
     expect(body.worthRules).toEqual([
-      { id: null, name: "قاعدة", levelKey: "game", when: "LOSER_ON_NOTHING", worth: 3 },
+      { id: null, name: "قاعدة", levelKey: "game", when: ["LOSER_ON_NOTHING"], worth: 3 },
     ]);
+  });
+
+  it("sends both situations where one rule holds both", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+    fireEvent.click(screen.getByLabelText(LOST_CREDIT));
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    expect(sentRules()[0].when).toEqual(["LOSER_ON_NOTHING", "WINNER_LOST_CREDIT"]);
+  });
+
+  it("sends the one situation a rule was left holding", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+    fireEvent.click(screen.getByLabelText(ON_NOTHING));
+    fireEvent.click(screen.getByLabelText(LOST_CREDIT));
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    expect(sentRules()[0].when).toEqual(["WINNER_LOST_CREDIT"]);
+  });
+
+  it("holds back the save where a rule was left holding no situation", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+    fireEvent.click(screen.getByLabelText(ON_NOTHING));
+
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText("حدد حالة واحدة على الأقل تقع فيها القاعدة")).toBeDefined();
   });
 
   it("titles the block once where a level declares one", async () => {
     answering([MATCH, GAME], [], null, [
-      { id: "w1", name: "قاعدة", levelId: "game", when: "LOSER_ON_NOTHING", worth: 2 },
+      { id: "w1", name: "قاعدة", levelId: "game", when: ["LOSER_ON_NOTHING"], worth: 2 },
     ]);
     show();
 
-    expect(await screen.findByRole("button", { name: "احتساب لعبة" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "إضافة قاعدة احتساب" })).toBeNull();
+    expect(await screen.findByRole("button", { name: "الاحتساب" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "تحديد الاحتساب" })).toBeNull();
+  });
+
+  it("offers no way to declare a second rule on a level that has one", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+
+    expect(screen.queryByRole("button", { name: "تحديد الاحتساب" })).toBeNull();
+    expect(screen.getAllByLabelText("اسم القاعدة")).toHaveLength(1);
   });
 
   it("takes a rule away with the level it was declared on", async () => {
     answering([MATCH, GAME], [], null, [
-      { id: "w1", name: "قاعدة", levelId: "game", when: "LOSER_ON_NOTHING", worth: 2 },
+      { id: "w1", name: "قاعدة", levelId: "game", when: ["LOSER_ON_NOTHING"], worth: 2 },
     ]);
     show();
     fireEvent.click(await screen.findByLabelText("حذف المستوى 2"));

@@ -4,7 +4,7 @@ export interface WorthRuleRow {
   id: string;
   name: string;
   levelId: string;
-  when: WorthWhen;
+  when: WorthWhen[];
   worth: number;
 }
 
@@ -13,12 +13,12 @@ export interface WorthDraft {
   id: string | null;
   levelKey: string;
   name: string;
-  when: WorthWhen;
+  when: WorthWhen[];
   worth: string;
 }
 
 export function blankWorth(key: string, levelKey: string): WorthDraft {
-  return { key, id: null, levelKey, name: "", when: "LOSER_ON_NOTHING", worth: "2" };
+  return { key, id: null, levelKey, name: "", when: ["LOSER_ON_NOTHING"], worth: "2" };
 }
 
 export function draftOfWorth(rule: WorthRuleRow): WorthDraft {

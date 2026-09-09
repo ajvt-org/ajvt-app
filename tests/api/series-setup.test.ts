@@ -13,14 +13,22 @@ async function seriesTournament() {
   });
 }
 
-const save = (id: string, levels: object[], moves: object[] = []) =>
+const save = (id: string, levels: object[], moves: object[] = [], worthRules: object[] = []) =>
   SAVE(
     put(`/api/admin/activities/${id}/levels`, {
       levels: levels.map((level, at) => ({ key: `k${at}`, ...level })),
       moves,
+      worthRules,
     }),
     withId(id),
   );
+
+const worthRule = (name: string) => ({
+  levelKey: "k1",
+  name,
+  when: ["LOSER_ON_NOTHING"],
+  worth: 2,
+});
 
 const read = (id: string) => READ(new Request(`http://x/a/${id}/levels`) as never, withId(id));
 
@@ -135,6 +143,30 @@ describe("declaring the levels of a series tournament", () => {
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(messages.seriesSetup.rulesOnTheLastLevel);
+  });
+
+  it("takes one counting rule on a level", async () => {
+    const activity = await seriesTournament();
+
+    const res = await save(activity.id, CHESS_LEVELS, [], [worthRule("فكتوار أبيض")]);
+
+    expect(res.status).toBe(200);
+    expect(await prisma.worthRule.count({ where: { activityId: activity.id } })).toBe(1);
+  });
+
+  it("refuses a second counting rule on the same level", async () => {
+    const activity = await seriesTournament();
+
+    const res = await save(
+      activity.id,
+      CHESS_LEVELS,
+      [],
+      [worthRule("فكتوار أبيض"), worthRule("تيسه")],
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(messages.worthRule.twice);
+    expect(await prisma.worthRule.count({ where: { activityId: activity.id } })).toBe(0);
   });
 
   it("stores a match of one level counted by the points of that one game", async () => {

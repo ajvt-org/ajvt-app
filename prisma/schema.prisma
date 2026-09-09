@@ -403,7 +403,7 @@ model WorthRule {
   levelId    String
   level      MatchLevel  @relation(fields: [levelId], references: [id], onDelete: Cascade)
   name       String
-  when       WorthWhen
+  when       WorthWhen[]
   worth      Int
   createdAt  DateTime    @default(now())
   detectedOn MatchUnit[]
