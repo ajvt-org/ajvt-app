@@ -302,6 +302,8 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/LevelMoves.tsx",
   "src/components/tournament/MatchUnits.tsx",
   "src/components/StandingsBoard.tsx",
+  "src/app/membership/SubmittedCard.tsx",
+  "src/app/membership/page.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
