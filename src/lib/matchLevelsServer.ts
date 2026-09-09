@@ -79,6 +79,7 @@ function worthData(rule: WorthInput, levelId: string) {
 
 function guardWorthRules(rules: WorthInput[], keyed: Set<string>): void {
   const names = new Set<string>();
+  const levels = new Set<string>();
   for (const rule of rules) {
     const problem = worthRuleProblem({
       ...rule,
@@ -88,6 +89,8 @@ function guardWorthRules(rules: WorthInput[], keyed: Set<string>): void {
     const name = rule.name.trim();
     if (names.has(name)) throw new ConflictError(messages.worthNameTaken);
     names.add(name);
+    if (levels.has(rule.levelKey)) throw new ValidationError(messages.worthRule.twice);
+    levels.add(rule.levelKey);
   }
 }
 
