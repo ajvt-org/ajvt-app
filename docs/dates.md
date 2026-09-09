@@ -43,6 +43,8 @@ These are the exports and what each one draws, for the instant `2026-09-07T19:28
 | `formatDate` | `2026/09/07` | a day with no hour to it |
 | `formatTime` | `19:28` | an hour under a heading that carries the day |
 | `formatLongDate` | `الاثنين، 7 سبتمبر 2026` | a heading above a day's rows, and nothing else |
+| `formatMonthName` | `سبتمبر` | a phrase that names a month without a full date |
+| `clubDayParts` | `{ year: 2026, month: 8, day: 7 }` | calendar arithmetic on the club's day |
 | `formatDayKey` | `2026/09/07` | a stored day key drawn as a date |
 | `matchDateKey` | `2026-09-07` | grouping and sorting, never a screen |
 | `todayClubDateKey` | the same key for today | comparing a stored day against now |

@@ -126,4 +126,16 @@ describe("reading in another timezone", () => {
     expect(shown({ startsAt: utc("2026-01-01") })).toBe("1 يناير");
     expect(shown({ startsAt: utc("2025-12-31") })).toBe("31 ديسمبر 2025");
   });
+
+  it("keeps a late evening activity on the club's day", () => {
+    expect(shown({ startsAt: at("2026-09-12", "23:30"), withTime: true })).toBe(
+      "12 سبتمبر، الساعة 23:30",
+    );
+  });
+
+  it("reads the hour on the club's clock", () => {
+    expect(shown({ startsAt: at("2026-09-12", "19:28"), withTime: true })).toBe(
+      "12 سبتمبر، الساعة 19:28",
+    );
+  });
 });
