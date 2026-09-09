@@ -2,6 +2,7 @@
 
 import HalfPoints from "@/components/HalfPoints";
 import { countedUnits, definiteUnits } from "@/lib/matchLevels";
+import { extensionLine } from "@/lib/seriesExtension";
 import { seriesResult as texts } from "@/lib/texts";
 import IconLabel from "@/components/IconLabel";
 import type { SeriesConfig } from "./seriesConfig";
@@ -9,7 +10,7 @@ import type { SeriesStandingRow } from "./seriesTypes";
 
 export function stateLine(standing: SeriesStandingRow, config: SeriesConfig, sides: string[]) {
   if (standing.extending && !standing.over) {
-    return texts.extending(countedUnits(config.match.continueUnits ?? 0, config.unit));
+    return extensionLine(config.match, config.unit) ?? texts.inProgress;
   }
   if (!standing.over) {
     return config.match.endsBy === "TARGET" && config.match.target !== null

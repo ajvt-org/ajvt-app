@@ -110,6 +110,19 @@ describe("a level that is continued while it stays unsettled", () => {
   it("wants the units it continues by", () => {
     expect(fault([{ ...knockout, continueUnits: null }, game])).toBe("continueUnitsMissing");
   });
+
+  it("asks a level played to a target for the margin alone", () => {
+    const target: LevelRow = {
+      ...knockout,
+      endsBy: "TARGET",
+      unitCount: null,
+      target: 100,
+      continueUnits: null,
+    };
+
+    expect(ladderProblem([target, game])).toBeNull();
+    expect(fault([{ ...target, margin: null }, game])).toBe("marginMissing");
+  });
 });
 
 describe("a starting credit", () => {

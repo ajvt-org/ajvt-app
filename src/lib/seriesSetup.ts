@@ -61,6 +61,7 @@ function endingFault(level: LevelRow): LevelProblem | null {
 function unsettledFault(level: LevelRow): LevelProblem | null {
   if (level.unsettled !== "CONTINUE") return null;
   if (!numberIn(level.margin, 1, MAX_UNIT_COUNT)) return "marginMissing";
+  if (level.endsBy === "TARGET") return null;
   if (!numberIn(level.continueUnits, 1, MAX_UNIT_COUNT)) return "continueUnitsMissing";
   return null;
 }
