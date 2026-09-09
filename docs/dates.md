@@ -61,6 +61,16 @@ These are the exports and what each one draws, for the instant `2026-09-07T19:28
 `clubOffsetMs`, `toClubWallClock` and `fromClubWallClock` are the plumbing under those. A
 screen has no reason to call them.
 
+## What holds this page up
+
+`src/lib/dateFormatters.test.ts` walks `src/` looking for `toLocaleDateString`,
+`toLocaleTimeString`, `toLocaleString`, `Intl.DateTimeFormat` and a private table of the
+Arabic month names, and it fails on any file that is not on its allowlist. Each entry on that
+list carries the reason it is there.
+
+If it has just failed on something you wrote, the answer is above. If you believe you have
+found a third exception, it goes on this page with its reason before it goes on that list.
+
 ## The two exceptions
 
 Both are allowed, and both are named here because an exception nobody wrote down is how the
