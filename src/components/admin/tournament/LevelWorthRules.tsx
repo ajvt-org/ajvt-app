@@ -52,9 +52,9 @@ function RuleFields({
       <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
         <span className="block mb-1">{texts.worthWhen}</span>
         <select
-          value={rule.when}
+          value={rule.when[0]}
           disabled={disabled}
-          onChange={(e) => onChange(rule.key, { when: e.target.value as WorthWhen })}
+          onChange={(e) => onChange(rule.key, { when: [e.target.value as WorthWhen] })}
           className="input input-sm w-full"
         >
           <option value="LOSER_ON_NOTHING">{texts.worthLoserOnNothing}</option>

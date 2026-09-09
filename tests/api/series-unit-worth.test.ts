@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin } from "./helpers";
 import { sideIdData } from "@/lib/matchSides";
 import { ladderData, type LevelFixture } from "./ladders";
+import type { WorthWhen } from "@/lib/unitWorth";
 
 import { GET as LIST, POST as ADD } from "@/app/api/admin/matches/[matchId]/units/route";
 import { PATCH as KEEP } from "@/app/api/admin/matches/[matchId]/units/[unitId]/worth/route";
@@ -37,7 +38,7 @@ const correct = (matchId: string, unitId: string, body: object) =>
 const remove = (matchId: string, unitId: string) =>
   REMOVE(del(`/api/admin/matches/${matchId}/units/${unitId}`), withUnit(matchId, unitId));
 
-async function tournament(when: "LOSER_ON_NOTHING" | "WINNER_LOST_CREDIT", worth = 2) {
+async function tournament(when: WorthWhen[], worth = 2) {
   const activity = await prisma.activity.create({
     data: {
       title: "بطولة",
@@ -77,7 +78,7 @@ describe("a unit a level says is worth more", () => {
   });
 
   it("counts for the declared number where the loser was on nothing as the last unit began", async () => {
-    const { match, rule } = await tournament("LOSER_ON_NOTHING");
+    const { match, rule } = await tournament(["LOSER_ON_NOTHING"]);
 
     const set = await setWon(match.id, [
       [5, 0],
@@ -90,7 +91,7 @@ describe("a unit a level says is worth more", () => {
   });
 
   it("reads the tally before the closing unit rather than the final standing", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
 
     const set = await setWon(match.id, [
       [5, 1],
@@ -103,7 +104,7 @@ describe("a unit a level says is worth more", () => {
   });
 
   it("moves the total of the level above it", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
 
     await setWon(match.id, [
       [5, 0],
@@ -115,7 +116,7 @@ describe("a unit a level says is worth more", () => {
   });
 
   it("lets go of a rule once the score it was read from is corrected", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
     const set = await setWon(match.id, [
       [5, 0],
       [5, 0],
@@ -130,7 +131,7 @@ describe("a unit a level says is worth more", () => {
   });
 
   it("lets go of it again once a unit is removed", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
     const set = await setWon(match.id, [
       [5, 0],
       [5, 0],
@@ -144,7 +145,7 @@ describe("a unit a level says is worth more", () => {
   });
 
   it("says nothing about a unit while it is still being played", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
 
     const set = await setWon(match.id, [[5, 0]]);
 
@@ -153,7 +154,7 @@ describe("a unit a level says is worth more", () => {
   });
 
   it("takes no rule that was declared for another level", async () => {
-    const { match, activity, levels } = await tournament("LOSER_ON_NOTHING");
+    const { match, activity, levels } = await tournament(["LOSER_ON_NOTHING"]);
     await prisma.worthRule.updateMany({
       where: { activityId: activity.id },
       data: { levelId: levels[0].id },
@@ -175,7 +176,7 @@ describe("a unit the winner took after losing its starting credit", () => {
   });
 
   async function credited() {
-    const made = await tournament("WINNER_LOST_CREDIT", 3);
+    const made = await tournament(["WINNER_LOST_CREDIT"], 3);
     await prisma.matchLevel.update({
       where: { id: made.levels[1].id },
       data: { startingCredit: 4, creditWindow: 2 },
@@ -224,7 +225,7 @@ describe("an admin who says a detected rule does not apply", () => {
     );
 
   it("turns it off for that unit and takes the number back", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
     const set = await setWon(match.id, [
       [5, 0],
       [5, 0],
@@ -239,7 +240,7 @@ describe("an admin who says a detected rule does not apply", () => {
   });
 
   it("leaves it off while the scores are corrected around it", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
     const set = await setWon(match.id, [
       [5, 0],
       [5, 0],
@@ -255,7 +256,7 @@ describe("an admin who says a detected rule does not apply", () => {
   });
 
   it("puts it back where the admin says so", async () => {
-    const { match, rule } = await tournament("LOSER_ON_NOTHING");
+    const { match, rule } = await tournament(["LOSER_ON_NOTHING"]);
     const set = await setWon(match.id, [
       [5, 0],
       [5, 0],
@@ -271,7 +272,7 @@ describe("an admin who says a detected rule does not apply", () => {
   });
 
   it("refuses anything that is not on or off", async () => {
-    const { match } = await tournament("LOSER_ON_NOTHING");
+    const { match } = await tournament(["LOSER_ON_NOTHING"]);
     const set = await setWon(match.id, [
       [5, 0],
       [5, 0],

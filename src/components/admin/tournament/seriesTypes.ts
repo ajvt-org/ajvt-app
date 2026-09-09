@@ -64,7 +64,7 @@ export interface WorthRuleRow {
   id: string;
   name: string;
   levelId: string;
-  when: "LOSER_ON_NOTHING" | "WINNER_LOST_CREDIT";
+  when: ("LOSER_ON_NOTHING" | "WINNER_LOST_CREDIT")[];
   worth: number;
 }
 

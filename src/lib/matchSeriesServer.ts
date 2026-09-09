@@ -22,7 +22,7 @@ import {
   type MoveRow,
   type UnitRow,
 } from "./seriesTree";
-import { detectedWorth, type WorthWhen } from "./unitWorth";
+import { detectedWorth, type WorthRuleShape } from "./unitWorth";
 
 export const LEVEL_FIELDS = {
   id: true,
@@ -340,12 +340,8 @@ interface WorthUpdate {
   worthRuleId: string | null;
 }
 
-interface DeclaredWorth {
+interface DeclaredWorth extends WorthRuleShape {
   id: string;
-  name: string;
-  levelId: string;
-  when: WorthWhen;
-  worth: number;
 }
 
 function worthUpdatesFor(match: LoadedMatch, rules: DeclaredWorth[]): WorthUpdate[] {
