@@ -192,4 +192,14 @@ describe("the switches on the انتساب form", () => {
 
     expect(res.status).toBe(400);
   });
+
+  it("leaves a switch alone where the caller says nothing about it", async () => {
+    await PATCH(post("/api/admin/settings", { ...valid, asksBankReference: true }));
+    const { asksBankReference, ...saidNothing } = valid;
+    void asksBankReference;
+
+    await PATCH(post("/api/admin/settings", saidNothing));
+
+    expect((await (await adminGet()).json()).settings.asksBankReference).toBe(true);
+  });
 });
