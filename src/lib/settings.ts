@@ -5,6 +5,8 @@ export const SETTINGS_ID = "singleton";
 export interface AppSettingsValues {
   membershipFee: number;
   membershipYear: number;
+  asksBankReference: boolean;
+  showsReferenceCode: boolean;
   supportWhatsapp: string;
   tempPasswordHours: number;
   whatsappGroup: string | null;
@@ -14,6 +16,8 @@ export interface AppSettingsValues {
 
 export const DEFAULT_SETTINGS: Omit<AppSettingsValues, "membershipYear"> = {
   membershipFee: 100,
+  asksBankReference: false,
+  showsReferenceCode: false,
   supportWhatsapp: "22241070328",
   tempPasswordHours: 1,
   whatsappGroup: null,

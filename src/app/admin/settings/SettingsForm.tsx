@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import { defaultSettings, type AppSettingsValues } from "@/lib/settings";
 import PageLoading from "@/components/PageLoading";
 import SettingsFieldInput from "./SettingsFieldInput";
+import SettingsSwitch from "./SettingsSwitch";
 import { groupedFields } from "./settingsFields";
 import { settingsPage } from "@/lib/texts";
 
@@ -57,14 +58,23 @@ export default function SettingsForm() {
           <p className="text-sm font-black" style={{ color: "var(--mint-700)" }}>
             {group.title}
           </p>
-          {group.fields.map((field) => (
-            <SettingsFieldInput
-              key={field.key}
-              field={field}
-              value={values[field.key]}
-              onChange={(value) => setValues((p) => ({ ...p, [field.key]: value }))}
-            />
-          ))}
+          {group.fields.map((field) =>
+            field.kind === "switch" ? (
+              <SettingsSwitch
+                key={field.key}
+                field={field}
+                value={values[field.key] === true}
+                onChange={(value) => setValues((p) => ({ ...p, [field.key]: value }))}
+              />
+            ) : (
+              <SettingsFieldInput
+                key={field.key}
+                field={field}
+                value={values[field.key] as string | number | null}
+                onChange={(value) => setValues((p) => ({ ...p, [field.key]: value }))}
+              />
+            ),
+          )}
         </div>
       ))}
 
