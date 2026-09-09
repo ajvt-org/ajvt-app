@@ -68,6 +68,11 @@ async function openMoves(name: string) {
   fireEvent.click(await screen.findByRole("button", { name: `حركات ${name}` }));
 }
 
+async function openRules() {
+  const folds = await screen.findAllByRole("button", { name: "قواعد هذا المستوى" });
+  folds.forEach((fold) => fireEvent.click(fold));
+}
+
 describe("the match levels card", () => {
   it("names the first level as the match itself", async () => {
     show();
@@ -82,20 +87,31 @@ describe("the match levels card", () => {
     expect(screen.getByDisplayValue("ألعاب")).toBeDefined();
   });
 
-  it("reads a level back as one sentence in the words the admin typed", async () => {
+  it("says nothing back about a level the fields under it already state", async () => {
     show();
 
+    await screen.findByDisplayValue("لعبة");
     expect(
-      await screen.findByText("تُلعب 2 ألعاب تُحسب بنتيجتها، وإن تعادلا انتهى متعادلاً"),
-    ).toBeDefined();
+      screen.queryByText("تُلعب 2 ألعاب تُحسب بنتيجتها، وإن تعادلا انتهى متعادلاً"),
+    ).toBeNull();
   });
 
-  it("names the level under it on the fields that are about it", async () => {
+  it("keeps the rules of a level folded away until they are asked for", async () => {
     show();
 
-    expect(await screen.findByText("بم تُحسب ألعاب")).toBeDefined();
+    await screen.findByDisplayValue("لعبة");
+    expect(screen.queryByText("بم تُحسب ألعاب")).toBeNull();
+
+    await openRules();
+    expect(screen.getByText("بم تُحسب ألعاب")).toBeDefined();
     expect(screen.getByText("كم لعبة")).toBeDefined();
-    expect(screen.getByText("قواعد المباراة عن ألعاب")).toBeDefined();
+  });
+
+  it("titles the rules once and not by the words of the level under it", async () => {
+    show();
+    await openRules();
+
+    expect(screen.queryByText("قواعد المباراة عن ألعاب")).toBeNull();
   });
 
   it("sends the levels and the moves back in one write", async () => {
@@ -125,6 +141,7 @@ describe("the match levels card", () => {
 
   it("puts the fault on the field that caused it", async () => {
     show();
+    await openRules();
     fireEvent.change(await screen.findByLabelText("كم لعبة"), { target: { value: "" } });
 
     const field = screen.getByLabelText("كم لعبة").closest("div");
@@ -133,6 +150,7 @@ describe("the match levels card", () => {
 
   it("offers the change a rule needs rather than refusing the save", async () => {
     show();
+    await openRules();
     fireEvent.change(await screen.findByLabelText("الرصيد الابتدائي"), { target: { value: "26" } });
 
     fireEvent.click(screen.getByRole("button", { name: "أصلحها" }));
@@ -170,14 +188,14 @@ describe("the moves of a level", () => {
     answering([MATCH, GAME], [TEYSSE]);
     show();
     await openMoves("لعبة");
+    fireEvent.click(screen.getByRole("button", { name: "تيس" }));
 
     expect(screen.getByDisplayValue("تيس")).toBeDefined();
   });
 
   it("adds one against the level it sits under", async () => {
     show();
-    await openMoves("لعبة");
-    fireEvent.click(screen.getByRole("button", { name: "إضافة حركة" }));
+    fireEvent.click(await screen.findByRole("button", { name: "إضافة حركة" }));
     fireEvent.change(screen.getByLabelText("اسم الحركة"), { target: { value: "تيس" } });
     fireEvent.click(screen.getByLabelText("تنهي الوحدة التي تقع عليها"));
     fireEvent.click(saveButton());
@@ -189,10 +207,35 @@ describe("the moves of a level", () => {
 
   it("holds back the save while a move has no name", async () => {
     show();
-    await openMoves("لعبة");
-    fireEvent.click(screen.getByRole("button", { name: "إضافة حركة" }));
+    fireEvent.click(await screen.findByRole("button", { name: "إضافة حركة" }));
 
     expect(saveButton().hasAttribute("disabled")).toBe(true);
+  });
+
+  it("offers one control and nothing else where a level declares none", async () => {
+    show();
+
+    expect(await screen.findByRole("button", { name: "إضافة حركة" })).toBeDefined();
+    expect(screen.queryByText("لا حركات معرّفة")).toBeNull();
+    expect(screen.queryByRole("button", { name: "حركات لعبة" })).toBeNull();
+  });
+
+  it("titles the block once where a level declares one", async () => {
+    answering([MATCH, GAME], [TEYSSE]);
+    show();
+
+    expect(await screen.findByRole("button", { name: "حركات لعبة" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "إضافة حركة" })).toBeNull();
+  });
+
+  it("folds a declared move away and opens it when it is asked for", async () => {
+    answering([MATCH, GAME], [TEYSSE]);
+    show();
+    await openMoves("لعبة");
+
+    expect(screen.queryByLabelText("ما تضيفه")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "تيس" }));
+    expect(screen.getByLabelText("ما تضيفه")).toBeDefined();
   });
 
   it("takes a move away with the level it acts on", async () => {
@@ -252,6 +295,7 @@ describe("a level played to a target", () => {
   it("asks for the margin and not for a number of units", async () => {
     answering([TARGET, GAME]);
     show();
+    await openRules();
 
     expect(await screen.findByText("الفارق الذي يحسمه")).toBeDefined();
     expect(screen.queryByText("تُستكمل بكم لعبة")).toBeNull();
@@ -270,6 +314,7 @@ describe("a level played to a target", () => {
   it("keeps asking a level counted in units for both", async () => {
     answering([{ ...TARGET, endsBy: "COUNT", unitCount: 2, target: null }, GAME]);
     show();
+    await openRules();
 
     expect(await screen.findByText("الفارق الذي يحسمه")).toBeDefined();
     expect(screen.getByText("تُستكمل بكم لعبة")).toBeDefined();

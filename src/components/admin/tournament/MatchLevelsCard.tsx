@@ -3,18 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { refusalMessage } from "@/lib/apiFailure";
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import Disclosure from "@/components/admin/Disclosure";
 import { useToast } from "@/components/Toast";
 import { matchLevelsSetup as texts } from "@/lib/texts";
-import { readBackOf } from "@/lib/levelReadBack";
 import { tournament as messages } from "@/lib/messages";
 import type { ConfigurationLock } from "@/lib/configurationLock";
 import type { LevelRow } from "@/lib/matchLevels";
 import type { MoveRuleRow } from "./seriesTypes";
-import LevelFields from "./LevelFields";
-import LevelMoves from "./LevelMoves";
+import LevelCard from "./LevelCard";
 import { levelFixes, moveFixes } from "./levelFaults";
 import {
   blankDraft,
@@ -34,6 +30,10 @@ export function configurationHolds(drafts: LevelDraft[], moves: MoveDraft[]): bo
     moves,
     drafts.map((draft) => draft.key),
   ).every((problem) => problem === null);
+}
+
+function nameOf(draft: LevelDraft, index: number): string {
+  return draft.singular.trim() || (index === 0 ? texts.matchLevel : texts.levelNumber(index + 1));
 }
 
 export default function MatchLevelsCard({ activityId }: { activityId: string }) {
@@ -132,99 +132,37 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       <div className="space-y-3">
         {drafts.map((draft, index) => {
           const below = drafts[index + 1] ?? null;
-          const own =
-            draft.singular.trim() ||
-            (index === 0 ? texts.matchLevel : texts.levelNumber(index + 1));
-          const under = below
-            ? {
-                singular: below.singular.trim() || texts.singular,
-                plural: below.plural.trim() || texts.plural,
-              }
-            : null;
           const here = moves.filter((move) => move.levelKey === draft.key);
           return (
-            <div
+            <LevelCard
               key={draft.key}
-              className="rounded-lg p-2.5 space-y-2"
-              style={{ border: "1px solid var(--mint-100)" }}
-            >
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="min-w-0 flex-1 text-xs font-bold"
-                  style={{ color: "var(--mint-700)" }}
-                >
-                  <bdi>{own}</bdi>
-                </span>
-                <button
-                  aria-label={texts.moveUp(index + 1)}
-                  onClick={() => setDrafts(movedDraft(drafts, index, index - 1))}
-                  disabled={frozen || index === 0}
-                  className="btn btn-icon btn-sm"
-                >
-                  <Icon name="chevronUp" size={13} />
-                </button>
-                <button
-                  aria-label={texts.moveDown(index + 1)}
-                  onClick={() => setDrafts(movedDraft(drafts, index, index + 1))}
-                  disabled={frozen || index === drafts.length - 1}
-                  className="btn btn-icon btn-sm"
-                >
-                  <Icon name="chevronDown" size={13} />
-                </button>
-                <button
-                  aria-label={texts.removeLevel(index + 1)}
-                  onClick={() => dropLevel(index)}
-                  disabled={frozen}
-                  className="btn btn-icon btn-sm"
-                  style={{ color: "#991b1b" }}
-                >
-                  <Icon name="trash" size={13} />
-                </button>
-              </div>
-
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                <bdi>{readBackOf(ladder[index], under)}</bdi>
-              </p>
-
-              <LevelFields
-                draft={draft}
-                own={own}
-                under={under}
-                last={index === drafts.length - 1}
-                disabled={frozen}
-                locked={false}
-                fix={fixes[index]}
-                onChange={(next) => patch(index, next)}
-              />
-
-              {index > 0 && (
-                <Disclosure
-                  title={<span className="text-xs">{texts.moves(own)}</span>}
-                  color="var(--mint-700)"
-                  className="rounded-lg px-2.5 py-2"
-                  surface={{ background: "var(--surface-2)" }}
-                >
-                  <LevelMoves
-                    moves={here}
-                    faults={here.map((move) => faults[moves.indexOf(move)])}
-                    under={own}
-                    disabled={frozen}
-                    onChange={(key, next) =>
-                      setMoves(
-                        moves.map((move) => (move.key === key ? { ...move, ...next } : move)),
-                      )
+              draft={draft}
+              own={nameOf(draft, index)}
+              index={index}
+              count={drafts.length}
+              under={
+                below
+                  ? {
+                      singular: below.singular.trim() || texts.singular,
+                      plural: below.plural.trim() || texts.plural,
                     }
-                    onAdd={() =>
-                      setMoves([
-                        ...moves,
-                        blankMove(`new-${moves.length}-${Date.now()}`, draft.key),
-                      ])
-                    }
-                    onRemove={(key) => setMoves(moves.filter((move) => move.key !== key))}
-                  />
-                </Disclosure>
-              )}
-            </div>
+                  : null
+              }
+              frozen={frozen}
+              fix={fixes[index]}
+              moves={{
+                drafts: here,
+                faults: here.map((move) => faults[moves.indexOf(move)]),
+                onChange: (key, next) =>
+                  setMoves(moves.map((move) => (move.key === key ? { ...move, ...next } : move))),
+                onAdd: () =>
+                  setMoves([...moves, blankMove(`new-${moves.length}-${Date.now()}`, draft.key)]),
+                onRemove: (key) => setMoves(moves.filter((move) => move.key !== key)),
+              }}
+              onChange={(next) => patch(index, next)}
+              onMove={(to) => setDrafts(movedDraft(drafts, index, to))}
+              onRemove={() => dropLevel(index)}
+            />
           );
         })}
       </div>
