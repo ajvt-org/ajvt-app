@@ -49,7 +49,7 @@ describe("saying how somebody was registered", () => {
 
 describe("saying when the request arrived", () => {
   it("reads the day the row was created", () => {
-    expect(requestedOn(registration({ createdAt: "2026-08-20T22:15:00.000Z" }))).toBe("2026-08-20");
+    expect(requestedOn(registration({ createdAt: "2026-08-20T22:15:00.000Z" }))).toBe("2026/08/20");
   });
 });
 

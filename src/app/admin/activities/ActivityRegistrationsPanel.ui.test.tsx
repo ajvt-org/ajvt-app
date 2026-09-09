@@ -469,7 +469,7 @@ describe("who put a registrant there and when", () => {
     show([], [registration({ source: "ADMIN", recordedBy: "مسؤول" })]);
 
     expect(screen.getByText("أضافه مسؤول")).toBeTruthy();
-    expect(screen.getByText("2026-09-01")).toBeTruthy();
+    expect(screen.getByText("2026/09/01")).toBeTruthy();
   });
 
   it("says a row written before the record is unknown rather than guessing", () => {

@@ -191,7 +191,7 @@ describe("one card for one membership year", () => {
 
     expect(screen.getByText(texts.states.ENDED)).toBeTruthy();
     expect(screen.getByText("مخالفة النظام الداخلي")).toBeTruthy();
-    expect(screen.getByText("2026-09-01")).toBeTruthy();
+    expect(screen.getByText("2026/09/01")).toBeTruthy();
     expect(screen.getByText("eminyous")).toBeTruthy();
     expect(screen.getByRole("button", { name: new RegExp(membershipEnding.restore) })).toBeTruthy();
     expect(screen.queryByRole("button", { name: new RegExp(membershipEnding.end) })).toBeNull();
