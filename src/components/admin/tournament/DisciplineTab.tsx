@@ -5,18 +5,20 @@ import { api, errorMessage } from "@/lib/api";
 import { counted } from "@/lib/arabicCount";
 import { MATCH } from "@/lib/messages";
 import { discipline as texts } from "@/lib/texts";
+import { formatDate } from "@/lib/clubTime";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import IconLabel from "@/components/IconLabel";
 import type { DisciplineRules, Suspension, Team } from "./types";
 
-function untilDate(value: string) {
-  return new Intl.DateTimeFormat("ar", { dateStyle: "medium" }).format(new Date(value));
-}
-
-function scopeText(s: Suspension) {
+function scopeText(s: Suspension): React.ReactNode {
   if (s.scope === "INDEFINITE") return texts.indefinite;
   if (s.scope === "MATCHES") return texts.remaining(counted(s.matches ?? 0, MATCH));
-  return s.until ? texts.until(untilDate(s.until)) : texts.indefinite;
+  if (!s.until) return texts.indefinite;
+  return (
+    <>
+      {texts.until} <bdi dir="ltr">{formatDate(s.until)}</bdi>
+    </>
+  );
 }
 
 function SuspensionCard({

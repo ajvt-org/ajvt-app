@@ -6,6 +6,7 @@ import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import { methodChoiceNames } from "@/lib/paymentMethodChoices";
 import { HOME_VILLAGE, villageChoices } from "@/lib/villages";
 import { memberImportDialog } from "@/lib/texts";
+import { formatDate } from "@/lib/clubTime";
 import type { CheckContext, CheckedRow } from "@/lib/memberImportCheck";
 import type { RowValues } from "@/lib/memberImportValues";
 import DialogHeader from "@/components/DialogHeader";
@@ -52,14 +53,15 @@ type Props = {
   onClose: () => void;
 };
 
-function noticeOf(preview: ImportPreview): string {
-  const parts: string[] = [];
+function noticeOf(preview: ImportPreview): React.ReactNode {
+  const parts: React.ReactNode[] = [];
   if (preview.previousImport) {
     parts.push(
-      memberImportDialog.alreadyImported(
-        new Date(preview.previousImport.createdAt).toLocaleDateString("ar"),
-        preview.previousImport.createdBy,
-      ),
+      <>
+        {memberImportDialog.importedOn}{" "}
+        <bdi dir="ltr">{formatDate(preview.previousImport.createdAt)}</bdi>{" "}
+        {memberImportDialog.importedBy(preview.previousImport.createdBy)}
+      </>,
     );
   }
   if (preview.unknownColumns.length) {
@@ -69,7 +71,13 @@ function noticeOf(preview: ImportPreview): string {
       ),
     );
   }
-  return parts.join(memberImportDialog.noticeSeparator);
+  if (parts.length === 0) return null;
+  return parts.map((part, index) => (
+    <span key={index}>
+      {index > 0 ? memberImportDialog.noticeSeparator : null}
+      {part}
+    </span>
+  ));
 }
 
 export default function MemberImportDialog({ ageGroups, onImported, onClose }: Props) {

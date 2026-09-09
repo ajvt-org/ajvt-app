@@ -32,7 +32,7 @@ export default function MemberImportReview({
   ageGroups: string[];
   paymentMethods: readonly string[];
   membershipFee: number;
-  notice: string;
+  notice: React.ReactNode;
   error: string;
   loading: boolean;
   onEdit: (row: number, change: Partial<RowValues>) => void;

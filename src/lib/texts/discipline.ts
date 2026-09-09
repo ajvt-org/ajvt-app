@@ -33,7 +33,7 @@ export const discipline = {
   suspendedBadge: "موقوف",
   hiddenSuspended: (names: string) => `موقوفون عن هذه المباراة: ${names}`,
   remaining: (matches: string) => `متبقي ${matches}`,
-  until: (date: string) => `حتى ${date}`,
+  until: "حتى",
   indefinite: "إيقاف نهائي",
   expired: "انتهت المدة",
 } as const;
