@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import { formatDateTime } from "@/lib/clubTime";
-import { UNDATED_LABEL } from "@/lib/matchDays";
+import { memberMatches } from "@/lib/texts";
+import NumericRanges from "@/components/NumericRanges";
 import type { ActivityDetail, ActivityRow } from "@/lib/memberActivities";
 import { withFrom } from "@/lib/backLink";
 
@@ -58,7 +59,7 @@ function line(detail: ActivityDetail): { icon: IconName; text: string } {
 function when(row: ActivityRow): React.ReactNode {
   if (row.detail.kind !== "NEXT_MATCH") return null;
   const at = row.detail.fixture.matchDate;
-  return at ? <bdi dir="ltr">{formatDateTime(at)}</bdi> : UNDATED_LABEL;
+  return at ? <bdi dir="ltr">{formatDateTime(at)}</bdi> : memberMatches.undated;
 }
 
 export default function ActivityRowCard({ row, from }: { row: ActivityRow; from: string }) {
@@ -85,7 +86,7 @@ export default function ActivityRowCard({ row, from }: { row: ActivityRow; from:
         style={{ color: "var(--text-muted)" }}
       >
         <Icon name={detail.icon} size={12} />
-        {detail.text}
+        {row.detail.kind === "DATES" ? <NumericRanges>{detail.text}</NumericRanges> : detail.text}
       </p>
     </Link>
   );

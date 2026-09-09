@@ -1,17 +1,5 @@
-const MONTHS = [
-  "يناير",
-  "فبراير",
-  "مارس",
-  "أبريل",
-  "مايو",
-  "يونيو",
-  "يوليو",
-  "أغسطس",
-  "سبتمبر",
-  "أكتوبر",
-  "نوفمبر",
-  "ديسمبر",
-];
+import { clubDayParts, formatMonthName, formatTime } from "./clubTime";
+import { activityDates as texts } from "./texts";
 
 export type ActivityDates = {
   startsAt?: Date | string | null;
@@ -20,61 +8,59 @@ export type ActivityDates = {
   period?: string | null;
 };
 
-function pad(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
-function time(d: Date): string {
-  return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+function dayStart(date: Date): number {
+  const { year, month, day } = clubDayParts(date);
+  return Date.UTC(year, month, day);
 }
 
 function dayCount(from: Date, to: Date): number {
-  const day = 24 * 60 * 60 * 1000;
-  const a = Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate());
-  const b = Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate());
-  return Math.round((b - a) / day) + 1;
+  return Math.round((dayStart(to) - dayStart(from)) / (24 * 60 * 60 * 1000)) + 1;
 }
 
 function sameDay(a: Date, b: Date): boolean {
   return dayCount(a, b) === 1;
 }
 
-// A year only earns its place when it is not the one the reader is in.
 function withYear(text: string, year: number, now: Date): string {
-  return year === now.getUTCFullYear() ? text : `${text} ${year}`;
+  return year === clubDayParts(now).year ? text : `${text} ${year}`;
 }
 
 function onePart(d: Date, now: Date): string {
-  return withYear(`${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`, d.getUTCFullYear(), now);
+  const { day, year } = clubDayParts(d);
+  return withYear(`${day} ${formatMonthName(d)}`, year, now);
 }
 
 function span(from: Date, to: Date, now: Date): string {
-  if (from.getUTCFullYear() !== to.getUTCFullYear()) {
-    return `${onePart(from, now)} - ${onePart(to, now)}`;
+  const start = clubDayParts(from);
+  const end = clubDayParts(to);
+  if (start.year !== end.year) return `${onePart(from, now)} - ${onePart(to, now)}`;
+  if (start.month !== end.month) {
+    const head = `${start.day} ${formatMonthName(from)} - ${end.day} ${formatMonthName(to)}`;
+    return withYear(head, end.year, now);
   }
-  if (from.getUTCMonth() !== to.getUTCMonth()) {
-    const head = `${from.getUTCDate()} ${MONTHS[from.getUTCMonth()]} - ${to.getUTCDate()} ${MONTHS[to.getUTCMonth()]}`;
-    return withYear(head, to.getUTCFullYear(), now);
-  }
-  const head = `${from.getUTCDate()} - ${to.getUTCDate()} ${MONTHS[to.getUTCMonth()]}`;
-  return withYear(head, to.getUTCFullYear(), now);
+  return withYear(`${start.day} - ${end.day} ${formatMonthName(to)}`, end.year, now);
 }
 
 function twoDays(from: Date, to: Date, now: Date): string {
-  if (from.getUTCMonth() !== to.getUTCMonth() || from.getUTCFullYear() !== to.getUTCFullYear()) {
-    return `يومي ${onePart(from, now)} و ${onePart(to, now)}`;
+  const start = clubDayParts(from);
+  const end = clubDayParts(to);
+  if (start.month !== end.month || start.year !== end.year) {
+    return texts.twoDays(onePart(from, now), onePart(to, now));
   }
-  const head = `يومي ${from.getUTCDate()} و ${to.getUTCDate()} ${MONTHS[to.getUTCMonth()]}`;
-  return withYear(head, to.getUTCFullYear(), now);
+  return withYear(
+    texts.twoDays(String(start.day), `${end.day} ${formatMonthName(to)}`),
+    end.year,
+    now,
+  );
 }
 
 function clock(from: Date, to: Date | null, oneDay: boolean): string {
-  if (to && oneDay && time(to) !== time(from)) return `من ${time(from)} إلى ${time(to)}`;
-  return `الساعة ${time(from)}`;
+  if (to && oneDay && formatTime(to) !== formatTime(from)) {
+    return texts.betweenTimes(formatTime(from), formatTime(to));
+  }
+  return texts.atTime(formatTime(from));
 }
 
-// Returns null when there is nothing to phrase, so a caller can fall back to
-// the legacy period text.
 export function formatActivityDates(
   activity: ActivityDates,
   now: Date = new Date(),
@@ -90,5 +76,5 @@ export function formatActivityDates(
     days <= 1 ? onePart(from, now) : days === 2 ? twoDays(from, to!, now) : span(from, to!, now);
 
   if (!activity.withTime) return dates;
-  return `${dates}، ${clock(from, to, days <= 1 && (!to || sameDay(from, to)))}`;
+  return texts.withClock(dates, clock(from, to, days <= 1 && (!to || sameDay(from, to))));
 }

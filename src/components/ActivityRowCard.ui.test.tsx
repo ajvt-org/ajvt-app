@@ -48,15 +48,37 @@ describe("an activity row", () => {
   });
 
   it("says nothing about a team for an activity that has none", () => {
-    render(
+    const { container } = render(
       <ActivityRowCard
         from="/home"
         row={row({ kind: "DATES", text: "12 - 15 سبتمبر" }, "القافلة الصحية")}
       />,
     );
     expect(screen.getByText("القافلة الصحية")).toBeDefined();
-    expect(screen.getByText(/12 - 15 سبتمبر/)).toBeDefined();
+    expect(container.textContent).toContain("12 - 15 سبتمبر");
     expect(screen.queryByText(/فريق/)).toBeNull();
+  });
+
+  it("isolates each day of a range so the two do not swap", () => {
+    const { container } = render(
+      <ActivityRowCard
+        from="/home"
+        row={row({ kind: "DATES", text: "12 - 15 سبتمبر" }, "القافلة الصحية")}
+      />,
+    );
+
+    expect(Array.from(container.querySelectorAll("bdi")).map((el) => el.textContent)).toEqual([
+      "12",
+      "15",
+    ]);
+  });
+
+  it("leaves a line that is not a date unwrapped", () => {
+    const { container } = render(
+      <ActivityRowCard from="/home" row={row({ kind: "TEAM", name: "النسور" })} />,
+    );
+
+    expect(container.querySelectorAll("bdi")).toHaveLength(0);
   });
 
   it("says a team tournament is waiting for the member to join one", () => {

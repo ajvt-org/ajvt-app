@@ -1,31 +1,5 @@
-import { CLUB_TIMEZONE, matchDateKey } from "./clubTime";
-
-const WEEKDAYS: Record<string, string> = {
-  Sun: "الأحد",
-  Mon: "الاثنين",
-  Tue: "الثلاثاء",
-  Wed: "الأربعاء",
-  Thu: "الخميس",
-  Fri: "الجمعة",
-  Sat: "السبت",
-};
-
-const MONTHS = [
-  "يناير",
-  "فبراير",
-  "مارس",
-  "أبريل",
-  "مايو",
-  "يونيو",
-  "يوليو",
-  "أغسطس",
-  "سبتمبر",
-  "أكتوبر",
-  "نوفمبر",
-  "ديسمبر",
-];
-
-export const UNDATED_LABEL = "موعد لاحق";
+import { formatLongDate, matchDateKey } from "./clubTime";
+import { memberMatches } from "./texts";
 
 export type DatedMatch = {
   matchDate: Date | string | null;
@@ -40,20 +14,6 @@ export type MatchDay<T> = {
   venue: string | null;
   matches: T[];
 };
-
-export function formatDayLabel(date: Date | string): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: CLUB_TIMEZONE,
-    weekday: "short",
-    day: "numeric",
-    month: "numeric",
-  }).formatToParts(new Date(date));
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((p) => p.type === type)?.value ?? "";
-  const weekday = WEEKDAYS[part("weekday")] ?? "";
-  const month = MONTHS[Number(part("month")) - 1] ?? "";
-  return `${weekday} ${part("day")} ${month}`.trim();
-}
 
 function shared<T>(matches: T[], pick: (m: T) => string | null | undefined): string | null {
   const first = pick(matches[0])?.trim() || null;
@@ -80,7 +40,7 @@ export function groupMatchesByDay<T extends DatedMatch>(matches: T[]): MatchDay<
         : day;
       return {
         key,
-        label: key ? formatDayLabel(sorted[0].matchDate!) : UNDATED_LABEL,
+        label: key ? formatLongDate(sorted[0].matchDate!) : memberMatches.undated,
         round: shared(sorted, (m) => m.round),
         venue: shared(sorted, (m) => m.venue),
         matches: sorted,

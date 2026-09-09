@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { groupMatchesByDay, formatDayLabel, UNDATED_LABEL } from "./matchDays";
+import { groupMatchesByDay } from "./matchDays";
+import { memberMatches } from "./texts";
 
 function match(matchDate: string | null, round: string | null = null, venue: string | null = null) {
   return { matchDate, round, venue };
@@ -69,7 +70,7 @@ describe("grouping fixtures into match days", () => {
       match("2026-08-25T16:00:00Z"),
     ]);
 
-    expect(days.map((d) => d.label).at(-1)).toBe(UNDATED_LABEL);
+    expect(days.map((d) => d.label).at(-1)).toBe(memberMatches.undated);
     expect(days.at(-1)!.matches).toHaveLength(1);
   });
 
@@ -81,11 +82,15 @@ describe("grouping fixtures into match days", () => {
 });
 
 describe("naming a match day", () => {
-  it("reads as a weekday, a date and a month in Arabic", () => {
-    expect(formatDayLabel("2026-08-24T16:00:00Z")).toBe("الاثنين 24 أغسطس");
+  it("heads a day the way the tournament admin heads one, year included", () => {
+    expect(groupMatchesByDay([match("2026-08-24T16:00:00Z")])[0].label).toBe(
+      "الاثنين، 24 أغسطس 2026",
+    );
   });
 
   it("names the day the club is in when the two disagree", () => {
-    expect(formatDayLabel("2026-08-24T23:30:00Z")).toBe("الاثنين 24 أغسطس");
+    expect(groupMatchesByDay([match("2026-08-24T23:30:00Z")])[0].label).toBe(
+      "الاثنين، 24 أغسطس 2026",
+    );
   });
 });

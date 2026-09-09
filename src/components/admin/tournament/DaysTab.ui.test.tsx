@@ -86,6 +86,18 @@ describe("DaysTab", () => {
     expect(screen.getByText(/النجم × الوحدة/)).toBeDefined();
   });
 
+  it("isolates each day of the span it heads the tab with", async () => {
+    await show();
+    await screen.findByText("الاثنين، 24 أغسطس 2026");
+
+    const heading = document.querySelector(".card p")!;
+
+    expect(Array.from(heading.querySelectorAll("bdi")).map((el) => el.textContent)).toEqual([
+      "24",
+      "26",
+    ]);
+  });
+
   it("inserts a rest day after the day whose control was used", async () => {
     await show();
 

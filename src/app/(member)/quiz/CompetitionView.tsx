@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
+import { formatDateTime } from "@/lib/clubTime";
 import HeaderIdentity from "@/components/HeaderIdentity";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
@@ -85,13 +86,13 @@ function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () =
       }}
     >
       <Icon name="clock" size={13} />
-      تُغلق الجولة بعد
+      {texts.roundClosesIn}
       <NextRoundCountdown
         opensAt={closesAt}
         onReached={onReached}
         color={urgent ? "var(--copper-300)" : "#ffffff"}
         compact
-        ariaLabel="الوقت المتبقي لإغلاق الجولة"
+        ariaLabel={texts.roundClosesInLabel}
       />
     </span>
   );
@@ -268,7 +269,7 @@ export default function CompetitionView({
               >
                 <Icon name="trophy" size={30} color="var(--copper-300)" />
               </span>
-              <p className="text-xl font-black text-white">انتهت المسابقة</p>
+              <p className="text-xl font-black text-white">{texts.competitionOver}</p>
               {standings.roundCount !== null && (
                 <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
                   {countedNoun(standings.roundCount, ROUNDS)}
@@ -284,7 +285,7 @@ export default function CompetitionView({
                 style={{ color: "var(--mint-300)" }}
               >
                 <Icon name="clock" size={16} />
-                الجولة القادمة {upcoming.index + 1} من {standings.roundCount}
+                {texts.nextRoundOf(upcoming.index + 1, standings.roundCount)}
               </span>
               <NextRoundCountdown
                 opensAt={upcoming.opensAt}
@@ -292,11 +293,7 @@ export default function CompetitionView({
                 color="#ffffff"
               />
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
-                تبدأ{" "}
-                {new Date(upcoming.opensAt).toLocaleString("ar", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
+                {texts.opensOn} <bdi dir="ltr">{formatDateTime(upcoming.opensAt)}</bdi>
               </p>
             </>
           )}
@@ -311,10 +308,10 @@ export default function CompetitionView({
               >
                 <Icon name="check" size={30} className="text-white" />
               </span>
-              <p className="text-lg font-black text-white">أنهيت أسئلة الجولة</p>
+              <p className="text-lg font-black text-white">{texts.roundDone}</p>
               {standings.me?.score != null && (
                 <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
-                  مجموعك {countedNoun(standings.me.score, POINTS)} في هذه الجولة
+                  {texts.yourRoundScore(countedNoun(standings.me.score, POINTS))}
                 </p>
               )}
               {standings.next && (
@@ -327,13 +324,13 @@ export default function CompetitionView({
                   }}
                 >
                   <Icon name="clock" size={13} />
-                  الجولة القادمة بعد
+                  {texts.nextRoundIn}
                   <NextRoundCountdown
                     opensAt={standings.next.opensAt}
                     onReached={onReloadStandings}
                     color="#ffffff"
                     compact
-                    ariaLabel="الوقت المتبقي للجولة القادمة"
+                    ariaLabel={texts.nextRoundInLabel}
                   />
                 </span>
               )}
@@ -393,7 +390,7 @@ export default function CompetitionView({
             <Icon name="trophy" size={26} color="var(--copper-600)" />
             <span className="min-w-0 flex-1">
               <span className="block text-xs font-extrabold" style={{ color: "var(--copper-600)" }}>
-                بطل الترتيب العام
+                {texts.overallChampion}
               </span>
               <span className="block font-black truncate" style={{ color: "var(--text-main)" }}>
                 {champion.name}
@@ -409,7 +406,7 @@ export default function CompetitionView({
 
         {open && open.blocks > 1 && (
           <select
-            aria-label="فترة الترتيب"
+            aria-label={texts.blockPicker}
             className="input input-sm"
             value={block ?? open.block}
             onChange={(e) => pickBlock(Number(e.target.value))}
@@ -438,7 +435,7 @@ export default function CompetitionView({
               rows={past ? past.rows : open.rows}
               mine={past ? past.mine : open.mine}
               meId={standings.meId}
-              empty="لا ترتيب بعد"
+              empty={texts.emptyBoard}
             />
           </div>
         )}
