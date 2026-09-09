@@ -22,6 +22,13 @@ settled for numbers in #1319, and a date is a longer run of the same problem. A 
 carries a date does not build it by joining strings. The words live in `src/lib/texts` and
 the component places the date beside them, so the wrapper can go around the date alone.
 
+A phrase built in Arabic words, such as an activity's dates, is drawn through
+`NumericRanges` instead. Two numbers with a neutral between them bind into one left to right
+run and swap, which is what `7 - 12 سبتمبر` does bare, and that component isolates each
+number inside the phrase. Arabic words between two numbers already separate them, so a
+phrase with no range in it draws the same either way. Wrapping such a phrase in a
+`<bdi dir="ltr">` would be wrong, since most of it is Arabic.
+
 **A read only date is text.** Never a disabled form control. The browser draws that one in
 its own locale, on a twelve hour clock, and the app cannot reach inside it.
 
