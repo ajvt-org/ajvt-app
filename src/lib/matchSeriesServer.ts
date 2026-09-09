@@ -400,6 +400,7 @@ export function seriesStateOf(match: LoadedMatch) {
     units: toNodes(resolved.units),
     moves: match.moves,
     levels: ladderFor(match),
+    worthRules: match.activity.worthRules,
     standing: resolved.standing,
   };
 }

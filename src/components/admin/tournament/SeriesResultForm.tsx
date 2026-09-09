@@ -82,6 +82,7 @@ export default function SeriesResultForm({
     busy,
     open: !state.standing.over,
     rules,
+    worthRules: state.worthRules ?? [],
     moves: state.moves,
     opened,
     onToggle: (unitId) =>
@@ -94,6 +95,7 @@ export default function SeriesResultForm({
     onRecordMove: (ruleId, side, unitId) =>
       run(() => api.post(`/api/admin/matches/${matchId}/moves`, { ruleId, side, unitId })),
     onUndoMove: (moveId) => run(() => api.del(`/api/admin/matches/${matchId}/moves/${moveId}`)),
+    onKeepWorth: (unitId, kept) => run(() => api.patch(`${base}/${unitId}/worth`, { kept })),
   };
 
   const own = recordsOnItself(state.levels);

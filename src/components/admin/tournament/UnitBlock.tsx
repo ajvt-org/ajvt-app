@@ -51,6 +51,8 @@ export default function UnitBlock({
         unit={unit}
         level={level}
         name={recordsOnItself(api.ladder) ? texts.resultRow : undefined}
+        worthRule={api.worthRules.find((rule) => rule.id === unit.worthRuleId) ?? null}
+        onKeepWorth={(kept) => api.onKeepWorth(unit.id, kept)}
         sides={api.sides}
         busy={api.busy}
         editable={api.open && unit.children.length === 0}

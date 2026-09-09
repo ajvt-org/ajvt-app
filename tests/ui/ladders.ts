@@ -65,6 +65,8 @@ export function unitNode(over: Partial<UnitNodeShape> & { id: string; order: num
     sideBPoints: null,
     sideAColour: null,
     worth: null,
+    worthRuleId: null,
+    worthKept: true,
     sideALostCredit: false,
     sideBLostCredit: false,
     decider: false,
@@ -84,6 +86,8 @@ export function standingRow(over: Partial<SeriesStandingRow> = {}): SeriesStandi
   return {
     sideATotal: 0,
     sideBTotal: 0,
+    sideAAtClose: 0,
+    sideBAtClose: 0,
     sideALostCredit: false,
     sideBLostCredit: false,
     scored: false,

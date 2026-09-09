@@ -1,5 +1,5 @@
 import { recordingUnder, type LevelRow, type Recording } from "@/lib/matchLevels";
-import type { MoveRuleRow, RecordedMoveRow, UnitRow } from "./seriesTypes";
+import type { MoveRuleRow, RecordedMoveRow, UnitRow, WorthRuleRow } from "./seriesTypes";
 
 export interface EditorApi {
   ladder: LevelRow[];
@@ -7,6 +7,7 @@ export interface EditorApi {
   busy: boolean;
   open: boolean;
   rules: MoveRuleRow[];
+  worthRules: WorthRuleRow[];
   moves: RecordedMoveRow[];
   opened: string[];
   onToggle: (unitId: string) => void;
@@ -15,6 +16,7 @@ export interface EditorApi {
   onRemove: (unitId: string) => void;
   onRecordMove: (ruleId: string, side: "SIDE_A" | "SIDE_B", unitId: string) => void;
   onUndoMove: (moveId: string) => void;
+  onKeepWorth: (unitId: string, kept: boolean) => void;
 }
 
 export function levelAt(api: EditorApi, depth: number): LevelRow | null {

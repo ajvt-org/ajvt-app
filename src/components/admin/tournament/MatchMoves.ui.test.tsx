@@ -27,6 +27,8 @@ const UNITS: UnitRow[] = [
     sideBPoints: null,
     sideAColour: null,
     worth: null,
+    worthRuleId: null,
+    worthKept: true,
     sideALostCredit: false,
     sideBLostCredit: false,
     decider: false,

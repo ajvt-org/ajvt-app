@@ -12,6 +12,8 @@ export interface UnitRow {
   sideBPoints: number | null;
   sideAColour: "FIRST" | "SECOND" | null;
   worth: number | null;
+  worthRuleId: string | null;
+  worthKept: boolean;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
   decider: boolean;
@@ -23,6 +25,8 @@ export interface UnitRow {
 export interface SeriesStandingRow {
   sideATotal: number;
   sideBTotal: number;
+  sideAAtClose: number;
+  sideBAtClose: number;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
   scored: boolean;
@@ -56,9 +60,18 @@ export interface RecordedMoveRow {
   rule: MoveRuleRow;
 }
 
+export interface WorthRuleRow {
+  id: string;
+  name: string;
+  levelId: string;
+  when: "LOSER_ON_NOTHING" | "WINNER_LOST_CREDIT";
+  worth: number;
+}
+
 export interface SeriesState {
   units: UnitRow[];
   moves: RecordedMoveRow[];
   levels: LevelRow[];
+  worthRules: WorthRuleRow[];
   standing: SeriesStandingRow;
 }
