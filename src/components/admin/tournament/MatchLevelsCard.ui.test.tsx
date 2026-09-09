@@ -63,12 +63,12 @@ const show = () => render(<MatchLevelsCard activityId="a1" />);
 
 const saveButton = () => screen.getByRole("button", { name: "حفظ المستويات" });
 
-async function openMoves(name: string) {
-  fireEvent.click(await screen.findByRole("button", { name: `حركات ${name}` }));
+async function openMoves() {
+  fireEvent.click(await screen.findByRole("button", { name: "الحركات" }));
 }
 
 async function openRules() {
-  const folds = await screen.findAllByRole("button", { name: "قواعد هذا المستوى" });
+  const folds = await screen.findAllByRole("button", { name: "القاعدة" });
   folds.forEach((fold) => fireEvent.click(fold));
 }
 
@@ -111,7 +111,7 @@ describe("the match levels card", () => {
     await openRules();
 
     expect(screen.queryByText("قواعد المباراة عن ألعاب")).toBeNull();
-    expect(screen.getAllByText("قواعد هذا المستوى")).toHaveLength(1);
+    expect(screen.getAllByText("القاعدة")).toHaveLength(1);
   });
 
   it("sends the levels and the moves back in one write", async () => {
@@ -208,7 +208,7 @@ describe("the moves of a level", () => {
   it("reads them where the level they act on is", async () => {
     answering([MATCH, GAME], [TEYSSE]);
     show();
-    await openMoves("لعبة");
+    await openMoves();
     fireEvent.click(screen.getByRole("button", { name: "تيس" }));
 
     expect(screen.getByDisplayValue("تيس")).toBeDefined();
@@ -238,21 +238,21 @@ describe("the moves of a level", () => {
 
     expect(await screen.findByRole("button", { name: "إضافة حركة" })).toBeDefined();
     expect(screen.queryByText("لا حركات معرّفة")).toBeNull();
-    expect(screen.queryByRole("button", { name: "حركات لعبة" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "الحركات" })).toBeNull();
   });
 
   it("titles the block once where a level declares one", async () => {
     answering([MATCH, GAME], [TEYSSE]);
     show();
 
-    expect(await screen.findByRole("button", { name: "حركات لعبة" })).toBeDefined();
+    expect(await screen.findByRole("button", { name: "الحركات" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "إضافة حركة" })).toBeNull();
   });
 
   it("folds a declared move away and opens it when it is asked for", async () => {
     answering([MATCH, GAME], [TEYSSE]);
     show();
-    await openMoves("لعبة");
+    await openMoves();
 
     expect(screen.queryByLabelText("ما تضيفه")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "تيس" }));

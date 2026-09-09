@@ -5,7 +5,7 @@ import { blankDraft } from "./levelDraft";
 import type { LevelPlace } from "@/lib/seriesSetup";
 
 const COUNTED_BY = "بم تُحسب الوحدات";
-const RULES = "قواعد هذا المستوى";
+const RULES = "القاعدة";
 const ENDS_BY = "متى ينتهي";
 const UNIT_COUNT = "كم وحدة";
 const UNSETTLED = "إن لم يُحسم";
