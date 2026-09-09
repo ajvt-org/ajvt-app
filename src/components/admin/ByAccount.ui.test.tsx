@@ -37,6 +37,18 @@ describe("the treasury broken down by number", () => {
     expect(screen.getByText("بنكيلي")).toBeDefined();
   });
 
+  it("stays closed until it is asked for, since it sits under the ledger", () => {
+    globalThis.fetch = answering([]);
+    const { container } = render(<ByAccount />);
+
+    const card = container.querySelector("details") as HTMLDetailsElement;
+    expect(card.open).toBe(false);
+    const summary = card.querySelector("summary") as HTMLElement;
+    expect(summary.className).toContain("disclosure-summary");
+    expect(summary.textContent).toContain(texts.title);
+    expect(summary.querySelector(".disclosure-chevron")).not.toBeNull();
+  });
+
   it("names the line for money nobody could place", async () => {
     globalThis.fetch = answering([
       {

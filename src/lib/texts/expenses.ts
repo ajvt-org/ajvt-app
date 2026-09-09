@@ -24,7 +24,6 @@ export const expensesPage = {
   confirmDeleteTitle: "حذف مصروف",
   confirmDelete: "هل أنت متأكد من حذف هذا المصروف؟",
   delete: "حذف المصروف",
-  title: "المصاريف والإيرادات",
   exportAction: "تصدير",
   ledger: (count: number) => `سجل المصاريف (${count})`,
   tags: "التصنيفات",
@@ -42,6 +41,15 @@ export const expenseList = {
   recordedBy: (name: string) => `بواسطة ${name}`,
   empty: "لا توجد مصاريف مسجلة بعد",
   emptyFiltered: "لا توجد نتائج مطابقة",
+} as const;
+
+export const byPaymentMethod = {
+  title: "حسب طريقة الدفع (كل الإيرادات)",
+  empty: "لا توجد بيانات بعد",
+  noEntries: "لا يوجد",
+  membership: "1- انتساب",
+  support: "2- دعم",
+  anonymous: "فاعل خير",
 } as const;
 
 export const dailyRevenue = {
