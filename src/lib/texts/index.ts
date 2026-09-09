@@ -61,6 +61,7 @@ export {
   dailyRevenue,
   expenseDestinations,
   expenseForm,
+  expenseList,
   expenseProofs,
   expensesPage,
 } from "./expenses";

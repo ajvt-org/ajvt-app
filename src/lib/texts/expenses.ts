@@ -36,6 +36,15 @@ export const expensesPage = {
   resetFilters: "إعادة تصفير الكل",
 } as const;
 
+export const expenseList = {
+  edit: "تعديل",
+  delete: "حذف",
+  history: "السجل",
+  recordedBy: (name: string) => `بواسطة ${name}`,
+  empty: "لا توجد مصاريف مسجلة بعد",
+  emptyFiltered: "لا توجد نتائج مطابقة",
+} as const;
+
 export const dailyRevenue = {
   title: "الإيرادات اليومية (آخر 30 يوماً)",
   empty: "لا توجد إيرادات في هذه الفترة",
