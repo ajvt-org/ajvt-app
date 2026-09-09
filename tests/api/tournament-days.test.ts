@@ -6,6 +6,7 @@ import {
 } from "@/app/api/admin/activities/[id]/days/[dayId]/route";
 import { POST as ASSIGN } from "@/app/api/admin/activities/[id]/days/assign/route";
 import { PATCH as EDIT_MATCH } from "@/app/api/admin/matches/[matchId]/route";
+import { POST as CREATE_MATCH } from "@/app/api/admin/activities/[id]/matches/route";
 import { prisma } from "@/lib/prisma";
 import {
   resetDb,
@@ -309,6 +310,91 @@ describe("the tournament day spine", () => {
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
     expect(saved.dayId).toBeNull();
     expect(saved.matchDate?.toISOString()).toBe("2026-09-14T17:00:00.000Z");
+  });
+
+  it("creates a dated match on the day that date falls on", async () => {
+    const a = await tournament();
+    await matchOn(a.id, "2026-08-24T16:00:00.000Z");
+    const body = await read(a.id);
+    const { home, away } = await teamPair(a.id);
+
+    const res = await CREATE_MATCH(
+      post(`/api/admin/activities/${a.id}/matches`, {
+        firstTeamId: home.id,
+        secondTeamId: away.id,
+        matchDate: "2026-08-24T19:00",
+      }),
+      withId(a.id),
+    );
+
+    expect(res.status).toBe(201);
+    const created = (await res.json()).match;
+    expect(created.dayId).toBe(body.days[0].id);
+
+    const after = await read(a.id);
+    expect(after.days[0].matches.map((m: { id: string }) => m.id)).toContain(created.id);
+    expect(after.unscheduled).toHaveLength(0);
+  });
+
+  it("creates an undated match with no day, in the unscheduled block", async () => {
+    const a = await tournament();
+    await matchOn(a.id, "2026-08-24T16:00:00.000Z");
+    await read(a.id);
+    const { home, away } = await teamPair(a.id);
+
+    const res = await CREATE_MATCH(
+      post(`/api/admin/activities/${a.id}/matches`, {
+        firstTeamId: home.id,
+        secondTeamId: away.id,
+      }),
+      withId(a.id),
+    );
+
+    expect(res.status).toBe(201);
+    const created = (await res.json()).match;
+    expect(created.dayId).toBeNull();
+
+    const after = await read(a.id);
+    expect(after.unscheduled.map((m: { id: string }) => m.id)).toEqual([created.id]);
+  });
+
+  it("refuses to create a match on a rest day", async () => {
+    const a = await tournament();
+    await matchOn(a.id, "2026-08-26T17:00:00.000Z");
+    const body = await read(a.id);
+    const { home, away } = await teamPair(a.id);
+
+    const res = await CREATE_MATCH(
+      post(`/api/admin/activities/${a.id}/matches`, {
+        firstTeamId: home.id,
+        secondTeamId: away.id,
+        matchDate: "2026-08-25T17:00",
+      }),
+      withId(a.id),
+    );
+
+    expect(body.days[1].isRest).toBe(true);
+    expect(res.status).toBe(409);
+    expect(await prisma.match.count({ where: { activityId: a.id } })).toBe(1);
+  });
+
+  it("refuses to create a match on a date the tournament has no day for", async () => {
+    const a = await tournament();
+    await matchOn(a.id, "2026-08-24T17:00:00.000Z");
+    await read(a.id);
+    const { home, away } = await teamPair(a.id);
+
+    const res = await CREATE_MATCH(
+      post(`/api/admin/activities/${a.id}/matches`, {
+        firstTeamId: home.id,
+        secondTeamId: away.id,
+        matchDate: "2026-09-14T17:00",
+      }),
+      withId(a.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.match.count({ where: { activityId: a.id } })).toBe(1);
   });
 
   it("refuses to schedule a match onto a rest day", async () => {
