@@ -189,6 +189,37 @@ describe("recording the units of a series match", () => {
     expect(body.standing.sideATotal).toBe(0);
   });
 
+  it("corrects a unit once the match is over", async () => {
+    const { match } = await matchOf(CHESS);
+    await add(match.id, { outcome: "SIDE_A" });
+    const second = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(second.standing.over).toBe(true);
+    expect(second.standing.winner).toBe("SIDE_A");
+
+    const res = await correct(match.id, second.unit.id, { outcome: "SIDE_B" });
+
+    expect(res.status).toBe(200);
+    const body = await (await list(match.id)).json();
+    expect(body.standing.over).toBe(true);
+    expect(body.standing.winner).toBeNull();
+    expect(body.standing.sideATotal).toBe(2);
+    expect(body.standing.sideBTotal).toBe(2);
+  });
+
+  it("removes a unit once the match is over and takes the match back to open", async () => {
+    const { match } = await matchOf(CHESS);
+    const first = await (await add(match.id, { outcome: "SIDE_A" })).json();
+    await add(match.id, { outcome: "SIDE_A" });
+
+    const res = await remove(match.id, first.unit.id);
+
+    expect(res.status).toBe(200);
+    const body = await (await list(match.id)).json();
+    expect(body.units).toHaveLength(1);
+    expect(body.standing.over).toBe(false);
+  });
+
   it("says nothing found for a unit of another match", async () => {
     const { match } = await matchOf(CHESS);
 
@@ -564,6 +595,20 @@ describe("a match whose ladder is one level", () => {
     expect(res.status).toBe(200);
     const body = await (await list(match.id)).json();
     expect(body.standing.winner).toBe("SIDE_B");
+  });
+
+  it("removes the result that was typed", async () => {
+    const { match } = await matchOf(ALONE);
+    const added = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(added.standing.over).toBe(true);
+
+    const res = await remove(match.id, added.unit.id);
+
+    expect(res.status).toBe(200);
+    const body = await (await list(match.id)).json();
+    expect(body.units).toEqual([]);
+    expect(body.standing.over).toBe(false);
   });
 
   it("takes no second result", async () => {
