@@ -4,6 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import PhotoUpload from "@/components/PhotoUpload";
 import InlineRename from "./InlineRename";
+import { SQUARE } from "./MatchCardActions";
 import { MATCH_TEAMS_SIZES } from "@/components/tournament/matchCard/MatchTeams";
 import { teamsTab } from "@/lib/texts";
 
@@ -12,6 +13,8 @@ export const CREST_GUTTER = 12;
 const NAME_LINE = 24;
 export const ONTO_FIRST_LINE = (CREST - NAME_LINE) / 2;
 export const CLEAR_OF_THE_CREST = 12;
+export const CLEAR_OF_THE_ACTIONS = 12;
+export const ROW_ACTION_ICON = 15;
 
 function keepTheCardStill(e: React.MouseEvent) {
   e.preventDefault();
@@ -24,6 +27,7 @@ export default function TeamIdentityEditor({
   logo,
   busy,
   controls,
+  marker,
   onRenameTeam,
   onSetLogo,
   children,
@@ -33,6 +37,7 @@ export default function TeamIdentityEditor({
   logo: string | null;
   busy: boolean;
   controls: React.ReactNode;
+  marker?: React.ReactNode;
   onRenameTeam: (name: string) => void;
   onSetLogo: (filename: string) => Promise<void>;
   children: React.ReactNode;
@@ -81,7 +86,7 @@ export default function TeamIdentityEditor({
                 {shownName}
               </p>
               <span
-                className="h-6 flex items-center shrink-0"
+                className="h-6 flex items-center gap-2 shrink-0"
                 style={{ marginBlockStart: ONTO_FIRST_LINE }}
               >
                 <button
@@ -91,13 +96,24 @@ export default function TeamIdentityEditor({
                   }}
                   disabled={busy}
                   aria-label={teamsTab.renameTeam}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  className={SQUARE}
                   style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  <Icon name="pencil" size={14} />
+                  <Icon name="pencil" size={ROW_ACTION_ICON} />
                 </button>
+                {controls}
               </span>
-              {controls}
+              {marker && (
+                <span
+                  className="h-6 flex items-center shrink-0"
+                  style={{
+                    marginBlockStart: ONTO_FIRST_LINE,
+                    marginInlineStart: CLEAR_OF_THE_ACTIONS,
+                  }}
+                >
+                  {marker}
+                </span>
+              )}
             </div>
           )}
         </div>
