@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import ExpenseList from "./ExpenseList";
 import type { Expense } from "./types";
-import { expenseList as texts } from "@/lib/texts";
+import { expenseList as texts, expenseReceipts } from "@/lib/texts";
 
 afterEach(cleanup);
 
@@ -73,5 +73,40 @@ describe("the words on an expense card", () => {
     show([]);
 
     expect(screen.getByText(texts.empty)).toBeDefined();
+  });
+});
+
+describe("the receipts on an expense card", () => {
+  it("opens one receipt straight from the card with no extra step", () => {
+    const { container } = show([expense({ proofs: [{ filename: "one.webp" }] })]);
+
+    const link = container.querySelector("a[href='/api/files/one.webp']") as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.target).toBe("_blank");
+    expect(screen.queryByLabelText(expenseReceipts.title)).toBeNull();
+  });
+
+  it("puts every receipt behind the badge when there is more than one", () => {
+    const proofs = [{ filename: "a.webp" }, { filename: "b.webp" }, { filename: "c.webp" }];
+    const { container } = show([expense({ proofs })]);
+
+    expect(screen.getByText("3")).toBeDefined();
+
+    fireEvent.click(screen.getByLabelText(expenseReceipts.title));
+
+    for (const row of proofs) {
+      expect(container.querySelector(`a[href='/api/files/${row.filename}']`)).not.toBeNull();
+    }
+  });
+
+  it("closes the receipts again", () => {
+    const proofs = [{ filename: "a.webp" }, { filename: "b.webp" }];
+    const { container } = show([expense({ proofs })]);
+
+    fireEvent.click(screen.getByLabelText(expenseReceipts.title));
+    expect(screen.getByLabelText(expenseReceipts.openOne(2))).toBeDefined();
+
+    fireEvent.click(container.querySelector("button.rounded-full") as HTMLElement);
+    expect(screen.queryByLabelText(expenseReceipts.openOne(2))).toBeNull();
   });
 });

@@ -66,6 +66,11 @@ export const expenseProofs = {
   none: "لا توجد صور بعد",
 } as const;
 
+export const expenseReceipts = {
+  title: "الفواتير والإيصالات",
+  openOne: (at: number) => `فتح الصورة ${at}`,
+} as const;
+
 export const expenseDestinations = {
   heading: "الوجهة (اختياري)",
   headingMany: "الوجهات والمبالغ",

@@ -62,6 +62,7 @@ export {
   expenseForm,
   expenseList,
   expenseProofs,
+  expenseReceipts,
   expensesPage,
 } from "./expenses";
 export { financeReport } from "./financeReport";
