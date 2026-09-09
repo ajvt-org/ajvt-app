@@ -105,9 +105,7 @@ export default function SeriesResultForm({
       data-testid="series-result-form"
     >
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="list">
-          {own ? texts.matchResult : texts.heading(config.unit.plural)}
-        </IconLabel>
+        <IconLabel name="list">{own ? texts.matchResult : texts.heading}</IconLabel>
       </p>
 
       {!own && <SeriesStanding standing={state.standing} config={config} sides={sides} />}

@@ -114,10 +114,10 @@ export default function UnitLine({
   );
 }
 
-export function UnitsEmpty({ level }: { level: LevelRow }) {
+export function UnitsEmpty() {
   return (
     <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-      <IconLabel name="list">{texts.none(level.plural)}</IconLabel>
+      <IconLabel name="list">{texts.none}</IconLabel>
     </p>
   );
 }

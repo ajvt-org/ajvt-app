@@ -66,7 +66,7 @@ export default function UnitBlock({
           className="rounded-lg px-2.5 py-1.5 text-xs space-y-1.5"
           style={{ background: "#fdf2e9", color: "var(--copper-600)" }}
         >
-          <p>{texts.openDiscards(under.plural)}</p>
+          <p>{texts.openDiscards}</p>
           <button
             onClick={() => {
               setWarning(false);
@@ -97,7 +97,7 @@ export default function UnitBlock({
       {opened && under && (
         <div className="ps-2 ms-1" style={{ borderInlineStart: "2px solid var(--mint-100)" }}>
           <p className="text-xs font-bold mb-1" style={{ color: "var(--text-muted)" }}>
-            <bdi>{under.plural}</bdi>
+            <bdi>{under.singular}</bdi>
           </p>
           <UnitBranch
             api={api}

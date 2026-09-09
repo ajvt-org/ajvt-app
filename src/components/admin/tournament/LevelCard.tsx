@@ -24,7 +24,6 @@ export default function LevelCard({
   own,
   index,
   count,
-  under,
   frozen,
   fix,
   moves,
@@ -36,7 +35,6 @@ export default function LevelCard({
   own: string;
   index: number;
   count: number;
-  under: { singular: string; plural: string } | null;
   frozen: boolean;
   fix: LevelFix | null;
   moves: LevelMovesApi;
@@ -79,7 +77,6 @@ export default function LevelCard({
 
       <LevelFields
         draft={draft}
-        under={under}
         last={index === count - 1}
         disabled={frozen}
         locked={false}

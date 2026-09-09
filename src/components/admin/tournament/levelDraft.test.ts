@@ -6,13 +6,12 @@ function chess() {
   const match = {
     ...blankDraft("a"),
     singular: "المباراة",
-    plural: "المباريات",
     countedBy: "OUTCOME" as const,
     endsBy: "COUNT" as const,
     unitCount: "2",
     unsettled: "DRAW" as const,
   };
-  const game = { ...blankDraft("b"), singular: "لعبة", plural: "ألعاب" };
+  const game = { ...blankDraft("b"), singular: "لعبة" };
   return [match, game];
 }
 

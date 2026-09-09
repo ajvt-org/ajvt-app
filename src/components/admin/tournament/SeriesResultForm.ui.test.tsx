@@ -33,7 +33,7 @@ const SCORED = SCORED_CONFIG;
 
 const DEEP = ladderConfig(
   { countedBy: "POINTS", endsBy: "TARGET", unitCount: null, target: 200 },
-  { singular: "شوط", plural: "أشواط", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
+  { singular: "شوط", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
 );
 const DEEP_LADDER = [
   ...DEEP.ladder,
@@ -42,7 +42,6 @@ const DEEP_LADDER = [
     id: "point",
     order: 2,
     singular: "نقطة",
-    plural: "نقاط",
     countedBy: null,
     endsBy: null,
     target: null,
@@ -102,8 +101,8 @@ describe("recording the top level of a match", () => {
   it("names the level in the heading and in the empty line", async () => {
     show();
 
-    expect(await screen.findByText("ألعاب المباراة")).toBeDefined();
-    expect(screen.getByText("لم تُسجَّل ألعاب بعد")).toBeDefined();
+    expect(await screen.findByText("وحدات المباراة")).toBeDefined();
+    expect(screen.getByText("لم تُسجَّل وحدات بعد")).toBeDefined();
   });
 
   it("asks for an outcome where the level is decided by one", async () => {
@@ -167,7 +166,7 @@ describe("opening a unit onto the level under it", () => {
     show(DEEP);
     fireEvent.click(await screen.findByLabelText("فتح شوط 1"));
 
-    expect(screen.getByText("تسجيل نقاط داخل هذه الوحدة يلغي نتيجتها المكتوبة")).toBeDefined();
+    expect(screen.getByText("تسجيل وحدات داخل هذه الوحدة يلغي نتيجتها المكتوبة")).toBeDefined();
     expect(screen.getAllByLabelText("نقاط أحمد")).toHaveLength(1);
   });
 
@@ -329,7 +328,7 @@ describe("loading the form", () => {
   it("asks for the declared rules where the tournament serves them", async () => {
     show();
 
-    await screen.findByText("ألعاب المباراة");
+    await screen.findByText("وحدات المباراة");
     expect(getMock.mock.calls.map((call) => String(call[0]))).toEqual(
       expect.arrayContaining(["/api/admin/matches/m1/units", "/api/admin/activities/a1/levels"]),
     );
@@ -351,7 +350,7 @@ describe("loading the form", () => {
 });
 
 describe("a match whose ladder is one level", () => {
-  const ALONE_LEVEL = levelRow({ id: "match", order: 0, singular: "مباراة", plural: "مباريات" });
+  const ALONE_LEVEL = levelRow({ id: "match", order: 0, singular: "مباراة" });
   const ALONE: SeriesConfig = {
     ladder: [ALONE_LEVEL],
     match: ALONE_LEVEL,

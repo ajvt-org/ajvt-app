@@ -22,7 +22,6 @@ const MATCH: LevelRow = levelRow({
   id: "match",
   order: 0,
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: "OUTCOME",
   endsBy: "COUNT",
   unitCount: 2,
@@ -33,7 +32,6 @@ const GAME: LevelRow = levelRow({
   id: "game",
   order: 1,
   singular: "لعبة",
-  plural: "ألعاب",
 });
 
 const TEYSSE: MoveRuleRow = {
@@ -80,11 +78,11 @@ describe("the match levels card", () => {
     expect((await screen.findAllByText("المباراة")).length).toBeGreaterThan(0);
   });
 
-  it("shows the words of every level it was given", async () => {
+  it("shows the one name of every level it was given", async () => {
     show();
 
     await screen.findByDisplayValue("لعبة");
-    expect(screen.getByDisplayValue("ألعاب")).toBeDefined();
+    expect(screen.getByDisplayValue("المباراة")).toBeDefined();
   });
 
   it("says nothing back about a level the fields under it already state", async () => {
@@ -100,11 +98,11 @@ describe("the match levels card", () => {
     show();
 
     await screen.findByDisplayValue("لعبة");
-    expect(screen.queryByText("بم تُحسب ألعاب")).toBeNull();
+    expect(screen.queryByText("بم تُحسب الوحدات")).toBeNull();
 
     await openRules();
-    expect(screen.getByText("بم تُحسب ألعاب")).toBeDefined();
-    expect(screen.getByText("كم لعبة")).toBeDefined();
+    expect(screen.getByText("بم تُحسب الوحدات")).toBeDefined();
+    expect(screen.getByText("كم وحدة")).toBeDefined();
   });
 
   it("titles the rules once and not by the words of the level under it", async () => {
@@ -112,6 +110,7 @@ describe("the match levels card", () => {
     await openRules();
 
     expect(screen.queryByText("قواعد المباراة عن ألعاب")).toBeNull();
+    expect(screen.getAllByText("قواعد هذا المستوى")).toHaveLength(1);
   });
 
   it("sends the levels and the moves back in one write", async () => {
@@ -132,7 +131,7 @@ describe("the match levels card", () => {
     ]);
   });
 
-  it("refuses to save a level with no word for its unit", async () => {
+  it("refuses to save a level with no name", async () => {
     show();
     fireEvent.change(await screen.findByDisplayValue("لعبة"), { target: { value: "  " } });
 
@@ -142,9 +141,9 @@ describe("the match levels card", () => {
   it("puts the fault on the field that caused it", async () => {
     show();
     await openRules();
-    fireEvent.change(await screen.findByLabelText("كم لعبة"), { target: { value: "" } });
+    fireEvent.change(await screen.findByLabelText("كم وحدة"), { target: { value: "" } });
 
-    const field = screen.getByLabelText("كم لعبة").closest("div");
+    const field = screen.getByLabelText("كم وحدة").closest("div");
     expect(field?.textContent).toContain("حدد عدد الوحدات التي تُلعب في هذا المستوى");
   });
 
@@ -155,7 +154,7 @@ describe("the match levels card", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "أصلحها" }));
 
-    expect((screen.getByLabelText("يُكتسب في كم لعبة") as HTMLInputElement).value).toBe("1");
+    expect((screen.getByLabelText("يُكتسب في كم وحدة") as HTMLInputElement).value).toBe("1");
     expect(saveButton().hasAttribute("disabled")).toBe(false);
   });
 
@@ -283,7 +282,6 @@ describe("a level played to a target", () => {
     id: "match",
     order: 0,
     singular: "المباراة",
-    plural: "المباريات",
     countedBy: "POINTS",
     endsBy: "TARGET",
     unitCount: null,
@@ -298,7 +296,7 @@ describe("a level played to a target", () => {
     await openRules();
 
     expect(await screen.findByText("الفارق الذي يحسمه")).toBeDefined();
-    expect(screen.queryByText("تُستكمل بكم لعبة")).toBeNull();
+    expect(screen.queryByText("تُستكمل بكم وحدة")).toBeNull();
   });
 
   it("saves without one", async () => {
@@ -317,6 +315,6 @@ describe("a level played to a target", () => {
     await openRules();
 
     expect(await screen.findByText("الفارق الذي يحسمه")).toBeDefined();
-    expect(screen.getByText("تُستكمل بكم لعبة")).toBeDefined();
+    expect(screen.getByText("تُستكمل بكم وحدة")).toBeDefined();
   });
 });

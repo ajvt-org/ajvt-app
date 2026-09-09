@@ -14,7 +14,7 @@ const TEYSSE = { name: "تيس", unitsToSelf: 2, unitsFromOther: 2 };
 
 const TARGET_LEVELS: LevelFixture[] = [
   { ...MATCH_LEVEL, endsBy: "TARGET", unitCount: null, target: 2, unsettled: null },
-  { singular: "جولة", plural: "جولات" },
+  { singular: "جولة" },
 ];
 
 const WON = { outcome: "SIDE_A" };
@@ -348,8 +348,8 @@ describe("a move typed into the unit below the one it acts on", () => {
 
   const DEEP: LevelFixture[] = [
     { ...MATCH_LEVEL, endsBy: "TARGET", unitCount: null, target: 2, unsettled: null },
-    { singular: "فكتوار", plural: "فكتوارات", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
-    { singular: "جولة", plural: "جولات" },
+    { singular: "فكتوار", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
+    { singular: "جولة" },
   ];
 
   async function deepMatch() {

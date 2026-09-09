@@ -139,7 +139,7 @@ describe("recording the units of a series match", () => {
   it("takes a free score with no target", async () => {
     const { match } = await matchOf([
       { ...MATCH_LEVEL, countedBy: "POINTS", unitCount: 1 },
-      { singular: "شوط", plural: "أشواط" },
+      { singular: "شوط" },
     ]);
 
     const res = await add(match.id, { sideAPoints: 3, sideBPoints: 1 });
@@ -384,12 +384,11 @@ describe("a unit recorded under another", () => {
     { ...MATCH_LEVEL, unsettled: "DECIDER" },
     {
       singular: "شوط",
-      plural: "أشواط",
       countedBy: "POINTS",
       endsBy: "TARGET",
       target: 100,
     },
-    { singular: "نقطة", plural: "نقاط" },
+    { singular: "نقطة" },
   ];
 
   async function unitOf(matchId: string, body: object) {
@@ -495,12 +494,11 @@ describe("opening a unit that already carries a score", () => {
     { ...MATCH_LEVEL, unsettled: "DECIDER" },
     {
       singular: "شوط",
-      plural: "أشواط",
       countedBy: "POINTS",
       endsBy: "TARGET",
       target: 100,
     },
-    { singular: "نقطة", plural: "نقاط" },
+    { singular: "نقطة" },
   ];
 
   it("lets go of the typed result when the first unit is recorded under it", async () => {
@@ -527,7 +525,7 @@ describe("opening a unit that already carries a score", () => {
 });
 
 describe("a match whose ladder is one level", () => {
-  const ALONE = [{ singular: "مباراة", plural: "مباريات" }];
+  const ALONE = [{ singular: "مباراة" }];
 
   beforeEach(async () => {
     await resetDb();

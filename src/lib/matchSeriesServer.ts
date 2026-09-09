@@ -27,7 +27,6 @@ export const LEVEL_FIELDS = {
   id: true,
   order: true,
   singular: true,
-  plural: true,
   countedBy: true,
   endsBy: true,
   unitCount: true,

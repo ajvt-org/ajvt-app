@@ -4,7 +4,6 @@ export interface LevelDraft {
   key: string;
   id: string | null;
   singular: string;
-  plural: string;
   countedBy: "" | "OUTCOME" | "POINTS";
   endsBy: "" | "COUNT" | "TARGET";
   unitCount: string;
@@ -31,7 +30,6 @@ export function blankDraft(key: string): LevelDraft {
     key,
     id: null,
     singular: "",
-    plural: "",
     countedBy: "OUTCOME",
     endsBy: "COUNT",
     unitCount: "2",
@@ -50,7 +48,6 @@ export function draftOfLevel(level: LevelRow): LevelDraft {
     key: level.id,
     id: level.id,
     singular: level.singular,
-    plural: level.plural,
     countedBy: level.countedBy ?? "",
     endsBy: level.endsBy ?? "",
     unitCount: asField(level.unitCount),
@@ -74,7 +71,6 @@ export function levelOfDraft(draft: LevelDraft, index: number, count: number): L
     id: draft.id ?? "",
     order: index,
     singular: draft.singular.trim(),
-    plural: draft.plural.trim(),
     countedBy: last ? null : draft.countedBy || null,
     endsBy,
     unitCount: endsBy === "COUNT" ? asNumber(draft.unitCount) : null,

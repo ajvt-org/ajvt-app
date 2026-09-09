@@ -6,7 +6,6 @@ const BLANK: LevelRow = {
   id: "match",
   order: 0,
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: "OUTCOME",
   endsBy: "COUNT",
   unitCount: 2,
@@ -19,23 +18,27 @@ const BLANK: LevelRow = {
   creditWindow: 0,
 };
 
-const UNIT: LevelRow = { ...BLANK, id: "game", order: 1, singular: "لعبة", plural: "ألعاب" };
-
 describe("what a match being extended says", () => {
-  it("names the units a level that continues is extended by", () => {
+  it("takes the dual at two rather than printing a number and a plural", () => {
     const match = { ...BLANK, unsettled: "CONTINUE" as const, margin: 1, continueUnits: 2 };
 
-    expect(extensionLine(match, UNIT)).toBe("تعادلت، وتُمدَّد ب2 ألعاب");
+    expect(extensionLine(match)).toBe("تعادلت، وتُمدَّد بوحدتان");
+  });
+
+  it("counts the units where there are more than two", () => {
+    const match = { ...BLANK, unsettled: "CONTINUE" as const, margin: 1, continueUnits: 3 };
+
+    expect(extensionLine(match)).toBe("تعادلت، وتُمدَّد ب3 وحدات");
   });
 
   it("says a deciding unit is played where that is what happens", () => {
     const match = { ...BLANK, unsettled: "DECIDER" as const };
 
-    expect(extensionLine(match, UNIT)).toBe("تعادلت، وتُلعب وحدة حاسمة");
+    expect(extensionLine(match)).toBe("تعادلت، وتُلعب وحدة حاسمة");
   });
 
   it("says nothing rather than an extension by no units", () => {
-    expect(extensionLine(BLANK, UNIT)).toBeNull();
-    expect(extensionLine({ ...BLANK, unsettled: "CONTINUE", margin: 1 }, UNIT)).toBeNull();
+    expect(extensionLine(BLANK)).toBeNull();
+    expect(extensionLine({ ...BLANK, unsettled: "CONTINUE", margin: 1 })).toBeNull();
   });
 });

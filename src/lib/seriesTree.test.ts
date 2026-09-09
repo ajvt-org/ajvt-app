@@ -6,7 +6,6 @@ const BLANK: LevelRow = {
   id: "match",
   order: 0,
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: null,
   endsBy: null,
   unitCount: null,
@@ -34,7 +33,6 @@ const CARDS: LevelRow[] = [
     id: "set",
     order: 1,
     singular: "شوط",
-    plural: "أشواط",
     countedBy: "OUTCOME",
     endsBy: "TARGET",
     target: 12,
@@ -44,7 +42,6 @@ const CARDS: LevelRow[] = [
     id: "point",
     order: 2,
     singular: "نقطة",
-    plural: "نقاط",
     countedBy: "POINTS",
     endsBy: "TARGET",
     target: 100,
@@ -52,7 +49,7 @@ const CARDS: LevelRow[] = [
     margin: 1,
     continueUnits: 1,
   },
-  { ...BLANK, id: "round", order: 3, singular: "دور", plural: "أدوار" },
+  { ...BLANK, id: "round", order: 3, singular: "دور" },
 ];
 
 function unit(over: Partial<UnitRow> & { id: string; levelId: string; order: number }): UnitRow {

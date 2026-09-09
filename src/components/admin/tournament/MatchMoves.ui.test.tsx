@@ -73,9 +73,9 @@ describe("the moves of a match", () => {
   });
 
   it("says what a move does, so nobody has to work out why the parts do not add up", () => {
-    expect(effectOf(TEYSSE, UNIT)).toContain("تيس");
-    expect(effectOf(TEYSSE, UNIT)).toContain("تضيف");
-    expect(effectOf(TEYSSE, UNIT)).toContain("تخصم");
+    expect(effectOf(TEYSSE)).toContain("تيس");
+    expect(effectOf(TEYSSE)).toContain("تضيف");
+    expect(effectOf(TEYSSE)).toContain("تخصم");
   });
 
   it("says a move happened and which side did it", () => {

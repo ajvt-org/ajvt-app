@@ -12,7 +12,6 @@ const BLANK: LevelRow = {
   id: "match",
   order: 0,
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: null,
   endsBy: null,
   unitCount: null,
@@ -29,7 +28,7 @@ const ONE: Ladder = [{ ...BLANK, id: "match" }];
 
 const TWO: Ladder = [
   { ...BLANK, id: "match", countedBy: "OUTCOME", endsBy: "COUNT", unitCount: 2 },
-  { ...BLANK, id: "game", order: 1, singular: "لعبة", plural: "ألعاب" },
+  { ...BLANK, id: "game", order: 1, singular: "لعبة" },
 ];
 
 describe("where a result is recorded", () => {

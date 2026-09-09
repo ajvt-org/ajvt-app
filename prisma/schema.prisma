@@ -367,7 +367,6 @@ model MatchLevel {
   activity       Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
   order          Int
   singular       String
-  plural         String
   countedBy      CountedBy?
   endsBy         EndsBy?
   unitCount      Int?

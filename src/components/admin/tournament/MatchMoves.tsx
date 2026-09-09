@@ -8,12 +8,12 @@ import { marksAWorth, offerableRules } from "@/lib/moveRules";
 import { seriesResult as texts } from "@/lib/texts";
 import type { MoveRuleRow, RecordedMoveRow, UnitRow } from "./seriesTypes";
 
-export function effectOf(rule: MoveRuleRow, unit: LevelRow): string {
+export function effectOf(rule: MoveRuleRow): string {
   if (marksAWorth(rule)) return texts.moveWorth(rule.name, String(rule.unitWorth));
   return texts.moveEffect(
     rule.name,
-    countedUnits(rule.unitsToSelf, unit),
-    countedUnits(rule.unitsFromOther, unit),
+    countedUnits(rule.unitsToSelf),
+    countedUnits(rule.unitsFromOther),
   );
 }
 
@@ -100,7 +100,7 @@ export default function MatchMoves({
             <option value="">{texts.pickMove}</option>
             {offerable.map((rule) => (
               <option key={rule.id} value={rule.id}>
-                {effectOf(rule, unit)}
+                {effectOf(rule)}
               </option>
             ))}
           </select>
