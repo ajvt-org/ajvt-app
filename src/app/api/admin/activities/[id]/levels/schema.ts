@@ -29,7 +29,16 @@ const move = z.object({
   unitWorth: z.number().int().nullable().default(null),
 });
 
+const worthRule = z.object({
+  id: z.string().nullish(),
+  levelKey: z.string(INVALID),
+  name: z.string(INVALID),
+  when: z.enum(["LOSER_ON_NOTHING", "WINNER_LOST_CREDIT"], INVALID),
+  worth: z.number().int(),
+});
+
 export const levelsSchema = z.object({
   levels: z.array(level),
   moves: z.array(move).default([]),
+  worthRules: z.array(worthRule).default([]),
 });

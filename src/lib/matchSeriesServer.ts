@@ -22,6 +22,7 @@ import {
   type MoveRow,
   type UnitRow,
 } from "./seriesTree";
+import { detectedWorth, type WorthWhen } from "./unitWorth";
 
 export const LEVEL_FIELDS = {
   id: true,
@@ -52,11 +53,21 @@ export const UNIT_FIELDS = {
   sideBPoints: true,
   sideAColour: true,
   worth: true,
+  worthRuleId: true,
+  worthKept: true,
   sideALostCredit: true,
   sideBLostCredit: true,
 } as const;
 
 export const UNITS_SELECT = { orderBy: { order: "asc" }, select: UNIT_FIELDS } as const;
+
+export const WORTH_FIELDS = {
+  id: true,
+  name: true,
+  levelId: true,
+  when: true,
+  worth: true,
+} as const;
 
 export const MOVE_FIELDS = {
   id: true,
@@ -75,6 +86,7 @@ export const MATCH_WITH_SERIES = {
     select: {
       matchShape: true,
       levels: LEVELS_SELECT,
+      worthRules: { orderBy: { createdAt: "asc" }, select: WORTH_FIELDS },
       hasColours: true,
       firstColourWord: true,
       secondColourWord: true,
@@ -234,7 +246,7 @@ export async function addUnit(matchId: string, input: UnitInput) {
 
   const first = parentId !== null && !match.units.some((row) => row.parentId === parentId);
 
-  return prisma.$transaction(async (tx) => {
+  const unit = await prisma.$transaction(async (tx) => {
     if (first) {
       await tx.matchUnit.update({
         where: { id: parentId },
@@ -245,6 +257,8 @@ export async function addUnit(matchId: string, input: UnitInput) {
       data: { matchId, parentId, levelId: level.id, order, sideAColour, ...result },
     });
   });
+  await applyWorthRules(matchId);
+  return unit;
 }
 
 function unitOf(match: LoadedMatch, unitId: string) {
@@ -263,13 +277,16 @@ export async function correctUnit(matchId: string, unitId: string, input: UnitIn
   const parent = parentOfLevel(ladderFor(match), unit.levelId);
   if (!parent) throw new ValidationError(messages.unitLevelMissing);
   const result = readUnit(input, parent);
-  return prisma.matchUnit.update({ where: { id: unitId }, data: result });
+  const corrected = await prisma.matchUnit.update({ where: { id: unitId }, data: result });
+  await applyWorthRules(matchId);
+  return corrected;
 }
 
 export async function removeUnit(matchId: string, unitId: string) {
   const match = await loadSeriesMatch(matchId);
   const unit = unitOf(match, unitId);
   await prisma.matchUnit.delete({ where: { id: unitId } });
+  await applyWorthRules(matchId);
   return unit;
 }
 
@@ -314,6 +331,67 @@ export async function undoMove(matchId: string, moveId: string) {
 
   await prisma.matchMove.delete({ where: { id: moveId } });
   return recorded;
+}
+
+interface WorthUpdate {
+  id: string;
+  worth: number | null;
+  worthRuleId: string | null;
+}
+
+interface DeclaredWorth {
+  id: string;
+  name: string;
+  levelId: string;
+  when: WorthWhen;
+  worth: number;
+}
+
+function worthUpdatesFor(match: LoadedMatch, rules: DeclaredWorth[]): WorthUpdate[] {
+  const resolved = resolveMatch(match.activity.levels, match.units, match.moves);
+  const updates: WorthUpdate[] = [];
+  for (const unit of flatten(resolved.units)) {
+    if (!unit.row.worthKept) continue;
+    const standing = unit.standing;
+    const rule = standing ? detectedWorth(rules, unit.row.levelId, standing) : null;
+    const worth = rule?.worth ?? null;
+    const worthRuleId = rule?.id ?? null;
+    if (unit.row.worthRuleId === worthRuleId && (unit.row.worth ?? null) === worth) continue;
+    if (worthRuleId === null && unit.row.worthRuleId === null) continue;
+    updates.push({ id: unit.row.id, worth, worthRuleId });
+  }
+  return updates;
+}
+
+export async function applyWorthRules(matchId: string) {
+  let match = await loadSeriesMatch(matchId);
+  const rules = match.activity.worthRules;
+  if (rules.length === 0) return;
+
+  for (let pass = 0; pass < match.activity.levels.length; pass += 1) {
+    const updates = worthUpdatesFor(match, rules);
+    if (updates.length === 0) return;
+    await prisma.$transaction(
+      updates.map((update) =>
+        prisma.matchUnit.update({
+          where: { id: update.id },
+          data: { worth: update.worth, worthRuleId: update.worthRuleId },
+        }),
+      ),
+    );
+    match = await loadSeriesMatch(matchId);
+  }
+}
+
+export async function keepWorth(matchId: string, unitId: string, kept: boolean) {
+  const match = await loadSeriesMatch(matchId);
+  const unit = unitOf(match, unitId);
+  await prisma.matchUnit.update({
+    where: { id: unit.id },
+    data: { worthKept: kept, ...(kept ? {} : { worth: null }) },
+  });
+  if (kept) await applyWorthRules(matchId);
+  return unitOf(await loadSeriesMatch(matchId), unitId);
 }
 
 export function seriesStateOf(match: LoadedMatch) {
