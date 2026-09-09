@@ -129,7 +129,7 @@ export default function LevelCard({
         ) : (
           <Disclosure
             defaultOpen={moves.drafts.some((move) => move.name.trim() === "")}
-            title={<span className="text-xs">{texts.moves(own)}</span>}
+            title={<span className="text-xs">{texts.moves}</span>}
             color="var(--mint-700)"
             className="rounded-lg px-2.5 py-2"
             surface={{ background: "var(--surface-2)" }}
