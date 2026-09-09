@@ -73,16 +73,14 @@ export default function MatchMoves({
                   {texts.unitNumber(unit.singular, orderOf.get(row.unitId) ?? 0)}
                 </span>
               </span>
-              {open && (
-                <button
-                  aria-label={`${texts.undoMove} ${row.rule.name}`}
-                  onClick={() => onUndo(row.id)}
-                  disabled={busy}
-                  className="btn btn-icon btn-sm"
-                >
-                  <Icon name="refresh" size={13} />
-                </button>
-              )}
+              <button
+                aria-label={`${texts.undoMove} ${row.rule.name}`}
+                onClick={() => onUndo(row.id)}
+                disabled={busy}
+                className="btn btn-icon btn-sm"
+              >
+                <Icon name="refresh" size={13} />
+              </button>
             </div>
           ))}
         </div>
