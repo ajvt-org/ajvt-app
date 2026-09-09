@@ -13,13 +13,7 @@ const SAVED = {
 describe("what the public settings route hands out", () => {
   it("names the fields it publishes, so a new setting is not published by being added", () => {
     expect(Object.keys(publicSettings(SAVED)).sort()).toEqual(
-      [
-        "asksBankReference",
-        "membershipFee",
-        "membershipYear",
-        "showsReferenceCode",
-        "supportWhatsapp",
-      ].sort(),
+      ["asksBankReference", "membershipFee", "showsReferenceCode", "supportWhatsapp"].sort(),
     );
   });
 
@@ -28,6 +22,12 @@ describe("what the public settings route hands out", () => {
 
     expect(published.whatsappGroup).toBeUndefined();
     expect(Object.values(published)).not.toContain("https://chat.whatsapp.com/secret");
+  });
+
+  it("keeps the membership year out of it, an admin screen reads that with a session", () => {
+    const published = publicSettings(SAVED) as unknown as Record<string, unknown>;
+
+    expect(published.membershipYear).toBeUndefined();
   });
 
   it("keeps the officer names and the password window out of it", () => {

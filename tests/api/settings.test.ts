@@ -42,13 +42,7 @@ describe("GET /api/settings", () => {
     const { settings } = await (await publicGet()).json();
 
     expect(Object.keys(settings).sort()).toEqual(
-      [
-        "asksBankReference",
-        "membershipFee",
-        "membershipYear",
-        "showsReferenceCode",
-        "supportWhatsapp",
-      ].sort(),
+      ["asksBankReference", "membershipFee", "showsReferenceCode", "supportWhatsapp"].sort(),
     );
     expect(JSON.stringify(settings)).not.toContain("chat.whatsapp.com");
   });
@@ -184,6 +178,16 @@ describe("PATCH /api/admin/settings", () => {
 
     expect(res.status).toBe(200);
     expect((await res.json()).settings.membershipYear).toBe(next);
+  });
+
+  it("hands the pinned year to the admin route, which is where a screen reads it", async () => {
+    await signInAsAdmin(await createAdmin());
+    const next = runningYear() + 1;
+    await PATCH(post("/api/admin/settings", { ...valid, membershipYear: next }));
+
+    const { settings } = await (await adminGet()).json();
+
+    expect(settings.membershipYear).toBe(next);
   });
 
   it("keeps the two officers who sign the receipts", async () => {
