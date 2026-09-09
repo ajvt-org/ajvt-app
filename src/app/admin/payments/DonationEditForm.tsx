@@ -124,20 +124,20 @@ export default function DonationEditForm({
         />
 
         <PhotoUpload
-          photo={form.proof}
-          variant="cover"
-          label={donationEdit.proof}
-          placeholderIcon="receipt"
-          onUpload={(filename) => set({ proof: filename })}
-        />
-
-        <PhotoUpload
           photo={form.donorPhoto}
           imageUrlPrefix="/api/files/donation"
           variant="avatar"
           label={donationEdit.donorPhoto}
           placeholderIcon="user"
           onUpload={(filename) => set({ donorPhoto: filename })}
+        />
+
+        <PhotoUpload
+          photo={form.proof}
+          variant="cover"
+          label={donationEdit.proof}
+          placeholderIcon="receipt"
+          onUpload={(filename) => set({ proof: filename })}
         />
       </div>
 
