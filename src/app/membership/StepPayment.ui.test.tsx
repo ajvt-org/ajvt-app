@@ -25,13 +25,14 @@ function formOf(over: Partial<PaymentValues> = {}): PaymentValues {
   };
 }
 
-function renderStep(form: PaymentValues = formOf(), setForm = vi.fn()) {
+function renderStep(form: PaymentValues = formOf(), setForm = vi.fn(), asksBankReference = true) {
   render(
     <StepPayment
       form={form}
       setForm={setForm}
       fullName="محمد ولد أحمد"
       membershipFee={2000}
+      asksBankReference={asksBankReference}
       copied={null}
       onCopy={vi.fn()}
       surplus={0}
@@ -227,6 +228,7 @@ describe("the transaction number a member copies off their receipt", () => {
         setForm={vi.fn()}
         fullName="محمد ولد أحمد"
         membershipFee={2000}
+        asksBankReference
         copied={null}
         onCopy={vi.fn()}
         surplus={0}
@@ -248,5 +250,33 @@ describe("the transaction number a member copies off their receipt", () => {
       (screen.getByRole("button", { name: new RegExp(stepPayment.send) }) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
+  });
+});
+
+describe("whether the انتساب form asks for a transaction number", () => {
+  beforeEach(() => {
+    globalThis.fetch = offering([]);
+  });
+
+  it("asks for it where the association wants it", () => {
+    renderStep(formOf(), vi.fn(), true);
+
+    expect(screen.getByLabelText(stepPayment.bankReference)).toBeDefined();
+    expect(screen.getByText(stepPayment.bankReferenceHint)).toBeDefined();
+  });
+
+  it("takes the label, the input and the line together where it does not", () => {
+    renderStep(formOf(), vi.fn(), false);
+
+    expect(screen.queryByLabelText(stepPayment.bankReference)).toBeNull();
+    expect(screen.queryByText(stepPayment.bankReferenceHint)).toBeNull();
+    expect(document.querySelector("#member-bank-reference")).toBeNull();
+  });
+
+  it("still asks for the amount and still submits", () => {
+    renderStep(formOf(), vi.fn(), false);
+
+    expect(document.querySelector("#member-paid")).not.toBeNull();
+    expect(screen.getByRole("button", { name: stepPayment.send })).toBeDefined();
   });
 });
