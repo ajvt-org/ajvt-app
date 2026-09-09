@@ -143,7 +143,7 @@ describe("recording a support payment by hand", () => {
     await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
     await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "ابو");
     await userEvent.click(screen.getByText("أبوبكر لمرابط"));
-    await userEvent.click(screen.getByText(manualDonation.clearAccount));
+    await userEvent.click(screen.getByText(manualDonation.unlink));
 
     const field = screen.getByLabelText(/اسم المتبرع/) as HTMLInputElement;
     expect(field.value).toBe("ابو");
@@ -218,7 +218,7 @@ describe("recording a support payment by hand", () => {
     await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
     await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "ابو");
     await userEvent.click(screen.getByText("أبوبكر لمرابط"));
-    await userEvent.click(screen.getByText(manualDonation.clearAccount));
+    await userEvent.click(screen.getByText(manualDonation.unlink));
 
     expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
   });

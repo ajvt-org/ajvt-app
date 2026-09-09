@@ -293,6 +293,7 @@ describe("what the fields of the donation form are called", () => {
     expect(donationEdit.paymentMethod).toBe(manualDonation.paymentMethod);
     expect(donationEdit.destination).toBe(manualDonation.destination);
     expect(donationEdit.anonymous).toBe(manualDonation.anonymous);
+    expect(donationEdit.unlink).toBe(manualDonation.unlink);
   });
 });
 

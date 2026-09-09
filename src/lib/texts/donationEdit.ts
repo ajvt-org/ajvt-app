@@ -6,7 +6,6 @@ export const donationEdit = {
   linkedTo: "مرتبط بحساب",
   link: "ربط بعضو مسجل",
   changeLink: "تغيير الربط",
-  unlink: "إلغاء الربط",
   save: "حفظ",
   cancel: "إلغاء",
 } as const;

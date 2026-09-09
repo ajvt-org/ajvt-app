@@ -141,7 +141,7 @@ export default function ManualDonationDialog({
                   className="text-xs px-2.5 py-1 rounded-lg font-bold shrink-0"
                   style={QUIET}
                 >
-                  {manualDonation.clearAccount}
+                  {manualDonation.unlink}
                 </button>
               </div>
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>

@@ -13,4 +13,5 @@ export const donationForm = {
   destination: "وجهة الدعم",
   anonymous: "إظهاره باسم فاعل خير",
   contactFromAccount: "الاسم ورقم الهاتف مأخوذان من حساب العضو المرتبط",
+  unlink: "إلغاء الربط",
 } as const;
