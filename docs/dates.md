@@ -42,6 +42,7 @@ These are the exports and what each one draws, for the instant `2026-09-07T19:28
 | `formatDateTime` | `2026/09/07 19:28` | a stamp on a record |
 | `formatDate` | `2026/09/07` | a day with no hour to it |
 | `formatTime` | `19:28` | an hour under a heading that carries the day |
+| `formatLongDate` | `الاثنين، 7 سبتمبر 2026` | a heading above a day's rows, and nothing else |
 | `formatDayKey` | `2026/09/07` | a stored day key drawn as a date |
 | `matchDateKey` | `2026-09-07` | grouping and sorting, never a screen |
 | `todayClubDateKey` | the same key for today | comparing a stored day against now |
@@ -58,19 +59,19 @@ seventh way starts.
 
 ### The long Arabic heading
 
-`الاثنين، 7 سبتمبر 2026`, drawn by `dayLabel` in
-`src/components/admin/tournament/daysTypes.ts`, above a day's matches.
+`formatLongDate`, above a day's matches, on the tournament admin and on the member's matches
+list.
 
-It is allowed because it is a heading rather than a record. A supervisor scanning a list of
-days reads a weekday faster than a numeric date, and the heading is what tells them which
-block of rows they are looking at. It carries the year, so it is not the yearless label #1761
-found and #1800 fixed.
+It is allowed because it is a heading rather than a record. Somebody scanning a list of days
+reads a weekday faster than a numeric date, and the heading is what tells them which block of
+rows they are looking at. It carries the year, so it is not the yearless label #1761 found
+and #1800 fixed.
 
 It is not a substitute for the numeric shape. A row that records when something happened
 draws `formatDateTime`, whatever the heading above it says.
 
-It asks `Intl` for `ar` directly and passes `CLUB_TIMEZONE`. It carries no month table of its
-own, and neither may anything else.
+It asks `Intl` for `ar` and passes `CLUB_TIMEZONE`. It carries no month table of its own, and
+neither may anything else.
 
 ### The export
 
