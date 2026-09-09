@@ -202,10 +202,8 @@ export default function ManualDonationDialog({
             id="manual-amount"
             type="number"
             dir="ltr"
-            min={1}
             value={form.amount}
             onChange={(e) => set({ amount: e.target.value })}
-            required
             className="input"
           />
         </FormField>

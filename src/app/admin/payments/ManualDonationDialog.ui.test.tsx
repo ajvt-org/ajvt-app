@@ -304,6 +304,15 @@ describe("recording a support payment by hand", () => {
     expect(screen.getByText(money.nameIsThePlaceholder)).toBeTruthy();
   });
 
+  it("refuses an empty amount in Arabic rather than leaving it to the browser", async () => {
+    mockPost();
+    show();
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(screen.getByText(money.amountInvalid)).toBeTruthy();
+  });
+
   it("records the operation number an admin typed", async () => {
     const fetchMock = mockPost();
     show();
