@@ -5,6 +5,7 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { api } from "@/lib/api";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import type { PublicSettings } from "@/lib/publicSettings";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 import { forgotPassword as texts } from "@/lib/texts";
@@ -21,7 +22,7 @@ export default function ForgotPasswordPage() {
 
   useEffect(() => {
     api
-      .get<{ settings: { supportWhatsapp: string } }>("/api/settings")
+      .get<{ settings: PublicSettings }>("/api/settings")
       .then((d) => setSupport(d.settings.supportWhatsapp))
       .catch(() => {});
   }, []);

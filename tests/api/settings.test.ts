@@ -25,7 +25,42 @@ describe("GET /api/settings", () => {
     const res = await publicGet();
 
     expect(res.status).toBe(200);
-    expect((await res.json()).settings).toEqual(defaultSettings());
+    expect((await res.json()).settings.membershipFee).toBe(defaultSettings().membershipFee);
+  });
+
+  it("hands out the fields the public reads and nothing else", async () => {
+    await signInAsAdmin(await createAdmin("super-admin", "SUPER"));
+    await PATCH(
+      post("/api/admin/settings", {
+        ...valid,
+        whatsappGroup: "https://chat.whatsapp.com/private",
+        secretaryName: "الأمين",
+        treasurerName: "المسؤول",
+      }),
+    );
+
+    const { settings } = await (await publicGet()).json();
+
+    expect(Object.keys(settings).sort()).toEqual(
+      [
+        "asksBankReference",
+        "membershipFee",
+        "membershipYear",
+        "showsReferenceCode",
+        "supportWhatsapp",
+      ].sort(),
+    );
+    expect(JSON.stringify(settings)).not.toContain("chat.whatsapp.com");
+  });
+
+  it("keeps the whole row for the admin route, which asks for a session", async () => {
+    await signInAsAdmin(await createAdmin("super-admin", "SUPER"));
+    await PATCH(post("/api/admin/settings", { ...valid, secretaryName: "الأمين" }));
+
+    const { settings } = await (await adminGet()).json();
+
+    expect(settings.secretaryName).toBe("الأمين");
+    expect(settings.tempPasswordHours).toBe(12);
   });
 
   it("returns the saved values once an admin changes them", async () => {

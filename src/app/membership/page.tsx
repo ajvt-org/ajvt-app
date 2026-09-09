@@ -15,6 +15,7 @@ import { canRenew } from "@/lib/renewal";
 import IconLabel from "@/components/IconLabel";
 import PageHeader from "@/components/PageHeader";
 import { membershipForm, pageTitles, stepPayment } from "@/lib/texts";
+import type { PublicSettings } from "@/lib/publicSettings";
 import { goAfterAuthChange } from "@/lib/authNav";
 import PageLoading from "@/components/PageLoading";
 import StepPayment from "./StepPayment";
