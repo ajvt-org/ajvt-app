@@ -22,6 +22,7 @@ export default function StepPayment({
   setForm,
   fullName,
   membershipFee,
+  asksBankReference,
   copied,
   onCopy,
   surplus,
@@ -41,6 +42,7 @@ export default function StepPayment({
   setForm: Dispatch<SetStateAction<PaymentValues>>;
   fullName: string;
   membershipFee: number;
+  asksBankReference: boolean;
   copied: string | null;
   onCopy: (value: string) => void;
   surplus: number;
@@ -159,29 +161,31 @@ export default function StepPayment({
           </p>
         </div>
 
-        <div>
-          <label
-            htmlFor="member-bank-reference"
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-          >
-            {texts.bankReference}
-          </label>
-          <input
-            id="member-bank-reference"
-            value={form.bankReference}
-            onChange={(e) => setForm((p) => ({ ...p, bankReference: e.target.value }))}
-            maxLength={40}
-            className="input"
-            dir="ltr"
-          />
-          <p
-            className="text-xs mt-1"
-            style={{ color: referenceLooksOdd ? "var(--copper-500)" : "var(--text-muted)" }}
-          >
-            {referenceLooksOdd ? texts.bankReferenceOdd : texts.bankReferenceHint}
-          </p>
-        </div>
+        {asksBankReference && (
+          <div>
+            <label
+              htmlFor="member-bank-reference"
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+            >
+              {texts.bankReference}
+            </label>
+            <input
+              id="member-bank-reference"
+              value={form.bankReference}
+              onChange={(e) => setForm((p) => ({ ...p, bankReference: e.target.value }))}
+              maxLength={40}
+              className="input"
+              dir="ltr"
+            />
+            <p
+              className="text-xs mt-1"
+              style={{ color: referenceLooksOdd ? "var(--copper-500)" : "var(--text-muted)" }}
+            >
+              {referenceLooksOdd ? texts.bankReferenceOdd : texts.bankReferenceHint}
+            </p>
+          </div>
+        )}
 
         {surplus > 0 && (
           <DonorNameChoice
