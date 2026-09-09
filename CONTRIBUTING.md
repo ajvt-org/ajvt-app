@@ -34,6 +34,13 @@ admin screens already do this and the rest move over as they are touched, so
 follow it in any file you are already changing rather than sweeping the whole
 tree.
 
+Every date a person reads goes through `src/lib/clubTime.ts`, in one shape, on the
+club's clock, and isolated so it survives an Arabic paragraph.
+[docs/dates.md](docs/dates.md) is the rule, the family of functions and the two
+exceptions to it. A date formatter written next to the screen using it, or a
+private table of the Arabic month names, is how six of them accumulated once
+already.
+
 Before pushing:
 
 ```bash
