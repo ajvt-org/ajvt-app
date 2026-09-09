@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Icon from "@/components/Icon";
 import Disclosure from "@/components/admin/Disclosure";
+import { formatDate } from "@/lib/clubTime";
 import { proofReuse as texts } from "@/lib/texts";
 
 type Reuse = { kind: "member" | "donation" | "expense"; id: string; label: string; date: string };
@@ -56,8 +57,7 @@ export default function ProofReuseWarning({
       <ul className="space-y-0.5 mt-1" style={{ color: "#92400e" }}>
         {reuse.map((row) => (
           <li key={`${row.kind}-${row.id}`}>
-            {WHERE[row.kind]} <b>{row.label}</b>{" "}
-            <span dir="ltr">({new Date(row.date).toISOString().slice(0, 10)})</span>
+            {WHERE[row.kind]} <b>{row.label}</b> <span dir="ltr">({formatDate(row.date)})</span>
           </li>
         ))}
       </ul>

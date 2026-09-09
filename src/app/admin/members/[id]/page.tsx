@@ -3,6 +3,7 @@
 import { Suspense, use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import { adminBackLink } from "@/lib/adminBackLink";
 import { auditActionLabel } from "@/lib/auditLabels";
 import IconLabel from "@/components/IconLabel";
@@ -19,11 +20,6 @@ import SupportPrivacyCard from "./SupportPrivacyCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberPage as texts, registrationStatusLabels } from "@/lib/texts";
 import Money from "@/components/Money";
-
-function day(value: string | Date | null | undefined): string {
-  if (!value) return "—";
-  return new Date(value).toISOString().slice(0, 10);
-}
 
 function AdminMemberProfilePageInner({ id }: { id: string }) {
   const router = useRouter();
@@ -130,7 +126,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
               ),
               aside: (
                 <>
-                  {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
+                  {d.paymentMethod || d.source} · <span dir="ltr">{formatDate(d.createdAt)}</span>
                 </>
               ),
             }))}
@@ -150,7 +146,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
                 aside: (
                   <>
                     {registrationStatusLabels[r.status] ?? r.status} ·{" "}
-                    <span dir="ltr">{day(r.createdAt)}</span>
+                    <span dir="ltr">{formatDate(r.createdAt)}</span>
                   </>
                 ),
               }))}
@@ -190,7 +186,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
             main: <IconLabel name="pencil">{auditActionLabel(h.action)}</IconLabel>,
             aside: (
               <>
-                {h.adminUsername} · <span dir="ltr">{day(h.createdAt)}</span>
+                {h.adminUsername} · <span dir="ltr">{formatDate(h.createdAt)}</span>
               </>
             ),
           }))}

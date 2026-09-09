@@ -4,11 +4,8 @@ import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import { api, errorMessage } from "@/lib/api";
+import { formatDate } from "@/lib/clubTime";
 import { membershipEnding as texts, MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
-
-function day(value: string | null): string {
-  return value ? new Date(value).toISOString().slice(0, 10) : "—";
-}
 
 export function EndedRows({
   endedAt,
@@ -22,7 +19,7 @@ export function EndedRows({
   return (
     <>
       <Row label={texts.endedReason} value={endedReason ?? "—"} />
-      <Row label={texts.endedOn} value={day(endedAt)} ltr />
+      <Row label={texts.endedOn} value={formatDate(endedAt)} ltr />
       <Row label={texts.endedBy} value={endedBy ?? "—"} />
     </>
   );
