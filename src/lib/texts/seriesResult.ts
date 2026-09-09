@@ -6,6 +6,7 @@ export const seriesResult = {
   none: "لم تُسجَّل وحدات بعد",
   unitNumber: (word: string, order: number) => `${word} ${order}`,
   abandoned: "متوقفة",
+  noResult: "لم تُسجَّل نتيجة بعد",
   endedBy: (name: string) => `أنهتها ${name}`,
   drawn: "تعادل",
   wonBy: (name: string) => `فوز ${name}`,

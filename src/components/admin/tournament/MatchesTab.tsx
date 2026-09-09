@@ -117,7 +117,6 @@ export default function MatchesTab({
   const played = matches.filter((m) => m.status === "PLAYED");
 
   const common = {
-    activityId,
     teams,
     allMatches: matches,
     matchShape,
