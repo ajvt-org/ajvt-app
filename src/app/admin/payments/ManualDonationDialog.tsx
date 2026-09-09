@@ -17,6 +17,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import Sheet from "@/components/Sheet";
+import PhoneInput from "@/components/form/PhoneInput";
 import DestinationSelect from "@/components/admin/DestinationSelect";
 import FormField from "@/components/admin/FormField";
 import LinkMemberPanel from "./LinkMemberPanel";
@@ -141,7 +142,7 @@ export default function ManualDonationDialog({
                   className="text-xs px-2.5 py-1 rounded-lg font-bold shrink-0"
                   style={QUIET}
                 >
-                  {manualDonation.clearAccount}
+                  {manualDonation.unlink}
                 </button>
               </div>
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -183,15 +184,10 @@ export default function ManualDonationDialog({
             </FormField>
 
             <FormField id="manual-donor-phone" label={manualDonation.phone}>
-              <input
+              <PhoneInput
                 id="manual-donor-phone"
-                type="tel"
-                dir="ltr"
                 value={form.donorPhone}
-                onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-                placeholder="2XXXXXXX"
-                maxLength={8}
-                className="input"
+                onChange={(donorPhone) => set({ donorPhone })}
               />
             </FormField>
           </>
@@ -202,10 +198,8 @@ export default function ManualDonationDialog({
             id="manual-amount"
             type="number"
             dir="ltr"
-            min={1}
             value={form.amount}
             onChange={(e) => set({ amount: e.target.value })}
-            required
             className="input"
           />
         </FormField>

@@ -1,15 +1,22 @@
 "use client";
 
+import type { CSSProperties } from "react";
+import { memberAccount } from "@/lib/texts";
+
 export default function PhoneInput({
   id,
   value,
   onChange,
-  placeholder = "2XXXXXXX",
+  placeholder = memberAccount.phonePlaceholder,
+  className = "input",
+  style,
 }: {
   id?: string;
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
+  className?: string;
+  style?: CSSProperties;
 }) {
   return (
     <input
@@ -25,8 +32,8 @@ export default function PhoneInput({
       placeholder={placeholder}
       dir="ltr"
       maxLength={8}
-      className="input"
-      style={{ letterSpacing: "0.15em" }}
+      className={className}
+      style={{ letterSpacing: "0.15em", ...style }}
     />
   );
 }
