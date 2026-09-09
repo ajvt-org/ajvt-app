@@ -73,6 +73,24 @@ describe("a level drafted on the setup card", () => {
     expect(level.continueUnits).toBeNull();
   });
 
+  it("keeps the counting on the only level of a ladder of one", () => {
+    const alone = { ...blankDraft("a"), singular: "مباراة", countedBy: "POINTS" as const };
+
+    const level = levelOfDraft(alone, 0, 1);
+
+    expect(level.countedBy).toBe("POINTS");
+    expect(level.endsBy).toBeNull();
+    expect(level.unitCount).toBeNull();
+    expect(level.unsettled).toBeNull();
+    expect(level.startingCredit).toBe(0);
+  });
+
+  it("passes the ladder check a match of one scored game would draw", () => {
+    const alone = { ...blankDraft("a"), singular: "مباراة", countedBy: "POINTS" as const };
+
+    expect(ladderProblem(ladderOfDrafts([alone]))).toBeNull();
+  });
+
   it("passes the ladder check a chess tournament would draw", () => {
     expect(ladderProblem(ladderOfDrafts(chess()))).toBeNull();
   });
