@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { OfficialReceiptView } from "@/lib/officialReceipt";
-import type { AppSettingsValues } from "@/lib/settings";
+import type { ScopedSettings } from "@/lib/adminSettings";
 
 type ListResponse = {
   receipts: OfficialReceiptView[];
@@ -21,7 +21,7 @@ export function useReceiptsData() {
     const query = asked ? `?year=${asked}` : "";
     return Promise.all([
       api.get<ListResponse>(`/api/admin/receipts${query}`).catch(() => null),
-      api.get<{ settings: AppSettingsValues }>("/api/admin/settings").catch(() => null),
+      api.get<{ settings: ScopedSettings }>("/api/admin/settings").catch(() => null),
     ]).then(([list, settings]) => {
       setReceipts(list?.receipts ?? []);
       setYears(list?.years ?? []);
