@@ -141,6 +141,7 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/DayMatchTime.tsx",
   "src/components/admin/tournament/DayMatchRow.tsx",
   "src/lib/matchOutcome.ts",
+  "src/lib/matchDays.ts",
   "src/components/admin/tournament/MatchCard.tsx",
   "src/components/admin/tournament/NewMatchForm.tsx",
   "src/components/admin/tournament/MatchCardActions.tsx",

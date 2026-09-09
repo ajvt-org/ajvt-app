@@ -3,7 +3,7 @@
 import Icon from "@/components/Icon";
 import Scoreline from "@/components/tournament/Scoreline";
 import { formatDateTime } from "@/lib/clubTime";
-import { UNDATED_LABEL } from "@/lib/matchDays";
+import { memberMatches } from "@/lib/texts";
 import { type Fixture } from "@/lib/memberFixtures";
 
 function TeamName({ name, mine }: { name: string; mine: boolean }) {
@@ -71,7 +71,7 @@ export default function FixtureRow({ fixture }: { fixture: Fixture }) {
           {fixture.matchDate ? (
             <bdi dir="ltr">{formatDateTime(fixture.matchDate)}</bdi>
           ) : (
-            UNDATED_LABEL
+            memberMatches.undated
           )}
         </span>
         {fixture.venue && (

@@ -3,4 +3,5 @@ export const memberMatches = {
   loading: "جاري التحميل...",
   past: "السابقة",
   upcoming: "القادمة",
+  undated: "موعد لاحق",
 } as const;
