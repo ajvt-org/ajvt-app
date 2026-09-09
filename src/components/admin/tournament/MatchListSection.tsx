@@ -7,7 +7,6 @@ import type { EntrantKind } from "@/lib/entrant";
 import type { SeriesConfig } from "./seriesConfig";
 
 export interface MatchCardCommon {
-  activityId: string;
   teams: Team[];
   allMatches: Match[];
   matchShape: "FOOTBALL" | "SERIES";
