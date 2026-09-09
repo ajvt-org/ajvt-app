@@ -10,23 +10,20 @@ import SeriesStanding from "./SeriesStanding";
 import UnitBranch from "./UnitBranch";
 import type { SeriesConfig } from "./seriesConfig";
 import type { EditorApi } from "./unitEditorApi";
-import type { MoveRuleRow, SeriesState } from "./seriesTypes";
+import type { SeriesState } from "./seriesTypes";
 
 export default function SeriesResultForm({
   matchId,
-  activityId,
   config,
   sides,
   onSaved,
 }: {
   matchId: string;
-  activityId: string;
   config: SeriesConfig;
   sides: string[];
   onSaved: () => void;
 }) {
   const [state, setState] = useState<SeriesState | null>(null);
-  const [rules, setRules] = useState<MoveRuleRow[]>([]);
   const [opened, setOpened] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -35,16 +32,11 @@ export default function SeriesResultForm({
 
   const load = useCallback(async () => {
     try {
-      const [next, declared] = await Promise.all([
-        api.get<SeriesState>(base),
-        api.get<{ moves: MoveRuleRow[] }>(`/api/admin/activities/${activityId}/levels`),
-      ]);
-      setState(next);
-      setRules(declared.moves);
+      setState(await api.get<SeriesState>(base));
     } catch (e) {
       setError(refusalMessage(e, texts.loadFailed));
     }
-  }, [base, activityId]);
+  }, [base]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -81,7 +73,7 @@ export default function SeriesResultForm({
     sides,
     busy,
     open: !state.standing.over,
-    rules,
+    rules: state.moveRules ?? [],
     worthRules: state.worthRules ?? [],
     moves: state.moves,
     opened,

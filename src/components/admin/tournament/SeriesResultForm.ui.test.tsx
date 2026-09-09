@@ -72,29 +72,18 @@ function mockSeries(state: {
     worth: number;
   }[];
 }) {
-  getMock.mockImplementation(async (url: string) =>
-    String(url).includes("/levels")
-      ? { moves: state.rules ?? [], levels: state.levels ?? CHESS.ladder, lock: null }
-      : {
-          units: state.units,
-          moves: state.moves ?? [],
-          levels: state.levels ?? CHESS.ladder,
-          worthRules: state.worthRules ?? [],
-          standing: state.standing,
-        },
-  );
+  getMock.mockImplementation(async () => ({
+    units: state.units,
+    moves: state.moves ?? [],
+    moveRules: state.rules ?? [],
+    levels: state.levels ?? CHESS.ladder,
+    worthRules: state.worthRules ?? [],
+    standing: state.standing,
+  }));
 }
 
 function show(config: SeriesConfig = CHESS) {
-  return render(
-    <SeriesResultForm
-      matchId="m1"
-      activityId="a1"
-      config={config}
-      sides={SIDES}
-      onSaved={vi.fn()}
-    />,
-  );
+  return render(<SeriesResultForm matchId="m1" config={config} sides={SIDES} onSaved={vi.fn()} />);
 }
 
 beforeEach(() => {
@@ -395,13 +384,13 @@ describe("the moves of a level", () => {
 });
 
 describe("loading the form", () => {
-  it("asks for the declared rules where the tournament serves them", async () => {
+  it("asks one route for everything it draws", async () => {
     show();
 
     await screen.findByText("وحدات المباراة");
-    expect(getMock.mock.calls.map((call) => String(call[0]))).toEqual(
-      expect.arrayContaining(["/api/admin/matches/m1/units", "/api/admin/activities/a1/levels"]),
-    );
+    expect(getMock.mock.calls.map((call) => String(call[0]))).toEqual([
+      "/api/admin/matches/m1/units",
+    ]);
   });
 
   it("shows what the server refused with rather than its own sentence", async () => {
