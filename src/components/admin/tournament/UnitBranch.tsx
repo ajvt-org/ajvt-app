@@ -47,7 +47,7 @@ export default function UnitBranch({
     <div className="space-y-1.5">
       {units.length === 0 ? (
         own ? null : (
-          <UnitsEmpty level={level} />
+          <UnitsEmpty />
         )
       ) : (
         units.map((unit) => (
@@ -103,7 +103,7 @@ export default function UnitBranch({
 
       {!editable && units.length > 0 && api.open && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.takesNoMore(level.plural)}
+          {texts.takesNoMore}
         </p>
       )}
     </div>

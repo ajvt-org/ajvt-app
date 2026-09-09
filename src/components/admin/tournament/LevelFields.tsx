@@ -81,7 +81,6 @@ function Num({
 
 export default function LevelFields({
   draft,
-  under,
   last,
   disabled,
   locked,
@@ -89,7 +88,6 @@ export default function LevelFields({
   onChange,
 }: {
   draft: LevelDraft;
-  under: { singular: string; plural: string } | null;
   last: boolean;
   disabled: boolean;
   locked: boolean;
@@ -98,34 +96,22 @@ export default function LevelFields({
 }) {
   const apply = () => fix?.patch && onChange(fix.patch);
   const frozen = disabled || locked;
-  const words = under ?? { singular: "", plural: "" };
   const wordsFault = fix && fix.field === "words" ? fix : null;
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2">
-        <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-          <span className="block mb-1">{texts.singular}</span>
-          <input
-            value={draft.singular}
-            disabled={disabled}
-            onChange={(e) => onChange({ singular: e.target.value })}
-            className="input input-sm w-full"
-          />
-        </label>
-        <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-          <span className="block mb-1">{texts.plural}</span>
-          <input
-            value={draft.plural}
-            disabled={disabled}
-            onChange={(e) => onChange({ plural: e.target.value })}
-            className="input input-sm w-full"
-          />
-        </label>
-      </div>
+      <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
+        <span className="block mb-1">{texts.singular}</span>
+        <input
+          value={draft.singular}
+          disabled={disabled}
+          onChange={(e) => onChange({ singular: e.target.value })}
+          className="input input-sm w-full"
+        />
+      </label>
       {wordsFault && <Fault fix={wordsFault} onFix={apply} />}
 
-      {!last && under && (
+      {!last && (
         <Disclosure
           title={<span className="text-xs">{texts.rules}</span>}
           color="var(--mint-700)"
@@ -133,7 +119,7 @@ export default function LevelFields({
           surface={{ background: "var(--surface-2)" }}
         >
           <div className="space-y-2 pt-2">
-            <Field label={texts.countedBy(words.plural)} field="countedBy" fix={fix} onFix={apply}>
+            <Field label={texts.countedBy} field="countedBy" fix={fix} onFix={apply}>
               <select
                 value={draft.countedBy}
                 disabled={frozen}
@@ -161,7 +147,7 @@ export default function LevelFields({
 
             {draft.endsBy === "COUNT" && (
               <Num
-                label={texts.unitCount(words.singular)}
+                label={texts.unitCount}
                 field="unitCount"
                 value={draft.unitCount}
                 disabled={frozen}
@@ -222,7 +208,7 @@ export default function LevelFields({
 
             {draft.unsettled === "CONTINUE" && draft.endsBy === "COUNT" && (
               <Num
-                label={texts.continueUnits(words.singular)}
+                label={texts.continueUnits}
                 field="continueUnits"
                 value={draft.continueUnits}
                 disabled={frozen}
@@ -243,7 +229,7 @@ export default function LevelFields({
             />
             {draft.startingCredit.trim() !== "" && draft.startingCredit.trim() !== "0" && (
               <Num
-                label={texts.creditWindow(words.singular)}
+                label={texts.creditWindow}
                 field="creditWindow"
                 value={draft.creditWindow}
                 disabled={frozen}

@@ -108,7 +108,7 @@ export default function MatchResult({
               units={scorelineUnits(ladder, match.units)}
               standing={match.series}
               unitWord={unitLevel?.singular ?? ""}
-              extension={unitLevel ? extensionLine(ladder[0], unitLevel) : null}
+              extension={extensionLine(ladder[0])}
             />
           </div>
           <MatchUnits

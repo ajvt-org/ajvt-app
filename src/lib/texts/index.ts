@@ -140,6 +140,7 @@ export { playersTab } from "./playersTab";
 export { proofUpload } from "./proofUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";
 export { seriesResult } from "./seriesResult";
+export { seriesUnits } from "./seriesUnits";
 export { matchLevelsSetup } from "./matchLevelsSetup";
 export { matchUnitCard } from "./matchUnitCard";
 export { setupLabels, setupWizard } from "./setupWizard";

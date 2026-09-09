@@ -1,10 +1,11 @@
 import type { CountedBy, EndsBy, Unsettled } from "@prisma/client";
+import { counted } from "./arabicCount";
+import { seriesUnits } from "./texts/seriesUnits";
 
 export interface LevelRow {
   id: string;
   order: number;
   singular: string;
-  plural: string;
   countedBy: CountedBy | null;
   endsBy: EndsBy | null;
   unitCount: number | null;
@@ -63,12 +64,8 @@ export function scorelineUnits<T>(ladder: Ladder, units: T[]): T[] {
   return recordsOnItself(ladder) ? [] : units;
 }
 
-export function countedUnits(count: number, level: LevelRow): string {
-  return count === 1 ? level.singular : `${count} ${level.plural}`;
-}
-
-export function definiteUnits(level: LevelRow): string {
-  return level.plural.startsWith("ال") ? level.plural : `ال${level.plural}`;
+export function countedUnits(count: number): string {
+  return counted(count, seriesUnits.noun);
 }
 
 export function countsPoints(level: LevelRow): boolean {

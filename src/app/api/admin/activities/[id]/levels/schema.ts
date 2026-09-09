@@ -7,7 +7,6 @@ const level = z.object({
   id: z.string().nullish(),
   key: z.string(INVALID),
   singular: z.string(INVALID),
-  plural: z.string(INVALID),
   countedBy: z.enum(["OUTCOME", "POINTS"], INVALID).nullable().default(null),
   endsBy: z.enum(["COUNT", "TARGET"], INVALID).nullable().default(null),
   unitCount: z.number().int().nullable().default(null),

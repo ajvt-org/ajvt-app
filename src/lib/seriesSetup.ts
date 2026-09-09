@@ -76,7 +76,7 @@ function creditFault(level: LevelRow): LevelProblem | null {
 }
 
 export function levelProblem(level: LevelRow, last: boolean): LevelProblem | null {
-  if (!level.singular.trim() || !level.plural.trim()) return "words";
+  if (!level.singular.trim()) return "words";
   if (last) return ruleless(level) ? null : "rulesOnTheLastLevel";
   return endingFault(level) ?? unsettledFault(level) ?? creditFault(level);
 }

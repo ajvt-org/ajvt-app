@@ -131,7 +131,6 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
 
       <div className="space-y-3">
         {drafts.map((draft, index) => {
-          const below = drafts[index + 1] ?? null;
           const here = moves.filter((move) => move.levelKey === draft.key);
           return (
             <LevelCard
@@ -140,14 +139,6 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
               own={nameOf(draft, index)}
               index={index}
               count={drafts.length}
-              under={
-                below
-                  ? {
-                      singular: below.singular.trim() || texts.singular,
-                      plural: below.plural.trim() || texts.plural,
-                    }
-                  : null
-              }
               frozen={frozen}
               fix={fixes[index]}
               moves={{

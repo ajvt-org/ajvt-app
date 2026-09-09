@@ -1,7 +1,7 @@
 "use client";
 
 import HalfPoints from "@/components/HalfPoints";
-import { countedUnits, definiteUnits } from "@/lib/matchLevels";
+import { countedUnits } from "@/lib/matchLevels";
 import { extensionLine } from "@/lib/seriesExtension";
 import { seriesResult as texts } from "@/lib/texts";
 import IconLabel from "@/components/IconLabel";
@@ -10,12 +10,12 @@ import type { SeriesStandingRow } from "./seriesTypes";
 
 export function stateLine(standing: SeriesStandingRow, config: SeriesConfig, sides: string[]) {
   if (standing.extending && !standing.over) {
-    return extensionLine(config.match, config.unit) ?? texts.inProgress;
+    return extensionLine(config.match) ?? texts.inProgress;
   }
   if (!standing.over) {
     return config.match.endsBy === "TARGET" && config.match.target !== null
-      ? texts.endsAt(countedUnits(config.match.target, config.unit))
-      : texts.endsWhenAllPlayed(definiteUnits(config.unit));
+      ? texts.endsAt(countedUnits(config.match.target))
+      : texts.endsWhenAllPlayed;
   }
   if (standing.winner === null) return texts.level;
   return texts.wonThe(standing.winner === "SIDE_A" ? sides[0] : sides[1]);
@@ -44,7 +44,7 @@ export default function SeriesStanding({
       <span style={{ color: "var(--text-muted)" }}>{stateLine(standing, config, sides)}</span>
       {!standing.over && (
         <span style={{ color: "var(--text-muted)" }}>
-          {texts.unitsLeft(countedUnits(standing.unitsLeft, config.unit))}
+          {texts.unitsLeft(countedUnits(standing.unitsLeft))}
         </span>
       )}
     </div>

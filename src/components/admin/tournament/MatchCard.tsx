@@ -122,7 +122,7 @@ export default function MatchCard({
               units={scorelineUnits(series.ladder, match.units)}
               standing={match.series}
               unitWord={series.unit.singular}
-              extension={extensionLine(series.match, series.unit)}
+              extension={extensionLine(series.match)}
               moves={match.moves}
               sides={[teamName(match.firstTeam), teamName(match.secondTeam)]}
             />

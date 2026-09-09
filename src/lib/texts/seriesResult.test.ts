@@ -6,19 +6,19 @@ describe("series result texts", () => {
     expect(seriesResult.unitNumber("شوط", 3)).toBe("شوط 3");
   });
 
-  it("heads the list with the plural the level carries", () => {
-    expect(seriesResult.heading("أشواط")).toContain("أشواط");
-    expect(seriesResult.none("أشواط")).toContain("أشواط");
+  it("heads the list and its empty line with the fixed word", () => {
+    expect(seriesResult.heading).toContain("وحدات");
+    expect(seriesResult.none).toContain("وحدات");
   });
 
-  it("says what is left and what ends the match in the tournament's own words", () => {
-    expect(seriesResult.unitsLeft("شوطان")).toContain("شوطان");
-    expect(seriesResult.endsAt("3 أشواط")).toContain("3 أشواط");
-    expect(seriesResult.endsWhenAllPlayed("الأشواط")).toContain("الأشواط");
+  it("says what is left and what ends the match", () => {
+    expect(seriesResult.unitsLeft("وحدتان")).toContain("وحدتان");
+    expect(seriesResult.endsAt("3 وحدات")).toContain("3 وحدات");
+    expect(seriesResult.endsWhenAllPlayed).toContain("الوحدات");
   });
 
-  it("takes the count and the unit into the extension line", () => {
-    expect(seriesResult.extending("جولتان")).toContain("جولتان");
+  it("takes the counted units into the extension line", () => {
+    expect(seriesResult.extending("وحدتان")).toContain("وحدتان");
   });
 
   it("weaves a side name into the lines about one side", () => {
@@ -36,11 +36,11 @@ describe("series result texts", () => {
     expect(seriesResult.addOne("لعبة")).toBe("إضافة لعبة");
     expect(seriesResult.openOne("لعبة 1")).toContain("لعبة 1");
     expect(seriesResult.closeOne("لعبة 1")).toContain("لعبة 1");
-    expect(seriesResult.takesNoMore("ألعاب")).toContain("ألعاب");
+    expect(seriesResult.takesNoMore).toContain("وحدات");
   });
 
   it("says what opening a unit will discard, and what a unit counted", () => {
-    expect(seriesResult.openDiscards("نقاط")).toContain("نقاط");
+    expect(seriesResult.openDiscards).toContain("وحدات");
     expect(seriesResult.countedTwice("2")).toContain("2");
     expect(seriesResult.endedBy("تيس")).toContain("تيس");
   });

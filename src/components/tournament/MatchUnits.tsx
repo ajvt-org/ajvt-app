@@ -64,7 +64,7 @@ function UnitLine({ unit, levels, sides }: { unit: UnitRow; levels: LevelRow[]; 
       {open && under && (
         <div className="ps-2 ms-1" style={{ borderInlineStart: "2px solid var(--mint-100)" }}>
           <p className="text-xs font-bold mb-1" style={{ color: "var(--text-muted)" }}>
-            <bdi>{under.plural}</bdi>
+            <bdi>{under.singular}</bdi>
           </p>
           <UnitList units={unit.children} levels={levels.slice(1)} sides={sides} />
         </div>
