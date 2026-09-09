@@ -1,5 +1,3 @@
-import { extractPaymentReference } from "./paymentReference";
-
 export const MAX_BANK_REFERENCE = 40;
 
 const ARABIC_INDIC = /[\u0660-\u0669\u06f0-\u06f9]/g;
@@ -17,10 +15,4 @@ export function readBankReference(value: unknown): string {
     .replace(/\s+/g, "")
     .replace(ARABIC_INDIC, latinDigit)
     .toUpperCase();
-}
-
-export function looksLikeReference(value: string): boolean {
-  const typed = readBankReference(value);
-  if (!typed) return true;
-  return extractPaymentReference(typed) !== null;
 }

@@ -10,8 +10,6 @@ export const stepPayment = {
   orderCode: "رمز الطلب (اكتبه في سبب التحويل)",
   memberCode: "رقم عضويتك (اكتبه في سبب التحويل)",
   bankReference: "رقم العملية من الإشعار",
-  bankReferenceHint: "اختياري، انسخه من إشعار التحويل",
-  bankReferenceOdd: "لا يشبه رقم عملية، تأكد منه",
   paidLabel: `المبلغ المدفوع (${ouguiya.singular})`,
   sending: "جاري إرسال الطلب...",
   saveEdits: "حفظ التعديلات",
@@ -19,6 +17,4 @@ export const stepPayment = {
   sendRenewal: "إرسال التجديد",
   payAtLeast: (fee: number) =>
     `الاشتراك ${money(fee)} على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه`,
-  feeMinimum: (fee: number) =>
-    `الحد الأدنى ${money(fee)} لرسوم الاشتراك — أي مبلغ زائد يُسجَّل كتبرّع بعد قبول الطلب، وتختار أنت كيف يظهر`,
 } as const;

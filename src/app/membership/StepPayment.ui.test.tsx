@@ -190,33 +190,21 @@ describe("the transaction number a member copies off their receipt", () => {
     vi.restoreAllMocks();
   });
 
-  it("is offered, and says it is optional", async () => {
+  it("is offered with nothing written under it", async () => {
     globalThis.fetch = offering([]);
     renderStep();
 
-    expect(screen.getByLabelText(stepPayment.bankReference)).toBeDefined();
-    expect(screen.getByText(stepPayment.bankReferenceHint)).toBeDefined();
+    const input = document.querySelector("#member-bank-reference") as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.nextElementSibling).toBeNull();
   });
 
-  it("says nothing while the box is empty", async () => {
-    globalThis.fetch = offering([]);
-    renderStep(formOf({ bankReference: "" }));
-
-    expect(screen.queryByText(stepPayment.bankReferenceOdd)).toBeNull();
-  });
-
-  it("accepts a number that looks like one, whatever the provider", async () => {
-    globalThis.fetch = offering([]);
-    renderStep(formOf({ bankReference: "TR10000000001" }));
-
-    expect(screen.queryByText(stepPayment.bankReferenceOdd)).toBeNull();
-  });
-
-  it("says so when the typed value is not a transaction number", async () => {
+  it("says nothing about what was typed into it", async () => {
     globalThis.fetch = offering([]);
     renderStep(formOf({ bankReference: "AJV-EG8A6" }));
 
-    expect(screen.getByText(stepPayment.bankReferenceOdd)).toBeDefined();
+    const input = document.querySelector("#member-bank-reference") as HTMLInputElement;
+    expect(input.parentElement?.querySelectorAll("p")).toHaveLength(0);
   });
 
   it("still lets the request be sent, since it is only a note", async () => {
@@ -262,14 +250,12 @@ describe("whether the انتساب form asks for a transaction number", () => {
     renderStep(formOf(), vi.fn(), true);
 
     expect(screen.getByLabelText(stepPayment.bankReference)).toBeDefined();
-    expect(screen.getByText(stepPayment.bankReferenceHint)).toBeDefined();
   });
 
-  it("takes the label, the input and the line together where it does not", () => {
+  it("takes the label and the input together where it does not", () => {
     renderStep(formOf(), vi.fn(), false);
 
     expect(screen.queryByLabelText(stepPayment.bankReference)).toBeNull();
-    expect(screen.queryByText(stepPayment.bankReferenceHint)).toBeNull();
     expect(document.querySelector("#member-bank-reference")).toBeNull();
   });
 
@@ -322,5 +308,28 @@ describe("the reference row in the transfer panel", () => {
     expect(await screen.findByText(stepPayment.amount)).toBeDefined();
     expect(screen.queryByText(stepPayment.orderCode)).toBeNull();
     expect(screen.queryByText(stepPayment.memberCode)).toBeNull();
+  });
+});
+
+describe("what the payment step says about the fee", () => {
+  it("takes the amount from the setting rather than from a constant", async () => {
+    globalThis.fetch = offering([
+      { name: "بنكيلي", memberFacing: true, accounts: [{ id: "a1", code: "22200000", label: "" }] },
+    ]);
+    renderStep(formOf({ paymentMethod: "بنكيلي" }));
+
+    await screen.findByText(stepPayment.receivingNumber);
+    const paid = document.querySelector("#member-paid") as HTMLInputElement;
+    expect(paid.min).toBe("2000");
+    expect(paid.placeholder).toBe("2000");
+    expect(document.body.textContent).toContain(stepPayment.payAtLeast(2000));
+  });
+
+  it("says nothing under the amount that the panel already says", () => {
+    globalThis.fetch = offering([]);
+    renderStep();
+
+    const paid = document.querySelector("#member-paid") as HTMLInputElement;
+    expect(paid.parentElement?.querySelectorAll("p")).toHaveLength(0);
   });
 });
