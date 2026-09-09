@@ -25,6 +25,7 @@ const FIELD_OF: Record<LevelProblem, FaultField> = {
   unitCountMissing: "unitCount",
   targetMissing: "target",
   marginMissing: "margin",
+  marginTooWide: "margin",
   continueUnitsMissing: "continueUnits",
   deciderTargetWithoutATarget: "deciderTarget",
   creditWithoutAWindow: "creditWindow",
@@ -55,6 +56,9 @@ function patchFor(problem: LevelProblem, draft: LevelDraft): Partial<LevelDraft>
   if (problem === "deciderTargetWithoutATarget") return { deciderTarget: "" };
   if (problem === "creditWithoutAWindow") return { creditWindow: "1" };
   if (problem === "creditWindowTooWide") return { creditWindow: draft.unitCount || "1" };
+  if (problem === "marginTooWide") {
+    return { margin: (draft.endsBy === "TARGET" ? draft.target : draft.unitCount) || "1" };
+  }
   return null;
 }
 
