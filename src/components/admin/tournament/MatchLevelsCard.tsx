@@ -152,7 +152,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       <div className="space-y-3">
         {drafts.map((draft, index) => {
           const here = moves.filter((move) => move.levelKey === draft.key);
-          const worthHere = worth.filter((rule) => rule.levelKey === draft.key);
+          const worthHere = worth.find((rule) => rule.levelKey === draft.key) ?? null;
           return (
             <LevelCard
               key={draft.key}
@@ -172,13 +172,17 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
                 onRemove: (key) => setMoves(moves.filter((move) => move.key !== key)),
               }}
               worth={{
-                drafts: worthHere,
-                faults: worthHere.map((rule) => worthProblems[worth.indexOf(rule)]),
-                onChange: (key, next) =>
-                  setWorth(worth.map((rule) => (rule.key === key ? { ...rule, ...next } : rule))),
-                onAdd: () =>
+                draft: worthHere,
+                fault: worthHere ? worthProblems[worth.indexOf(worthHere)] : null,
+                onChange: (next) =>
+                  setWorth(
+                    worth.map((rule) =>
+                      rule.key === worthHere?.key ? { ...rule, ...next } : rule,
+                    ),
+                  ),
+                onDeclare: () =>
                   setWorth([...worth, blankWorth(`new-${worth.length}-${Date.now()}`, draft.key)]),
-                onRemove: (key) => setWorth(worth.filter((rule) => rule.key !== key)),
+                onRemove: () => setWorth(worth.filter((rule) => rule.key !== worthHere?.key)),
               }}
               onChange={(next) => patch(index, next)}
               onMove={(to) => setDrafts(movedDraft(drafts, index, to))}
