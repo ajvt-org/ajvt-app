@@ -23,14 +23,14 @@ export default function SeriesScoreline({
   units,
   standing,
   unitWord,
-  extensionUnits = "",
+  extension = null,
   moves = [],
   sides = [],
 }: {
   units: UnitRow[];
   standing: SeriesStandingRow;
   unitWord: string;
-  extensionUnits?: string;
+  extension?: string | null;
   moves?: RecordedMoveRow[];
   sides?: string[];
 }) {
@@ -43,7 +43,7 @@ export default function SeriesScoreline({
       </span>
       {!standing.over && (
         <span className="badge badge-pending">
-          {standing.extending ? texts.extending(extensionUnits) : texts.inProgress}
+          {standing.extending && extension ? extension : texts.inProgress}
         </span>
       )}
       {units.length > 0 && (

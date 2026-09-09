@@ -6,7 +6,6 @@ import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import DonorNameChoice from "@/components/DonorNameChoice";
 import ProofUpload from "@/components/ProofUpload";
-import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { stepPayment as texts } from "@/lib/texts";
 import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
@@ -14,7 +13,6 @@ import { type PaymentValues } from "./constants";
 import { usePayableMethods } from "@/lib/usePayableMethods";
 import PaymentMethodChoice from "@/components/PaymentMethodChoice";
 import AccountChoice from "./AccountChoice";
-import { looksLikeReference } from "@/lib/bankReference";
 import { accountToPreselect } from "@/lib/paymentMethodChoices";
 
 export default function StepPayment({
@@ -22,6 +20,7 @@ export default function StepPayment({
   setForm,
   fullName,
   membershipFee,
+  asksBankReference,
   copied,
   onCopy,
   surplus,
@@ -41,6 +40,7 @@ export default function StepPayment({
   setForm: Dispatch<SetStateAction<PaymentValues>>;
   fullName: string;
   membershipFee: number;
+  asksBankReference: boolean;
   copied: string | null;
   onCopy: (value: string) => void;
   surplus: number;
@@ -52,7 +52,7 @@ export default function StepPayment({
   error: string;
   loading: boolean;
   proofUploading: boolean;
-  reference: { label: string; value: string };
+  reference: { label: string; value: string } | null;
   submitLabel: string;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
@@ -67,7 +67,6 @@ export default function StepPayment({
   useEffect(() => {
     if (!form.accountId && preselected) setForm((p) => ({ ...p, accountId: preselected }));
   }, [form.accountId, preselected, setForm]);
-  const referenceLooksOdd = !looksLikeReference(form.bankReference);
 
   return (
     <>
@@ -97,7 +96,7 @@ export default function StepPayment({
 
       {form.paymentMethod && (
         <div
-          className="rounded-2xl p-4 mt-4 mb-6 fade-up"
+          className="rounded-2xl p-4 fade-up"
           style={{
             background: "linear-gradient(135deg, var(--mint-700), var(--mint-800))",
             border: "1px solid var(--copper-400)",
@@ -121,15 +120,17 @@ export default function StepPayment({
               copied={copied === amount}
               onCopy={() => onCopy(amount)}
             />
-            <CopyRow
-              label={reference.label}
-              value={reference.value}
-              copied={copied === reference.value}
-              onCopy={() => onCopy(reference.value)}
-            />
+            {reference && (
+              <CopyRow
+                label={reference.label}
+                value={reference.value}
+                copied={copied === reference.value}
+                onCopy={() => onCopy(reference.value)}
+              />
+            )}
           </div>
           <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-            {texts.payAtLeast(MEMBERSHIP_FEE)}
+            {texts.payAtLeast(membershipFee)}
           </p>
         </div>
       )}
@@ -147,41 +148,34 @@ export default function StepPayment({
             id="member-paid"
             type="number"
             inputMode="numeric"
-            min={MEMBERSHIP_FEE}
+            min={membershipFee}
             value={form.paidAmount}
             onChange={(e) => setForm((p) => ({ ...p, paidAmount: e.target.value }))}
-            placeholder={String(MEMBERSHIP_FEE)}
+            placeholder={String(membershipFee)}
             className="input"
             dir="ltr"
           />
-          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            {texts.feeMinimum(membershipFee)}
-          </p>
         </div>
 
-        <div>
-          <label
-            htmlFor="member-bank-reference"
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-          >
-            {texts.bankReference}
-          </label>
-          <input
-            id="member-bank-reference"
-            value={form.bankReference}
-            onChange={(e) => setForm((p) => ({ ...p, bankReference: e.target.value }))}
-            maxLength={40}
-            className="input"
-            dir="ltr"
-          />
-          <p
-            className="text-xs mt-1"
-            style={{ color: referenceLooksOdd ? "var(--copper-500)" : "var(--text-muted)" }}
-          >
-            {referenceLooksOdd ? texts.bankReferenceOdd : texts.bankReferenceHint}
-          </p>
-        </div>
+        {asksBankReference && (
+          <div>
+            <label
+              htmlFor="member-bank-reference"
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+            >
+              {texts.bankReference}
+            </label>
+            <input
+              id="member-bank-reference"
+              value={form.bankReference}
+              onChange={(e) => setForm((p) => ({ ...p, bankReference: e.target.value }))}
+              maxLength={40}
+              className="input"
+              dir="ltr"
+            />
+          </div>
+        )}
 
         {surplus > 0 && (
           <DonorNameChoice

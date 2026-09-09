@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import { refusalMessage } from "@/lib/apiFailure";
 import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
+import { recordsOnItself } from "@/lib/matchLevels";
 import SeriesStanding from "./SeriesStanding";
 import UnitBranch from "./UnitBranch";
 import type { SeriesConfig } from "./seriesConfig";
@@ -35,12 +37,12 @@ export default function SeriesResultForm({
     try {
       const [next, declared] = await Promise.all([
         api.get<SeriesState>(base),
-        api.get<{ rules: MoveRuleRow[] }>(`/api/admin/activities/${activityId}/moves`),
+        api.get<{ moves: MoveRuleRow[] }>(`/api/admin/activities/${activityId}/levels`),
       ]);
       setState(next);
-      setRules(declared.rules);
-    } catch {
-      setError(texts.loadFailed);
+      setRules(declared.moves);
+    } catch (e) {
+      setError(refusalMessage(e, texts.loadFailed));
     }
   }, [base, activityId]);
 
@@ -80,6 +82,7 @@ export default function SeriesResultForm({
     busy,
     open: !state.standing.over,
     rules,
+    worthRules: state.worthRules ?? [],
     moves: state.moves,
     opened,
     onToggle: (unitId) =>
@@ -92,7 +95,10 @@ export default function SeriesResultForm({
     onRecordMove: (ruleId, side, unitId) =>
       run(() => api.post(`/api/admin/matches/${matchId}/moves`, { ruleId, side, unitId })),
     onUndoMove: (moveId) => run(() => api.del(`/api/admin/matches/${matchId}/moves/${moveId}`)),
+    onKeepWorth: (unitId, kept) => run(() => api.patch(`${base}/${unitId}/worth`, { kept })),
   };
+
+  const own = recordsOnItself(state.levels);
 
   return (
     <div
@@ -101,10 +107,10 @@ export default function SeriesResultForm({
       data-testid="series-result-form"
     >
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="list">{texts.heading(config.unit.plural)}</IconLabel>
+        <IconLabel name="list">{own ? texts.matchResult : texts.heading}</IconLabel>
       </p>
 
-      <SeriesStanding standing={state.standing} config={config} sides={sides} />
+      {!own && <SeriesStanding standing={state.standing} config={config} sides={sides} />}
 
       <UnitBranch api={editor} parentId={null} depth={1} units={state.units} full={false} />
 

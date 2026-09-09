@@ -1,6 +1,6 @@
 import type { UnitColour, UnitOutcome } from "@prisma/client";
 import { deriveSeries, perUnitOf, type PlayedUnit, type SeriesStanding } from "./matchSeries";
-import { ladderOf, type Ladder, type LevelRow } from "./matchLevels";
+import { ladderOf, recordsOnItself, type Ladder, type LevelRow } from "./matchLevels";
 import { asMoves, type RecordedInstance } from "./moveRules";
 import type { SeriesRules } from "./matchSeries";
 
@@ -15,6 +15,8 @@ export interface UnitRow {
   sideBPoints: number | null;
   sideAColour: UnitColour | null;
   worth: number | null;
+  worthRuleId: string | null;
+  worthKept: boolean;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
 }
@@ -58,12 +60,17 @@ export interface ResolvedMatch {
   standing: SeriesStanding;
 }
 
+function countAt(ladder: Ladder, depth: number, level: LevelRow | null): number {
+  if (level?.unitCount != null) return level.unitCount;
+  return recordsOnItself(ladder) && depth === 0 ? 1 : 0;
+}
+
 export function rulesAt(ladder: Ladder, depth: number): SeriesRules {
   const level = ladder[depth] ?? null;
   return {
     countedBy: level?.countedBy ?? "OUTCOME",
     endsBy: level?.endsBy ?? "COUNT",
-    unitCount: level?.unitCount ?? 0,
+    unitCount: countAt(ladder, depth, level),
     target: level?.target ?? null,
     unsettled: level?.unsettled ?? null,
     margin: level?.margin ?? null,
@@ -250,6 +257,8 @@ export interface UnitNode {
   sideBPoints: number | null;
   sideAColour: UnitColour | null;
   worth: number | null;
+  worthRuleId: string | null;
+  worthKept: boolean;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
   decider: boolean;
@@ -270,6 +279,8 @@ export function toNodes(units: ResolvedUnit[]): UnitNode[] {
     sideAColour: row.sideAColour,
     decider,
     worth: played.worth ?? null,
+    worthRuleId: row.worthRuleId,
+    worthKept: row.worthKept,
     sideALostCredit: played.sideALostCredit ?? false,
     sideBLostCredit: played.sideBLostCredit ?? false,
     endedBy,

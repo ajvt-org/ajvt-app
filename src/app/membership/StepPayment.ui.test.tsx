@@ -25,13 +25,14 @@ function formOf(over: Partial<PaymentValues> = {}): PaymentValues {
   };
 }
 
-function renderStep(form: PaymentValues = formOf(), setForm = vi.fn()) {
+function renderStep(form: PaymentValues = formOf(), setForm = vi.fn(), asksBankReference = true) {
   render(
     <StepPayment
       form={form}
       setForm={setForm}
       fullName="محمد ولد أحمد"
       membershipFee={2000}
+      asksBankReference={asksBankReference}
       copied={null}
       onCopy={vi.fn()}
       surplus={0}
@@ -189,33 +190,21 @@ describe("the transaction number a member copies off their receipt", () => {
     vi.restoreAllMocks();
   });
 
-  it("is offered, and says it is optional", async () => {
+  it("is offered with nothing written under it", async () => {
     globalThis.fetch = offering([]);
     renderStep();
 
-    expect(screen.getByLabelText(stepPayment.bankReference)).toBeDefined();
-    expect(screen.getByText(stepPayment.bankReferenceHint)).toBeDefined();
+    const input = document.querySelector("#member-bank-reference") as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.nextElementSibling).toBeNull();
   });
 
-  it("says nothing while the box is empty", async () => {
-    globalThis.fetch = offering([]);
-    renderStep(formOf({ bankReference: "" }));
-
-    expect(screen.queryByText(stepPayment.bankReferenceOdd)).toBeNull();
-  });
-
-  it("accepts a number that looks like one, whatever the provider", async () => {
-    globalThis.fetch = offering([]);
-    renderStep(formOf({ bankReference: "TR10000000001" }));
-
-    expect(screen.queryByText(stepPayment.bankReferenceOdd)).toBeNull();
-  });
-
-  it("says so when the typed value is not a transaction number", async () => {
+  it("says nothing about what was typed into it", async () => {
     globalThis.fetch = offering([]);
     renderStep(formOf({ bankReference: "AJV-EG8A6" }));
 
-    expect(screen.getByText(stepPayment.bankReferenceOdd)).toBeDefined();
+    const input = document.querySelector("#member-bank-reference") as HTMLInputElement;
+    expect(input.parentElement?.querySelectorAll("p")).toHaveLength(0);
   });
 
   it("still lets the request be sent, since it is only a note", async () => {
@@ -227,6 +216,7 @@ describe("the transaction number a member copies off their receipt", () => {
         setForm={vi.fn()}
         fullName="محمد ولد أحمد"
         membershipFee={2000}
+        asksBankReference
         copied={null}
         onCopy={vi.fn()}
         surplus={0}
@@ -248,5 +238,98 @@ describe("the transaction number a member copies off their receipt", () => {
       (screen.getByRole("button", { name: new RegExp(stepPayment.send) }) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
+  });
+});
+
+describe("whether the انتساب form asks for a transaction number", () => {
+  beforeEach(() => {
+    globalThis.fetch = offering([]);
+  });
+
+  it("asks for it where the association wants it", () => {
+    renderStep(formOf(), vi.fn(), true);
+
+    expect(screen.getByLabelText(stepPayment.bankReference)).toBeDefined();
+  });
+
+  it("takes the label and the input together where it does not", () => {
+    renderStep(formOf(), vi.fn(), false);
+
+    expect(screen.queryByLabelText(stepPayment.bankReference)).toBeNull();
+    expect(document.querySelector("#member-bank-reference")).toBeNull();
+  });
+
+  it("still asks for the amount and still submits", () => {
+    renderStep(formOf(), vi.fn(), false);
+
+    expect(document.querySelector("#member-paid")).not.toBeNull();
+    expect(screen.getByRole("button", { name: stepPayment.send })).toBeDefined();
+  });
+});
+
+describe("the reference row in the transfer panel", () => {
+  beforeEach(() => {
+    globalThis.fetch = offering([
+      { name: "بنكيلي", memberFacing: true, accounts: [{ id: "a1", code: "22200000", label: "" }] },
+    ]);
+  });
+
+  it("shows the row the page hands it", async () => {
+    renderStep(formOf({ paymentMethod: "بنكيلي" }));
+
+    expect(await screen.findByText(stepPayment.orderCode)).toBeDefined();
+  });
+
+  it("draws a finished panel with no row to show", async () => {
+    render(
+      <StepPayment
+        form={formOf({ paymentMethod: "بنكيلي" })}
+        setForm={vi.fn()}
+        fullName="محمد ولد أحمد"
+        membershipFee={2000}
+        asksBankReference={false}
+        copied={null}
+        onCopy={vi.fn()}
+        surplus={0}
+        wantsName={null}
+        setWantsName={vi.fn()}
+        proofFilename={null}
+        setProofFilename={vi.fn()}
+        setProofUploading={vi.fn()}
+        error=""
+        loading={false}
+        proofUploading={false}
+        reference={null}
+        submitLabel={stepPayment.send}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(stepPayment.amount)).toBeDefined();
+    expect(screen.queryByText(stepPayment.orderCode)).toBeNull();
+    expect(screen.queryByText(stepPayment.memberCode)).toBeNull();
+  });
+});
+
+describe("what the payment step says about the fee", () => {
+  it("takes the amount from the setting rather than from a constant", async () => {
+    globalThis.fetch = offering([
+      { name: "بنكيلي", memberFacing: true, accounts: [{ id: "a1", code: "22200000", label: "" }] },
+    ]);
+    renderStep(formOf({ paymentMethod: "بنكيلي" }));
+
+    await screen.findByText(stepPayment.receivingNumber);
+    const paid = document.querySelector("#member-paid") as HTMLInputElement;
+    expect(paid.min).toBe("2000");
+    expect(paid.placeholder).toBe("2000");
+    expect(document.body.textContent).toContain(stepPayment.payAtLeast(2000));
+  });
+
+  it("says nothing under the amount that the panel already says", () => {
+    globalThis.fetch = offering([]);
+    renderStep();
+
+    const paid = document.querySelector("#member-paid") as HTMLInputElement;
+    expect(paid.parentElement?.querySelectorAll("p")).toHaveLength(0);
   });
 });

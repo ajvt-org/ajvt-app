@@ -3,7 +3,7 @@ export const proofUpload = {
   connectionLost: "انقطع الاتصال بالإنترنت أثناء الرفع",
   tooSlow: "استغرق الرفع وقتاً طويلاً — تحقق من اتصالك",
   unexpected: "خطأ غير متوقع",
-  label: "كابتير — صورة تأكيد الدفع",
+  label: "صورة تأكيد الدفع (كابتير)",
   imageAlt: "الكابتير",
   uploading: (percent: number) => `جاري الرفع... ${percent}%`,
   preparing: "جاري تجهيز الصورة...",

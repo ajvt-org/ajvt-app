@@ -4,14 +4,13 @@ export type LevelFixture = Omit<Prisma.MatchLevelCreateWithoutActivityInput, "or
 
 export const MATCH_LEVEL: LevelFixture = {
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: "OUTCOME",
   endsBy: "COUNT",
   unitCount: 2,
   unsettled: "DRAW",
 };
 
-export const CHESS_LEVELS: LevelFixture[] = [MATCH_LEVEL, { singular: "لعبة", plural: "ألعاب" }];
+export const CHESS_LEVELS: LevelFixture[] = [MATCH_LEVEL, { singular: "لعبة" }];
 
 export const KNOCKOUT_LEVELS: LevelFixture[] = [
   { ...MATCH_LEVEL, unsettled: "CONTINUE", margin: 1, continueUnits: 2 },
@@ -26,19 +25,18 @@ export const SCORED_LEVELS: LevelFixture[] = [
     unitCount: null,
     target: 200,
   },
-  { singular: "جولة", plural: "جولات" },
+  { singular: "جولة" },
 ];
 
 export const DEEP_LEVELS: LevelFixture[] = [
   { ...MATCH_LEVEL, unsettled: "DECIDER" },
   {
     singular: "شوط",
-    plural: "أشواط",
     countedBy: "OUTCOME",
     endsBy: "TARGET",
     target: 3,
   },
-  { singular: "نقطة", plural: "نقاط" },
+  { singular: "نقطة" },
 ];
 
 export function ladderData(levels: LevelFixture[]) {

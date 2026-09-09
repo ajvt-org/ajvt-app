@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { refusalMessage } from "@/lib/apiFailure";
 import { loginPathWithNext } from "@/lib/utils";
 import { tournamentWorkspace as texts } from "@/lib/texts";
 import { DEFAULT_MVP_VOTE_MINUTES } from "@/lib/mvpVote";
@@ -106,7 +107,7 @@ export function useTournamentData(activityId: string, enabled = true) {
       reloadMatches(),
       reloadDiscipline(),
     ])
-      .catch(() => setError(texts.loadFailed))
+      .catch((e) => setError(refusalMessage(e, texts.loadFailed)))
       .finally(() => setLoading(false));
   }, [
     enabled,

@@ -40,6 +40,7 @@ export default function UnitEditor({
   draft,
   level,
   parent,
+  addLabel,
   sides,
   busy,
   editing,
@@ -50,6 +51,7 @@ export default function UnitEditor({
   draft: UnitDraft;
   level: LevelRow;
   parent: LevelRow;
+  addLabel?: string;
   sides: string[];
   busy: boolean;
   editing: boolean;
@@ -108,7 +110,7 @@ export default function UnitEditor({
           className="btn btn-primary btn-sm"
         >
           <IconLabel name={editing ? "save" : "plus"}>
-            {editing ? texts.save : texts.addOne(level.singular)}
+            {editing ? texts.save : (addLabel ?? texts.addOne(level.singular))}
           </IconLabel>
         </button>
         {editing && (

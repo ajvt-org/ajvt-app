@@ -6,7 +6,6 @@ const BLANK: LevelRow = {
   id: "one",
   order: 0,
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: null,
   endsBy: null,
   unitCount: null,
@@ -27,7 +26,7 @@ const match: LevelRow = {
   unsettled: "DRAW",
 };
 
-const game: LevelRow = { ...BLANK, id: "two", order: 1, singular: "لعبة", plural: "ألعاب" };
+const game: LevelRow = { ...BLANK, id: "two", order: 1, singular: "لعبة" };
 
 const chess = [match, game];
 
@@ -45,8 +44,8 @@ describe("what a ladder may be set up as", () => {
     expect(fault([])).toBe("noLevels");
   });
 
-  it("wants a singular and a plural on every level", () => {
-    expect(fault([match, { ...game, plural: "  " }])).toBe("words");
+  it("wants a name on every level", () => {
+    expect(fault([match, { ...game, singular: " " }])).toBe("words");
   });
 
   it("wants to know how the units under a level are counted", () => {
@@ -109,6 +108,19 @@ describe("a level that is continued while it stays unsettled", () => {
 
   it("wants the units it continues by", () => {
     expect(fault([{ ...knockout, continueUnits: null }, game])).toBe("continueUnitsMissing");
+  });
+
+  it("asks a level played to a target for the margin alone", () => {
+    const target: LevelRow = {
+      ...knockout,
+      endsBy: "TARGET",
+      unitCount: null,
+      target: 100,
+      continueUnits: null,
+    };
+
+    expect(ladderProblem([target, game])).toBeNull();
+    expect(fault([{ ...target, margin: null }, game])).toBe("marginMissing");
   });
 });
 

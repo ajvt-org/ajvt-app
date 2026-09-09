@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SeriesResultForm from "./SeriesResultForm";
+import { ApiError } from "@/lib/api";
 import {
   CHESS_CONFIG,
   SCORED_CONFIG,
   ladderConfig,
+  levelRow,
   standingRow,
   unitNode,
 } from "@tests/ui/ladders";
@@ -16,14 +18,14 @@ const postMock = vi.fn();
 const patchMock = vi.fn();
 const delMock = vi.fn();
 
-vi.mock("@/lib/api", () => ({
+vi.mock("@/lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api")>()),
   api: {
     get: (...args: unknown[]) => getMock(...args),
     post: (...args: unknown[]) => postMock(...args),
     patch: (...args: unknown[]) => patchMock(...args),
     del: (...args: unknown[]) => delMock(...args),
   },
-  errorMessage: (e: unknown) => (e as Error).message,
 }));
 
 const CHESS = CHESS_CONFIG;
@@ -31,7 +33,7 @@ const SCORED = SCORED_CONFIG;
 
 const DEEP = ladderConfig(
   { countedBy: "POINTS", endsBy: "TARGET", unitCount: null, target: 200 },
-  { singular: "شوط", plural: "أشواط", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
+  { singular: "شوط", countedBy: "POINTS", endsBy: "TARGET", target: 100 },
 );
 const DEEP_LADDER = [
   ...DEEP.ladder,
@@ -40,7 +42,6 @@ const DEEP_LADDER = [
     id: "point",
     order: 2,
     singular: "نقطة",
-    plural: "نقاط",
     countedBy: null,
     endsBy: null,
     target: null,
@@ -63,14 +64,22 @@ function mockSeries(state: {
   levels?: SeriesConfig["ladder"];
   moves?: RecordedMoveRow[];
   rules?: MoveRuleRow[];
+  worthRules?: {
+    id: string;
+    name: string;
+    levelId: string;
+    when: "LOSER_ON_NOTHING";
+    worth: number;
+  }[];
 }) {
   getMock.mockImplementation(async (url: string) =>
-    String(url).includes("moves")
-      ? { rules: state.rules ?? [] }
+    String(url).includes("/levels")
+      ? { moves: state.rules ?? [], levels: state.levels ?? CHESS.ladder, lock: null }
       : {
           units: state.units,
           moves: state.moves ?? [],
           levels: state.levels ?? CHESS.ladder,
+          worthRules: state.worthRules ?? [],
           standing: state.standing,
         },
   );
@@ -100,8 +109,8 @@ describe("recording the top level of a match", () => {
   it("names the level in the heading and in the empty line", async () => {
     show();
 
-    expect(await screen.findByText("ألعاب المباراة")).toBeDefined();
-    expect(screen.getByText("لم تُسجَّل ألعاب بعد")).toBeDefined();
+    expect(await screen.findByText("وحدات المباراة")).toBeDefined();
+    expect(screen.getByText("لم تُسجَّل وحدات بعد")).toBeDefined();
   });
 
   it("asks for an outcome where the level is decided by one", async () => {
@@ -165,7 +174,7 @@ describe("opening a unit onto the level under it", () => {
     show(DEEP);
     fireEvent.click(await screen.findByLabelText("فتح شوط 1"));
 
-    expect(screen.getByText("تسجيل نقاط داخل هذه الوحدة يلغي نتيجتها المكتوبة")).toBeDefined();
+    expect(screen.getByText("تسجيل وحدات داخل هذه الوحدة يلغي نتيجتها المكتوبة")).toBeDefined();
     expect(screen.getAllByLabelText("نقاط أحمد")).toHaveLength(1);
   });
 
@@ -320,5 +329,139 @@ describe("the moves of a level", () => {
 
     const picker = (await screen.findByLabelText("تسجيل حركة")) as HTMLSelectElement;
     expect(picker.options).toHaveLength(2);
+  });
+});
+
+describe("loading the form", () => {
+  it("asks for the declared rules where the tournament serves them", async () => {
+    show();
+
+    await screen.findByText("وحدات المباراة");
+    expect(getMock.mock.calls.map((call) => String(call[0]))).toEqual(
+      expect.arrayContaining(["/api/admin/matches/m1/units", "/api/admin/activities/a1/levels"]),
+    );
+  });
+
+  it("shows what the server refused with rather than its own sentence", async () => {
+    getMock.mockRejectedValue(new ApiError("أكمل إعداد جولات البطولة قبل تسجيل نتيجة", 409));
+    show();
+
+    expect(await screen.findByText("أكمل إعداد جولات البطولة قبل تسجيل نتيجة")).toBeDefined();
+  });
+
+  it("keeps its own sentence when the answer explained nothing", async () => {
+    getMock.mockRejectedValue(new ApiError("فشلت العملية", 500));
+    show();
+
+    expect(await screen.findByText("تعذّر تحميل جولات المباراة")).toBeDefined();
+  });
+});
+
+describe("a match whose ladder is one level", () => {
+  const ALONE_LEVEL = levelRow({ id: "match", order: 0, singular: "مباراة" });
+  const ALONE: SeriesConfig = {
+    ladder: [ALONE_LEVEL],
+    match: ALONE_LEVEL,
+    unit: ALONE_LEVEL,
+    hasColours: false,
+    firstColourWord: null,
+    secondColourWord: null,
+  };
+
+  it("offers one place to type the result and no list to add to", async () => {
+    mockSeries({ units: [], standing: standing({ unitsLeft: 1 }), levels: ALONE.ladder });
+    show(ALONE);
+
+    expect(await screen.findByText("نتيجة المباراة")).toBeDefined();
+    expect(screen.getByLabelText("نتيجة مباراة")).toBeDefined();
+    expect(screen.getByRole("button", { name: "تسجيل النتيجة" })).toBeDefined();
+    expect(screen.queryByText("لم تُسجَّل مباريات بعد")).toBeNull();
+  });
+
+  it("records it on the match itself", async () => {
+    mockSeries({ units: [], standing: standing({ unitsLeft: 1 }), levels: ALONE.ladder });
+    show(ALONE);
+    fireEvent.change(await screen.findByLabelText("نتيجة مباراة"), {
+      target: { value: "SIDE_A" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "تسجيل النتيجة" }));
+
+    await waitFor(() => expect(postMock).toHaveBeenCalled());
+    expect(postMock.mock.calls[0][1]).toEqual({ outcome: "SIDE_A", parentId: null });
+  });
+
+  it("shows the recorded result as the result rather than as a numbered unit", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { levelId: "match", outcome: "SIDE_A" })],
+      standing: standing({ over: true, unitsLeft: 0, winner: "SIDE_A" }),
+      levels: ALONE.ladder,
+    });
+    show(ALONE);
+
+    expect(await screen.findByText("النتيجة")).toBeDefined();
+    expect(screen.getByText("فوز أحمد")).toBeDefined();
+    expect(screen.queryByText("مباراة 1")).toBeNull();
+  });
+});
+
+describe("a unit a declared rule says is worth more", () => {
+  const RULE = {
+    id: "w1",
+    name: "قاعدة",
+    levelId: "unit",
+    when: "LOSER_ON_NOTHING" as const,
+    worth: 2,
+  };
+
+  it("names the rule that was detected rather than only the number", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A", worth: 2, worthRuleId: "w1" })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+
+    expect(await screen.findByText("قاعدة، تُحتسب 2")).toBeDefined();
+  });
+
+  it("offers to turn it off for that unit", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A", worth: 2, worthRuleId: "w1" })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: "لا تُطبَّق هنا" }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/matches/m1/units/u1/worth");
+    expect(patchMock.mock.calls[0][1]).toEqual({ kept: false });
+  });
+
+  it("says it is turned off and offers it back", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A", worthRuleId: "w1", worthKept: false })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+
+    expect(await screen.findByText("قاعدة موقوفة على هذه الوحدة")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "أعِد تطبيقها" }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][1]).toEqual({ kept: true });
+  });
+
+  it("says nothing where no rule was detected", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: "SIDE_A" })],
+      standing: standing(),
+      worthRules: [RULE],
+    });
+    show();
+
+    await screen.findByText("لعبة 1");
+    expect(screen.queryByRole("button", { name: "لا تُطبَّق هنا" })).toBeNull();
   });
 });

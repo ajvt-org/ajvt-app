@@ -61,6 +61,7 @@ function endingFault(level: LevelRow): LevelProblem | null {
 function unsettledFault(level: LevelRow): LevelProblem | null {
   if (level.unsettled !== "CONTINUE") return null;
   if (!numberIn(level.margin, 1, MAX_UNIT_COUNT)) return "marginMissing";
+  if (level.endsBy === "TARGET") return null;
   if (!numberIn(level.continueUnits, 1, MAX_UNIT_COUNT)) return "continueUnitsMissing";
   return null;
 }
@@ -75,7 +76,7 @@ function creditFault(level: LevelRow): LevelProblem | null {
 }
 
 export function levelProblem(level: LevelRow, last: boolean): LevelProblem | null {
-  if (!level.singular.trim() || !level.plural.trim()) return "words";
+  if (!level.singular.trim()) return "words";
   if (last) return ruleless(level) ? null : "rulesOnTheLastLevel";
   return endingFault(level) ?? unsettledFault(level) ?? creditFault(level);
 }

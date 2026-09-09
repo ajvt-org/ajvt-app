@@ -6,7 +6,13 @@ const fieldFor = (key: string) => SETTINGS_FIELDS.find((field) => field.key === 
 
 describe("the hints the association settings carry", () => {
   it("says nothing under a label an admin already filled in", () => {
-    for (const key of ["membershipFee", "membershipYear", "tempPasswordHours", "supportWhatsapp"]) {
+    for (const key of [
+      "membershipFee",
+      "membershipYear",
+      "asksBankReference",
+      "tempPasswordHours",
+      "supportWhatsapp",
+    ]) {
       expect(fieldFor(key)?.hint).toBeUndefined();
     }
   });
@@ -42,12 +48,14 @@ describe("the groups the association settings are shown in", () => {
     expect(groupedFields().filter((group) => group.fields.length === 0)).toEqual([]);
   });
 
-  it("keeps the fee and the year apart from the password and from the names", () => {
+  it("keeps what the انتساب form does apart from the password and from the names", () => {
     const membership = groupedFields().find((group) => group.key === "membership");
 
     expect(membership?.fields.map((field) => field.key)).toEqual([
       "membershipFee",
       "membershipYear",
+      "asksBankReference",
+      "showsReferenceCode",
     ]);
   });
 
@@ -69,5 +77,25 @@ describe("what a settings field does with what was typed", () => {
 
   it("strips everything but digits from a phone", () => {
     expect(cleanValue(fieldFor("supportWhatsapp")!, "+222 22 33 44 55")).toBe("22222334455");
+  });
+
+  it("reads a switch as on or off and nothing else", () => {
+    const asks = fieldFor("asksBankReference")!;
+
+    expect(cleanValue(asks, "true")).toBe(true);
+    expect(cleanValue(asks, "false")).toBe(false);
+    expect(cleanValue(asks, "")).toBe(false);
+  });
+});
+
+describe("what the انتساب form is asked to draw", () => {
+  it("switches the two questions the public form asks", () => {
+    for (const key of ["asksBankReference", "showsReferenceCode"]) {
+      expect(fieldFor(key)?.kind).toBe("switch");
+    }
+  });
+
+  it("says what stays true when the reference code is not shown", () => {
+    expect(fieldFor("showsReferenceCode")?.hint).toBe(settingsForm.showsReferenceCodeHint);
   });
 });

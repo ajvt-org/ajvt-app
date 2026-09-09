@@ -111,6 +111,7 @@ model Activity {
   firstColourWord        String?
   secondColourWord       String?
   moves                  MoveRule[]
+  worthRules             WorthRule[]
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
@@ -350,6 +351,9 @@ model MatchUnit {
   sideBPoints     Int?
   sideAColour     UnitColour?
   worth           Int?
+  worthRuleId     String?
+  worthRule       WorthRule?   @relation(fields: [worthRuleId], references: [id], onDelete: SetNull)
+  worthKept       Boolean      @default(true)
   sideALostCredit Boolean      @default(false)
   sideBLostCredit Boolean      @default(false)
   moves           MatchMove[]
@@ -359,6 +363,7 @@ model MatchUnit {
   @@index([matchId])
   @@index([parentId])
   @@index([levelId])
+  @@index([worthRuleId])
 }
 
 model MatchLevel {
@@ -367,7 +372,6 @@ model MatchLevel {
   activity       Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
   order          Int
   singular       String
-  plural         String
   countedBy      CountedBy?
   endsBy         EndsBy?
   unitCount      Int?
@@ -380,10 +384,33 @@ model MatchLevel {
   creditWindow   Int         @default(0)
   createdAt      DateTime    @default(now())
   moves          MoveRule[]
+  worthRules     WorthRule[]
   units          MatchUnit[]
 
   @@unique([activityId, order])
   @@index([activityId])
+}
+
+enum WorthWhen {
+  LOSER_ON_NOTHING
+  WINNER_LOST_CREDIT
+}
+
+model WorthRule {
+  id         String      @id @default(cuid())
+  activityId String
+  activity   Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  levelId    String
+  level      MatchLevel  @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  name       String
+  when       WorthWhen
+  worth      Int
+  createdAt  DateTime    @default(now())
+  detectedOn MatchUnit[]
+
+  @@unique([activityId, name])
+  @@index([activityId])
+  @@index([levelId])
 }
 
 model MoveRule {
@@ -805,15 +832,17 @@ model QuizSettings {
 // the values the association decides rather than the developer: the fee, the
 // contact number members are sent to. Changing one shouldn't need a deploy.
 model AppSettings {
-  id                String   @id
-  membershipFee     Int      @default(100)
-  membershipYear    Int?
-  supportWhatsapp   String   @default("22241070328")
-  tempPasswordHours Int      @default(1)
-  whatsappGroup     String?
-  secretaryName     String?
-  treasurerName     String?
-  updatedAt         DateTime @updatedAt
+  id                 String   @id
+  membershipFee      Int      @default(100)
+  membershipYear     Int?
+  asksBankReference  Boolean  @default(false)
+  showsReferenceCode Boolean  @default(false)
+  supportWhatsapp    String   @default("22241070328")
+  tempPasswordHours  Int      @default(1)
+  whatsappGroup      String?
+  secretaryName      String?
+  treasurerName      String?
+  updatedAt          DateTime @updatedAt
 }
 
 model DeletedRecord {

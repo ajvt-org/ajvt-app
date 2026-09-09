@@ -2,18 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import Icon from "@/components/Icon";
+import { refusalMessage } from "@/lib/apiFailure";
 import IconLabel from "@/components/IconLabel";
-import Disclosure from "@/components/admin/Disclosure";
 import { useToast } from "@/components/Toast";
 import { matchLevelsSetup as texts } from "@/lib/texts";
-import { readBackOf } from "@/lib/levelReadBack";
 import { tournament as messages } from "@/lib/messages";
 import type { ConfigurationLock } from "@/lib/configurationLock";
 import type { LevelRow } from "@/lib/matchLevels";
 import type { MoveRuleRow } from "./seriesTypes";
-import LevelFields from "./LevelFields";
-import LevelMoves from "./LevelMoves";
+import LevelCard from "./LevelCard";
 import { levelFixes, moveFixes } from "./levelFaults";
 import {
   blankDraft,
@@ -24,21 +21,37 @@ import {
   type LevelDraft,
 } from "./levelDraft";
 import { blankMove, draftOfMove, movePayload, type MoveDraft } from "./moveDraft";
+import {
+  blankWorth,
+  draftOfWorth,
+  worthFaults,
+  worthPayload,
+  type WorthDraft,
+  type WorthRuleRow,
+} from "./worthDraft";
 
-export function configurationHolds(drafts: LevelDraft[], moves: MoveDraft[]): boolean {
+export function configurationHolds(
+  drafts: LevelDraft[],
+  moves: MoveDraft[],
+  worth: WorthDraft[] = [],
+): boolean {
   if (drafts.length === 0) return false;
   const ladder = ladderOfDrafts(drafts);
   if (levelFixes(ladder, drafts).some((fix) => fix !== null)) return false;
-  return moveFixes(
-    moves,
-    drafts.map((draft) => draft.key),
-  ).every((problem) => problem === null);
+  const keys = drafts.map((draft) => draft.key);
+  if (worthFaults(worth, keys).some((problem) => problem !== null)) return false;
+  return moveFixes(moves, keys).every((problem) => problem === null);
+}
+
+function nameOf(draft: LevelDraft, index: number): string {
+  return draft.singular.trim() || (index === 0 ? texts.matchLevel : texts.levelNumber(index + 1));
 }
 
 export default function MatchLevelsCard({ activityId }: { activityId: string }) {
   const showToast = useToast();
   const [drafts, setDrafts] = useState<LevelDraft[] | null>(null);
   const [moves, setMoves] = useState<MoveDraft[]>([]);
+  const [worth, setWorth] = useState<WorthDraft[]>([]);
   const [lock, setLock] = useState<ConfigurationLock | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -50,13 +63,15 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       const saved = await api.get<{
         levels: LevelRow[];
         moves: MoveRuleRow[];
+        worthRules: WorthRuleRow[];
         lock: ConfigurationLock | null;
       }>(`${base}/levels`);
       setLock(saved.lock ?? null);
       setDrafts(saved.levels.map(draftOfLevel));
       setMoves((saved.moves ?? []).map(draftOfMove));
-    } catch {
-      setError(texts.loadFailed);
+      setWorth((saved.worthRules ?? []).map(draftOfWorth));
+    } catch (e) {
+      setError(refusalMessage(e, texts.loadFailed));
     }
   }, [base]);
 
@@ -81,7 +96,11 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
     moves,
     drafts.map((draft) => draft.key),
   );
-  const holds = configurationHolds(drafts, moves);
+  const worthProblems = worthFaults(
+    worth,
+    drafts.map((draft) => draft.key),
+  );
+  const holds = configurationHolds(drafts, moves, worth);
   const frozen = busy || lock !== null;
 
   const patch = (index: number, next: Partial<LevelDraft>) =>
@@ -91,6 +110,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
     const gone = drafts[index].key;
     setDrafts(drafts.filter((_, at) => at !== index));
     setMoves(moves.filter((move) => move.levelKey !== gone));
+    setWorth(worth.filter((rule) => rule.levelKey !== gone));
   };
 
   async function save() {
@@ -100,6 +120,7 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
       await api.put(`${base}/levels`, {
         levels: levelPayload(drafts!),
         moves: moves.map(movePayload),
+        worthRules: worth.map(worthPayload),
       });
       showToast(texts.saved);
       await load();
@@ -130,100 +151,39 @@ export default function MatchLevelsCard({ activityId }: { activityId: string }) 
 
       <div className="space-y-3">
         {drafts.map((draft, index) => {
-          const below = drafts[index + 1] ?? null;
-          const own =
-            draft.singular.trim() ||
-            (index === 0 ? texts.matchLevel : texts.levelNumber(index + 1));
-          const under = below
-            ? {
-                singular: below.singular.trim() || texts.singular,
-                plural: below.plural.trim() || texts.plural,
-              }
-            : null;
           const here = moves.filter((move) => move.levelKey === draft.key);
+          const worthHere = worth.filter((rule) => rule.levelKey === draft.key);
           return (
-            <div
+            <LevelCard
               key={draft.key}
-              className="rounded-lg p-2.5 space-y-2"
-              style={{ border: "1px solid var(--mint-100)" }}
-            >
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="min-w-0 flex-1 text-xs font-bold"
-                  style={{ color: "var(--mint-700)" }}
-                >
-                  <bdi>{own}</bdi>
-                </span>
-                <button
-                  aria-label={texts.moveUp(index + 1)}
-                  onClick={() => setDrafts(movedDraft(drafts, index, index - 1))}
-                  disabled={frozen || index === 0}
-                  className="btn btn-icon btn-sm"
-                >
-                  <Icon name="chevronUp" size={13} />
-                </button>
-                <button
-                  aria-label={texts.moveDown(index + 1)}
-                  onClick={() => setDrafts(movedDraft(drafts, index, index + 1))}
-                  disabled={frozen || index === drafts.length - 1}
-                  className="btn btn-icon btn-sm"
-                >
-                  <Icon name="chevronDown" size={13} />
-                </button>
-                <button
-                  aria-label={texts.removeLevel(index + 1)}
-                  onClick={() => dropLevel(index)}
-                  disabled={frozen}
-                  className="btn btn-icon btn-sm"
-                  style={{ color: "#991b1b" }}
-                >
-                  <Icon name="trash" size={13} />
-                </button>
-              </div>
-
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                <bdi>{readBackOf(ladder[index], under)}</bdi>
-              </p>
-
-              <LevelFields
-                draft={draft}
-                own={own}
-                under={under}
-                last={index === drafts.length - 1}
-                disabled={frozen}
-                locked={false}
-                fix={fixes[index]}
-                onChange={(next) => patch(index, next)}
-              />
-
-              {index > 0 && (
-                <Disclosure
-                  title={<span className="text-xs">{texts.moves(own)}</span>}
-                  color="var(--mint-700)"
-                  className="rounded-lg px-2.5 py-2"
-                  surface={{ background: "var(--surface-2)" }}
-                >
-                  <LevelMoves
-                    moves={here}
-                    faults={here.map((move) => faults[moves.indexOf(move)])}
-                    under={own}
-                    disabled={frozen}
-                    onChange={(key, next) =>
-                      setMoves(
-                        moves.map((move) => (move.key === key ? { ...move, ...next } : move)),
-                      )
-                    }
-                    onAdd={() =>
-                      setMoves([
-                        ...moves,
-                        blankMove(`new-${moves.length}-${Date.now()}`, draft.key),
-                      ])
-                    }
-                    onRemove={(key) => setMoves(moves.filter((move) => move.key !== key))}
-                  />
-                </Disclosure>
-              )}
-            </div>
+              draft={draft}
+              own={nameOf(draft, index)}
+              index={index}
+              count={drafts.length}
+              frozen={frozen}
+              fix={fixes[index]}
+              moves={{
+                drafts: here,
+                faults: here.map((move) => faults[moves.indexOf(move)]),
+                onChange: (key, next) =>
+                  setMoves(moves.map((move) => (move.key === key ? { ...move, ...next } : move))),
+                onAdd: () =>
+                  setMoves([...moves, blankMove(`new-${moves.length}-${Date.now()}`, draft.key)]),
+                onRemove: (key) => setMoves(moves.filter((move) => move.key !== key)),
+              }}
+              worth={{
+                drafts: worthHere,
+                faults: worthHere.map((rule) => worthProblems[worth.indexOf(rule)]),
+                onChange: (key, next) =>
+                  setWorth(worth.map((rule) => (rule.key === key ? { ...rule, ...next } : rule))),
+                onAdd: () =>
+                  setWorth([...worth, blankWorth(`new-${worth.length}-${Date.now()}`, draft.key)]),
+                onRemove: (key) => setWorth(worth.filter((rule) => rule.key !== key)),
+              }}
+              onChange={(next) => patch(index, next)}
+              onMove={(to) => setDrafts(movedDraft(drafts, index, to))}
+              onRemove={() => dropLevel(index)}
+            />
           );
         })}
       </div>

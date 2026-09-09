@@ -8,7 +8,6 @@ const BLANK: LevelRow = {
   id: "level",
   order: 0,
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: null,
   endsBy: null,
   unitCount: null,
@@ -28,18 +27,19 @@ const LADDER: LevelRow[] = [
     id: "set",
     order: 1,
     singular: "شوط",
-    plural: "أشواط",
     countedBy: "POINTS",
     endsBy: "TARGET",
     target: 100,
   },
-  { ...BLANK, id: "point", order: 2, singular: "نقطة", plural: "نقاط" },
+  { ...BLANK, id: "point", order: 2, singular: "نقطة" },
 ];
 
 function standing(over: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
   return {
     sideATotal: 0,
     sideBTotal: 0,
+    sideAAtClose: 0,
+    sideBAtClose: 0,
     sideALostCredit: false,
     sideBLostCredit: false,
     scored: false,
@@ -69,6 +69,8 @@ function unit(id: string, order: number, extra: Partial<UnitRow> = {}): UnitRow 
     sideBPoints: null,
     sideAColour: null,
     worth: null,
+    worthRuleId: null,
+    worthKept: true,
     sideALostCredit: false,
     sideBLostCredit: false,
     decider: false,

@@ -34,9 +34,12 @@ export function colourText(
 export default function UnitLine({
   unit,
   level,
+  name: given,
+  worthRule,
   sides,
   busy,
   editable,
+  onKeepWorth,
   openable = false,
   opened = false,
   onToggle,
@@ -45,17 +48,21 @@ export default function UnitLine({
 }: {
   unit: Unit;
   level: LevelRow;
+  name?: string;
+  worthRule?: { name: string; worth: number } | null;
   sides: string[];
   busy: boolean;
   editable: boolean;
+  onKeepWorth?: (kept: boolean) => void;
   openable?: boolean;
   opened?: boolean;
   onToggle?: () => void;
   onEdit: () => void;
   onRemove: () => void;
 }) {
-  const name = texts.unitNumber(level.singular, unit.order);
+  const name = given ?? texts.unitNumber(level.singular, unit.order);
   const doubled = (unit.worth ?? 1) > 1;
+  const detected = worthRule ?? null;
   return (
     <div
       className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
@@ -66,9 +73,18 @@ export default function UnitLine({
       </span>
       <span className="min-w-0 flex-1 text-xs" style={{ color: "var(--text-main)" }}>
         <bdi>{scoreText(unit, sides)}</bdi>
-        {doubled && (
+        {doubled && !detected && (
           <span className="ms-2" style={{ color: "var(--copper-600)" }}>
             {texts.countedTwice(String(unit.worth))}
+          </span>
+        )}
+        {detected && (
+          <span className="block" style={{ color: "var(--copper-600)" }}>
+            <bdi>
+              {unit.worthKept
+                ? texts.worthByRule(detected.name, String(detected.worth))
+                : texts.worthOff(detected.name)}
+            </bdi>
           </span>
         )}
         {unit.decider && (
@@ -85,6 +101,15 @@ export default function UnitLine({
           className="btn btn-icon btn-sm"
         >
           <Icon name={opened ? "chevronUp" : "chevronDown"} size={13} />
+        </button>
+      )}
+      {detected && onKeepWorth && (
+        <button
+          onClick={() => onKeepWorth(!unit.worthKept)}
+          disabled={busy}
+          className="btn btn-sm shrink-0"
+        >
+          {unit.worthKept ? texts.turnWorthOff : texts.turnWorthOn}
         </button>
       )}
       {editable && (
@@ -112,10 +137,10 @@ export default function UnitLine({
   );
 }
 
-export function UnitsEmpty({ level }: { level: LevelRow }) {
+export function UnitsEmpty() {
   return (
     <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-      <IconLabel name="list">{texts.none(level.plural)}</IconLabel>
+      <IconLabel name="list">{texts.none}</IconLabel>
     </p>
   );
 }

@@ -9,7 +9,6 @@ export const BLANK_LEVEL: LevelRow = {
   id: "level",
   order: 0,
   singular: "المباراة",
-  plural: "المباريات",
   countedBy: null,
   endsBy: null,
   unitCount: null,
@@ -53,7 +52,7 @@ export function ladderConfig(
 
 export const CHESS_CONFIG = ladderConfig(
   { unitCount: 2 },
-  { singular: "لعبة", plural: "ألعاب" },
+  { singular: "لعبة" },
   { hasColours: true, firstColourWord: "أبيض", secondColourWord: "أسود" },
 );
 
@@ -66,6 +65,8 @@ export function unitNode(over: Partial<UnitNodeShape> & { id: string; order: num
     sideBPoints: null,
     sideAColour: null,
     worth: null,
+    worthRuleId: null,
+    worthKept: true,
     sideALostCredit: false,
     sideBLostCredit: false,
     decider: false,
@@ -78,13 +79,15 @@ export function unitNode(over: Partial<UnitNodeShape> & { id: string; order: num
 
 export const SCORED_CONFIG = ladderConfig(
   { countedBy: "POINTS", endsBy: "TARGET", target: 200 },
-  { singular: "جولة", plural: "جولات" },
+  { singular: "جولة" },
 );
 
 export function standingRow(over: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
   return {
     sideATotal: 0,
     sideBTotal: 0,
+    sideAAtClose: 0,
+    sideBAtClose: 0,
     sideALostCredit: false,
     sideBLostCredit: false,
     scored: false,

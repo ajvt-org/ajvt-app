@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { seriesResult as texts } from "@/lib/texts";
+import { recordsOnItself } from "@/lib/matchLevels";
 import { offerableRules } from "@/lib/moveRules";
 import MatchMoves from "./MatchMoves";
 import UnitBlock from "./UnitBlock";
 import UnitEditor, { EMPTY_DRAFT, bodyOf, draftOf, type UnitDraft } from "./UnitEditor";
 import { UnitsEmpty } from "./UnitRow";
-import { levelAt, movesOn, type EditorApi } from "./unitEditorApi";
+import { movesOn, recordingAt, type EditorApi } from "./unitEditorApi";
 import type { UnitRow } from "./seriesTypes";
 
 export default function UnitBranch({
@@ -26,15 +27,16 @@ export default function UnitBranch({
   const [draft, setDraft] = useState<UnitDraft>(EMPTY_DRAFT);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const level = levelAt(api, depth);
-  const parent = levelAt(api, depth - 1);
-  if (!level || !parent) return null;
+  const recording = recordingAt(api, depth);
+  if (!recording) return null;
 
+  const { level, parent } = recording;
+  const own = recordsOnItself(api.ladder);
   const editable = api.open && !full;
   const rules = offerableRules(api.rules, [level.id]);
 
   function submit() {
-    const body = bodyOf(draft, parent!);
+    const body = bodyOf(draft, parent);
     if (editingId) api.onCorrect(editingId, body);
     else api.onAdd(parentId, body);
     setDraft(EMPTY_DRAFT);
@@ -44,7 +46,9 @@ export default function UnitBranch({
   return (
     <div className="space-y-1.5">
       {units.length === 0 ? (
-        <UnitsEmpty level={level} />
+        own ? null : (
+          <UnitsEmpty />
+        )
       ) : (
         units.map((unit) => (
           <UnitBlock
@@ -87,6 +91,7 @@ export default function UnitBranch({
           draft={draft}
           level={level}
           parent={parent}
+          addLabel={own ? texts.recordResult : undefined}
           sides={api.sides}
           busy={api.busy}
           editing={false}
@@ -98,7 +103,7 @@ export default function UnitBranch({
 
       {!editable && units.length > 0 && api.open && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.takesNoMore(level.plural)}
+          {texts.takesNoMore}
         </p>
       )}
     </div>

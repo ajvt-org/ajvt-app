@@ -25,6 +25,8 @@ vi.mock("next/navigation", () => ({
 const settings = {
   membershipFee: 1000,
   membershipYear: 2026,
+  asksBankReference: false,
+  showsReferenceCode: false,
   tempPasswordHours: 48,
   supportWhatsapp: "22200000",
   whatsappGroup: "",
@@ -174,5 +176,35 @@ describe("the association settings form", () => {
     const container = await onTheForm();
 
     expect(container.querySelector("h1")).toBeNull();
+  });
+});
+
+describe("the two switches on the انتساب form", () => {
+  it("draws each as a switch the admin can see the state of", async () => {
+    await onTheForm();
+
+    const asks = screen.getByLabelText(settingsForm.asksBankReferenceLabel) as HTMLInputElement;
+    expect(asks.type).toBe("checkbox");
+    expect(asks.checked).toBe(false);
+    expect(screen.getAllByText(settingsForm.switchOff).length).toBe(2);
+  });
+
+  it("turns one on without touching the other", async () => {
+    await onTheForm();
+    fireEvent.click(screen.getByLabelText(settingsForm.asksBankReferenceLabel));
+
+    expect(
+      (screen.getByLabelText(settingsForm.asksBankReferenceLabel) as HTMLInputElement).checked,
+    ).toBe(true);
+    expect(
+      (screen.getByLabelText(settingsForm.showsReferenceCodeLabel) as HTMLInputElement).checked,
+    ).toBe(false);
+    expect(screen.getByText(settingsForm.switchOn)).toBeDefined();
+  });
+
+  it("says what stays true when the code is not shown", async () => {
+    await onTheForm();
+
+    expect(screen.getByText(settingsForm.showsReferenceCodeHint)).toBeDefined();
   });
 });

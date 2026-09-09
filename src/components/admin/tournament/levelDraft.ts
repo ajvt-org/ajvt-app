@@ -4,7 +4,6 @@ export interface LevelDraft {
   key: string;
   id: string | null;
   singular: string;
-  plural: string;
   countedBy: "" | "OUTCOME" | "POINTS";
   endsBy: "" | "COUNT" | "TARGET";
   unitCount: string;
@@ -31,7 +30,6 @@ export function blankDraft(key: string): LevelDraft {
     key,
     id: null,
     singular: "",
-    plural: "",
     countedBy: "OUTCOME",
     endsBy: "COUNT",
     unitCount: "2",
@@ -50,7 +48,6 @@ export function draftOfLevel(level: LevelRow): LevelDraft {
     key: level.id,
     id: level.id,
     singular: level.singular,
-    plural: level.plural,
     countedBy: level.countedBy ?? "",
     endsBy: level.endsBy ?? "",
     unitCount: asField(level.unitCount),
@@ -69,18 +66,18 @@ export function levelOfDraft(draft: LevelDraft, index: number, count: number): L
   const endsBy = last ? null : draft.endsBy || null;
   const unsettled = last ? null : draft.unsettled || null;
   const continues = unsettled === "CONTINUE";
+  const continuesByCount = continues && endsBy === "COUNT";
   return {
     id: draft.id ?? "",
     order: index,
     singular: draft.singular.trim(),
-    plural: draft.plural.trim(),
     countedBy: last ? null : draft.countedBy || null,
     endsBy,
     unitCount: endsBy === "COUNT" ? asNumber(draft.unitCount) : null,
     target: endsBy === "TARGET" ? asNumber(draft.target) : null,
     unsettled,
     margin: continues ? asNumber(draft.margin) : null,
-    continueUnits: continues ? asNumber(draft.continueUnits) : null,
+    continueUnits: continuesByCount ? asNumber(draft.continueUnits) : null,
     deciderTarget: endsBy === "TARGET" ? asNumber(draft.deciderTarget) : null,
     startingCredit: last ? 0 : (asNumber(draft.startingCredit) ?? 0),
     creditWindow: last ? 0 : (asNumber(draft.creditWindow) ?? 0),

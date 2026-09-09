@@ -2,7 +2,7 @@
 
 import { matchLevelsSetup as texts } from "@/lib/texts";
 import { tournament as messages } from "@/lib/messages";
-import IconLabel from "@/components/IconLabel";
+import Disclosure from "@/components/admin/Disclosure";
 import type { LevelDraft } from "./levelDraft";
 import type { FaultField, LevelFix } from "./levelFaults";
 
@@ -81,8 +81,6 @@ function Num({
 
 export default function LevelFields({
   draft,
-  own,
-  under,
   last,
   disabled,
   locked,
@@ -90,8 +88,6 @@ export default function LevelFields({
   onChange,
 }: {
   draft: LevelDraft;
-  own: string;
-  under: { singular: string; plural: string } | null;
   last: boolean;
   disabled: boolean;
   locked: boolean;
@@ -100,116 +96,105 @@ export default function LevelFields({
 }) {
   const apply = () => fix?.patch && onChange(fix.patch);
   const frozen = disabled || locked;
-  const words = under ?? { singular: "", plural: "" };
   const wordsFault = fix && fix.field === "words" ? fix : null;
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2">
-        <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-          <span className="block mb-1">{texts.singular}</span>
-          <input
-            value={draft.singular}
-            disabled={disabled}
-            onChange={(e) => onChange({ singular: e.target.value })}
-            className="input input-sm w-full"
-          />
-        </label>
-        <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-          <span className="block mb-1">{texts.plural}</span>
-          <input
-            value={draft.plural}
-            disabled={disabled}
-            onChange={(e) => onChange({ plural: e.target.value })}
-            className="input input-sm w-full"
-          />
-        </label>
-      </div>
+      <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
+        <span className="block mb-1">{texts.singular}</span>
+        <input
+          value={draft.singular}
+          disabled={disabled}
+          onChange={(e) => onChange({ singular: e.target.value })}
+          className="input input-sm w-full"
+        />
+      </label>
       {wordsFault && <Fault fix={wordsFault} onFix={apply} />}
 
-      {!last && under && (
-        <div className="space-y-2 rounded-lg p-2.5" style={{ background: "var(--surface-2)" }}>
-          <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
-            <IconLabel name="list">{texts.rulesAbout(own, words.plural)}</IconLabel>
-          </p>
+      {!last && (
+        <Disclosure
+          title={<span className="text-xs">{texts.rules}</span>}
+          color="var(--mint-700)"
+          className="rounded-lg px-2.5 py-2"
+          surface={{ background: "var(--surface-2)" }}
+        >
+          <div className="space-y-2 pt-2">
+            <Field label={texts.countedBy} field="countedBy" fix={fix} onFix={apply}>
+              <select
+                value={draft.countedBy}
+                disabled={frozen}
+                onChange={(e) => onChange({ countedBy: e.target.value as LevelDraft["countedBy"] })}
+                className="input input-sm w-full"
+              >
+                <option value="">{texts.unsettledNever}</option>
+                <option value="OUTCOME">{texts.countedByOutcome}</option>
+                <option value="POINTS">{texts.countedByPoints}</option>
+              </select>
+            </Field>
 
-          <Field label={texts.countedBy(words.plural)} field="countedBy" fix={fix} onFix={apply}>
-            <select
-              value={draft.countedBy}
-              disabled={frozen}
-              onChange={(e) => onChange({ countedBy: e.target.value as LevelDraft["countedBy"] })}
-              className="input input-sm w-full"
-            >
-              <option value="">{texts.unsettledNever}</option>
-              <option value="OUTCOME">{texts.countedByOutcome}</option>
-              <option value="POINTS">{texts.countedByPoints}</option>
-            </select>
-          </Field>
+            <Field label={texts.endsBy} field="endsBy" fix={fix} onFix={apply}>
+              <select
+                value={draft.endsBy}
+                disabled={frozen}
+                onChange={(e) => onChange({ endsBy: e.target.value as LevelDraft["endsBy"] })}
+                className="input input-sm w-full"
+              >
+                <option value="">{texts.unsettledNever}</option>
+                <option value="COUNT">{texts.endsByCount}</option>
+                <option value="TARGET">{texts.endsByTarget}</option>
+              </select>
+            </Field>
 
-          <Field label={texts.endsBy} field="endsBy" fix={fix} onFix={apply}>
-            <select
-              value={draft.endsBy}
-              disabled={frozen}
-              onChange={(e) => onChange({ endsBy: e.target.value as LevelDraft["endsBy"] })}
-              className="input input-sm w-full"
-            >
-              <option value="">{texts.unsettledNever}</option>
-              <option value="COUNT">{texts.endsByCount}</option>
-              <option value="TARGET">{texts.endsByTarget}</option>
-            </select>
-          </Field>
-
-          {draft.endsBy === "COUNT" && (
-            <Num
-              label={texts.unitCount(words.singular)}
-              field="unitCount"
-              value={draft.unitCount}
-              disabled={frozen}
-              fix={fix}
-              onFix={apply}
-              onChange={(unitCount) => onChange({ unitCount })}
-            />
-          )}
-
-          {draft.endsBy === "TARGET" && (
-            <>
+            {draft.endsBy === "COUNT" && (
               <Num
-                label={texts.target}
-                field="target"
-                value={draft.target}
+                label={texts.unitCount}
+                field="unitCount"
+                value={draft.unitCount}
                 disabled={frozen}
                 fix={fix}
                 onFix={apply}
-                onChange={(target) => onChange({ target })}
+                onChange={(unitCount) => onChange({ unitCount })}
               />
-              <Num
-                label={texts.deciderTarget}
-                field="deciderTarget"
-                value={draft.deciderTarget}
+            )}
+
+            {draft.endsBy === "TARGET" && (
+              <>
+                <Num
+                  label={texts.target}
+                  field="target"
+                  value={draft.target}
+                  disabled={frozen}
+                  fix={fix}
+                  onFix={apply}
+                  onChange={(target) => onChange({ target })}
+                />
+                <Num
+                  label={texts.deciderTarget}
+                  field="deciderTarget"
+                  value={draft.deciderTarget}
+                  disabled={frozen}
+                  fix={fix}
+                  onFix={apply}
+                  onChange={(deciderTarget) => onChange({ deciderTarget })}
+                />
+              </>
+            )}
+
+            <Field label={texts.unsettled} field="unsettled" fix={fix} onFix={apply}>
+              <select
+                value={draft.unsettled}
                 disabled={frozen}
-                fix={fix}
-                onFix={apply}
-                onChange={(deciderTarget) => onChange({ deciderTarget })}
-              />
-            </>
-          )}
+                onChange={(e) => onChange({ unsettled: e.target.value as LevelDraft["unsettled"] })}
+                className="input input-sm w-full"
+              >
+                <option value="">{texts.unsettledNever}</option>
+                <option value="CONTINUE">{texts.unsettledContinue}</option>
+                <option value="DECIDER">{texts.unsettledDecider}</option>
+                <option value="DRAW">{texts.unsettledDraw}</option>
+              </select>
+            </Field>
 
-          <Field label={texts.unsettled} field="unsettled" fix={fix} onFix={apply}>
-            <select
-              value={draft.unsettled}
-              disabled={frozen}
-              onChange={(e) => onChange({ unsettled: e.target.value as LevelDraft["unsettled"] })}
-              className="input input-sm w-full"
-            >
-              <option value="">{texts.unsettledNever}</option>
-              <option value="CONTINUE">{texts.unsettledContinue}</option>
-              <option value="DECIDER">{texts.unsettledDecider}</option>
-              <option value="DRAW">{texts.unsettledDraw}</option>
-            </select>
-          </Field>
-
-          {draft.unsettled === "CONTINUE" && (
-            <>
+            {draft.unsettled === "CONTINUE" && (
               <Num
                 label={texts.margin}
                 field="margin"
@@ -219,8 +204,11 @@ export default function LevelFields({
                 onFix={apply}
                 onChange={(margin) => onChange({ margin })}
               />
+            )}
+
+            {draft.unsettled === "CONTINUE" && draft.endsBy === "COUNT" && (
               <Num
-                label={texts.continueUnits(words.singular)}
+                label={texts.continueUnits}
                 field="continueUnits"
                 value={draft.continueUnits}
                 disabled={frozen}
@@ -228,30 +216,30 @@ export default function LevelFields({
                 onFix={apply}
                 onChange={(continueUnits) => onChange({ continueUnits })}
               />
-            </>
-          )}
+            )}
 
-          <Num
-            label={texts.startingCredit}
-            field="startingCredit"
-            value={draft.startingCredit}
-            disabled={frozen}
-            fix={fix}
-            onFix={apply}
-            onChange={(startingCredit) => onChange({ startingCredit })}
-          />
-          {draft.startingCredit.trim() !== "" && draft.startingCredit.trim() !== "0" && (
             <Num
-              label={texts.creditWindow(words.singular)}
-              field="creditWindow"
-              value={draft.creditWindow}
+              label={texts.startingCredit}
+              field="startingCredit"
+              value={draft.startingCredit}
               disabled={frozen}
               fix={fix}
               onFix={apply}
-              onChange={(creditWindow) => onChange({ creditWindow })}
+              onChange={(startingCredit) => onChange({ startingCredit })}
             />
-          )}
-        </div>
+            {draft.startingCredit.trim() !== "" && draft.startingCredit.trim() !== "0" && (
+              <Num
+                label={texts.creditWindow}
+                field="creditWindow"
+                value={draft.creditWindow}
+                disabled={frozen}
+                fix={fix}
+                onFix={apply}
+                onChange={(creditWindow) => onChange({ creditWindow })}
+              />
+            )}
+          </div>
+        </Disclosure>
       )}
 
       {last && fix && fix.field !== "words" && <Fault fix={fix} onFix={apply} />}

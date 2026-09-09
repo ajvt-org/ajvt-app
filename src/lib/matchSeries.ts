@@ -39,6 +39,8 @@ export interface RecordedMove {
 export interface SeriesStanding {
   sideATotal: number;
   sideBTotal: number;
+  sideAAtClose: number;
+  sideBAtClose: number;
   sideALostCredit: boolean;
   sideBLostCredit: boolean;
   scored: boolean;
@@ -149,6 +151,7 @@ const RUNNING: Verdict = { winner: null, over: false };
 
 interface Run extends Verdict {
   totals: Tally;
+  atClose: Tally;
   unitsRecorded: number;
   unitsScored: number;
   lost: Lost;
@@ -162,6 +165,7 @@ function runUnits(
 ): Run {
   const credit = creditOf(rules);
   const totals: Tally = { a: credit, b: credit };
+  let atClose: Tally = { ...totals };
   const margin = marginOf(rules);
   const opening: Tally[] = [];
   let lost = KEPT;
@@ -195,6 +199,7 @@ function runUnits(
       unitsRecorded += 1;
       if (!skipped(unit)) unitsScored += 1;
       const gained = gainOf(unit, rules);
+      atClose = { a: totals.a, b: totals.b };
       totals.a += gained.a;
       totals.b += gained.b;
       if (opening.length < rules.creditWindow) opening.push(gained);
@@ -207,7 +212,7 @@ function runUnits(
     }
   }
 
-  return { totals, unitsRecorded, unitsScored, lost, ...verdict };
+  return { totals, atClose, unitsRecorded, unitsScored, lost, ...verdict };
 }
 
 function allowedByCount(rules: SeriesRules, unitsRecorded: number, level: boolean): number {
@@ -238,6 +243,8 @@ export function deriveSeries(
     return {
       sideATotal: totals.a,
       sideBTotal: totals.b,
+      sideAAtClose: run.atClose.a,
+      sideBAtClose: run.atClose.b,
       sideALostCredit: run.lost.a,
       sideBLostCredit: run.lost.b,
       scored: countsPoints(rules),
@@ -263,6 +270,8 @@ export function deriveSeries(
   return {
     sideATotal: totals.a,
     sideBTotal: totals.b,
+    sideAAtClose: run.atClose.a,
+    sideBAtClose: run.atClose.b,
     sideALostCredit: run.lost.a,
     sideBLostCredit: run.lost.b,
     scored: countsPoints(rules),

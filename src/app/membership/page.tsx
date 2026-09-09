@@ -14,7 +14,8 @@ import { members } from "@/lib/messages";
 import { canRenew } from "@/lib/renewal";
 import IconLabel from "@/components/IconLabel";
 import PageHeader from "@/components/PageHeader";
-import { pageTitles, stepPayment } from "@/lib/texts";
+import { membershipForm, pageTitles, stepPayment } from "@/lib/texts";
+import type { PublicSettings } from "@/lib/publicSettings";
 import { goAfterAuthChange } from "@/lib/authNav";
 import PageLoading from "@/components/PageLoading";
 import StepPayment from "./StepPayment";
@@ -57,7 +58,11 @@ function MembershipPageInner() {
   const [checking, setChecking] = useState(true);
   const [proofFilename, setProofFilename] = useState<string | null>(null);
   const [proofUploading, setProofUploading] = useState(false);
-  const [membershipFee, setMembershipFee] = useState(MEMBERSHIP_FEE);
+  const [settings, setSettings] = useState({
+    membershipFee: MEMBERSHIP_FEE,
+    asksBankReference: false,
+    showsReferenceCode: false,
+  });
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
@@ -72,12 +77,12 @@ function MembershipPageInner() {
     referenceCode: "",
   });
 
-  const surplus = surplusOf(form.paidAmount, membershipFee);
+  const surplus = surplusOf(form.paidAmount, settings.membershipFee);
 
   useEffect(() => {
     api
-      .get<{ settings: { membershipFee: number } }>("/api/settings")
-      .then((d) => setMembershipFee(d.settings.membershipFee))
+      .get<{ settings: PublicSettings }>("/api/settings")
+      .then((d) => setSettings(d.settings))
       .catch(() => {});
   }, []);
 
@@ -171,7 +176,7 @@ function MembershipPageInner() {
   }
 
   async function shareReferenceCode() {
-    const text = `رقم دفتري في رابطة شباب قرية التاكلالت: ${form.referenceCode}`;
+    const text = membershipForm.shareText(form.referenceCode);
     if (navigator.share) {
       try {
         await navigator.share({ text });
@@ -186,7 +191,7 @@ function MembershipPageInner() {
     setError("");
 
     if (!form.paymentMethod) return setError(members.pickPaymentMethod);
-    const paidAmountError = validatePaidAmount(form.paidAmount, membershipFee);
+    const paidAmountError = validatePaidAmount(form.paidAmount, settings.membershipFee);
     if (paidAmountError) return setError(paidAmountError);
     const nameChoiceError =
       surplus > 0 ? validateDonorChoice(wantsName === null ? null : !wantsName, fullName) : null;
@@ -241,12 +246,19 @@ function MembershipPageInner() {
     );
   }
 
+  const referenceRow = renewing
+    ? { label: stepPayment.memberCode, value: memberNumber }
+    : settings.showsReferenceCode
+      ? { label: stepPayment.orderCode, value: form.referenceCode }
+      : null;
+
   if (submitted) {
     return (
       <SubmittedCard
         form={{ ...form, fullName }}
         editing={!!editId}
         renewing={renewing}
+        showsReferenceCode={settings.showsReferenceCode}
         copied={copied}
         onCopy={copyCode}
         onShare={shareReferenceCode}
@@ -259,20 +271,18 @@ function MembershipPageInner() {
     <div className="app-shell">
       <PageHeader title={renewalTitle(renewing, !!editId)} backHref={cameFrom || "/home"} />
 
-      <div className="px-5 py-6 pb-10">
+      <div className="px-5 py-6 pb-10 space-y-6">
         <div
-          className="rounded-2xl p-4 mb-4 fade-up text-center"
+          className="rounded-2xl p-4 fade-up text-center"
           style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
         >
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="trophy">
-              الاشتراك في الرابطة هو ما يتيح لك المشاركة في الأنشطة والفعاليات
-            </IconLabel>
+            <IconLabel name="trophy">{membershipForm.joinNote}</IconLabel>
           </p>
           <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            تريد فقط دعم الرابطة دون الانضمام كعضو؟{" "}
+            {membershipForm.donateInstead}{" "}
             <Link href="/donate" className="font-bold" style={{ color: "var(--mint-600)" }}>
-              تبرّع من هنا
+              {membershipForm.donateLink}
             </Link>
           </p>
         </div>
@@ -281,7 +291,8 @@ function MembershipPageInner() {
           form={form}
           setForm={setForm}
           fullName={fullName}
-          membershipFee={membershipFee}
+          membershipFee={settings.membershipFee}
+          asksBankReference={settings.asksBankReference}
           copied={copied}
           onCopy={copyCode}
           surplus={surplus}
@@ -293,11 +304,7 @@ function MembershipPageInner() {
           error={error}
           loading={loading}
           proofUploading={proofUploading}
-          reference={
-            renewing
-              ? { label: stepPayment.memberCode, value: memberNumber }
-              : { label: stepPayment.orderCode, value: form.referenceCode }
-          }
+          reference={referenceRow}
           submitLabel={submitLabelOf(renewing, !!editId)}
           onSubmit={handleSubmit}
         />
