@@ -9,6 +9,7 @@ import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import { toThumbUrl } from "@/lib/utils";
 import { formatDate } from "@/lib/clubTime";
+import { expenseList as texts } from "@/lib/texts";
 import type { Expense } from "./types";
 
 function Thumb({ expense }: { expense: Expense }) {
@@ -75,11 +76,14 @@ function Row({
         <Thumb expense={expense} />
         <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-bold text-sm truncate" style={{ color: "var(--text-main)" }}>
+            <p
+              className="font-bold text-sm line-clamp-2"
+              style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
+            >
               {expense.label}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              <bdi dir="ltr">{formatDate(expense.date)}</bdi> بواسطة {expense.createdBy}
+              <bdi dir="ltr">{formatDate(expense.date)}</bdi> {texts.recordedBy(expense.createdBy)}
             </p>
             {expense.note && (
               <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
@@ -107,7 +111,10 @@ function Row({
               </div>
             )}
           </div>
-          <p className="font-black text-sm shrink-0" style={{ color: "var(--copper-500)" }}>
+          <p
+            className="font-black text-sm shrink-0 self-start"
+            style={{ color: "var(--copper-500)" }}
+          >
             <Money value={expense.amount} />
           </p>
         </div>
@@ -120,7 +127,7 @@ function Row({
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="pencil">تعديل</IconLabel>
+          <IconLabel name="pencil">{texts.edit}</IconLabel>
         </button>
         <button
           onClick={onDelete}
@@ -128,14 +135,14 @@ function Row({
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          {busy ? "..." : <IconLabel name="trash">حذف</IconLabel>}
+          {busy ? "..." : <IconLabel name="trash">{texts.delete}</IconLabel>}
         </button>
         <button
           onClick={() => setShowHistory(!showHistory)}
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="list">السجل</IconLabel>
+          <IconLabel name="list">{texts.history}</IconLabel>
         </button>
       </div>
 
@@ -171,8 +178,8 @@ export default function ExpenseList({
           onDelete={() => onDelete(expense.id)}
         />
       )}
-      emptyMessage="لا توجد مصاريف مسجلة بعد"
-      emptyFilteredMessage="لا توجد نتائج مطابقة"
+      emptyMessage={texts.empty}
+      emptyFilteredMessage={texts.emptyFiltered}
       isFiltered={filtered}
       pagination={pagination}
     />
