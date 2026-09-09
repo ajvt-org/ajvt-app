@@ -45,6 +45,12 @@ describe("series result texts", () => {
     expect(seriesResult.endedBy("تيس")).toContain("تيس");
   });
 
+  it("separates a unit that was stopped from one that carries nothing yet", () => {
+    expect(seriesResult.abandoned).not.toBe(seriesResult.noResult);
+    expect(seriesResult.noResult).toContain("نتيجة");
+    expect(seriesResult.noResult).not.toBe(seriesResult.none);
+  });
+
   it("says which colour a side opened in", () => {
     expect(seriesResult.colourOf("أحمد", "أبيض")).toBe("أحمد أبيض");
   });

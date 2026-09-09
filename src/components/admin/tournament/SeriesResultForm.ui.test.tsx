@@ -257,6 +257,30 @@ describe("a unit a rule ended", () => {
   });
 });
 
+describe("a unit that carries nothing", () => {
+  it("says no result was recorded rather than that it was stopped", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { outcome: null, sideAPoints: null, sideBPoints: null })],
+      standing: standing(),
+    });
+    show();
+
+    expect(await screen.findByText("لم تُسجَّل نتيجة بعد")).toBeDefined();
+    expect(screen.queryByText("متوقفة")).toBeNull();
+  });
+
+  it("still says a unit that was stopped was stopped", async () => {
+    mockSeries({
+      units: [unit("u1", 1, { abandoned: true })],
+      standing: standing(),
+    });
+    show();
+
+    expect(await screen.findByText("متوقفة")).toBeDefined();
+    expect(screen.queryByText("لم تُسجَّل نتيجة بعد")).toBeNull();
+  });
+});
+
 describe("a unit worth more than one", () => {
   it("says what it counted", async () => {
     mockSeries({
