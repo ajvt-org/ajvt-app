@@ -6,6 +6,7 @@ export {
   tournamentSetup,
 } from "./activities";
 export { activityAttention } from "./activityAttention";
+export { activityDates } from "./activityDates";
 export {
   activityDatesEditor,
   activityFinance,

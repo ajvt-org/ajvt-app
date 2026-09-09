@@ -52,6 +52,6 @@ export const activityDatesEditor = {
   from: "من",
   to: "إلى",
   withTime: "تحديد الساعة",
-  preview: (formatted: string) => `سيظهر هكذا: ${formatted}`,
+  preview: "سيظهر هكذا:",
   save: "حفظ التواريخ",
 } as const;

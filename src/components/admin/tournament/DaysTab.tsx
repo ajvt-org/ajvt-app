@@ -7,6 +7,7 @@ import { useToast } from "@/components/Toast";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { formatActivityDates } from "@/lib/activityDates";
+import NumericRanges from "@/components/NumericRanges";
 import DayCard from "./DayCard";
 import { timeOf } from "@/lib/tournamentDays";
 import { type DaysPayload } from "./daysTypes";
@@ -75,12 +76,14 @@ export default function DaysTab({
       <div className="card p-3 flex items-center gap-2 flex-wrap">
         <p className="text-sm font-bold flex-1" style={{ color: "var(--text-main)" }}>
           <IconLabel name="calendar">
-            {formatActivityDates({
-              startsAt: data.startsAt,
-              endsAt: data.endsAt,
-              withTime: false,
-              period: null,
-            }) ?? ""}
+            <NumericRanges>
+              {formatActivityDates({
+                startsAt: data.startsAt,
+                endsAt: data.endsAt,
+                withTime: false,
+                period: null,
+              }) ?? ""}
+            </NumericRanges>
           </IconLabel>
         </p>
         <span className="text-xs" style={{ color: "var(--text-muted)" }}>

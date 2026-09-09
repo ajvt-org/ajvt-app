@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { formatActivityDates } from "@/lib/activityDates";
 import IconLabel from "@/components/IconLabel";
+import NumericRanges from "@/components/NumericRanges";
 import { activityDatesEditor as texts } from "@/lib/texts";
 
 function dayValue(value: string | null): string {
@@ -131,7 +132,7 @@ export default function ActivityDatesEditor({
 
       {preview && (
         <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
-          {texts.preview(preview)}
+          {texts.preview} <NumericRanges>{preview}</NumericRanges>
         </p>
       )}
       {error && (

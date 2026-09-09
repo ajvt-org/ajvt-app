@@ -1,4 +1,5 @@
 import { clubDayParts, formatMonthName, formatTime } from "./clubTime";
+import { activityDates as texts } from "./texts";
 
 export type ActivityDates = {
   startsAt?: Date | string | null;
@@ -44,16 +45,20 @@ function twoDays(from: Date, to: Date, now: Date): string {
   const start = clubDayParts(from);
   const end = clubDayParts(to);
   if (start.month !== end.month || start.year !== end.year) {
-    return `يومي ${onePart(from, now)} و ${onePart(to, now)}`;
+    return texts.twoDays(onePart(from, now), onePart(to, now));
   }
-  return withYear(`يومي ${start.day} و ${end.day} ${formatMonthName(to)}`, end.year, now);
+  return withYear(
+    texts.twoDays(String(start.day), `${end.day} ${formatMonthName(to)}`),
+    end.year,
+    now,
+  );
 }
 
 function clock(from: Date, to: Date | null, oneDay: boolean): string {
   if (to && oneDay && formatTime(to) !== formatTime(from)) {
-    return `من ${formatTime(from)} إلى ${formatTime(to)}`;
+    return texts.betweenTimes(formatTime(from), formatTime(to));
   }
-  return `الساعة ${formatTime(from)}`;
+  return texts.atTime(formatTime(from));
 }
 
 export function formatActivityDates(
@@ -71,5 +76,5 @@ export function formatActivityDates(
     days <= 1 ? onePart(from, now) : days === 2 ? twoDays(from, to!, now) : span(from, to!, now);
 
   if (!activity.withTime) return dates;
-  return `${dates}، ${clock(from, to, days <= 1 && (!to || sameDay(from, to)))}`;
+  return texts.withClock(dates, clock(from, to, days <= 1 && (!to || sameDay(from, to))));
 }
