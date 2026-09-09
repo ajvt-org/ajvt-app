@@ -303,6 +303,7 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/LevelCard.tsx",
   "src/components/admin/tournament/LevelFields.tsx",
   "src/components/admin/tournament/LevelMoves.tsx",
+  "src/components/admin/tournament/LevelWorthRules.tsx",
   "src/components/tournament/MatchUnits.tsx",
   "src/components/StandingsBoard.tsx",
   "src/app/membership/SubmittedCard.tsx",

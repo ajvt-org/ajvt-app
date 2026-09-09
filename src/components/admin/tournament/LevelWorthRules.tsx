@@ -10,6 +10,18 @@ import type { WorthDraft } from "./worthDraft";
 
 type Change = (key: string, patch: Partial<WorthDraft>) => void;
 
+const SITUATIONS: { when: WorthWhen; label: string }[] = [
+  { when: "LOSER_ON_NOTHING", label: texts.worthLoserOnNothing },
+  { when: "WINNER_LOST_CREDIT", label: texts.worthWinnerLostCredit },
+];
+
+function picked(when: WorthWhen[], situation: WorthWhen, on: boolean): WorthWhen[] {
+  const wanted = new Set(when);
+  if (on) wanted.add(situation);
+  else wanted.delete(situation);
+  return SITUATIONS.map((each) => each.when).filter((each) => wanted.has(each));
+}
+
 function RuleFields({
   rule,
   fault,
@@ -49,18 +61,25 @@ function RuleFields({
         </button>
       </div>
 
-      <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-        <span className="block mb-1">{texts.worthWhen}</span>
-        <select
-          value={rule.when[0]}
-          disabled={disabled}
-          onChange={(e) => onChange(rule.key, { when: [e.target.value as WorthWhen] })}
-          className="input input-sm w-full"
-        >
-          <option value="LOSER_ON_NOTHING">{texts.worthLoserOnNothing}</option>
-          <option value="WINNER_LOST_CREDIT">{texts.worthWinnerLostCredit}</option>
-        </select>
-      </label>
+      <fieldset className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
+        <legend className="mb-1">{texts.worthWhen}</legend>
+        <div className="space-y-1">
+          {SITUATIONS.map((situation) => (
+            <label key={situation.when} className="flex items-start gap-2 font-normal">
+              <input
+                type="checkbox"
+                checked={rule.when.includes(situation.when)}
+                disabled={disabled}
+                onChange={(e) =>
+                  onChange(rule.key, { when: picked(rule.when, situation.when, e.target.checked) })
+                }
+                className="mt-0.5 w-4 h-4 shrink-0"
+              />
+              <span>{situation.label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
         <span className="block mb-1">{texts.worthNumber}</span>

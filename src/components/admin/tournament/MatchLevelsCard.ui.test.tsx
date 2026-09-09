@@ -341,6 +341,21 @@ describe("a level played to a target", () => {
   });
 });
 
+const ON_NOTHING = "خصم الفائز لم يكسب شيئاً قبل الوحدة الأخيرة";
+const LOST_CREDIT = "الفائز خسر رصيده الابتدائي";
+
+async function declareRule(name: string, worth: string) {
+  fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
+  fireEvent.change(screen.getByLabelText("اسم القاعدة"), { target: { value: name } });
+  fireEvent.change(screen.getByLabelText("العدد الذي تُحتسب به الوحدة"), {
+    target: { value: worth },
+  });
+}
+
+function sentRules() {
+  return (putMock.mock.calls[0][1] as { worthRules: { when: string[] }[] }).worthRules;
+}
+
 describe("what a level says a unit is worth", () => {
   it("offers one control where a level declares no such rule", async () => {
     show();
@@ -354,7 +369,9 @@ describe("what a level says a unit is worth", () => {
     fireEvent.click(await screen.findByRole("button", { name: "إضافة قاعدة احتساب" }));
 
     expect(screen.getByLabelText("اسم القاعدة")).toBeDefined();
-    expect(screen.getByLabelText("متى تقع")).toBeDefined();
+    expect(screen.getByText("متى تقع")).toBeDefined();
+    expect(screen.getByLabelText(ON_NOTHING)).toBeDefined();
+    expect(screen.getByLabelText(LOST_CREDIT)).toBeDefined();
     expect(screen.getByLabelText("العدد الذي تُحتسب به الوحدة")).toBeDefined();
   });
 
@@ -384,6 +401,36 @@ describe("what a level says a unit is worth", () => {
     expect(body.worthRules).toEqual([
       { id: null, name: "قاعدة", levelKey: "game", when: ["LOSER_ON_NOTHING"], worth: 3 },
     ]);
+  });
+
+  it("sends both situations where one rule holds both", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+    fireEvent.click(screen.getByLabelText(LOST_CREDIT));
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    expect(sentRules()[0].when).toEqual(["LOSER_ON_NOTHING", "WINNER_LOST_CREDIT"]);
+  });
+
+  it("sends the one situation a rule was left holding", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+    fireEvent.click(screen.getByLabelText(ON_NOTHING));
+    fireEvent.click(screen.getByLabelText(LOST_CREDIT));
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    expect(sentRules()[0].when).toEqual(["WINNER_LOST_CREDIT"]);
+  });
+
+  it("holds back the save where a rule was left holding no situation", async () => {
+    show();
+    await declareRule("فكتوار أبيض", "2");
+    fireEvent.click(screen.getByLabelText(ON_NOTHING));
+
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText("حدد حالة واحدة على الأقل تقع فيها القاعدة")).toBeDefined();
   });
 
   it("titles the block once where a level declares one", async () => {
