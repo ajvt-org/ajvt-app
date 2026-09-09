@@ -13,12 +13,7 @@ const SAVED = {
 describe("what the public settings route hands out", () => {
   it("names the fields it publishes, so a new setting is not published by being added", () => {
     expect(Object.keys(publicSettings(SAVED)).sort()).toEqual(
-      [
-        "asksBankReference",
-        "membershipFee",
-        "showsReferenceCode",
-        "supportWhatsapp",
-      ].sort(),
+      ["asksBankReference", "membershipFee", "showsReferenceCode", "supportWhatsapp"].sort(),
     );
   });
 
