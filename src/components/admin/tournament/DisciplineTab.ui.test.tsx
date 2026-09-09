@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import DisciplineTab from "./DisciplineTab";
 import type { Suspension, Team } from "./types";
+import { discipline } from "@/lib/texts";
+import { formatDate } from "@/lib/clubTime";
 
 const post = vi.fn();
 const patch = vi.fn();
@@ -138,5 +140,40 @@ describe("DisciplineTab", () => {
     ]);
 
     expect(screen.getByText("انتهت المدة")).toBeDefined();
+  });
+});
+
+describe("the day a ban runs to", () => {
+  it("draws it the way the rest of the admin draws a date", () => {
+    show([
+      suspension({
+        status: "ACTIVE",
+        scope: "DAYS",
+        matches: null,
+        until: "2099-01-05T00:00:00.000Z",
+        running: true,
+      }),
+    ]);
+
+    const drawn = screen.getByText(formatDate("2099-01-05T00:00:00.000Z"));
+
+    expect(drawn.parentElement?.textContent).toContain(discipline.until);
+  });
+
+  it("keeps that day in one left to right run", () => {
+    show([
+      suspension({
+        status: "ACTIVE",
+        scope: "DAYS",
+        matches: null,
+        until: "2099-01-05T00:00:00.000Z",
+        running: true,
+      }),
+    ]);
+
+    const drawn = screen.getByText(formatDate("2099-01-05T00:00:00.000Z"));
+
+    expect(drawn.tagName).toBe("BDI");
+    expect(drawn.getAttribute("dir")).toBe("ltr");
   });
 });
