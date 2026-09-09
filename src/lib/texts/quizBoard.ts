@@ -10,6 +10,19 @@ export const quizBoard = {
   startRound: "ابدأ الجولة",
   resumeRound: "أكمل الجولة",
   signUpToPlay: "سجّل للمشاركة",
+  roundClosesIn: "تُغلق الجولة بعد",
+  roundClosesInLabel: "الوقت المتبقي لإغلاق الجولة",
+  competitionOver: "انتهت المسابقة",
+  nextRoundOf: (index: number, rounds: number | null) =>
+    `الجولة القادمة ${index} من ${rounds ?? ""}`,
+  opensOn: "تبدأ",
+  roundDone: "أنهيت أسئلة الجولة",
+  yourRoundScore: (points: string) => `مجموعك ${points} في هذه الجولة`,
+  nextRoundIn: "الجولة القادمة بعد",
+  nextRoundInLabel: "الوقت المتبقي للجولة القادمة",
+  overallChampion: "بطل الترتيب العام",
+  blockPicker: "فترة الترتيب",
+  emptyBoard: "لا ترتيب بعد",
 } as const;
 
 export const quizPicker = {

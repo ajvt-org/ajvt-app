@@ -347,6 +347,28 @@ describe("CompetitionView", () => {
     expect(screen.queryByText(/تُغلق الجولة/)).toBeNull();
   });
 
+  it("draws when the next round opens on the club clock, in the shared shape", () => {
+    setup({ state: "closed", closesAt: null, next: { index: 3, opensAt: "2026-09-07T19:28:00Z" } });
+
+    expect(screen.getByText(/تبدأ/).textContent).toBe("تبدأ 2026/09/07 19:28");
+  });
+
+  it("keeps that stamp in one isolated run", () => {
+    const { container } = setup({
+      state: "closed",
+      closesAt: null,
+      next: { index: 3, opensAt: "2026-09-07T19:28:00Z" },
+    });
+
+    expect(container.querySelector('bdi[dir="ltr"]')?.textContent).toBe("2026/09/07 19:28");
+  });
+
+  it("puts no invisible mark inside it", () => {
+    setup({ state: "closed", closesAt: null, next: { index: 3, opensAt: "2026-09-07T19:28:00Z" } });
+
+    expect(screen.getByText(/تبدأ/).textContent).not.toMatch(/[\u200b-\u200f]/);
+  });
+
   it("tells a member who has finished when the next round opens", () => {
     setup({
       me: { played: true, finished: true, score: 40 },
