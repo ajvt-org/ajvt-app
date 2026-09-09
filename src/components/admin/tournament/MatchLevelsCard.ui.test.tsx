@@ -234,3 +234,44 @@ describe("a configuration that is closed", () => {
     expect(saveButton().hasAttribute("disabled")).toBe(false);
   });
 });
+
+describe("a level played to a target", () => {
+  const TARGET: LevelRow = levelRow({
+    id: "match",
+    order: 0,
+    singular: "المباراة",
+    plural: "المباريات",
+    countedBy: "POINTS",
+    endsBy: "TARGET",
+    unitCount: null,
+    target: 100,
+    unsettled: "CONTINUE",
+    margin: 1,
+  });
+
+  it("asks for the margin and not for a number of units", async () => {
+    answering([TARGET, GAME]);
+    show();
+
+    expect(await screen.findByText("الفارق الذي يحسمه")).toBeDefined();
+    expect(screen.queryByText("تُستكمل بكم لعبة")).toBeNull();
+  });
+
+  it("saves without one", async () => {
+    answering([TARGET, GAME]);
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: "حفظ المستويات" }));
+
+    await waitFor(() => expect(putMock).toHaveBeenCalled());
+    const body = putMock.mock.calls[0][1] as { levels: { continueUnits: number | null }[] };
+    expect(body.levels[0].continueUnits).toBeNull();
+  });
+
+  it("keeps asking a level counted in units for both", async () => {
+    answering([{ ...TARGET, endsBy: "COUNT", unitCount: 2, target: null }, GAME]);
+    show();
+
+    expect(await screen.findByText("الفارق الذي يحسمه")).toBeDefined();
+    expect(screen.getByText("تُستكمل بكم لعبة")).toBeDefined();
+  });
+});

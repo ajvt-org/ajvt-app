@@ -209,26 +209,27 @@ export default function LevelFields({
           </Field>
 
           {draft.unsettled === "CONTINUE" && (
-            <>
-              <Num
-                label={texts.margin}
-                field="margin"
-                value={draft.margin}
-                disabled={frozen}
-                fix={fix}
-                onFix={apply}
-                onChange={(margin) => onChange({ margin })}
-              />
-              <Num
-                label={texts.continueUnits(words.singular)}
-                field="continueUnits"
-                value={draft.continueUnits}
-                disabled={frozen}
-                fix={fix}
-                onFix={apply}
-                onChange={(continueUnits) => onChange({ continueUnits })}
-              />
-            </>
+            <Num
+              label={texts.margin}
+              field="margin"
+              value={draft.margin}
+              disabled={frozen}
+              fix={fix}
+              onFix={apply}
+              onChange={(margin) => onChange({ margin })}
+            />
+          )}
+
+          {draft.unsettled === "CONTINUE" && draft.endsBy === "COUNT" && (
+            <Num
+              label={texts.continueUnits(words.singular)}
+              field="continueUnits"
+              value={draft.continueUnits}
+              disabled={frozen}
+              fix={fix}
+              onFix={apply}
+              onChange={(continueUnits) => onChange({ continueUnits })}
+            />
           )}
 
           <Num

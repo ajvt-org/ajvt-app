@@ -15,7 +15,8 @@ import type { EntrantKind } from "@/lib/entrant";
 import { matchDisplay, mvpVote as voteTexts } from "@/lib/texts";
 import SeriesScoreline from "@/components/admin/tournament/SeriesScoreline";
 import MatchUnits from "./MatchUnits";
-import { countedUnits, ladderOf, scorelineUnits, type LevelRow } from "@/lib/matchLevels";
+import { ladderOf, scorelineUnits, type LevelRow } from "@/lib/matchLevels";
+import { extensionLine } from "@/lib/seriesExtension";
 
 export default function MatchResult({
   match,
@@ -107,9 +108,7 @@ export default function MatchResult({
               units={scorelineUnits(ladder, match.units)}
               standing={match.series}
               unitWord={unitLevel?.singular ?? ""}
-              extensionUnits={
-                unitLevel ? countedUnits(ladder[0].continueUnits ?? 0, unitLevel) : ""
-              }
+              extension={unitLevel ? extensionLine(ladder[0], unitLevel) : null}
             />
           </div>
           <MatchUnits

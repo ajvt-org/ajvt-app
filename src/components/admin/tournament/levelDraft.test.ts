@@ -58,6 +58,22 @@ describe("a level drafted on the setup card", () => {
     expect(level.continueUnits).toBeNull();
   });
 
+  it("keeps the margin and drops the units where the level is played to a target", () => {
+    const draft = {
+      ...chess()[0],
+      endsBy: "TARGET" as const,
+      target: "100",
+      unsettled: "CONTINUE" as const,
+      margin: "1",
+      continueUnits: "2",
+    };
+
+    const level = levelOfDraft(draft, 0, 2);
+
+    expect(level.margin).toBe(1);
+    expect(level.continueUnits).toBeNull();
+  });
+
   it("passes the ladder check a chess tournament would draw", () => {
     expect(ladderProblem(ladderOfDrafts(chess()))).toBeNull();
   });

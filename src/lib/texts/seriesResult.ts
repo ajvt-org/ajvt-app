@@ -32,6 +32,7 @@ export const seriesResult = {
   level: "تعادل",
   inProgress: "قيد اللعب",
   extending: (units: string) => `تعادلت، وتُمدَّد ب${units}`,
+  extendingByDecider: "تعادلت، وتُلعب وحدة حاسمة",
   wonThe: (name: string) => `فازت ${name}`,
   colourOf: (name: string, colour: string) => `${name} ${colour}`,
   moves: "الحركات",

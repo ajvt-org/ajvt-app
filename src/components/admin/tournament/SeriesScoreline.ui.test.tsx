@@ -95,13 +95,25 @@ describe("the scoreline on a match card", () => {
     expect(container.textContent).not.toContain("تعادلت");
   });
 
+  it("falls back to the running line where the extension says nothing", () => {
+    render(
+      <SeriesScoreline
+        units={[]}
+        standing={standing({ extending: true, unitsAllowed: 4 })}
+        unitWord="لعبة"
+      />,
+    );
+
+    expect(screen.getByText("قيد اللعب")).toBeDefined();
+  });
+
   it("says a level knockout match is being extended rather than looking finished", () => {
     render(
       <SeriesScoreline
         units={[]}
         standing={standing({ extending: true, unitsAllowed: 4 })}
         unitWord="لعبة"
-        extensionUnits="2 ألعاب"
+        extension="تعادلت، وتُمدَّد ب2 ألعاب"
       />,
     );
 

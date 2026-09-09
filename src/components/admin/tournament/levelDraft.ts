@@ -69,6 +69,7 @@ export function levelOfDraft(draft: LevelDraft, index: number, count: number): L
   const endsBy = last ? null : draft.endsBy || null;
   const unsettled = last ? null : draft.unsettled || null;
   const continues = unsettled === "CONTINUE";
+  const continuesByCount = continues && endsBy === "COUNT";
   return {
     id: draft.id ?? "",
     order: index,
@@ -80,7 +81,7 @@ export function levelOfDraft(draft: LevelDraft, index: number, count: number): L
     target: endsBy === "TARGET" ? asNumber(draft.target) : null,
     unsettled,
     margin: continues ? asNumber(draft.margin) : null,
-    continueUnits: continues ? asNumber(draft.continueUnits) : null,
+    continueUnits: continuesByCount ? asNumber(draft.continueUnits) : null,
     deciderTarget: endsBy === "TARGET" ? asNumber(draft.deciderTarget) : null,
     startingCredit: last ? 0 : (asNumber(draft.startingCredit) ?? 0),
     creditWindow: last ? 0 : (asNumber(draft.creditWindow) ?? 0),
