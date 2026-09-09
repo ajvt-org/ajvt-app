@@ -4,8 +4,10 @@ import {
   clubOffsetMs,
   formatDate,
   formatDateTime,
+  clubDayParts,
   formatDayKey,
   formatLongDate,
+  formatMonthName,
   formatTime,
   matchDateKey,
   matchDateToLocalInput,
@@ -123,6 +125,21 @@ describe("drawing a rollup key as a date", () => {
   it("draws the same day a key names it", () => {
     const at = "2026-08-24T23:30:00Z";
     expect(formatDayKey(matchDateKey(at))).toBe(formatDate(at));
+  });
+});
+
+describe("naming a month and a day on the club's calendar", () => {
+  it("gives the Arabic month the association writes", () => {
+    expect(formatMonthName("2026-09-07T12:00:00Z")).toBe("سبتمبر");
+    expect(formatMonthName("2026-01-07T12:00:00Z")).toBe("يناير");
+  });
+
+  it("reads the calendar day the club is on, not the reader's", () => {
+    expect(clubDayParts("2026-09-07T23:30:00Z")).toEqual({ year: 2026, month: 8, day: 7 });
+  });
+
+  it("counts months from zero, the way a Date does", () => {
+    expect(clubDayParts("2026-01-01T00:00:00Z").month).toBe(0);
   });
 });
 
