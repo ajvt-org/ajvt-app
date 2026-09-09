@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
 import { paymentDates } from "@/lib/texts";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/clubTime";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 type Member = MemberProfile["member"];
@@ -59,7 +59,9 @@ describe("the date on the membership payment dialog", () => {
   it("dates the payment by the day the money moved", () => {
     show();
 
-    expect(screen.getByText(paymentDates.paidOn(formatDate(PAID_ON)))).toBeTruthy();
+    expect(screen.getByText(formatDate(PAID_ON)).parentElement?.textContent).toContain(
+      paymentDates.paidOn,
+    );
   });
 
   it("never dates the payment by the member's own row", () => {
@@ -71,9 +73,9 @@ describe("the date on the membership payment dialog", () => {
   it("falls back to the day the payment was recorded, and says so", () => {
     show({ paymentPaidOn: null });
 
-    expect(
-      screen.getByText(paymentDates.recordedOn(formatDate(RECORDED_AT), formatTime(RECORDED_AT))),
-    ).toBeTruthy();
+    expect(screen.getByText(formatDateTime(RECORDED_AT)).parentElement?.textContent).toContain(
+      paymentDates.recordedOn,
+    );
   });
 
   it("shows no date at all for a membership with no payment behind it", () => {

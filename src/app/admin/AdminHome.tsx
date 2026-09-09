@@ -14,7 +14,7 @@ import WaitingRequests from "./WaitingRequests";
 import { counted } from "@/lib/arabicCount";
 import { ACTIVE_MEMBER, REQUEST } from "@/lib/messages";
 import { adminHome as texts } from "@/lib/texts";
-import { formatMatchTime } from "@/lib/clubTime";
+import { formatTime } from "@/lib/clubTime";
 import { teamName } from "@/lib/fixtureTeams";
 
 export interface HomeMatch {
@@ -145,7 +145,7 @@ export default function AdminHome() {
                   {m.matchDate ? (
                     <>
                       {" "}
-                      · <span dir="ltr">{formatMatchTime(m.matchDate)}</span>
+                      · <bdi dir="ltr">{formatTime(m.matchDate)}</bdi>
                     </>
                   ) : null}
                 </span>

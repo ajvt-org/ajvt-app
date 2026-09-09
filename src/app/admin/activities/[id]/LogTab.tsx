@@ -2,12 +2,9 @@
 
 import IconLabel from "@/components/IconLabel";
 import { auditActionLabel } from "@/lib/auditLabels";
+import { formatDate } from "@/lib/clubTime";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { activityLog as texts } from "@/lib/texts";
-
-function day(value: string | null | undefined): string {
-  return value ? new Date(value).toISOString().slice(0, 10) : "—";
-}
 
 export default function LogTab({ history }: { history: ActivityDetail["history"] }) {
   return (
@@ -25,7 +22,7 @@ export default function LogTab({ history }: { history: ActivityDetail["history"]
             <li key={h.id} className="flex items-center justify-between gap-2 text-sm">
               <span className="min-w-0 truncate">{auditActionLabel(h.action)}</span>
               <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                {h.adminUsername} · <span dir="ltr">{day(h.createdAt)}</span>
+                {h.adminUsername} · <bdi dir="ltr">{formatDate(h.createdAt)}</bdi>
               </span>
             </li>
           ))}

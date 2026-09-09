@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import ProfileSection from "@/components/admin/ProfileSection";
 import Money from "@/components/Money";
 import { moneyDigits } from "@/lib/money";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import { withRunningBalance, type LedgerInput, type LedgerTotals } from "@/lib/activityLedger";
 import { activityFinance as texts } from "@/lib/texts";
 
@@ -58,7 +58,9 @@ export default function ActivityFinance({ activityId }: { activityId: string }) 
                 <p className="font-bold truncate" style={{ color: "var(--text-main)" }}>
                   {entry.label}
                 </p>
-                <p style={{ color: "var(--text-muted)" }}>{formatDate(entry.date)}</p>
+                <p style={{ color: "var(--text-muted)" }}>
+                  <bdi dir="ltr">{formatDate(entry.date)}</bdi>
+                </p>
               </div>
               <div className="shrink-0 text-left">
                 <p

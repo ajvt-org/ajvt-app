@@ -1,4 +1,5 @@
 import { memberStatusLabels } from "./messages";
+import { matchDateKey } from "./clubTime";
 import { donorNameOnRecord, type DonorAccount } from "./donorName";
 import { seesSupporterName, type SupportViewer } from "./supportPrivacy";
 import { nameOf } from "./person";
@@ -56,10 +57,6 @@ export function sourceOf(purpose: string, accountId: string | null): string {
   return accountId ? "SELF" : "PUBLIC";
 }
 
-function day(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
 export const MEMBER_HEADERS = [
   "الاسم الكامل",
   "رقم الهاتف",
@@ -88,7 +85,7 @@ export function memberRows(members: ExportableMember[]): (string | number)[][] {
     STATUS_LABEL[m.status] ?? m.status,
     m.memberNumber ?? "",
     m.referenceCode ?? "",
-    day(m.createdAt),
+    matchDateKey(m.createdAt),
   ]);
 }
 
@@ -119,7 +116,7 @@ export function donationRows(
       SOURCE_LABEL[d.source] ?? d.source,
       named && d.user ? nameOf(d.user) : "",
       d.tags.map((t) => t.name).join(" / "),
-      day(d.createdAt),
+      matchDateKey(d.createdAt),
     ];
   });
 }

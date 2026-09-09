@@ -3,6 +3,7 @@
 import BoardsEditor from "./BoardsEditor";
 import type { BoardConfig, Visibility } from "@/lib/competitionConfig";
 import NumberField from "@/components/NumberField";
+import { formatDateTime } from "@/lib/clubTime";
 import { quizCompetition as texts } from "@/lib/texts";
 import {
   toLocalInput,
@@ -27,6 +28,19 @@ export interface Draft {
   fullSeconds: number;
   maxSeconds: number;
   floorPercent: number;
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+        {label}
+      </p>
+      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+        <bdi dir="ltr">{value}</bdi>
+      </p>
+    </div>
+  );
 }
 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
@@ -117,16 +131,19 @@ export default function CompetitionFields({
         </select>
       </Field>
 
-      <Field label={texts.firstRound} id="c-start">
-        <input
-          id="c-start"
-          type="datetime-local"
-          value={toLocalInput(draft.startsAt)}
-          disabled={locked}
-          onChange={(e) => onChange("startsAt", fromLocalInput(e.target.value))}
-          className="input input-sm"
-        />
-      </Field>
+      {locked ? (
+        <Fact label={texts.firstRound} value={formatDateTime(draft.startsAt)} />
+      ) : (
+        <Field label={texts.firstRound} id="c-start">
+          <input
+            id="c-start"
+            type="datetime-local"
+            value={toLocalInput(draft.startsAt)}
+            onChange={(e) => onChange("startsAt", fromLocalInput(e.target.value))}
+            className="input input-sm"
+          />
+        </Field>
+      )}
 
       {number("roundCount", "c-rounds", texts.roundCount)}
 

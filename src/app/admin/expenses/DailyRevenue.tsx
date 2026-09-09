@@ -3,7 +3,7 @@
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
-import { formatDayKey } from "@/lib/utils";
+import { formatDayKey } from "@/lib/clubTime";
 import { dailyRevenue as texts, paymentDates } from "@/lib/texts";
 import { groupDayRecords, type DayRecord, type FinanceDay } from "./types";
 
@@ -109,9 +109,9 @@ export default function DailyRevenue({
                 >
                   <span className="flex items-center gap-1.5">
                     <Icon name={open ? "chevronDown" : "chevronLeft"} size={14} />
-                    <span dir="ltr" style={{ color: "var(--text-main)" }}>
+                    <bdi dir="ltr" style={{ color: "var(--text-main)" }}>
                       {formatDayKey(day.date)}
-                    </span>
+                    </bdi>
                   </span>
                   <span className="font-black" style={{ color: "var(--mint-600)" }}>
                     <Money value={day.total} />

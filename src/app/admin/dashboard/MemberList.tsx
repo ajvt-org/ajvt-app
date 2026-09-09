@@ -3,7 +3,8 @@
 import Icon from "@/components/Icon";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import InlineName from "./InlineName";
-import { formatDateTime, toThumbUrl } from "@/lib/utils";
+import { toThumbUrl } from "@/lib/utils";
+import { formatDateTime } from "@/lib/clubTime";
 import { STATUS_LABEL, STATUS_BADGE } from "./constants";
 import type { Member } from "./types";
 
@@ -92,7 +93,7 @@ function MemberRow({
         <span>•</span>
         <span>{member.paymentMethod}</span>
         <span>•</span>
-        <span dir="ltr">{formatDateTime(member.createdAt)}</span>
+        <bdi dir="ltr">{formatDateTime(member.createdAt)}</bdi>
       </div>
     </div>
   );

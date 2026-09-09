@@ -2,7 +2,7 @@
 
 import Icon from "@/components/Icon";
 import Scoreline from "@/components/tournament/Scoreline";
-import { formatMatchDateTime } from "@/lib/clubTime";
+import { formatDateTime } from "@/lib/clubTime";
 import { UNDATED_LABEL } from "@/lib/matchDays";
 import { type Fixture } from "@/lib/memberFixtures";
 
@@ -68,7 +68,11 @@ export default function FixtureRow({ fixture }: { fixture: Fixture }) {
       <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
         <span className="flex items-center gap-1">
           <Icon name="calendar" size={12} />
-          {fixture.matchDate ? formatMatchDateTime(fixture.matchDate) : UNDATED_LABEL}
+          {fixture.matchDate ? (
+            <bdi dir="ltr">{formatDateTime(fixture.matchDate)}</bdi>
+          ) : (
+            UNDATED_LABEL
+          )}
         </span>
         {fixture.venue && (
           <span className="flex items-center gap-1 truncate">

@@ -1,5 +1,5 @@
 import { toCsv, downloadCsv } from "@/lib/csv";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/clubTime";
 import { STATUS_LABEL } from "./constants";
 import type { Member } from "./types";
 

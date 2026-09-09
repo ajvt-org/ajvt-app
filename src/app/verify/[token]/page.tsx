@@ -4,7 +4,7 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import VerifyEnrollments from "@/components/VerifyEnrollments";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import { nameOf } from "@/lib/person";
 import { verifyPage, villageField } from "@/lib/texts";
 import { loadVerifiedMember } from "@/lib/verifyEnrollmentsServer";
@@ -38,7 +38,10 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
             <Row label={verifyPage.memberNumber} value={member.memberNumber || "—"} dir="ltr" />
             <Row label={villageField.label} value={member.village} />
             {member.age && <Row label={verifyPage.age} value={member.age} />}
-            <Row label={verifyPage.memberSince} value={formatDate(member.memberSince)} />
+            <Row
+              label={verifyPage.memberSince}
+              value={<bdi dir="ltr">{formatDate(member.memberSince)}</bdi>}
+            />
           </dl>
 
           <VerifyEnrollments items={member.enrollments} />
@@ -75,7 +78,7 @@ function HomeLink() {
   );
 }
 
-function Row({ label, value, dir }: { label: string; value: string; dir?: string }) {
+function Row({ label, value, dir }: { label: string; value: React.ReactNode; dir?: string }) {
   return (
     <div
       className="flex items-center justify-between gap-4 py-3"

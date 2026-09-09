@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import CompetitionFields, { type Draft } from "./CompetitionFields";
 import { toLocalInput } from "./competitionTypes";
+import { formatDateTime } from "@/lib/clubTime";
 
 const draft: Draft = {
   name: "مسابقة الصيف",
@@ -58,7 +59,6 @@ describe("the competition settings fields", () => {
     show(true);
 
     for (const label of [
-      "بداية الجولة الأولى",
       "عدد الجولات",
       "جولة كل",
       "مدة الجولة بالدقائق",
@@ -67,5 +67,21 @@ describe("the competition settings fields", () => {
     ]) {
       expect((screen.getByLabelText(label) as HTMLInputElement).disabled).toBe(true);
     }
+  });
+
+  it("draws the start the app's own way once it can no longer be edited", () => {
+    show(true);
+
+    expect(screen.queryByLabelText("بداية الجولة الأولى")).toBeNull();
+    expect(screen.getByText("بداية الجولة الأولى")).toBeDefined();
+    expect(screen.getByText(formatDateTime(draft.startsAt))).toBeDefined();
+  });
+
+  it("isolates the start so it does not fold into the Arabic around it", () => {
+    show(true);
+
+    const drawn = screen.getByText(formatDateTime(draft.startsAt));
+    expect(drawn.tagName).toBe("BDI");
+    expect(drawn.getAttribute("dir")).toBe("ltr");
   });
 });

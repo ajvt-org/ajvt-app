@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { paymentAccountManager as texts } from "@/lib/texts";
 import { counted } from "@/lib/arabicCount";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import { RECORD } from "@/lib/messages/counts";
 import type { AdminAccountRow } from "@/lib/paymentMethodAdmin";
 
@@ -143,7 +143,7 @@ export default function PaymentAccountRow({
         )}
         {closed ? (
           <span className="badge shrink-0">
-            {texts.closedOn(formatDate(account.closedAt ?? new Date()))}
+            {texts.closedOn} <bdi dir="ltr">{formatDate(account.closedAt ?? new Date())}</bdi>
           </span>
         ) : (
           !account.active && <span className="badge shrink-0">{texts.stopped}</span>

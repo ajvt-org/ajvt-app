@@ -11,7 +11,7 @@ import {
   proofReuse,
 } from "@/lib/texts";
 import { money } from "@/lib/money";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import type { MemberOption, Proof } from "./paymentTypes";
 
 const ACCOUNT: MemberOption = {

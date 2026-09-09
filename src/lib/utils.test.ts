@@ -1,13 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import {
-  formatDateTime,
-  formatDayKey,
-  formatTime,
-  loginPathWithNext,
-  safeNextPath,
-  toThumbUrl,
-  validatePhone,
-} from "./utils";
+import { loginPathWithNext, safeNextPath, toThumbUrl, validatePhone } from "./utils";
 
 describe("validatePhone", () => {
   it("accepts 8 digits starting with 2, 3 or 4", () => {
@@ -112,43 +104,5 @@ describe("loginPathWithNext", () => {
 
     atLocation("/admin/login");
     expect(loginPathWithNext("/admin/login")).toBe("/admin/login");
-  });
-});
-
-describe("formatDateTime", () => {
-  it("puts the parts in a fixed order", () => {
-    expect(formatDateTime(new Date(2026, 7, 14, 15, 18))).toBe("2026/08/14 15:18");
-  });
-
-  it("pads single digits so rows line up", () => {
-    expect(formatDateTime(new Date(2026, 0, 5, 9, 4))).toBe("2026/01/05 09:04");
-  });
-
-  it("emits no directional marks, which is what scrambled the log", () => {
-    expect(formatDateTime(new Date(2026, 7, 14, 15, 18))).toMatch(/^[\d/: ]+$/);
-  });
-});
-
-describe("formatTime", () => {
-  it("uses a 24 hour clock with no am/pm marker to reorder", () => {
-    expect(formatTime(new Date(2026, 7, 14, 15, 18))).toBe("15:18");
-  });
-
-  it("pads the hour", () => {
-    expect(formatTime(new Date(2026, 7, 14, 9, 5))).toBe("09:05");
-  });
-});
-
-describe("formatDayKey", () => {
-  it("reads a rollup key as a local day, not utc midnight", () => {
-    expect(formatDayKey("2026-08-14")).toBe("2026/08/14");
-  });
-
-  it("does not slip to the previous day", () => {
-    expect(formatDayKey("2026-01-01")).toBe("2026/01/01");
-  });
-
-  it("emits no directional marks, the rows it fills are dir=ltr", () => {
-    expect(formatDayKey("2026-08-14")).toMatch(/^[\d/]+$/);
   });
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import IconLabel from "@/components/IconLabel";
 import Logo from "@/components/Logo";
 import { savePdf, savePng, sharePng } from "@/components/pdf/renderPdf";
@@ -121,7 +121,7 @@ export default function MemberCard({
               {memberNumber}
             </p>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-              {memberCard.memberSince(formatDate(createdAt))}
+              {memberCard.memberSince} <bdi dir="ltr">{formatDate(createdAt)}</bdi>
             </p>
           </div>
         </div>

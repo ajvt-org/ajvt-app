@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDayKey, loginPathWithNext } from "@/lib/utils";
+import { loginPathWithNext } from "@/lib/utils";
+import { formatDayKey } from "@/lib/clubTime";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { siteVisits as texts } from "@/lib/texts";
@@ -149,9 +150,9 @@ export default function VisitsPanel() {
         <div className="space-y-1.5 max-h-64 overflow-y-auto">
           {[...days].reverse().map((d) => (
             <div key={d.date} className="flex items-center justify-between text-xs">
-              <span dir="ltr" style={{ color: "var(--text-main)" }}>
+              <bdi dir="ltr" style={{ color: "var(--text-main)" }}>
                 {formatDayKey(d.date)}
-              </span>
+              </bdi>
               <span>
                 <span className="font-black" style={{ color: "var(--mint-600)" }}>
                   {texts.visitors(d.visitors)}

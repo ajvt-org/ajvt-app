@@ -8,7 +8,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import MemberProofForm from "@/components/admin/MemberProofForm";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/clubTime";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 import { villageField } from "@/lib/texts";
@@ -98,8 +98,20 @@ function Facts({ member }: { member: Member }) {
     [texts.membershipYear, String(member.membershipYear), "ltr"],
     ...paidRows(member),
     [texts.memberNumber, member.memberNumber || "—", "ltr"],
-    [texts.requestDate, formatDate(member.createdAt), undefined],
-    [texts.requestTime, formatTime(member.createdAt), "ltr"],
+    [
+      texts.requestDate,
+      <bdi key="date" dir="ltr">
+        {formatDate(member.createdAt)}
+      </bdi>,
+      undefined,
+    ],
+    [
+      texts.requestTime,
+      <bdi key="time" dir="ltr">
+        {formatTime(member.createdAt)}
+      </bdi>,
+      undefined,
+    ],
   ];
 
   return (

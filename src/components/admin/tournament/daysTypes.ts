@@ -36,6 +36,7 @@ export function dayLabel(date: string | null): string {
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric",
     timeZone: CLUB_TIMEZONE,
   }).format(new Date(date));
 }

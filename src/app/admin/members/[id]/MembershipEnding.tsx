@@ -4,11 +4,8 @@ import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import { api, errorMessage } from "@/lib/api";
+import { formatDate } from "@/lib/clubTime";
 import { membershipEnding as texts, MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
-
-function day(value: string | null): string {
-  return value ? new Date(value).toISOString().slice(0, 10) : "—";
-}
 
 export function EndedRows({
   endedAt,
@@ -22,19 +19,17 @@ export function EndedRows({
   return (
     <>
       <Row label={texts.endedReason} value={endedReason ?? "—"} />
-      <Row label={texts.endedOn} value={day(endedAt)} ltr />
+      <Row label={texts.endedOn} value={<bdi dir="ltr">{formatDate(endedAt)}</bdi>} />
       <Row label={texts.endedBy} value={endedBy ?? "—"} />
     </>
   );
 }
 
-function Row({ label, value, ltr }: { label: string; value: string; ltr?: boolean }) {
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-3">
       <dt style={{ color: "var(--text-muted)" }}>{label}</dt>
-      <dd className="font-bold" {...(ltr ? { dir: "ltr" as const } : {})}>
-        {value}
-      </dd>
+      <dd className="font-bold">{value}</dd>
     </div>
   );
 }

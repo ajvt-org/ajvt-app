@@ -1,4 +1,5 @@
 import { activityRegistrants as texts } from "@/lib/texts";
+import { formatDate } from "@/lib/clubTime";
 import type { Registration } from "./activityTypes";
 
 export const NEWEST_FIRST = "newest";
@@ -14,7 +15,7 @@ export function howRegistered(registration: Registration): string {
 }
 
 export function requestedOn(registration: Registration): string {
-  return new Date(registration.createdAt).toISOString().slice(0, 10);
+  return formatDate(registration.createdAt);
 }
 
 export function byRequestedDate<T extends Registration>(rows: T[], order: string): T[] {

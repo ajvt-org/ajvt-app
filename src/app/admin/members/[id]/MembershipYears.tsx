@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import IconLabel from "@/components/IconLabel";
 import { STATUS_BADGE, STATUS_ICON, STATUS_LABEL } from "@/app/admin/dashboard/constants";
 import type { MembershipYear } from "./membershipTypes";
@@ -37,7 +37,7 @@ export default function MembershipYears({
             {year.paymentMethod ? ` · ${year.paymentMethod}` : ""}
           </span>
           <span style={{ color: "var(--text-muted)" }}>
-            {year.recordedBy ? year.recordedBy : formatDate(year.createdAt)}
+            {year.recordedBy ? year.recordedBy : <bdi dir="ltr">{formatDate(year.createdAt)}</bdi>}
           </span>
           {year.rejectionReason && (
             <span className="w-full text-[11px]" style={{ color: "#991b1b" }}>

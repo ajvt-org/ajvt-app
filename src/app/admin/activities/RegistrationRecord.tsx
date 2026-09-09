@@ -13,7 +13,7 @@ export default function RegistrationRecord({ registration }: { registration: Reg
       <IconLabel name="user" size={11}>
         {howRegistered(registration)}
       </IconLabel>
-      <span dir="ltr">{requestedOn(registration)}</span>
+      <bdi dir="ltr">{requestedOn(registration)}</bdi>
     </p>
   );
 }

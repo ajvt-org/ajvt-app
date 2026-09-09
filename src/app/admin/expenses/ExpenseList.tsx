@@ -7,7 +7,8 @@ import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
-import { formatDate, toThumbUrl } from "@/lib/utils";
+import { toThumbUrl } from "@/lib/utils";
+import { formatDate } from "@/lib/clubTime";
 import type { Expense } from "./types";
 
 function Thumb({ expense }: { expense: Expense }) {
@@ -78,7 +79,7 @@ function Row({
               {expense.label}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              {formatDate(expense.date)} بواسطة {expense.createdBy}
+              <bdi dir="ltr">{formatDate(expense.date)}</bdi> بواسطة {expense.createdBy}
             </p>
             {expense.note && (
               <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>

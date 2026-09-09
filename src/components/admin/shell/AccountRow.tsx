@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/clubTime";
 import { adminRoleLabel, ROLE_LABELS } from "@/lib/adminRoles";
 import { settableRoles } from "@/lib/adminRoleChange";
 import IconLabel from "@/components/IconLabel";
@@ -95,7 +95,7 @@ function Details({ account }: { account: AdminAccount }) {
     <details className="text-xs" style={{ color: "var(--text-muted)" }}>
       <summary className="cursor-pointer select-none">{adminAccounts.moreDetails}</summary>
       <p className="mt-1">
-        {adminAccounts.createdAt} {formatDateTime(account.createdAt)}
+        {adminAccounts.createdAt} <bdi dir="ltr">{formatDateTime(account.createdAt)}</bdi>
       </p>
       {account.lastLoginIp && (
         <p className="mt-1">
@@ -197,9 +197,13 @@ export default function AccountRow({
       )}
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {account.lastLoginAt
-          ? `${adminAccounts.lastLogin} ${formatDateTime(account.lastLoginAt)}`
-          : adminAccounts.neverSignedIn}
+        {account.lastLoginAt ? (
+          <>
+            {adminAccounts.lastLogin} <bdi dir="ltr">{formatDateTime(account.lastLoginAt)}</bdi>
+          </>
+        ) : (
+          adminAccounts.neverSignedIn
+        )}
       </p>
 
       <Details account={account} />
