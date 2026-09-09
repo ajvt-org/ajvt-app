@@ -9,6 +9,8 @@ import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
 const valid = {
   membershipFee: 250,
   membershipYear: runningYear(),
+  asksBankReference: false,
+  showsReferenceCode: false,
   supportWhatsapp: "22299887766",
   tempPasswordHours: 12,
   whatsappGroup: "https://chat.whatsapp.com/abc",
@@ -161,5 +163,33 @@ describe("PATCH /api/admin/settings", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "الرابط غير صالح" });
+  });
+});
+
+describe("the switches on the انتساب form", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("super-admin", "SUPER"));
+  });
+
+  it("starts with both off, so the release itself takes them off the form", async () => {
+    const { settings } = await (await publicGet()).json();
+
+    expect(settings.asksBankReference).toBe(false);
+    expect(settings.showsReferenceCode).toBe(false);
+  });
+
+  it("saves each one on its own and reads it back", async () => {
+    await PATCH(post("/api/admin/settings", { ...valid, asksBankReference: true }));
+
+    const { settings } = await (await adminGet()).json();
+    expect(settings.asksBankReference).toBe(true);
+    expect(settings.showsReferenceCode).toBe(false);
+  });
+
+  it("refuses anything that is not on or off", async () => {
+    const res = await PATCH(post("/api/admin/settings", { ...valid, asksBankReference: "yes" }));
+
+    expect(res.status).toBe(400);
   });
 });

@@ -11,17 +11,26 @@ export const SETTINGS_GROUPS = [
 
 export type SettingsGroupKey = (typeof SETTINGS_GROUPS)[number]["key"];
 
-export interface SettingsField {
+interface FieldBase {
   key: keyof AppSettingsValues;
   group: SettingsGroupKey;
   label: string;
-  kind: "number" | "phone" | "url" | "text";
   hint?: string;
+}
+
+export interface SettingsInput extends FieldBase {
+  kind: "number" | "phone" | "url" | "text";
   min?: number;
   max?: number;
   placeholder?: string;
   optional?: boolean;
 }
+
+export interface SettingsToggle extends FieldBase {
+  kind: "switch";
+}
+
+export type SettingsField = SettingsInput | SettingsToggle;
 
 export const SETTINGS_FIELDS: SettingsField[] = [
   {
@@ -38,6 +47,19 @@ export const SETTINGS_FIELDS: SettingsField[] = [
     kind: "number",
     min: FIRST_MEMBERSHIP_YEAR,
     max: runningYear() + 1,
+  },
+  {
+    key: "asksBankReference",
+    group: "membership",
+    label: settingsForm.asksBankReferenceLabel,
+    kind: "switch",
+  },
+  {
+    key: "showsReferenceCode",
+    group: "membership",
+    label: settingsForm.showsReferenceCodeLabel,
+    kind: "switch",
+    hint: settingsForm.showsReferenceCodeHint,
   },
   {
     key: "tempPasswordHours",
@@ -89,7 +111,8 @@ export function groupedFields(): {
   }));
 }
 
-export function cleanValue(field: SettingsField, raw: string): string | number {
+export function cleanValue(field: SettingsField, raw: string): string | number | boolean {
+  if (field.kind === "switch") return raw === "true";
   if (field.kind === "number") return Number(raw) || 0;
   if (field.kind === "phone") return raw.replace(/\D/g, "");
   return raw;

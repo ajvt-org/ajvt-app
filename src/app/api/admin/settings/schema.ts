@@ -28,6 +28,8 @@ export const appSettingsSchema = z.object({
       }
     })
     .transform((v) => Number(v)),
+  asksBankReference: z.boolean(INVALID),
+  showsReferenceCode: z.boolean(INVALID),
   supportWhatsapp: z
     .string(INVALID)
     .refine((v) => /^\d{8,15}$/.test(v.trim()), settings.whatsappInvalid)

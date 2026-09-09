@@ -1,7 +1,7 @@
 "use client";
 
 import { arabicValidity } from "@/lib/validationMessage";
-import { cleanValue, type SettingsField } from "./settingsFields";
+import { cleanValue, type SettingsInput } from "./settingsFields";
 
 const INPUT_TYPE = { number: "number", phone: "tel", url: "url", text: "text" } as const;
 
@@ -10,7 +10,7 @@ export default function SettingsFieldInput({
   value,
   onChange,
 }: {
-  field: SettingsField;
+  field: SettingsInput;
   value: string | number | null;
   onChange: (value: string | number) => void;
 }) {
@@ -33,7 +33,7 @@ export default function SettingsFieldInput({
         step={field.kind === "number" ? 1 : undefined}
         placeholder={field.placeholder}
         value={value ?? ""}
-        onChange={(e) => onChange(cleanValue(field, e.target.value))}
+        onChange={(e) => onChange(cleanValue(field, e.target.value) as string | number)}
         required={!field.optional}
         {...(field.optional ? {} : arabicValidity())}
         className="input"
