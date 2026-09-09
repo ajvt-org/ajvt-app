@@ -52,7 +52,7 @@ export default function SupportPrivacyCard({
           disabled={saving}
           onChange={(e) => save(e.target.checked)}
         />
-        <IconLabel name="ban">{texts.checkbox}</IconLabel>
+        <IconLabel name="eyeClosed">{texts.checkbox}</IconLabel>
       </label>
       {shown !== null && (
         <Notice tone="success">

@@ -25,6 +25,13 @@ const STATES = [
   ["REJECTED", paymentCard.statusRejected],
 ] as const;
 
+function shapeOf(proof: Proof, label: string) {
+  const { unmount } = render(<ProofBadges proof={proof} />);
+  const d = screen.getByLabelText(label).querySelector("path")!.getAttribute("d");
+  unmount();
+  return d;
+}
+
 describe("the marks across the top of a payment card", () => {
   it("carries the Arabic word of each state as its accessible name", () => {
     for (const [status, word] of STATES) {
@@ -48,15 +55,13 @@ describe("the marks across the top of a payment card", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("tells the three states apart by shape rather than by colour alone", () => {
-    const shapes = STATES.map(([status]) => {
-      const { container, unmount } = render(<ProofBadges proof={proofOf({ status })} />);
-      const path = container.querySelector("path")!.getAttribute("d");
-      unmount();
-      return path;
-    });
+  it("tells the three states and the hidden gift apart by shape rather than by colour alone", () => {
+    const shapes = [
+      ...STATES.map(([status, word]) => shapeOf(proofOf({ status }), word)),
+      shapeOf(proofOf({ anonymous: true }), paymentCard.hiddenOnBoard),
+    ];
 
-    expect(new Set(shapes).size).toBe(STATES.length);
+    expect(new Set(shapes).size).toBe(shapes.length);
   });
 
   it("marks a gift linked to an account, and says so", () => {
