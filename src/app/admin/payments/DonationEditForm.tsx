@@ -12,6 +12,7 @@ import { money } from "@/lib/messages";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
+import PhoneInput from "@/components/form/PhoneInput";
 import DestinationSelect from "@/components/admin/DestinationSelect";
 import FormField from "@/components/admin/FormField";
 import DonationShownAs from "./DonationShownAs";
@@ -175,13 +176,10 @@ export default function DonationEditForm({
             </FormField>
 
             <FormField id={field("donor-phone")} label={donationEdit.phone} compact>
-              <input
+              <PhoneInput
                 id={field("donor-phone")}
-                type="tel"
-                dir="ltr"
                 value={form.donorPhone}
-                onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-                maxLength={8}
+                onChange={(donorPhone) => set({ donorPhone })}
                 className="input text-xs"
                 style={FIELD}
               />
