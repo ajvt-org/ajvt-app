@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { formatActivityDates } from "@/lib/activityDates";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import { activityDatesEditor as texts } from "@/lib/texts";
@@ -18,6 +19,48 @@ function timeValue(value: string | null): string {
 function toIso(day: string, time: string, withTime: boolean): string | null {
   if (!day) return null;
   return `${day}T${withTime && time ? time : "00:00"}:00.000Z`;
+}
+
+function DayField({
+  id,
+  label,
+  value,
+  min,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  min?: string;
+  onChange: (day: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+      <label htmlFor={id} className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </label>
+      <input
+        id={id}
+        type="date"
+        value={value}
+        min={min}
+        onChange={(e) => onChange(e.target.value)}
+        className="input text-sm flex-1 min-w-0"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          aria-label={texts.clearDate}
+          title={texts.clearDate}
+          className="shrink-0 p-1 rounded-lg"
+          style={{ color: "var(--text-muted)" }}
+        >
+          <Icon name="close" size={16} />
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function ActivityDatesEditor({
@@ -75,34 +118,13 @@ export default function ActivityDatesEditor({
       )}
 
       <div className="flex items-center gap-2 flex-wrap">
-        <label
-          htmlFor={`${uid}-from`}
-          className="text-xs shrink-0"
-          style={{ color: "var(--text-muted)" }}
-        >
-          {texts.from}
-        </label>
-        <input
-          id={`${uid}-from`}
-          type="date"
-          value={startDay}
-          onChange={(e) => setStartDay(e.target.value)}
-          className="input text-sm flex-1 min-w-0"
-        />
-        <label
-          htmlFor={`${uid}-to`}
-          className="text-xs shrink-0"
-          style={{ color: "var(--text-muted)" }}
-        >
-          {texts.to}
-        </label>
-        <input
+        <DayField id={`${uid}-from`} label={texts.from} value={startDay} onChange={setStartDay} />
+        <DayField
           id={`${uid}-to`}
-          type="date"
+          label={texts.to}
           value={endDay}
           min={startDay || undefined}
-          onChange={(e) => setEndDay(e.target.value)}
-          className="input text-sm flex-1 min-w-0"
+          onChange={setEndDay}
         />
       </div>
 
