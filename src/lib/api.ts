@@ -44,5 +44,7 @@ export const api = {
 };
 
 export function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : "خطأ";
+  if (err instanceof ApiError) return err.message;
+  console.error(err);
+  return FAILED;
 }
