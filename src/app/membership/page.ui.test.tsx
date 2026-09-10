@@ -41,7 +41,9 @@ function reply(body: unknown) {
 }
 
 function stubFetch() {
-  const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+  const sent: Record<string, string> = {};
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+    if (typeof init?.body === "string") sent[url] = init.body;
     if (url === "/api/user/me") return reply({ fullName: "سالم", members: [] });
     if (url === "/api/settings") {
       return reply({
@@ -53,7 +55,7 @@ function stubFetch() {
     return reply({});
   });
   vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
+  return Object.assign(fetchMock, { sent });
 }
 
 async function openWithDraft(draft: string) {
@@ -70,8 +72,7 @@ async function send(user: ReturnType<typeof userEvent.setup>, attach: HTMLElemen
   await user.click(screen.getByRole("button", { name: new RegExp(stepPayment.send) }));
 }
 
-const posted = (fetchMock: ReturnType<typeof stubFetch>) =>
-  fetchMock.mock.calls.find(([url]) => url === "/api/members");
+const posted = (fetchMock: ReturnType<typeof stubFetch>) => fetchMock.sent["/api/members"];
 
 beforeEach(() => {
   localStorage.clear();
@@ -84,7 +85,7 @@ describe("the membership form restoring a draft the browser kept", () => {
 
     await waitFor(() => expect(posted(fetchMock)).toBeTruthy());
     expect(screen.queryByText(/Cannot read properties/)).toBeNull();
-    const body = JSON.parse(posted(fetchMock)![1]!.body as string);
+    const body = JSON.parse(posted(fetchMock)!);
     expect(body.bankReference).toBeNull();
     expect(body.paidAmount).toBe(FEE);
     expect(body.paymentMethod).toBe("بنكيلي");
