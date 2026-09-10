@@ -44,5 +44,9 @@ export const api = {
 };
 
 export function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : "خطأ";
+  if (err instanceof Error && typeof (err as Partial<ApiError>).status === "number") {
+    return err.message;
+  }
+  console.error(err);
+  return FAILED;
 }

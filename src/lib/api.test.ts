@@ -104,9 +104,29 @@ describe("errorMessage", () => {
     expect(errorMessage(new ApiError("العضو غير موجود", 404))).toBe("العضو غير موجود");
   });
 
+  it("keeps the message the server wrote whatever the status", () => {
+    expect(errorMessage(new ApiError("تعذر الاتصال بالخادم", 0))).toBe("تعذر الاتصال بالخادم");
+    expect(errorMessage(new ApiError("فشلت العملية", 500))).toBe("فشلت العملية");
+  });
+
+  it("refuses the message of an error the browser raised", () => {
+    expect(errorMessage(new TypeError("Cannot read properties of undefined"))).toBe("فشلت العملية");
+    expect(errorMessage(new Error("boom"))).toBe("فشلت العملية");
+  });
+
   it("falls back for anything that is not an Error", () => {
-    expect(errorMessage("boom")).toBe("خطأ");
-    expect(errorMessage(null)).toBe("خطأ");
-    expect(errorMessage(undefined)).toBe("خطأ");
+    expect(errorMessage("boom")).toBe("فشلت العملية");
+    expect(errorMessage(null)).toBe("فشلت العملية");
+    expect(errorMessage(undefined)).toBe("فشلت العملية");
+  });
+
+  it("logs what it refused so the fault is not silent", () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const raised = new TypeError("Cannot read properties of undefined");
+
+    errorMessage(raised);
+
+    expect(logged).toHaveBeenCalledWith(raised);
+    logged.mockRestore();
   });
 });
