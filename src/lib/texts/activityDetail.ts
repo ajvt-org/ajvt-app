@@ -52,6 +52,7 @@ export const activityDatesEditor = {
   from: "من",
   to: "إلى",
   withTime: "تحديد الساعة",
+  clearDate: "مسح التاريخ",
   preview: "سيظهر هكذا:",
   save: "حفظ التواريخ",
 } as const;
