@@ -21,6 +21,7 @@ import PageLoading from "@/components/PageLoading";
 import StepPayment from "./StepPayment";
 import SubmittedCard from "./SubmittedCard";
 import { DRAFT_KEY, IDLE_TIMEOUT_MS } from "./constants";
+import { parseDraft } from "./draft";
 
 function renewalTitle(renewing: boolean, editing: boolean): string {
   if (renewing) return pageTitles.membershipRenew;
@@ -141,7 +142,7 @@ function MembershipPageInner() {
       const draft = localStorage.getItem(DRAFT_KEY);
       if (draft) {
         try {
-          const parsed = JSON.parse(draft);
+          const parsed = parseDraft(draft);
           setForm({ ...parsed, referenceCode: parsed.referenceCode || generateReferenceCode() });
         } catch {
           setForm((p) => ({ ...p, referenceCode: generateReferenceCode() }));
