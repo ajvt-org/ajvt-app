@@ -79,6 +79,8 @@ export default function MembershipCard({
         {member.status === "ACTIVE" && (
           <MembershipEnding
             memberId={member.id}
+            memberName={member.fullName}
+            year={member.membershipYear}
             ended={member.endedAt !== null}
             onChanged={refresh}
           />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ConfirmDialogShell from "@/components/ConfirmDialogShell";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import { api, errorMessage } from "@/lib/api";
@@ -36,10 +37,14 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default function MembershipEnding({
   memberId,
+  memberName,
+  year,
   ended,
   onChanged,
 }: {
   memberId: string;
+  memberName: string;
+  year: number;
   ended: boolean;
   onChanged: () => void;
 }) {
@@ -47,6 +52,11 @@ export default function MembershipEnding({
   const [reason, setReason] = useState<string>(MEMBERSHIP_ENDING_REASONS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  function close() {
+    setPicking(false);
+    setError("");
+  }
 
   async function run(call: Promise<unknown>) {
     setBusy(true);
@@ -62,42 +72,7 @@ export default function MembershipEnding({
     }
   }
 
-  if (picking) {
-    return (
-      <div className="w-full space-y-2">
-        <label className="block text-xs font-bold" htmlFor="ending-reason">
-          {texts.reasonLabel}
-        </label>
-        <select
-          id="ending-reason"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          className="input text-sm"
-        >
-          {MEMBERSHIP_ENDING_REASONS.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() =>
-              run(api.post(`/api/admin/members/${memberId}/end-membership`, { reason }))
-            }
-            disabled={busy}
-            className="btn btn-sm btn-danger font-bold"
-          >
-            {busy ? "..." : texts.endConfirm}
-          </button>
-          <button onClick={() => setPicking(false)} className="btn btn-sm btn-ghost">
-            {texts.cancel}
-          </button>
-        </div>
-        {error && <Notice tone="error">{error}</Notice>}
-      </div>
-    );
-  }
+  const notice = error ? <Notice tone="error">{error}</Notice> : null;
 
   return (
     <>
@@ -118,7 +93,49 @@ export default function MembershipEnding({
           <IconLabel name="ban">{texts.end}</IconLabel>
         </button>
       )}
-      {error && <Notice tone="error">{error}</Notice>}
+
+      {!picking && notice}
+
+      {picking && (
+        <ConfirmDialogShell title={texts.endTitle} onClose={close}>
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            {texts.endSubject(memberName, year)}
+          </p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            {texts.endMeaning}
+          </p>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold" htmlFor="ending-reason">
+              {texts.reasonLabel}
+            </label>
+            <select
+              id="ending-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="input text-sm"
+            >
+              {MEMBERSHIP_ENDING_REASONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={() =>
+              run(api.post(`/api/admin/members/${memberId}/end-membership`, { reason }))
+            }
+            disabled={busy}
+            className="btn btn-danger w-full text-sm font-bold disabled:opacity-40"
+          >
+            {busy ? "..." : texts.endConfirm}
+          </button>
+
+          {notice}
+        </ConfirmDialogShell>
+      )}
     </>
   );
 }

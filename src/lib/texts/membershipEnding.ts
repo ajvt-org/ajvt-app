@@ -8,6 +8,9 @@ export const MEMBERSHIP_ENDING_REASONS = [
 
 export const membershipEnding = {
   end: "إنهاء العضوية",
+  endTitle: "إنهاء العضوية",
+  endSubject: (name: string, year: number) => `عضوية ${name} لسنة ${year}.`,
+  endMeaning: "تتوقف العضوية لهذه السنة، ويحتفظ الشخص بحسابه وبسجله كاملاً.",
   endConfirm: "تأكيد الإنهاء",
   reasonLabel: "سبب إنهاء العضوية",
   restore: "إرجاع العضوية",
