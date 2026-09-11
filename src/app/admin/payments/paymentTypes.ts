@@ -9,6 +9,7 @@ export interface Proof {
   memberName: string;
   activityTitle: string | null;
   amount: number | null;
+  supportAmount?: number;
   status: string;
   source?: string;
   paymentMethod?: string | null;

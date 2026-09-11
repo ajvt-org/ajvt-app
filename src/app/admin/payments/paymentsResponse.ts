@@ -11,6 +11,7 @@ export const proofSchema = z.object({
   memberName: z.string(),
   activityTitle: nullableText,
   amount: z.number().nullable(),
+  supportAmount: z.number().optional(),
   status: z.string(),
   source: z.string().optional(),
   paymentMethod: nullableText.optional(),

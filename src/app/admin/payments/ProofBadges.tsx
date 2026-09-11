@@ -1,6 +1,8 @@
 import Icon, { type IconName } from "@/components/Icon";
 import { paymentCard, PROOF_STATUS_LABEL } from "@/lib/texts";
 import { STATUS_CLASS, type Proof } from "./paymentTypes";
+import { isMembershipSurplus } from "./paymentsFilters";
+import { money } from "@/lib/money";
 
 const STATUS_ICON: Record<string, IconName> = {
   PENDING: "clock",
@@ -32,6 +34,13 @@ export default function ProofBadges({ proof }: { proof: Proof }) {
       )}
       {isDonation && proof.anonymous && (
         <Mark name="eyeClosed" label={paymentCard.hiddenOnBoard} tone="badge-pending" />
+      )}
+      {isMembershipSurplus(proof) && (
+        <Mark
+          name="heart"
+          label={paymentCard.membershipSurplus(money(proof.supportAmount ?? 0))}
+          tone="badge-active"
+        />
       )}
     </>
   );

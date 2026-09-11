@@ -138,8 +138,17 @@ function matchesLinked(proof: Proof, linked: string): boolean {
   return linked === "yes" ? !!proof.userId : !proof.userId;
 }
 
+export function isMembershipSurplus(proof: Proof): boolean {
+  return proof.kind === "MEMBERSHIP" && (proof.supportAmount ?? 0) > 0;
+}
+
+function matchesKind(proof: Proof, kind: KindFilter): boolean {
+  if (kind === "ALL" || proof.kind === kind) return true;
+  return kind === "DONATION" && isMembershipSurplus(proof);
+}
+
 export function matchesPaymentsFilters(proof: Proof, filters: PaymentsFilters): boolean {
-  if (filters.kind !== "ALL" && proof.kind !== filters.kind) return false;
+  if (!matchesKind(proof, filters.kind)) return false;
   if (filters.status && proof.status !== filters.status) return false;
   if (!matchesAccount(proof, filters.account)) return false;
   if (!matchesDateRange(proof, filters.from, filters.to)) return false;
