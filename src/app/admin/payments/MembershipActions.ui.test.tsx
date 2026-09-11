@@ -2,9 +2,15 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MembershipActions from "./MembershipActions";
+import { membershipEdit } from "@/lib/texts";
 
 vi.mock("@/lib/api", () => ({
-  api: { post: vi.fn(), put: vi.fn(), del: vi.fn() },
+  api: {
+    get: vi.fn().mockResolvedValue({ methods: [] }),
+    post: vi.fn(),
+    put: vi.fn(),
+    del: vi.fn(),
+  },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
@@ -96,5 +102,40 @@ describe("the actions under a membership payment", () => {
     await userEvent.click(screen.getByRole("button", { name: /رفض إثبات الدفع/ }));
 
     expect(screen.queryByRole("button", { name: /^قبول الدفع$/ })).toBeNull();
+  });
+});
+
+describe("editing the payment from the row", () => {
+  it("offers it when the row carries the payment", async () => {
+    render(
+      <MembershipActions
+        userId="u1"
+        memberName="Fatimetou"
+        proof={null}
+        status="ACTIVE"
+        payment={{
+          id: "u1",
+          kind: "MEMBERSHIP",
+          proof: null,
+          memberName: "Fatimetou",
+          activityTitle: null,
+          amount: 2000,
+          status: "ACTIVE",
+          paidOn: null,
+          submittedAt: "2026-08-20T09:00:00.000Z",
+        }}
+        onChanged={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: membershipEdit.open })).toBeDefined();
+    await userEvent.click(screen.getByRole("button", { name: membershipEdit.open }));
+    expect(screen.getByLabelText(membershipEdit.amount)).toBeDefined();
+  });
+
+  it("does not offer it where no payment reached the row", () => {
+    draw("ACTIVE");
+
+    expect(screen.queryByRole("button", { name: membershipEdit.open })).toBeNull();
   });
 });
