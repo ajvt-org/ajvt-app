@@ -77,7 +77,9 @@ export const PATCH = withRoute(
       data.age = nextAge;
     }
     if (photo !== undefined) {
-      await requireOwnUpload(photo, { userId: null, adminId: session.adminId });
+      if (photo !== existing.photo) {
+        await requireOwnUpload(photo, { userId: null, adminId: session.adminId });
+      }
       data.photo = photo;
     }
     if (photoLocked !== undefined) {
