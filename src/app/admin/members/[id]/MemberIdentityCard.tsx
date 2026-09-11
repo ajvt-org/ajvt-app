@@ -5,13 +5,13 @@ import Icon from "@/components/Icon";
 import VerbButton from "@/components/admin/VerbButton";
 import EditRecordButton from "@/components/admin/EditRecordButton";
 import { GRAVE, RISKY, SAFE } from "@/components/admin/verbTones";
-import TempPasswordBox from "@/components/admin/TempPasswordBox";
+import TempPasswordBox, { type TempPassword } from "@/components/admin/TempPasswordBox";
 import { api, errorMessage } from "@/lib/api";
 import { DETAIL_SEPARATOR, personDetails } from "@/lib/personDetails";
 import { toThumbUrl } from "@/lib/utils";
 import { accountPhone, memberAccount, memberPage, memberPhoto } from "@/lib/texts";
 import AccountPhoneForm from "./AccountPhoneForm";
-import CreateAccountForm, { type TempPassword } from "./CreateAccountForm";
+import CreateAccountForm from "./CreateAccountForm";
 import MemberPhotoDialogs, { type PhotoAsking } from "./MemberPhotoDialogs";
 
 export default function MemberIdentityCard({
@@ -193,8 +193,9 @@ export default function MemberIdentityCard({
           <AccountPhoneForm
             memberId={memberId}
             phone={phone}
-            onSaved={() => {
+            onSaved={(made) => {
               setCorrecting(false);
+              setTemp(made);
               onChanged();
             }}
             onCancel={() => setCorrecting(false)}

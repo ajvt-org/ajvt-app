@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Icon from "@/components/Icon";
+import type { TempPassword } from "@/components/admin/TempPasswordBox";
 import { api, errorMessage } from "@/lib/api";
 import { accountPhone as texts } from "@/lib/texts";
 
@@ -13,7 +14,7 @@ export default function AccountPhoneForm({
 }: {
   memberId: string;
   phone: string | null;
-  onSaved: () => void;
+  onSaved: (temp: TempPassword | null) => void;
   onCancel: () => void;
 }) {
   const [value, setValue] = useState(phone ?? "");
@@ -24,8 +25,20 @@ export default function AccountPhoneForm({
     setError("");
     setSaving(true);
     try {
-      await api.patch(`/api/admin/members/${memberId}/account`, { phone: value });
-      onSaved();
+      if (phone) {
+        await api.patch(`/api/admin/members/${memberId}/account`, { phone: value });
+        onSaved(null);
+      } else {
+        const data = await api.patch<{ tempPassword?: string; tempPasswordHours?: number }>(
+          `/api/admin/members/${memberId}`,
+          { accountPhone: value },
+        );
+        onSaved(
+          data.tempPassword
+            ? { password: data.tempPassword, hours: data.tempPasswordHours ?? 0 }
+            : null,
+        );
+      }
     } catch (e) {
       setError(errorMessage(e));
     } finally {

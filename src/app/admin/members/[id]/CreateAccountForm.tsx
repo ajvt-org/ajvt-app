@@ -2,13 +2,9 @@
 
 import { useState } from "react";
 import Icon from "@/components/Icon";
+import type { TempPassword } from "@/components/admin/TempPasswordBox";
 import { api, errorMessage } from "@/lib/api";
 import { memberAccount as texts } from "@/lib/texts";
-
-export interface TempPassword {
-  password: string;
-  hours: number;
-}
 
 export default function CreateAccountForm({
   memberId,
