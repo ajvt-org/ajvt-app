@@ -6,7 +6,6 @@ import {
   accountOptionsOf,
   activePaymentsFilterCount,
   matchesAccount,
-  isMembershipSurplus,
   matchesPaymentsFilters,
   pageHolding,
   readPaymentsFilters,
@@ -220,7 +219,7 @@ describe("counting what is narrowing the list", () => {
   });
 });
 
-describe("what the support tab counts as support", () => {
+describe("which tab one payment is listed under", () => {
   const membership = (over: Partial<Proof> = {}): Proof => ({
     id: "u1",
     kind: "MEMBERSHIP",
@@ -238,34 +237,25 @@ describe("what the support tab counts as support", () => {
 
   const on = (over: Partial<PaymentsFilters>) => ({ ...NO_PAYMENTS_FILTERS, ...over });
 
-  it("calls a membership payment above the fee a supporter", () => {
-    expect(isMembershipSurplus(membership())).toBe(true);
-  });
-
-  it("does not call a membership payment at the fee a supporter", () => {
-    expect(isMembershipSurplus(membership({ feeApplied: 2000 }))).toBe(false);
-  });
-
-  it("shows the surplus under the support tab", () => {
-    expect(matchesPaymentsFilters(membership(), on({ kind: "DONATION" }))).toBe(true);
-  });
-
-  it("leaves a membership payment at the fee off the support tab", () => {
-    expect(matchesPaymentsFilters(membership({ feeApplied: 2000 }), on({ kind: "DONATION" }))).toBe(
-      false,
-    );
-  });
-
-  it("still shows it under the membership tab", () => {
+  it("lists a membership payment above the fee under memberships", () => {
     expect(matchesPaymentsFilters(membership(), on({ kind: "MEMBERSHIP" }))).toBe(true);
   });
 
-  it("finds it under the support tab by the member's name", () => {
-    expect(matchesPaymentsFilters(membership(), on({ kind: "DONATION", q: "محمد" }))).toBe(true);
+  it("leaves that same payment off the support tab, where it was never a second payment", () => {
+    expect(matchesPaymentsFilters(membership(), on({ kind: "DONATION" }))).toBe(false);
   });
 
   it("keeps a support payment off the membership tab", () => {
     const donation = membership({ kind: "DONATION", feeApplied: undefined });
     expect(matchesPaymentsFilters(donation, on({ kind: "MEMBERSHIP" }))).toBe(false);
+  });
+
+  it("keeps a support payment on the support tab", () => {
+    const donation = membership({ kind: "DONATION", feeApplied: undefined });
+    expect(matchesPaymentsFilters(donation, on({ kind: "DONATION" }))).toBe(true);
+  });
+
+  it("lists every payment under all", () => {
+    expect(matchesPaymentsFilters(membership(), on({ kind: "ALL" }))).toBe(true);
   });
 });

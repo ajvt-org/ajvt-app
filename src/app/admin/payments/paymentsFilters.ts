@@ -1,5 +1,4 @@
 import { paymentDate } from "@/lib/paymentDate";
-import { splitPayment } from "@/lib/membershipPayment";
 import type { KindFilter } from "./KindTabs";
 import { matchesSearch } from "./paymentsSearch";
 import { DEFAULT_SORT, readPaymentSort, type PaymentSort } from "./paymentsSort";
@@ -139,14 +138,8 @@ function matchesLinked(proof: Proof, linked: string): boolean {
   return linked === "yes" ? !!proof.userId : !proof.userId;
 }
 
-export function isMembershipSurplus(proof: Proof): boolean {
-  if (proof.kind !== "MEMBERSHIP" || proof.amount == null) return false;
-  return splitPayment(proof.amount, proof.feeApplied ?? 0).surplus > 0;
-}
-
 function matchesKind(proof: Proof, kind: KindFilter): boolean {
-  if (kind === "ALL" || proof.kind === kind) return true;
-  return kind === "DONATION" && isMembershipSurplus(proof);
+  return kind === "ALL" || proof.kind === kind;
 }
 
 export function matchesPaymentsFilters(proof: Proof, filters: PaymentsFilters): boolean {
