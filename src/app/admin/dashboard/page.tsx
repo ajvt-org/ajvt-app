@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import {
+  MEMBER_FILTER_KEYS,
   readFilters,
   writeFilters,
   matchesFilters,
@@ -16,6 +17,7 @@ import { api, ApiError, errorMessage } from "@/lib/api";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { awaitsReview, nextAwaitingReview } from "@/lib/reviewQueue";
 import { pageCount, paginate } from "@/lib/listUrlState";
+import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import type { FilterTab, Member, AgeGroup, OrphanAge, Village } from "./types";
 import { PAGE_SIZE } from "./constants";
 import { initialFilterTab } from "./initialTab";
@@ -59,9 +61,11 @@ function AdminDashboardInner() {
   const membership = useMembershipSettings();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFiltersState] = useState(
-    readFilters(new URLSearchParams(searchParams.toString())),
-  );
+  const { filters, page, go, goToPage } = useAdminListUrlState("/admin/dashboard", {
+    keys: [...MEMBER_FILTER_KEYS],
+    readFilters,
+    writeFilters,
+  });
   const filter = filters.status as FilterTab;
   const tabPicked = useRef(false);
 
@@ -86,9 +90,6 @@ function AdminDashboardInner() {
     onDone: () => fetchMembers(),
   });
 
-  const [page, setPage] = useState(1);
-  const [lastFilterKey, setLastFilterKey] = useState("PENDING|");
-
   const [showStats, setShowStats] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
@@ -103,13 +104,7 @@ function AdminDashboardInner() {
   const [otherVillageCount, setOtherVillageCount] = useState(0);
   const [unlistedVillages, setUnlistedVillages] = useState<OrphanAge[]>([]);
 
-  function setFilters(next: typeof filters, nextPage = 1) {
-    setFiltersState(next);
-    const query = writeFilters(next, nextPage).toString();
-    router.replace(query ? `/admin/dashboard?${query}` : "/admin/dashboard", { scroll: false });
-  }
-
-  const setFilter = (status: FilterTab) => setFilters({ ...filters, status });
+  const setFilter = (status: FilterTab) => go({ ...filters, status });
 
   useEffect(() => {
     fetchMembers();
@@ -224,11 +219,6 @@ function AdminDashboardInner() {
   });
 
   const filtered = members.filter((m) => matchesFilters(m, filters, membership));
-  const filterKey = JSON.stringify(filters);
-  if (filterKey !== lastFilterKey) {
-    setLastFilterKey(filterKey);
-    setPage(1);
-  }
 
   const filterCount = [
     filters.age,
@@ -284,7 +274,7 @@ function AdminDashboardInner() {
             value={filters.q}
             filterCount={filterCount}
             statsOpen={showStats}
-            onChange={(q) => setFilters({ ...filters, q })}
+            onChange={(q) => go({ ...filters, q })}
             onOpenFilters={() => setShowFilters(true)}
             onToggleStats={() => setShowStats((v) => !v)}
             onExport={() => exportMembers(members)}
@@ -312,15 +302,15 @@ function AdminDashboardInner() {
                 ? filters.standing
                 : null
             }
-            onShowCurrent={() => setFilters(withStanding("current"))}
-            onShowFormer={() => setFilters(withStanding("former"))}
+            onShowCurrent={() => go(withStanding("current"))}
+            onShowFormer={() => go(withStanding("former"))}
           />
 
           <FilterChips
             filters={filters}
             year={membership.year}
             resultCount={filtered.length}
-            onChange={setFilters}
+            onChange={go}
           />
 
           {bulk.error && <Notice tone="error">{bulk.error}</Notice>}
@@ -362,7 +352,7 @@ function AdminDashboardInner() {
                 setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, fullName } : m)));
                 setSelected((prev) => (prev && prev.id === id ? { ...prev, fullName } : prev));
               }}
-              pagination={{ page: currentPage, totalPages, onGo: setPage }}
+              pagination={{ page: currentPage, totalPages, onGo: goToPage }}
             />
           )}
         </>
@@ -407,7 +397,7 @@ function AdminDashboardInner() {
           years={years}
           year={membership.year}
           resultCount={filtered.length}
-          onChange={setFilters}
+          onChange={go}
           onClose={() => setShowFilters(false)}
         />
       )}
@@ -473,7 +463,7 @@ function AdminDashboardInner() {
           }}
           onShowOther={() => {
             setShowVillages(false);
-            setFilters({ ...filters, status: "ALL", village: OTHER_VILLAGE });
+            go({ ...filters, status: "ALL", village: OTHER_VILLAGE });
           }}
           onClose={() => setShowVillages(false)}
         />
