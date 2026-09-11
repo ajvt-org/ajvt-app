@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { matchDateToLocalInput } from "@/lib/clubTime";
 import { api, errorMessage } from "@/lib/api";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
@@ -22,10 +23,6 @@ import { DANGER, FIELD, PRIMARY, QUIET } from "./donationTones";
 import { destinationOf, destinationValue, type DestinationOption } from "@/lib/moneyDestination";
 import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
-function dayOf(value: string | null): string {
-  return value ? value.slice(0, 10) : "";
-}
-
 function initial(proof: Proof) {
   return {
     donorName: proof.userId ? "" : proof.donorName || "",
@@ -37,7 +34,7 @@ function initial(proof: Proof) {
     bankReference: proof.bankReference || "",
     destinationId: destinationValue(proof),
     proof: proof.proof || null,
-    paidOn: dayOf(proof.paidOn),
+    paidOn: matchDateToLocalInput(proof.paidOn),
     anonymous: proof.anonymous ?? false,
   };
 }
@@ -202,7 +199,7 @@ export default function DonationEditForm({
         <FormField id={field("paid-on")} label={donationEdit.paidOn} compact>
           <input
             id={field("paid-on")}
-            type="date"
+            type="datetime-local"
             dir="ltr"
             value={form.paidOn}
             onChange={(e) => set({ paidOn: e.target.value })}

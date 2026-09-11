@@ -16,6 +16,11 @@ const TOOLS = {
   "/admin/audit-log": { label: adminTools.auditLog, icon: "list", superOnly: true },
   "/admin/broadcast": { label: adminTools.broadcast, icon: "megaphone", superOnly: true },
   "/admin/deleted": { label: adminTools.deleted, icon: "trash", superOnly: false },
+  "/admin/payments/proof-check": {
+    label: adminTools.proofCheck,
+    icon: "search",
+    superOnly: false,
+  },
 } satisfies Record<string, Omit<ToolLink, "href">>;
 
 export type ToolHref = keyof typeof TOOLS;

@@ -29,7 +29,8 @@ import {
   readExpensesFilters,
   writeExpensesFilters,
 } from "./expensesFilters";
-import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
+import { emptyExpenseForm, nowInputValue, PAGE_SIZE } from "./types";
+import { matchDateToLocalInput } from "@/lib/clubTime";
 import type { Expense, ExpenseForm } from "./types";
 import { hasFullAccess } from "@/lib/adminRoles";
 import { expensesPage } from "@/lib/texts";
@@ -88,7 +89,7 @@ function AdminExpensesPageInner() {
   function openCreate() {
     setEditingId(null);
     setHeldAccount(null);
-    setForm({ ...emptyExpenseForm, date: todayInputValue() });
+    setForm({ ...emptyExpenseForm, date: nowInputValue() });
     setFormError("");
     setShowForm(true);
   }
@@ -102,7 +103,7 @@ function AdminExpensesPageInner() {
       method: expense.method || "",
       accountId: expense.accountId || "",
       note: expense.note || "",
-      date: expense.date.slice(0, 10),
+      date: matchDateToLocalInput(expense.date),
       proofs: expense.proofs.map((row) => row.filename),
       tagIds: expense.tags.map((t) => t.id),
       allocations: expense.allocations.length

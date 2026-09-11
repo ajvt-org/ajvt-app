@@ -58,8 +58,13 @@ export function parseMatchDate(value: string): Date {
   return fromClubWallClock(Date.parse(`${padded}Z`));
 }
 
-export function matchDateToLocalInput(date: string | Date): string {
+export function matchDateToLocalInput(date: string | Date | null | undefined): string {
+  if (!date) return "";
   return toClubWallClock(date).toISOString().slice(0, 16);
+}
+
+export function nowLocalInput(): string {
+  return matchDateToLocalInput(new Date());
 }
 
 export function formatDayKey(key: string): string {

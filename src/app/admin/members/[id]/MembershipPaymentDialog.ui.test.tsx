@@ -56,10 +56,10 @@ function show(over: Partial<Member> = {}) {
 }
 
 describe("the date on the membership payment dialog", () => {
-  it("dates the payment by the day the money moved", () => {
+  it("dates the payment by the moment the money moved", () => {
     show();
 
-    expect(screen.getByText(formatDate(PAID_ON)).parentElement?.textContent).toContain(
+    expect(screen.getByText(formatDateTime(PAID_ON)).parentElement?.textContent).toContain(
       paymentDates.paidOn,
     );
   });

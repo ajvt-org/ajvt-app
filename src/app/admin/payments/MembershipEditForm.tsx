@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { matchDateToLocalInput } from "@/lib/clubTime";
 import { api, errorMessage } from "@/lib/api";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
@@ -17,14 +18,10 @@ import FormField from "@/components/admin/FormField";
 import { DANGER, FIELD, PRIMARY, QUIET } from "./donationTones";
 import type { Proof } from "./paymentTypes";
 
-function dayOf(value: string | null): string {
-  return value ? value.slice(0, 10) : "";
-}
-
 function initial(proof: Proof) {
   return {
     amount: proof.amount != null ? String(proof.amount) : "",
-    paidOn: dayOf(proof.paidOn),
+    paidOn: matchDateToLocalInput(proof.paidOn),
     paymentMethod: proof.paymentMethod || "",
     accountId: proof.accountId || "",
     bankReference: proof.bankReference || "",
@@ -101,7 +98,7 @@ export default function MembershipEditForm({
         <FormField id={field("paid-on")} label={membershipEdit.paidOn} compact>
           <input
             id={field("paid-on")}
-            type="date"
+            type="datetime-local"
             dir="ltr"
             value={form.paidOn}
             onChange={(e) => set({ paidOn: e.target.value })}

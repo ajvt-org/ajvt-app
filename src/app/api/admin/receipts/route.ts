@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readMoneyDate } from "@/lib/paymentDate";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
@@ -38,7 +39,7 @@ export const POST = withRoute("POST /api/admin/receipts", async (req: NextReques
       payerName,
       reason,
       amount,
-      issuedOn: issuedOn ? new Date(issuedOn as string) : new Date(),
+      issuedOn: readMoneyDate(issuedOn) ?? new Date(),
       issuedBy: session.username,
     },
     { paymentMethod, accountId },

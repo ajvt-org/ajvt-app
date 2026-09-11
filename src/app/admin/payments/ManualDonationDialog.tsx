@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { nowLocalInput } from "@/lib/clubTime";
 import { api, errorMessage } from "@/lib/api";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
@@ -26,10 +27,6 @@ import { proofFromDonation } from "./donationProof";
 import { DANGER, QUIET } from "./donationTones";
 import { destinationOf, type DestinationOption } from "@/lib/moneyDestination";
 import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 const EMPTY = {
   donorName: "",
@@ -57,7 +54,7 @@ export default function ManualDonationDialog({
   onCreated: (proof: Proof) => void;
 }) {
   const { methods } = usePaymentMethods();
-  const [form, setForm] = useState({ ...EMPTY, paidOn: today() });
+  const [form, setForm] = useState({ ...EMPTY, paidOn: nowLocalInput() });
   const [account, setAccount] = useState<MemberOption | null>(null);
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState("");
@@ -207,7 +204,7 @@ export default function ManualDonationDialog({
         <FormField id="manual-paid-on" label={manualDonation.paidOn}>
           <input
             id="manual-paid-on"
-            type="date"
+            type="datetime-local"
             dir="ltr"
             value={form.paidOn}
             onChange={(e) => set({ paidOn: e.target.value })}

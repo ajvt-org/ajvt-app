@@ -120,3 +120,26 @@ describe("the number an expense was paid from", () => {
     expect(onChange).toHaveBeenCalledWith({ method: "مصرفي", accountId: "" });
   });
 });
+
+describe("the date on an expense", () => {
+  it("asks for the hour the money moved, not only the day", () => {
+    stubMethods();
+    show({ date: "2026-07-14T16:20" });
+
+    const field = screen.getByLabelText(texts.date) as HTMLInputElement;
+
+    expect(field.type).toBe("datetime-local");
+    expect(field.value).toBe("2026-07-14T16:20");
+  });
+
+  it("sends the hour back as it was typed", () => {
+    stubMethods();
+    const onChange = show({ date: "2026-07-14T16:20" });
+
+    fireEvent.change(screen.getByLabelText(texts.date), {
+      target: { value: "2026-07-14T09:05" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith({ date: "2026-07-14T09:05" });
+  });
+});

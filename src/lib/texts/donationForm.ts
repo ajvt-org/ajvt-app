@@ -9,7 +9,7 @@ export const donationForm = {
   paymentMethod: "طريقة الدفع",
   methodUnset: "غير محددة",
   paidOn: "تاريخ الدفع",
-  paidOnHint: "اليوم الذي وصل فيه المال، لا يوم تسجيله",
+  paidOnHint: "الوقت الذي وصل فيه المال، لا وقت تسجيله",
   destination: "وجهة الدعم",
   anonymous: "إظهاره باسم فاعل خير",
   contactFromAccount: "الاسم ورقم الهاتف مأخوذان من حساب العضو المرتبط",

@@ -45,6 +45,28 @@ describe("POST /api/admin/expenses", () => {
     expect(expense.createdBy).toBe("admin");
   });
 
+  it("keeps the hour and minute the admin recorded", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    const res = await POST(
+      post("/api/admin/expenses", { ...validExpense, date: "2026-07-14T16:20" }),
+    );
+
+    expect(res.status).toBe(201);
+    const expense = await prisma.expense.findFirstOrThrow();
+    expect(expense.date.toISOString()).toBe("2026-07-14T16:20:00.000Z");
+  });
+
+  it("puts a day with no time on it at midday, the way a payment already sits", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    const res = await POST(post("/api/admin/expenses", { ...validExpense, date: "2026-07-14" }));
+
+    expect(res.status).toBe(201);
+    const expense = await prisma.expense.findFirstOrThrow();
+    expect(expense.date.toISOString()).toBe("2026-07-14T12:00:00.000Z");
+  });
+
   it("keeps the exact validation messages", async () => {
     await signInAsAdmin(await createAdmin());
 
@@ -143,6 +165,17 @@ describe("PATCH /api/admin/expenses/[id]", () => {
     expect((await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).label).toBe(
       "إيجار الملعب",
     );
+  });
+
+  it("keeps the hour and minute on an edit", async () => {
+    await signInAsAdmin(await createAdmin());
+    const expense = await anExpense();
+
+    const res = await PATCH(...patch(expense.id, { date: "2026-07-14T09:05" }));
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } });
+    expect(saved.date.toISOString()).toBe("2026-07-14T09:05:00.000Z");
   });
 
   it("updates only the fields sent", async () => {

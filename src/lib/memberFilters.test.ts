@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
-import type { FilterableMember } from "./memberFilters";
+import type { FilterableMember, MemberFilters } from "./memberFilters";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "./villages";
 import {
   NO_FILTERS,
+  MEMBER_FILTER_KEYS,
   readFilters,
   writeFilters,
   activeFilterCount,
@@ -67,9 +68,33 @@ describe("carrying the filters in the address", () => {
     expect(readFilters(new URLSearchParams("standing=behind")).standing).toBe("former");
   });
 
-  it("keeps the page only once it is past the first", () => {
-    expect(writeFilters(NO_FILTERS, 1).get("page")).toBeNull();
-    expect(writeFilters(NO_FILTERS, 3).get("page")).toBe("3");
+  it("leaves the page out, the list url state hook owns it", () => {
+    expect(writeFilters({ ...NO_FILTERS, status: "PENDING" }).get("page")).toBeNull();
+  });
+
+  it("names every filter it reads and writes", () => {
+    expect([...MEMBER_FILTER_KEYS]).toEqual([
+      "status",
+      "q",
+      "age",
+      "village",
+      "method",
+      "paid",
+      "year",
+      "standing",
+      "from",
+      "to",
+    ]);
+    expect(Object.keys(NO_FILTERS).sort()).toEqual([...MEMBER_FILTER_KEYS].sort());
+  });
+
+  it("writes every filter it was given and reads it back", () => {
+    const every = Object.fromEntries(
+      MEMBER_FILTER_KEYS.map((key) => [key, `v-${key}`]),
+    ) as MemberFilters;
+    const params = writeFilters(every);
+    for (const key of MEMBER_FILTER_KEYS) expect(params.get(key)).toBe(`v-${key}`);
+    expect(readFilters(params)).toEqual(every);
   });
 
   it("counts what is narrowing the list, for the clear button", () => {

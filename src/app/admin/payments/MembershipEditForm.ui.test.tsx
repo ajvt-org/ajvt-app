@@ -52,7 +52,7 @@ describe("editing a membership payment", () => {
 
     expect((screen.getByLabelText(membershipEdit.amount) as HTMLInputElement).value).toBe("2000");
     expect((screen.getByLabelText(membershipEdit.paidOn) as HTMLInputElement).value).toBe(
-      "2026-08-18",
+      "2026-08-18T12:00",
     );
     expect((screen.getByLabelText(bankReference.label) as HTMLInputElement).value).toBe("REF-1");
     await waitFor(() =>
@@ -79,7 +79,7 @@ describe("editing a membership payment", () => {
       paymentMethod: "بنكيلي",
       accountId: "a1",
       bankReference: "REF-1",
-      paidOn: "2026-08-18",
+      paidOn: "2026-08-18T12:00",
     });
   });
 
@@ -139,5 +139,17 @@ describe("editing a membership payment", () => {
       paymentMethod: "السداد",
       accountId: null,
     });
+  });
+});
+
+describe("the date on a membership payment", () => {
+  it("asks for the hour the money moved", () => {
+    mockPut();
+    setup();
+
+    const field = screen.getByLabelText(membershipEdit.paidOn) as HTMLInputElement;
+
+    expect(field.type).toBe("datetime-local");
+    expect(field.value).toBe("2026-08-18T12:00");
   });
 });

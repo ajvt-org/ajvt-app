@@ -6,18 +6,22 @@ import {
 } from "./membershipState";
 import { containsSearch, normalizeSearch } from "./searchText";
 
-export type MemberFilters = {
-  status: string;
-  q: string;
-  age: string;
-  village: string;
-  method: string;
-  paid: string;
-  year: string;
-  standing: string;
-  from: string;
-  to: string;
-};
+export const MEMBER_FILTER_KEYS = [
+  "status",
+  "q",
+  "age",
+  "village",
+  "method",
+  "paid",
+  "year",
+  "standing",
+  "from",
+  "to",
+] as const;
+
+export type MemberFilterKey = (typeof MEMBER_FILTER_KEYS)[number];
+
+export type MemberFilters = Record<MemberFilterKey, string>;
 
 export const NO_FILTERS: MemberFilters = {
   status: "ALL",
@@ -49,50 +53,26 @@ export type FilterableMember = {
 const LEGACY_STANDING: Record<string, string> = { paid: "current", behind: "former" };
 
 export function readFilters(params: URLSearchParams): MemberFilters {
-  const standing = params.get("standing") || "";
-  return {
-    status: params.get("status") || NO_FILTERS.status,
-    q: params.get("q") || "",
-    age: params.get("age") || "",
-    village: params.get("village") || "",
-    method: params.get("method") || "",
-    paid: params.get("paid") || "",
-    year: params.get("year") || "",
-    standing: LEGACY_STANDING[standing] ?? standing,
-    from: params.get("from") || "",
-    to: params.get("to") || "",
-  };
+  const filters = { ...NO_FILTERS };
+  for (const key of MEMBER_FILTER_KEYS) {
+    const value = params.get(key);
+    if (value) filters[key] = value;
+  }
+  filters.standing = LEGACY_STANDING[filters.standing] ?? filters.standing;
+  return filters;
 }
 
-export function writeFilters(filters: MemberFilters, page = 1): URLSearchParams {
+export function writeFilters(filters: MemberFilters): URLSearchParams {
   const params = new URLSearchParams();
-  if (filters.status && filters.status !== "ALL") params.set("status", filters.status);
-  if (filters.q.trim()) params.set("q", filters.q.trim());
-  if (filters.age) params.set("age", filters.age);
-  if (filters.village) params.set("village", filters.village);
-  if (filters.method) params.set("method", filters.method);
-  if (filters.paid) params.set("paid", filters.paid);
-  if (filters.year) params.set("year", filters.year);
-  if (filters.standing) params.set("standing", filters.standing);
-  if (filters.from) params.set("from", filters.from);
-  if (filters.to) params.set("to", filters.to);
-  if (page > 1) params.set("page", String(page));
+  for (const key of MEMBER_FILTER_KEYS) {
+    const value = key === "q" ? filters.q.trim() : filters[key];
+    if (value && value !== NO_FILTERS[key]) params.set(key, value);
+  }
   return params;
 }
 
 export function activeFilterCount(filters: MemberFilters): number {
-  return [
-    filters.status !== "ALL" && filters.status !== "",
-    !!filters.q.trim(),
-    !!filters.age,
-    !!filters.village,
-    !!filters.method,
-    !!filters.paid,
-    !!filters.year,
-    !!filters.standing,
-    !!filters.from,
-    !!filters.to,
-  ].filter(Boolean).length;
+  return [...writeFilters(filters)].length;
 }
 
 function matchesText(member: FilterableMember, q: string): boolean {

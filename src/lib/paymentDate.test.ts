@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { paidWithin, paymentDate, readPaidOn } from "./paymentDate";
+import { paidWithin, paymentDate, readMoneyDate } from "./paymentDate";
+import { parseMatchDate } from "./clubTime";
 
 const made = new Date("2026-07-14T00:00:00.000Z");
 const recorded = new Date("2026-08-02T09:31:00.000Z");
@@ -40,22 +41,37 @@ describe("paidWithin", () => {
   });
 });
 
-describe("readPaidOn", () => {
+describe("readMoneyDate", () => {
   it("anchors the day a date field sends at midday, so no clock reads it as the day before", () => {
-    expect(readPaidOn("2026-07-14")).toEqual(new Date("2026-07-14T12:00:00.000Z"));
+    expect(readMoneyDate("2026-07-14")).toEqual(new Date("2026-07-14T12:00:00.000Z"));
   });
 
   it("leaves a full timestamp alone", () => {
-    expect(readPaidOn("2026-07-14T06:30:00.000Z")).toEqual(new Date("2026-07-14T06:30:00.000Z"));
+    expect(readMoneyDate("2026-07-14T06:30:00.000Z")).toEqual(new Date("2026-07-14T06:30:00.000Z"));
   });
 
   it("reads an empty field as no date rather than as an invalid one", () => {
-    expect(readPaidOn("")).toBeNull();
-    expect(readPaidOn(null)).toBeNull();
-    expect(readPaidOn(undefined)).toBeNull();
+    expect(readMoneyDate("")).toBeNull();
+    expect(readMoneyDate(null)).toBeNull();
+    expect(readMoneyDate(undefined)).toBeNull();
   });
 
   it("refuses a date it cannot read", () => {
-    expect(readPaidOn("not a day")).toBeNull();
+    expect(readMoneyDate("not a day")).toBeNull();
+  });
+
+  it("keeps the hour and minute a datetime field sends", () => {
+    expect(readMoneyDate("2026-07-14T06:30")).toEqual(new Date("2026-07-14T06:30:00.000Z"));
+    expect(readMoneyDate("2026-07-14T18:45:00")).toEqual(new Date("2026-07-14T18:45:00.000Z"));
+  });
+
+  it("reads the hour on the club wall clock", () => {
+    expect(readMoneyDate("2026-07-14T06:30")).toEqual(parseMatchDate("2026-07-14T06:30"));
+  });
+
+  it("orders two moments on one day", () => {
+    const morning = readMoneyDate("2026-07-14T09:00");
+    const afternoon = readMoneyDate("2026-07-14T16:00");
+    expect(morning!.getTime()).toBeLessThan(afternoon!.getTime());
   });
 });

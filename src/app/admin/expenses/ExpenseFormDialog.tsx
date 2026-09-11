@@ -157,7 +157,7 @@ export default function ExpenseFormDialog({
           <Field id="expense-date" label={texts.date}>
             <input
               id="expense-date"
-              type="date"
+              type="datetime-local"
               dir="ltr"
               value={form.date}
               onChange={(e) => onChange({ date: e.target.value })}
