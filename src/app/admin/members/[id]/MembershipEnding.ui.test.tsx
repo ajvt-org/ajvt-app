@@ -5,26 +5,33 @@ import MembershipEnding from "./MembershipEnding";
 import { membershipEnding as texts, MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
 
 const post = vi.fn();
+const del = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   api: {
     get: vi.fn(),
     post: (...args: unknown[]) => post(...args),
     put: vi.fn(),
-    del: vi.fn(),
+    del: (...args: unknown[]) => del(...args),
   },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
 const NAME = "محمد ولد أحمد";
 
-function show(ended = false) {
+const ENDING = {
+  endedAt: "2026-09-01T00:00:00.000Z",
+  endedReason: MEMBERSHIP_ENDING_REASONS[2],
+  endedBy: "eminyous",
+};
+
+function show(ending: typeof ENDING | null = null) {
   return render(
     <MembershipEnding
       memberId="u1"
       memberName={NAME}
       year={2026}
-      ended={ended}
+      ending={ending}
       onChanged={vi.fn()}
     />,
   );
@@ -35,9 +42,16 @@ async function openDialog() {
   await userEvent.click(screen.getByRole("button", { name: new RegExp(texts.end) }));
 }
 
+async function openRestore() {
+  show(ENDING);
+  await userEvent.click(screen.getByRole("button", { name: new RegExp(texts.restore) }));
+}
+
 beforeEach(() => {
   post.mockReset();
   post.mockResolvedValue({});
+  del.mockReset();
+  del.mockResolvedValue({});
 });
 
 describe("asking before a membership is ended", () => {
@@ -92,9 +106,50 @@ describe("asking before a membership is ended", () => {
   });
 
   it("offers nothing to end on a membership already ended", () => {
-    show(true);
+    show(ENDING);
 
     expect(screen.queryByRole("button", { name: new RegExp(texts.end) })).toBeNull();
     expect(screen.getByRole("button", { name: new RegExp(texts.restore) })).toBeTruthy();
+  });
+});
+
+describe("asking before a membership is brought back", () => {
+  it("sends nothing on the first press", async () => {
+    await openRestore();
+
+    expect(del).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: new RegExp(texts.restoreTitle) })).toBeTruthy();
+  });
+
+  it("names the member and the year being brought back", async () => {
+    await openRestore();
+
+    expect(screen.getByText(texts.restoreSubject(NAME, 2026))).toBeTruthy();
+  });
+
+  it("shows the ending it is about to undo", async () => {
+    await openRestore();
+
+    expect(screen.getByText(texts.restoreUndoes)).toBeTruthy();
+    expect(screen.getByText(ENDING.endedReason)).toBeTruthy();
+    expect(screen.getByText("2026/09/01")).toBeTruthy();
+    expect(screen.getByText(ENDING.endedBy)).toBeTruthy();
+  });
+
+  it("leaves the membership ended when the dialog is cancelled", async () => {
+    await openRestore();
+
+    await userEvent.click(screen.getByRole("button", { name: texts.cancel }));
+
+    expect(del).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: new RegExp(texts.restore) })).toBeTruthy();
+  });
+
+  it("brings the membership back once the dialog is confirmed", async () => {
+    await openRestore();
+
+    await userEvent.click(screen.getByRole("button", { name: texts.restoreConfirm }));
+
+    expect(del).toHaveBeenCalledWith("/api/admin/members/u1/end-membership");
   });
 });

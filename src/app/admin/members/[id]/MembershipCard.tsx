@@ -81,7 +81,15 @@ export default function MembershipCard({
             memberId={member.id}
             memberName={member.fullName}
             year={member.membershipYear}
-            ended={member.endedAt !== null}
+            ending={
+              member.endedAt
+                ? {
+                    endedAt: member.endedAt,
+                    endedReason: member.endedReason,
+                    endedBy: member.endedBy,
+                  }
+                : null
+            }
             onChanged={refresh}
           />
         )}
