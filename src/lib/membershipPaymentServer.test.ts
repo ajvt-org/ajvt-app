@@ -3,11 +3,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("./paymentReceiptServer", () => ({
   ensureReceiptsFor: vi.fn(async () => []),
   syncReceiptsFor: vi.fn(async () => []),
-  withdrawReceiptsBeforeDelete: vi.fn(async () => 0),
 }));
 
 import { recordFeeVerdict, writeMembershipFee } from "./membershipPaymentServer";
-import { withdrawReceiptsBeforeDelete } from "./paymentReceiptServer";
 
 type Call = { op: string; args: Record<string, unknown> };
 
@@ -117,16 +115,25 @@ describe("the payment a membership fee is written to", () => {
     });
   });
 
-  it("takes the payment away when the amount is gone or is nothing", async () => {
-    for (const amount of [null, 0, -1]) {
-      const { db, calls } = fakeDb({ id: "p1" });
-      await writeMembershipFee(db, "u1", 2026, amount, 1000, FEE);
-      expect(only(calls, "delete")).toHaveLength(1);
-      expect(withdrawReceiptsBeforeDelete).toHaveBeenCalledWith(db, { id: "p1" });
-    }
+  it("records nothing transferred as an amount rather than as a removal", async () => {
+    const { db, calls } = fakeDb({ id: "p1" });
+
+    await writeMembershipFee(db, "u1", 2026, 0, 1000, FEE);
+
+    expect(only(calls, "delete")).toHaveLength(0);
+    expect(only(calls, "update")[0].args.data).toMatchObject({ amount: 0, feeApplied: 1000 });
   });
 
-  it("writes nothing at all when there was never a payment to take away", async () => {
+  it("never takes a standing payment away, whatever the amount", async () => {
+    const { db, calls } = fakeDb({ id: "p1" });
+
+    await writeMembershipFee(db, "u1", 2026, null, 1000, FEE);
+
+    expect(only(calls, "delete")).toHaveLength(0);
+    expect(only(calls, "update")).toHaveLength(0);
+  });
+
+  it("writes nothing at all when the caller names no amount", async () => {
     const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, null, 1000, FEE);

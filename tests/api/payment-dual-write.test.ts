@@ -218,19 +218,20 @@ describe("every path that touches money writes only the payment", () => {
     expect((await prisma.payment.findFirstOrThrow()).amount).toBe(600);
   });
 
-  it("agrees after an admin clears the amount", async () => {
+  it("agrees after an admin is refused an amount sent as nothing", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
     const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
-    await PAY(
+    const res = await PAY(
       put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: null }),
       withId(m.userId),
     );
 
+    expect(res.status).toBe(400);
     expect(await moneyKeptAnywhereElse()).toBe(0);
-    expect(await prisma.payment.count()).toBe(0);
+    expect(await prisma.payment.count()).toBe(1);
   });
 
   it("agrees after an admin adds a member by hand", async () => {
