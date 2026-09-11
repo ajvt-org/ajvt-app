@@ -8,7 +8,7 @@ import Money from "@/components/Money";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import { toThumbUrl } from "@/lib/utils";
-import { formatDate } from "@/lib/clubTime";
+import { formatDateTime } from "@/lib/clubTime";
 import { expenseList as texts, expenseReceipts } from "@/lib/texts";
 import ExpenseReceiptsDialog from "./ExpenseReceiptsDialog";
 import type { Expense } from "./types";
@@ -116,7 +116,8 @@ function Row({
               {expense.label}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              <bdi dir="ltr">{formatDate(expense.date)}</bdi> {texts.recordedBy(expense.createdBy)}
+              <bdi dir="ltr">{formatDateTime(expense.date)}</bdi>{" "}
+              {texts.recordedBy(expense.createdBy)}
             </p>
             {expense.note && (
               <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>

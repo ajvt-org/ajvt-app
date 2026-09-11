@@ -448,3 +448,22 @@ describe("the bank's own transaction number", () => {
     await waitFor(() => expect(bodyOf(fetchMock).bankReference).toBe("REF100000001"));
   });
 });
+
+describe("the date on a support payment", () => {
+  it("opens on the hour the payment already carries", () => {
+    mockPatch();
+    show({ paidOn: "2026-08-18T16:20:00.000Z" });
+
+    const field = screen.getByLabelText(donationEdit.paidOn) as HTMLInputElement;
+
+    expect(field.type).toBe("datetime-local");
+    expect(field.value).toBe("2026-08-18T16:20");
+  });
+
+  it("leaves the field empty when the payment carries no date", () => {
+    mockPatch();
+    show({ paidOn: null });
+
+    expect((screen.getByLabelText(donationEdit.paidOn) as HTMLInputElement).value).toBe("");
+  });
+});
