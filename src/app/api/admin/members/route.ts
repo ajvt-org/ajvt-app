@@ -13,6 +13,7 @@ import {
   paymentOfYear,
 } from "@/lib/membershipPaymentFields";
 import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
+import { recordedByAdmin } from "@/lib/membershipOrigin";
 import { viewerOf } from "@/lib/supportViewer";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
@@ -46,6 +47,9 @@ export const GET = withRoute("GET /api/admin/members", async () => {
     },
   });
 
+  const admins = await prisma.admin.findMany({ select: { username: true } });
+  const adminNames = new Set(admins.map((admin) => admin.username));
+
   const current = byReviewOrder([...latestByAccount(memberships).values()]);
 
   return NextResponse.json({
@@ -55,7 +59,8 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
       const banked = paidForYear(payments, year);
       const paid = named ? banked : feeOnly(banked);
-      const mirrored = mirroredColumns(paymentOfYear(payments, year));
+      const payment = paymentOfYear(payments, year);
+      const mirrored = mirroredColumns(payment);
       return {
         ...withPerson({
           ...rest,
@@ -68,6 +73,7 @@ export const GET = withRoute("GET /api/admin/members", async () => {
         registrations,
         paidAmount: paid?.fee ?? null,
         supportAmount: paid?.support ?? 0,
+        recordedByAdmin: recordedByAdmin(payment, adminNames),
       };
     }),
   });
