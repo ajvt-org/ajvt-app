@@ -6,6 +6,7 @@ import {
   accountOptionsOf,
   activePaymentsFilterCount,
   matchesAccount,
+  isMembershipSurplus,
   matchesPaymentsFilters,
   pageHolding,
   readPaymentsFilters,
@@ -216,5 +217,54 @@ describe("counting what is narrowing the list", () => {
     expect(activePaymentsFilterCount({ ...NO_PAYMENTS_FILTERS, q: "أحمد", sort: "largest" })).toBe(
       0,
     );
+  });
+});
+
+describe("what the support tab counts as support", () => {
+  const membership = (over: Partial<Proof> = {}): Proof => ({
+    id: "u1",
+    kind: "MEMBERSHIP",
+    proof: null,
+    memberName: "محمد ولد أحمد",
+    activityTitle: null,
+    amount: 2000,
+    supportAmount: 1000,
+    status: "ACTIVE",
+    paidOn: null,
+    submittedAt: "2026-08-01T09:00:00.000Z",
+    ...over,
+  });
+
+  const on = (over: Partial<PaymentsFilters>) => ({ ...NO_PAYMENTS_FILTERS, ...over });
+
+  it("calls a membership payment above the fee a supporter", () => {
+    expect(isMembershipSurplus(membership())).toBe(true);
+  });
+
+  it("does not call a membership payment at the fee a supporter", () => {
+    expect(isMembershipSurplus(membership({ supportAmount: 0 }))).toBe(false);
+  });
+
+  it("shows the surplus under the support tab", () => {
+    expect(matchesPaymentsFilters(membership(), on({ kind: "DONATION" }))).toBe(true);
+  });
+
+  it("leaves a membership payment at the fee off the support tab", () => {
+    expect(matchesPaymentsFilters(membership({ supportAmount: 0 }), on({ kind: "DONATION" }))).toBe(
+      false,
+    );
+  });
+
+  it("still shows it under the membership tab", () => {
+    expect(matchesPaymentsFilters(membership(), on({ kind: "MEMBERSHIP" }))).toBe(true);
+  });
+
+  it("finds it under the support tab by the member's name", () => {
+    expect(matchesPaymentsFilters(membership(), on({ kind: "DONATION", q: "محمد" }))).toBe(true);
+  });
+
+  it("keeps a support payment off the membership tab", () => {
+    const donation = membership({ kind: "DONATION", supportAmount: undefined });
+    expect(matchesPaymentsFilters(donation, on({ kind: "MEMBERSHIP" }))).toBe(false);
   });
 });

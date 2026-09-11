@@ -8,6 +8,7 @@ import { confirmationMatches } from "@/lib/deletedRecords";
 import { archive, purgeExpired } from "@/lib/deletedRecordsServer";
 import { forgetQuizFootprint } from "@/lib/quizAttemptServer";
 import { accounts } from "@/lib/messages";
+import { withdrawReceiptsBeforeDelete } from "@/lib/paymentReceiptServer";
 import type { Prisma } from "@prisma/client";
 
 function identifiers(user: { fullName: string | null; phone: string | null }): string[] {
@@ -33,6 +34,10 @@ export const DELETE = withRoute(
     }
 
     const years = await prisma.membership.findMany({ where: { userId: id } });
+    const payments = await prisma.payment.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: "asc" },
+    });
     const label = user.fullName?.trim() || user.phone || user.id;
 
     if (years.length > 0) {
@@ -44,10 +49,17 @@ export const DELETE = withRoute(
         session.username,
       );
     }
-    await archive("User", id, label, user as unknown as Prisma.InputJsonValue, session.username);
+    await archive(
+      "User",
+      id,
+      label,
+      { ...user, payments } as unknown as Prisma.InputJsonValue,
+      session.username,
+    );
 
     const forgotten = await forgetQuizFootprint(id);
     await prisma.$transaction(async (tx) => {
+      await withdrawReceiptsBeforeDelete(tx, { userId: id });
       await tx.user.delete({ where: { id } });
     });
     await purgeExpired();
@@ -56,7 +68,12 @@ export const DELETE = withRoute(
       ...auditContext(session, req),
       targetType: "User",
       targetId: id,
-      before: { fullName: user.fullName, phone: user.phone, years: years.length },
+      before: {
+        fullName: user.fullName,
+        phone: user.phone,
+        years: years.length,
+        payments: payments.length,
+      },
       meta: forgotten ?? undefined,
     });
 

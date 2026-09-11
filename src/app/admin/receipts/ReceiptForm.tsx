@@ -2,6 +2,10 @@
 
 import { amountInWords } from "@/lib/arabicAmount";
 import { receiptAdmin } from "@/lib/texts/receipt";
+import { paymentAccountPicker } from "@/lib/texts";
+import { accountsOfMethod } from "@/lib/paymentMethodChoices";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
 import IconLabel from "@/components/IconLabel";
 import type { ReceiptForm as Form } from "./types";
 
@@ -20,6 +24,8 @@ export default function ReceiptForm({
   error: string;
   officersMissing: boolean;
 }) {
+  const { methods } = usePaymentMethods(form.paymentMethod || null);
+  const accounts = accountsOfMethod(methods, form.paymentMethod);
   const amount = Number(form.amount);
   const words = Number.isInteger(amount) && amount > 0 ? amountInWords(amount) : "";
 
@@ -85,6 +91,37 @@ export default function ReceiptForm({
         value={form.issuedOn}
         onChange={(e) => onChange({ ...form, issuedOn: e.target.value })}
       />
+
+      <label className="block text-sm font-bold" htmlFor="receipt-method">
+        {receiptAdmin.methodLabel}
+      </label>
+      <select
+        id="receipt-method"
+        className="input"
+        value={form.paymentMethod}
+        onChange={(e) => onChange({ ...form, paymentMethod: e.target.value, accountId: "" })}
+      >
+        <option value="">{receiptAdmin.methodUnset}</option>
+        {methods.map((method) => (
+          <option key={method.name} value={method.name}>
+            {method.name}
+          </option>
+        ))}
+      </select>
+
+      {accounts.length > 0 && (
+        <>
+          <label className="block text-sm font-bold" htmlFor="receipt-account">
+            {paymentAccountPicker.label}
+          </label>
+          <PaymentAccountPicker
+            id="receipt-account"
+            accounts={accounts}
+            value={form.accountId}
+            onPick={(accountId) => onChange({ ...form, accountId })}
+          />
+        </>
+      )}
 
       {officersMissing && (
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>

@@ -10,7 +10,7 @@ import {
   type SupportViewer,
 } from "./supportPrivacy";
 import { money } from "./messages";
-import type { Prisma, Receipt } from "@prisma/client";
+import type { Payment, Prisma, PrismaClient, Receipt } from "@prisma/client";
 
 export interface ReceiptDraft {
   payerName: string;
@@ -22,8 +22,10 @@ export interface ReceiptDraft {
   paymentId?: string | null;
 }
 
-export async function nextReceiptNumber(year: number): Promise<string> {
-  const counter = await prisma.counter.upsert({
+type Db = PrismaClient | Prisma.TransactionClient;
+
+export async function nextReceiptNumber(year: number, db: Db = prisma): Promise<string> {
+  const counter = await db.counter.upsert({
     where: { id: `receipt:${year}` },
     update: { value: { increment: 1 } },
     create: { id: `receipt:${year}`, value: 1 },
@@ -47,6 +49,61 @@ export async function issueReceipt(draft: ReceiptDraft): Promise<Receipt> {
       userId: draft.userId ?? null,
       paymentId: draft.paymentId ?? null,
     },
+  });
+}
+
+export interface HandReceiptSource {
+  paymentMethod?: string | null;
+  accountId?: string | null;
+}
+
+export async function issueReceiptOverPayment(
+  draft: Omit<ReceiptDraft, "paymentId">,
+  source: HandReceiptSource,
+): Promise<{ receipt: Receipt; payment: Payment }> {
+  return prisma.$transaction(async (tx) => {
+    const donation = await tx.donation.create({
+      data: {
+        donorName: draft.payerName,
+        amount: draft.amount,
+        paymentMethod: source.paymentMethod || null,
+        accountId: source.accountId || null,
+        userId: draft.userId ?? null,
+        source: draft.userId ? "SELF" : "PUBLIC",
+        status: "ACTIVE",
+      },
+    });
+    const payment = await tx.payment.create({
+      data: {
+        id: donation.id,
+        purpose: "DONATION",
+        amount: draft.amount,
+        method: donation.paymentMethod,
+        accountId: donation.accountId,
+        status: "ACTIVE",
+        anonymous: false,
+        donorName: donation.donorName,
+        userId: donation.userId,
+        paidOn: draft.issuedOn,
+      },
+    });
+    const settings = await getAppSettings();
+    const receipt = await tx.receipt.create({
+      data: {
+        number: await nextReceiptNumber(draft.issuedOn.getFullYear(), tx),
+        token: generateVerifyToken(),
+        payerName: draft.payerName,
+        reason: draft.reason,
+        amount: draft.amount,
+        issuedOn: draft.issuedOn,
+        issuedBy: draft.issuedBy,
+        secretary: settings.secretaryName,
+        treasurer: settings.treasurerName,
+        userId: donation.userId,
+        paymentId: payment.id,
+      },
+    });
+    return { receipt, payment };
   });
 }
 
@@ -92,6 +149,7 @@ const VIEW_SELECT = {
   secretary: true,
   treasurer: true,
   status: true,
+  paymentId: true,
 } as const;
 
 const PAYER_SELECT = {
@@ -166,5 +224,6 @@ export function receiptView(row: ReceiptViewRow): OfficialReceiptView {
     secretary: row.secretary,
     treasurer: row.treasurer,
     status: row.status as ReceiptState,
+    unbacked: row.status === "ACTIVE" && row.paymentId === null,
   };
 }

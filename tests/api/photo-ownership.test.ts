@@ -138,3 +138,75 @@ describe("an admin changing a member's picture", () => {
     );
   });
 });
+
+describe("an admin saving a member without touching the picture", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("saves a picture another admin uploaded, sent back unchanged", async () => {
+    const user = await memberRow();
+    const other = await createAdmin("other-admin", "MEMBERS");
+    await uploadedBy("old.webp", { adminId: other.id });
+    await membersAdmin();
+
+    const res = await ADMIN_PATCH(
+      patch(`/api/admin/members/${user.id}`, { fullName: "اسم آخر", photo: "old.webp" }),
+      withId(user.id),
+    );
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(saved.photo).toBe("old.webp");
+    expect(saved.fullName).toBe("اسم آخر");
+  });
+
+  it("saves a picture with no upload record behind it, sent back unchanged", async () => {
+    const user = await memberRow();
+    await membersAdmin();
+
+    const res = await ADMIN_PATCH(
+      patch(`/api/admin/members/${user.id}`, { village: "التاكلالت", photo: "old.webp" }),
+      withId(user.id),
+    );
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(saved.photo).toBe("old.webp");
+    expect(saved.village).toBe("التاكلالت");
+  });
+
+  it("still refuses a different filename the admin does not own", async () => {
+    const user = await memberRow();
+    const other = await createAdmin("other-admin", "MEMBERS");
+    await uploadedBy("theirs.webp", { adminId: other.id });
+    await membersAdmin();
+
+    const res = await ADMIN_PATCH(
+      patch(`/api/admin/members/${user.id}`, { photo: "theirs.webp" }),
+      withId(user.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(uploads.notYourUpload);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).photo).toBe(
+      "old.webp",
+    );
+  });
+
+  it("takes a different filename the admin does own", async () => {
+    const user = await memberRow();
+    const admin = await membersAdmin();
+    await uploadedBy("mine.webp", { adminId: admin.id });
+
+    const res = await ADMIN_PATCH(
+      patch(`/api/admin/members/${user.id}`, { photo: "mine.webp" }),
+      withId(user.id),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).photo).toBe(
+      "mine.webp",
+    );
+  });
+});

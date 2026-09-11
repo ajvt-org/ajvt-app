@@ -37,6 +37,8 @@ export default function AdminReceiptsPage() {
         reason: form.reason,
         amount: Number(form.amount),
         issuedOn: new Date(form.issuedOn).toISOString(),
+        paymentMethod: form.paymentMethod || null,
+        accountId: form.accountId || null,
       });
       setForm(emptyReceiptForm());
       await reload();

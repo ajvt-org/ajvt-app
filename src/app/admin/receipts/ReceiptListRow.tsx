@@ -39,6 +39,19 @@ export default function ReceiptListRow({
         </div>
       )}
 
+      {receipt.unbacked && (
+        <div>
+          <span className="badge badge-pending">
+            <IconLabel name="warning" size={11}>
+              {receiptAdmin.unbacked}
+            </IconLabel>
+          </span>
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+            {receiptAdmin.unbackedHint}
+          </p>
+        </div>
+      )}
+
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         {receipt.reason}
       </p>

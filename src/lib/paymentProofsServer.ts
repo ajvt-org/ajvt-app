@@ -40,6 +40,9 @@ function whenPaid(proof: { paidOn: Date | null; submittedAt: Date }): Date {
 const MEMBERSHIP_PAYMENT_SELECT = {
   userId: true,
   year: true,
+  amount: true,
+  feeApplied: true,
+  method: true,
   accountId: true,
   account: { select: { id: true, code: true, label: true } },
   bankReference: true,
@@ -88,13 +91,17 @@ function yearKey(userId: string, year: number): string {
   return `${userId}:${year}`;
 }
 
+function surplusOf(row: { amount: number; feeApplied: number | null }): number {
+  return Math.max(0, row.amount - Math.min(row.amount, row.feeApplied ?? 0));
+}
+
 async function membershipProofPayments() {
   const rows = await prisma.payment.findMany({
-    where: { purpose: "MEMBERSHIP", proof: { not: null }, userId: { not: null } },
+    where: { purpose: "MEMBERSHIP", userId: { not: null } },
     select: MEMBERSHIP_PAYMENT_SELECT,
   });
   return rows.flatMap((row) =>
-    row.userId !== null && row.year !== null
+    row.userId !== null && row.year !== null && (row.proof !== null || surplusOf(row) > 0)
       ? [{ ...row, userId: row.userId, year: row.year }]
       : [],
   );
@@ -182,14 +189,16 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
         id: m.userId,
         kind: "MEMBERSHIP" as const,
         userId: m.userId,
-        proof: m.proof as string,
+        proof: m.proof,
         memberName: m.user ? nameOf(m.user) : "",
+        paymentMethod: m.method,
         accountId: m.accountId,
         account: m.account,
         bankReference: m.bankReference,
         repeatedReference: isRepeated(seenTwice, m.bankReference),
         activityTitle: null as string | null,
-        amount: null as number | null,
+        amount: m.amount as number | null,
+        supportAmount: surplusOf(m),
         status: m.status,
         paidOn: m.paidOn,
         submittedAt: recorded ?? m.createdAt,

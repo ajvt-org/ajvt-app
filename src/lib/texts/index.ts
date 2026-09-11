@@ -75,7 +75,7 @@ export { memberActivities } from "./memberActivities";
 export { memberCard } from "./memberCard";
 export { manualAdd } from "./manualAdd";
 export { manualDonation } from "./manualDonation";
-export { memberEdit } from "./memberAdmin";
+export { memberEdit, membershipEdit, yearAmount } from "./memberAdmin";
 export { memberDrawer } from "./memberDrawer";
 export { memberPicker } from "./memberPicker";
 export { memberSearch } from "./memberSearch";

@@ -5,6 +5,7 @@ import { GET as LIST, POST as ISSUE } from "@/app/api/admin/receipts/route";
 import { POST as VOID } from "@/app/api/admin/receipts/[number]/void/route";
 import { PATCH as SAVE_SETTINGS } from "@/app/api/admin/settings/route";
 import { runningYear } from "@/lib/membershipYear";
+import { syncReceiptsFor } from "@/lib/paymentReceiptServer";
 
 const DRAFT = {
   payerName: "السيدة فاطمة محمد عبد الله الحسن",
@@ -297,5 +298,108 @@ describe("the list of receipts", () => {
 
   it("is closed to nobody at all", async () => {
     expect((await LIST(get("/api/admin/receipts"))).status).toBe(401);
+  });
+});
+
+describe("the payment under a hand written receipt", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("creates the payment the receipt points at", async () => {
+    await asBoss();
+
+    const { receipt } = await (await issue()).json();
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    expect(row.paymentId).not.toBeNull();
+    const payment = await prisma.payment.findUniqueOrThrow({ where: { id: row.paymentId! } });
+    expect(payment.purpose).toBe("DONATION");
+    expect(payment.amount).toBe(DRAFT.amount);
+    expect(payment.status).toBe("ACTIVE");
+    expect(payment.donorName).toBe(DRAFT.payerName);
+    expect(payment.paidOn?.toISOString()).toBe(DRAFT.issuedOn);
+  });
+
+  it("mirrors it into the support record so every screen sees it", async () => {
+    await asBoss();
+
+    const { receipt } = await (await issue()).json();
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    const donation = await prisma.donation.findUniqueOrThrow({ where: { id: row.paymentId! } });
+    expect(donation.amount).toBe(DRAFT.amount);
+    expect(donation.status).toBe("ACTIVE");
+    expect(donation.source).not.toBe("MEMBERSHIP");
+  });
+
+  it("keeps the payer and the reason the admin wrote", async () => {
+    await asBoss();
+
+    const { receipt } = await (await issue()).json();
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    expect(row.payerName).toBe(DRAFT.payerName);
+    expect(row.reason).toBe(DRAFT.reason);
+  });
+
+  it("is not rewritten by the receipt reconciler", async () => {
+    await asBoss();
+    const { receipt } = await (await issue()).json();
+
+    await syncReceiptsFor(prisma, {});
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    expect(row.reason).toBe(DRAFT.reason);
+    expect(row.payerName).toBe(DRAFT.payerName);
+    expect(row.status).toBe("ACTIVE");
+  });
+
+  it("refuses an account that does not belong to the method", async () => {
+    await asBoss();
+    const account = await prisma.paymentAccount.findFirstOrThrow({ include: { method: true } });
+    const other = await prisma.paymentMethod.findFirstOrThrow({
+      where: { name: { not: account.method.name } },
+    });
+
+    const res = await issue({ ...DRAFT, paymentMethod: other.name, accountId: account.id });
+
+    expect(res.status).toBe(400);
+    expect(await prisma.receipt.count()).toBe(0);
+    expect(await prisma.payment.count()).toBe(0);
+  });
+
+  it("carries the method and the account onto the payment", async () => {
+    await asBoss();
+    const account = await prisma.paymentAccount.findFirstOrThrow({ include: { method: true } });
+
+    const { receipt } = await (
+      await issue({ ...DRAFT, paymentMethod: account.method.name, accountId: account.id })
+    ).json();
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    const payment = await prisma.payment.findUniqueOrThrow({ where: { id: row.paymentId! } });
+    expect(payment.method).toBe(account.method.name);
+    expect(payment.accountId).toBe(account.id);
+  });
+
+  it("says on the list which receipts have no payment under them", async () => {
+    await asBoss();
+    await issue();
+    await prisma.receipt.updateMany({ data: { paymentId: null } });
+
+    const { receipts } = await (await LIST(get("/api/admin/receipts"))).json();
+
+    expect(receipts).toHaveLength(1);
+    expect(receipts[0].unbacked).toBe(true);
+  });
+
+  it("does not mark a receipt that has its payment", async () => {
+    await asBoss();
+    await issue();
+
+    const { receipts } = await (await LIST(get("/api/admin/receipts"))).json();
+
+    expect(receipts[0].unbacked).toBe(false);
   });
 });

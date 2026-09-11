@@ -45,6 +45,7 @@ const STANDING = {
   payerName: "محمد ولد أحمد",
   reason: "اشتراك عضوية 2026",
   userId: "u1",
+  issuedBy: "system",
   payment: MEMBERSHIP,
 };
 
@@ -274,6 +275,25 @@ describe("reconciling a receipt with its payment", () => {
 
     expect(drift.action).toBe("correct");
     expect(drift.changes).toEqual([{ field: "payerName", from: "ابو", to: "محمد ولد أحمد" }]);
+  });
+
+  it("leaves the wording of a receipt a person wrote by hand", async () => {
+    const drifted = await receiptDriftFor(
+      drifting({ issuedBy: "boss", payerName: "ابو", reason: "دعم عام للرابطة" }),
+      {},
+    );
+
+    expect(drifted).toEqual([]);
+  });
+
+  it("still corrects the amount on a receipt a person wrote by hand", async () => {
+    const [drift] = await receiptDriftFor(
+      drifting({ issuedBy: "boss", reason: "دعم عام للرابطة", amount: 2000 }),
+      {},
+    );
+
+    expect(drift.action).toBe("reissue");
+    expect(drift.changes.map((c) => c.field)).toEqual(["amount"]);
   });
 
   it("asks for the account to be filled in on a receipt issued before the link", async () => {

@@ -8,24 +8,29 @@ import MemberProofPanel from "@/components/admin/MemberProofPanel";
 import VerbButton from "@/components/admin/VerbButton";
 import { GRAVE, LEAD, RISKY } from "@/components/admin/verbTones";
 import { api, errorMessage } from "@/lib/api";
-import { deleteMember, memberDecision as texts } from "@/lib/texts";
+import { deleteMember, memberDecision as texts, membershipEdit } from "@/lib/texts";
 import PaymentActions from "./PaymentActions";
 import RefusalPicker, { type RefusalMode } from "./RefusalPicker";
+import MembershipEditForm from "./MembershipEditForm";
+import type { Proof } from "./paymentTypes";
 
 export default function MembershipActions({
   userId,
   memberName,
   proof,
   status,
+  payment,
   onChanged,
 }: {
   userId: string;
   memberName: string;
   proof: string | null;
   status: string;
+  payment?: Proof;
   onChanged: () => void;
 }) {
   const [picking, setPicking] = useState<RefusalMode | null>(null);
+  const [editing, setEditing] = useState(false);
   const [editingProof, setEditingProof] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -109,8 +114,28 @@ export default function MembershipActions({
                 onClick={() => setPicking("refuse")}
               />
             )}
+            {payment && (
+              <VerbButton
+                icon="pencil"
+                label={membershipEdit.open}
+                tone={LEAD}
+                disabled={busy}
+                onClick={() => setEditing((open) => !open)}
+              />
+            )}
             <MemberProofButton proof={proof} onClick={() => setEditingProof(true)} />
           </PaymentActions>
+
+          {payment && editing && (
+            <MembershipEditForm
+              proof={payment}
+              onCancel={() => setEditing(false)}
+              onSaved={() => {
+                setEditing(false);
+                onChanged();
+              }}
+            />
+          )}
 
           {editingProof && (
             <MemberProofPanel

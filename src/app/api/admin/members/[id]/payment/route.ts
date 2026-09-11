@@ -14,16 +14,15 @@ import { memberPaymentSchema } from "./schema";
 import { accountIdError } from "@/lib/paymentAccountsServer";
 import { nameOf } from "@/lib/person";
 import { releaseUploads } from "@/lib/uploadRelease";
+import { readPaidOn } from "@/lib/paymentDate";
 
 export const PUT = withRoute(
   "PUT /api/admin/members/[id]/payment",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { amountTransferred, paymentMethod, accountId, paymentProof } = parse(
-      memberPaymentSchema,
-      await req.json(),
-    );
+    const { amountTransferred, paymentMethod, accountId, paymentProof, bankReference, paidOn } =
+      parse(memberPaymentSchema, await req.json());
     const { membershipFee } = await getAppSettings();
 
     const account = await prisma.user.findUnique({
@@ -46,7 +45,11 @@ export const PUT = withRoute(
     const before = await totalPaidFor(prisma, id);
 
     const edited =
-      paymentMethod !== undefined || accountId !== undefined || paymentProof !== undefined;
+      paymentMethod !== undefined ||
+      accountId !== undefined ||
+      paymentProof !== undefined ||
+      bankReference !== undefined ||
+      paidOn !== undefined;
 
     await prisma.$transaction(async (tx) => {
       if (edited || amountTransferred !== undefined) {
@@ -58,8 +61,10 @@ export const PUT = withRoute(
           {
             method: paymentMethod !== undefined ? paymentMethod : current.paymentMethod,
             accountId: accountId !== undefined ? accountId || null : current.accountId,
-            bankReference: current.bankReference,
+            bankReference:
+              bankReference !== undefined ? bankReference || null : current.bankReference,
             proof: paymentProof !== undefined ? paymentProof : current.paymentProof,
+            ...(paidOn === undefined ? {} : { paidOn: readPaidOn(paidOn) }),
             referenceCode: current.referenceCode,
             status: current.status,
             reviewedBy: current.reviewedBy,

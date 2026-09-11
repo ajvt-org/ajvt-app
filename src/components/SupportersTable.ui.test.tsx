@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SupportersTable from "./SupportersTable";
-import { supporters } from "@/lib/texts";
+import { adminSupporters, supporters } from "@/lib/texts";
 import type { PublicLeaderboardEntry } from "@/lib/donationsServer";
 
 function entry(
@@ -116,5 +116,38 @@ describe("the supporters table paging", () => {
     fireEvent.click(screen.getByText(supporters.more));
 
     await waitFor(() => expect(screen.getByText(supporters.loadFailed)).toBeDefined());
+  });
+});
+
+describe("where a supporter's money came from", () => {
+  function withSources(sources: PublicLeaderboardEntry["sources"]) {
+    render(
+      <SupportersTable
+        initial={[{ ...entry(1, 1, "محمد ولد أحمد", 1000), sources }]}
+        total={1}
+        minePositions={[]}
+        source="/api/admin/supporters"
+      />,
+    );
+  }
+
+  it("says a membership surplus is one", () => {
+    withSources(["MEMBERSHIP"]);
+
+    expect(screen.getByText(adminSupporters.fromMembership)).toBeDefined();
+  });
+
+  it("says both when the money came from two places", () => {
+    withSources(["DONATION", "MEMBERSHIP"]);
+
+    expect(
+      screen.getByText(`${adminSupporters.fromDonation} · ${adminSupporters.fromMembership}`),
+    ).toBeDefined();
+  });
+
+  it("says nothing on a board that was not told", () => {
+    board();
+
+    expect(screen.queryByText(adminSupporters.fromMembership)).toBeNull();
   });
 });

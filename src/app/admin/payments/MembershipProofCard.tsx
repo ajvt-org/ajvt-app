@@ -18,6 +18,7 @@ export default function MembershipProofCard({
       memberName={proof.memberName}
       proof={proof.proof}
       status={proof.status}
+      payment={proof}
       onChanged={onChanged}
     />
   );
