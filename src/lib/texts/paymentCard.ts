@@ -10,7 +10,6 @@ export const paymentCard = {
   receipt: "وصل",
   receiptActive: "ساري",
   receiptVoid: "ملغى",
-  membershipSurplus: (amount: string) => `فائض انتساب ${amount}`,
   fee: "رسوم العضوية",
   feeForYear: (year: number) => `رسوم عضوية ${year}`,
   aboveFee: "فوق الرسوم",
