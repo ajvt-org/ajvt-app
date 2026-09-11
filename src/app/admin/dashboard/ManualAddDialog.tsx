@@ -15,6 +15,7 @@ import type { AgeGroup } from "./types";
 
 type Props = {
   ageGroups: AgeGroup[];
+  membershipFee: number | null;
   payFor?: { id: string; fullName: string } | null;
   onCreated: () => Promise<void> | void;
   onManageAgeGroups: () => void;
@@ -26,6 +27,7 @@ type Saved = { id: string; fullName: string; tempPassword?: string };
 
 export default function ManualAddDialog({
   ageGroups,
+  membershipFee,
   payFor,
   onCreated,
   onManageAgeGroups,
@@ -148,6 +150,7 @@ export default function ManualAddDialog({
             <ManualAddPaymentForm
               form={payment}
               setForm={setPayment}
+              membershipFee={membershipFee}
               personName={saved.fullName}
               proofPreview={proofPreview}
               proofUploading={proofUploading}

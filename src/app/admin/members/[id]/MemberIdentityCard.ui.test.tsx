@@ -189,4 +189,48 @@ describe("an account that has no number yet", () => {
     expect(screen.getByRole("button", { name: accountPhone.add })).toBeTruthy();
     expect(screen.getByText(accountPhone.add)).toBeTruthy();
   });
+
+  it("sends the first number to the route that also gives the person a way in", async () => {
+    show({ phone: null });
+
+    await userEvent.click(screen.getByRole("button", { name: accountPhone.add }));
+    await userEvent.type(screen.getByLabelText(accountPhone.label), "36000002");
+    await userEvent.click(screen.getByRole("button", { name: accountPhone.save }));
+
+    expect(patch).toHaveBeenCalledWith("/api/admin/members/m1", { accountPhone: "36000002" });
+  });
+
+  it("hands back the temporary password the number was issued with", async () => {
+    const { onChanged } = show({ phone: null });
+
+    await userEvent.click(screen.getByRole("button", { name: accountPhone.add }));
+    await userEvent.type(screen.getByLabelText(accountPhone.label), "36000002");
+    await userEvent.click(screen.getByRole("button", { name: accountPhone.save }));
+
+    expect(await screen.findByText("AB12CD")).toBeTruthy();
+    expect(onChanged).toHaveBeenCalled();
+  });
+
+  it("says to add a number rather than to correct one", async () => {
+    show({ phone: null });
+
+    await userEvent.click(screen.getByRole("button", { name: accountPhone.add }));
+
+    expect(screen.getByText(accountPhone.noneHint)).toBeTruthy();
+    expect(screen.queryByText(accountPhone.hint)).toBeNull();
+  });
+});
+
+describe("an account whose number is only wrong", () => {
+  it("still goes to the route that corrects a number and issues no password", async () => {
+    show();
+
+    await userEvent.click(screen.getByRole("button", { name: accountPhone.edit }));
+    await userEvent.clear(screen.getByLabelText(accountPhone.label));
+    await userEvent.type(screen.getByLabelText(accountPhone.label), "36000003");
+    await userEvent.click(screen.getByRole("button", { name: accountPhone.save }));
+
+    expect(patch).toHaveBeenCalledWith("/api/admin/members/m1/account", { phone: "36000003" });
+    expect(screen.queryByText("AB12CD")).toBeNull();
+  });
 });

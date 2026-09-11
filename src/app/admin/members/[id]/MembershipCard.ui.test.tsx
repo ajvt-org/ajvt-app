@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MembershipCard from "./MembershipCard";
 import {
@@ -12,6 +12,16 @@ import {
 } from "@/lib/texts";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import type { MembershipHistory } from "./membershipTypes";
+import { renewalRefusalMessage } from "@/lib/renewalMessages";
+import type { RenewalRefusal } from "@/lib/renewal";
+
+const REFUSALS: NonNullable<RenewalRefusal>[] = [
+  "underReview",
+  "notActive",
+  "notIssued",
+  "alreadyRenewed",
+  "yearBehind",
+];
 
 const get = vi.fn();
 
@@ -183,7 +193,9 @@ describe("reading one member's membership payment", () => {
     await userEvent.click(screen.getByRole("button", { name: "إغلاق" }));
 
     expect(screen.queryByText(texts.paymentTitle)).toBeNull();
-    expect(screen.getByRole("button", { name: new RegExp(texts.toPayment) })).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: new RegExp(texts.toPayment) }).length,
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -307,7 +319,9 @@ describe("one card for one membership year", () => {
     await userEvent.click(screen.getByRole("button", { name: new RegExp(membershipEnding.end) }));
 
     expect(screen.getByLabelText(membershipEnding.reasonLabel)).toBeTruthy();
-    expect(screen.getByRole("button", { name: new RegExp(texts.toPayment) })).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: new RegExp(texts.toPayment) }).length,
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -349,12 +363,70 @@ describe("one card for the standing and the years", () => {
     expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 
-  it("offers neither form, and no reason, where renewal is refused", async () => {
+  it("offers no form where renewal is refused, and says why instead", async () => {
     historyLands(historyOf({ refusal: "notActive", memberships: [yearOf()] }));
     show();
 
     await waitFor(() => expect(screen.getByText("2025")).toBeTruthy());
     expect(screen.queryByRole("button", { name: new RegExp(renewForm.renew(2026)) })).toBeNull();
     expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.getByText(renewalRefusalMessage("notActive"))).toBeTruthy();
+  });
+});
+
+describe("a membership that cannot be renewed", () => {
+  it("names every reason the routes would have refused it with", async () => {
+    for (const refusal of REFUSALS) {
+      historyLands(historyOf({ refusal, memberships: [yearOf()] }));
+      show({ status: "ACTIVE" });
+
+      expect(await screen.findByText(renewalRefusalMessage(refusal))).toBeTruthy();
+      cleanup();
+    }
+  });
+
+  it("points the three an admin settles on this page at the payment", async () => {
+    for (const refusal of ["underReview", "notActive", "notIssued"] as const) {
+      historyLands(historyOf({ refusal, memberships: [yearOf()] }));
+      show({ status: "ACTIVE" });
+
+      await screen.findByText(renewalRefusalMessage(refusal));
+      expect(screen.getAllByRole("button", { name: new RegExp(texts.toPayment) })).toHaveLength(2);
+      cleanup();
+    }
+  });
+
+  it("only names the two nothing on this page changes", async () => {
+    for (const refusal of ["alreadyRenewed", "yearBehind"] as const) {
+      historyLands(historyOf({ refusal, memberships: [yearOf()] }));
+      show({ status: "ACTIVE" });
+
+      await screen.findByText(renewalRefusalMessage(refusal));
+      expect(screen.getAllByRole("button", { name: new RegExp(texts.toPayment) })).toHaveLength(1);
+      cleanup();
+    }
+  });
+
+  it("opens the payment from the reason itself", async () => {
+    historyLands(historyOf({ refusal: "underReview", memberships: [yearOf()] }));
+    show({ status: "ACTIVE" });
+
+    await screen.findByText(renewalRefusalMessage("underReview"));
+    const buttons = screen.getAllByRole("button", { name: new RegExp(texts.toPayment) });
+    await userEvent.click(buttons[buttons.length - 1]);
+
+    expect(screen.getByText(texts.paymentTitle)).toBeTruthy();
+  });
+
+  it("says nothing where the renewal is on offer", async () => {
+    historyLands(historyOf({ refusal: null }));
+    show({ status: "ACTIVE" });
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: new RegExp(renewForm.renew(2026)) })).toBeTruthy(),
+    );
+    for (const refusal of REFUSALS) {
+      expect(screen.queryByText(renewalRefusalMessage(refusal))).toBeNull();
+    }
   });
 });
