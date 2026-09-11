@@ -16,4 +16,5 @@ export const memberPaymentSchema = z.object({
   paymentProof: z.string(INVALID).nullish(),
   bankReference: z.string(INVALID).max(MAX_BANK_REFERENCE, INVALID).nullish(),
   paidOn: paidOn.optional(),
+  membershipDecision: z.enum(["end", "restore"], INVALID).optional(),
 });
