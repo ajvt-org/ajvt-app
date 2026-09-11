@@ -8,8 +8,13 @@ export interface EndableMembership {
 export type EndingRefusal = "notStanding" | "alreadyEnded" | null;
 export type RestoreRefusal = "notEnded" | null;
 
+export const MAX_ENDING_REASON = 120;
+
 export function isEndingReason(value: unknown): value is string {
-  return (MEMBERSHIP_ENDING_REASONS as readonly string[]).includes(value as string);
+  if (typeof value !== "string") return false;
+  if ((MEMBERSHIP_ENDING_REASONS as readonly string[]).includes(value)) return true;
+  const written = value.trim();
+  return written.length > 0 && written.length <= MAX_ENDING_REASON;
 }
 
 export function endingRefusal(membership: EndableMembership): EndingRefusal {
