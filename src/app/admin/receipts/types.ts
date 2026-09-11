@@ -3,6 +3,8 @@ export interface ReceiptForm {
   reason: string;
   amount: string;
   issuedOn: string;
+  paymentMethod: string;
+  accountId: string;
 }
 
 export function todayInputValue(): string {
@@ -12,5 +14,12 @@ export function todayInputValue(): string {
 }
 
 export function emptyReceiptForm(): ReceiptForm {
-  return { payerName: "", reason: "", amount: "", issuedOn: todayInputValue() };
+  return {
+    payerName: "",
+    reason: "",
+    amount: "",
+    issuedOn: todayInputValue(),
+    paymentMethod: "",
+    accountId: "",
+  };
 }

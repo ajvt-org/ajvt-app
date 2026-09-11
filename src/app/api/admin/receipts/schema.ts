@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { common, money, receipts } from "@/lib/messages";
 import { MAX_SPELLED } from "@/lib/arabicNumberWords";
+import { paymentMethodIn } from "@/lib/donationFields";
 
 const {
   payerRequired: PAYER_REQUIRED,
@@ -39,14 +40,18 @@ const issuedOn = z.unknown().superRefine((v, ctx) => {
   }
 });
 
-export const receiptCreateSchema = z
-  .object({
-    payerName,
-    reason,
-    amount,
-    issuedOn: issuedOn.optional(),
-  })
-  .strict();
+export function receiptCreateSchema(accepted: readonly string[]) {
+  return z
+    .object({
+      payerName,
+      reason,
+      amount,
+      issuedOn: issuedOn.optional(),
+      paymentMethod: paymentMethodIn(accepted).nullish(),
+      accountId: z.string(common.invalidBody).nullish(),
+    })
+    .strict();
+}
 
 export const receiptVoidSchema = z.object({
   reason: z

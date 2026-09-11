@@ -12,6 +12,7 @@ export interface OfficialReceiptView {
   secretary: string | null;
   treasurer: string | null;
   status: ReceiptState;
+  unbacked?: boolean;
 }
 
 export const RECEIPT_NUMBER_PREFIX = "R";
