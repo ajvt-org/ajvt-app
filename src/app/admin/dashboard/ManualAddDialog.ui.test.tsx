@@ -13,6 +13,7 @@ const ageGroups = [
 function setup(overrides: Partial<React.ComponentProps<typeof ManualAddDialog>> = {}) {
   const props = {
     ageGroups,
+    membershipFee: 100,
     onCreated: vi.fn(),
     onManageAgeGroups: vi.fn(),
     onManageVillages: vi.fn(),

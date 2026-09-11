@@ -1,6 +1,5 @@
 "use client";
 
-import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import { accountsOfMethod, methodChoiceNames } from "@/lib/paymentMethodChoices";
 import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
@@ -16,6 +15,7 @@ export type PaymentForm = typeof emptyPaymentForm;
 export default function ManualAddPaymentForm({
   form,
   setForm,
+  membershipFee,
   personName,
   proofPreview,
   proofUploading,
@@ -27,6 +27,7 @@ export default function ManualAddPaymentForm({
 }: {
   form: PaymentForm;
   setForm: React.Dispatch<React.SetStateAction<PaymentForm>>;
+  membershipFee: number | null;
   personName: string;
   proofPreview: string | null;
   proofUploading: boolean;
@@ -90,10 +91,10 @@ export default function ManualAddPaymentForm({
           id="paidAmount"
           type="number"
           inputMode="numeric"
-          min={MEMBERSHIP_FEE}
+          min={membershipFee ?? undefined}
           value={form.paidAmount}
           onChange={(e) => setForm((p) => ({ ...p, paidAmount: e.target.value }))}
-          placeholder={String(MEMBERSHIP_FEE)}
+          placeholder={membershipFee === null ? undefined : String(membershipFee)}
           className="input"
           dir="ltr"
         />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import { useMembershipSettings } from "@/components/admin/useMembershipSettings";
 import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
 import { accountsOfMethod } from "@/lib/paymentMethodChoices";
 import { renewForm as texts } from "@/lib/texts";
@@ -22,6 +23,7 @@ export default function RenewForm({
 }) {
   const [form, setForm] = useState(EMPTY);
   const { methods } = usePaymentMethods();
+  const { configuredFee } = useMembershipSettings();
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -53,7 +55,7 @@ export default function RenewForm({
       <input
         type="number"
         dir="ltr"
-        min={1}
+        min={configuredFee ?? undefined}
         placeholder={texts.amountPlaceholder}
         value={form.paidAmount}
         onChange={(e) => set({ paidAmount: e.target.value })}
