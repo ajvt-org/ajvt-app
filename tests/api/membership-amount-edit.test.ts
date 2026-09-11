@@ -194,6 +194,51 @@ describe("correcting a membership payment where it lives", () => {
     expect(after.status).toBe("ACTIVE");
   });
 
+  it("measures the amount against the fee the payment carries, not today's", async () => {
+    const m = await paid();
+    await saveAppSettings({ membershipYear: YEAR, membershipFee: 500 });
+
+    const res = await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 150 }),
+      withId(m.userId),
+    );
+
+    expect(res.status).toBe(200);
+    const row = await paidFor(m.userId);
+    expect(row?.amount).toBe(150);
+    expect(row?.feeApplied).toBe(100);
+  });
+
+  it("still refuses an amount below the fee the payment carries", async () => {
+    const m = await paid();
+    await saveAppSettings({ membershipYear: YEAR, membershipFee: 500 });
+
+    const res = await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 40 }),
+      withId(m.userId),
+    );
+
+    expect(res.status).toBe(400);
+    expect((await paidFor(m.userId))?.amount).toBe(200);
+  });
+
+  it("takes the fee from the settings where the membership has no payment yet", async () => {
+    const m = await memberMissingAmount();
+    await saveAppSettings({ membershipYear: YEAR, membershipFee: 300 });
+
+    const refused = await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 100 }),
+      withId(m.userId),
+    );
+    expect(refused.status).toBe(400);
+
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 300 }),
+      withId(m.userId),
+    );
+    expect((await paidFor(m.userId))?.feeApplied).toBe(300);
+  });
+
   it("keeps the receipt in step with the corrected amount", async () => {
     const m = await paid();
     await syncReceiptsFor(prisma, { userId: m.userId });

@@ -3,6 +3,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export const MEMBERSHIP_PAYMENT_SELECT = {
+  feeApplied: true,
   method: true,
   accountId: true,
   bankReference: true,
@@ -14,6 +15,7 @@ export const MEMBERSHIP_PAYMENT_SELECT = {
 } as const;
 
 export interface MembershipPaymentRow {
+  feeApplied: number | null;
   method: string | null;
   accountId: string | null;
   bankReference: string | null;
@@ -25,6 +27,7 @@ export interface MembershipPaymentRow {
 }
 
 export interface MembershipPaymentFields {
+  feeApplied: number | null;
   paymentMethod: string | null;
   accountId: string | null;
   bankReference: string | null;
@@ -36,6 +39,7 @@ export interface MembershipPaymentFields {
 }
 
 export const NO_MEMBERSHIP_PAYMENT: MembershipPaymentFields = {
+  feeApplied: null,
   paymentMethod: null,
   accountId: null,
   bankReference: null,
@@ -51,6 +55,7 @@ export function membershipPaymentFields(
 ): MembershipPaymentFields {
   if (!payment) return { ...NO_MEMBERSHIP_PAYMENT };
   return {
+    feeApplied: payment.feeApplied,
     paymentMethod: payment.method,
     accountId: payment.accountId,
     bankReference: payment.bankReference,

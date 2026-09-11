@@ -12,6 +12,7 @@ describe("what a membership payment says about how it was paid", () => {
   it("hands the payment's fields back under the names the membership used", () => {
     expect(
       membershipPaymentFields({
+        feeApplied: 100,
         method: "بنكيلي",
         accountId: "acc-1",
         bankReference: "884422",
@@ -22,6 +23,7 @@ describe("what a membership payment says about how it was paid", () => {
         reviewedAt: REVIEWED,
       }),
     ).toEqual({
+      feeApplied: 100,
       paymentMethod: "بنكيلي",
       accountId: "acc-1",
       bankReference: "884422",
@@ -36,6 +38,7 @@ describe("what a membership payment says about how it was paid", () => {
   it("keeps an empty field empty rather than dropping it", () => {
     expect(
       membershipPaymentFields({
+        feeApplied: null,
         method: "بنكيلي",
         accountId: null,
         bankReference: null,

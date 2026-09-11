@@ -33,8 +33,10 @@ export const PUT = withRoute(
     const current = await currentMembershipPaid(prisma, id);
     if (!current) throw new NotFoundError(messages.notFound);
 
+    const feeApplied = current.feeApplied ?? membershipFee;
+
     if (amountTransferred !== undefined) {
-      const amountError = validatePaidAmount(amountTransferred, membershipFee);
+      const amountError = validatePaidAmount(amountTransferred, feeApplied);
       if (amountError) throw new ValidationError(amountError);
     }
 
@@ -57,7 +59,7 @@ export const PUT = withRoute(
           tx,
           id,
           amountTransferred !== undefined ? amountTransferred : before,
-          membershipFee,
+          feeApplied,
           {
             method: paymentMethod !== undefined ? paymentMethod : current.paymentMethod,
             accountId: accountId !== undefined ? accountId || null : current.accountId,
