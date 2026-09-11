@@ -4,6 +4,8 @@ import { DELETE } from "@/app/api/admin/users/[id]/route";
 import { POST as RESTORE } from "@/app/api/admin/deleted/[id]/restore/route";
 import { prisma } from "@/lib/prisma";
 import { runningYear } from "@/lib/membershipYear";
+import { syncReceiptsFor } from "@/lib/paymentReceiptServer";
+import { receipts as receiptMessages } from "@/lib/messages";
 import {
   resetDb,
   post,
@@ -263,5 +265,70 @@ describe("deleting the account of a member", () => {
     );
 
     expect(await prisma.membership.count({ where: { userId: user.id } })).toBe(1);
+  });
+});
+
+describe("deleting a person who holds money", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+  });
+
+  async function payer() {
+    const user = await createUser("36000009");
+    await makeMember({
+      userId: user.id,
+      fullName: "محمد ولد أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      paidAmount: 2000,
+    });
+    await syncReceiptsFor(prisma, { userId: user.id });
+    return user;
+  }
+
+  it("withdraws the receipts instead of leaving them standing", async () => {
+    const user = await payer();
+    const before = await prisma.receipt.findFirstOrThrow({ where: { userId: user.id } });
+    expect(before.status).toBe("ACTIVE");
+    expect(before.paymentId).not.toBeNull();
+
+    await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+
+    const after = await prisma.receipt.findUniqueOrThrow({ where: { id: before.id } });
+    expect(after.status).toBe("VOID");
+    expect(after.voidReason).toBe(receiptMessages.withdrawnOnDelete);
+    expect(after.paymentId).toBeNull();
+  });
+
+  it("keeps the payments in the archive", async () => {
+    const user = await payer();
+    const paid = await prisma.payment.findFirstOrThrow({ where: { userId: user.id } });
+
+    await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+
+    expect(await prisma.payment.count()).toBe(0);
+    const record = await prisma.deletedRecord.findFirstOrThrow({ where: { kind: "User" } });
+    const archived =
+      (record.data as { payments?: { id: string; amount: number }[] }).payments ?? [];
+    expect(archived.map((p) => p.id)).toEqual([paid.id]);
+    expect(archived[0].amount).toBe(paid.amount);
+  });
+
+  it("still restores the account, ignoring the archived payments", async () => {
+    const user = await payer();
+    await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+    const record = await prisma.deletedRecord.findFirstOrThrow({ where: { kind: "User" } });
+
+    const res = await RESTORE(
+      post(`/api/admin/deleted/${record.id}/restore`, {}),
+      withId(record.id),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).phone).toBe(
+      user.phone,
+    );
   });
 });

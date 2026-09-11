@@ -29,6 +29,7 @@
     "db:payment-accounts": "tsx prisma/backfillPaymentAccounts.ts",
     "db:receipts": "tsx prisma/backfillReceipts.ts",
     "db:repair-receipts": "tsx prisma/repairReceipts.ts",
+    "db:repair-orphan-receipts": "tsx prisma/repairOrphanReceipts.ts",
     "db:repair-proofs": "tsx prisma/repairProofImages.ts",
     "db:repair-donor-names": "tsx prisma/repairPlaceholderDonorNames.ts",
     "db:repair-team-places": "tsx prisma/repairTeamPlaces.ts",

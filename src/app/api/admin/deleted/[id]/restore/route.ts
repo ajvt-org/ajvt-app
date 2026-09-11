@@ -46,8 +46,10 @@ export const POST = withRoute(
       });
       if (taken) throw new ConflictError(accounts.phoneTaken);
 
+      const { payments: _payments, ...fields } = data;
+      void _payments;
       await prisma.$transaction([
-        prisma.user.create({ data: data as never }),
+        prisma.user.create({ data: fields as never }),
         prisma.deletedRecord.delete({ where: { id } }),
       ]);
 
