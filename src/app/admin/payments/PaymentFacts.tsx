@@ -9,6 +9,7 @@ import { donorPhoneShown } from "@/lib/donorPhoneShown";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import PaymentDateLine from "@/components/admin/PaymentDateLine";
 import MemberIdentity from "./MemberIdentity";
+import MembershipSplit from "./MembershipSplit";
 import type { MemberOption, Proof } from "./paymentTypes";
 
 function Origin({ proof }: { proof: Proof }) {
@@ -65,6 +66,8 @@ export default function PaymentFacts({
       <span>
         <Origin proof={proof} />
       </span>
+
+      <MembershipSplit proof={proof} />
 
       <PaymentDateLine paidOn={proof.paidOn} recordedAt={proof.submittedAt} />
 

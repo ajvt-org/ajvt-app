@@ -180,12 +180,12 @@ describe("the payments the screen loads", () => {
   it("keeps a row carrying a field the parser does not declare, and says so", () => {
     const spy = vi.spyOn(logger, "error");
 
-    const proofs = readProofs({ proofs: [{ ...DONATION_PROOF, feeApplied: 500 }] });
+    const proofs = readProofs({ proofs: [{ ...DONATION_PROOF, reviewedBy: "admin" }] });
 
     expect(proofs).toHaveLength(1);
     expect(spy).toHaveBeenCalledWith("payments.proofs.shape", {
       reason: "undeclared fields",
-      fields: ["feeApplied"],
+      fields: ["reviewedBy"],
     });
   });
 

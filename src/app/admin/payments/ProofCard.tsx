@@ -70,7 +70,7 @@ export default function ProofCard({
               </p>
               <ProofBadges proof={proof} />
             </div>
-            {isDonation && proof.amount != null && (
+            {proof.amount != null && (
               <p className="font-bold text-sm shrink-0" style={{ color: "var(--mint-700)" }}>
                 <Money value={proof.amount} />
               </p>

@@ -11,6 +11,9 @@ export const paymentCard = {
   receiptActive: "ساري",
   receiptVoid: "ملغى",
   membershipSurplus: (amount: string) => `فائض انتساب ${amount}`,
+  fee: "رسوم العضوية",
+  feeForYear: (year: number) => `رسوم عضوية ${year}`,
+  aboveFee: "فوق الرسوم",
   history: "السجل",
 } as const;
 

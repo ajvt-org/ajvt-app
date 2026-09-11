@@ -3,6 +3,7 @@ import { paymentCard, PROOF_STATUS_LABEL } from "@/lib/texts";
 import { STATUS_CLASS, type Proof } from "./paymentTypes";
 import { isMembershipSurplus } from "./paymentsFilters";
 import { money } from "@/lib/money";
+import { splitPayment } from "@/lib/membershipPayment";
 
 const STATUS_ICON: Record<string, IconName> = {
   PENDING: "clock",
@@ -38,7 +39,9 @@ export default function ProofBadges({ proof }: { proof: Proof }) {
       {isMembershipSurplus(proof) && (
         <Mark
           name="heart"
-          label={paymentCard.membershipSurplus(money(proof.supportAmount ?? 0))}
+          label={paymentCard.membershipSurplus(
+            money(splitPayment(proof.amount ?? 0, proof.feeApplied ?? 0).surplus),
+          )}
           tone="badge-active"
         />
       )}
