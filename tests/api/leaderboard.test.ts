@@ -362,4 +362,18 @@ describe("the supporters board", () => {
     expect(body.rows.map((r: { rank: number }) => r.rank)).toEqual([1, 1]);
     expect(body.rows.map((r: { position: number }) => r.position)).toEqual([1, 2]);
   });
+  it("says nothing on the public board about where the money came from", async () => {
+    const m = await member("محمد");
+    const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
+    await recordMembershipPayment(prisma, m.userId, 1000, 100, {
+      method: "بنكيلي",
+      status: "ACTIVE",
+    });
+    await gift(200, { name: "سالم" });
+
+    const body = await (await BOARD(get("/api/leaderboard"))).json();
+
+    expect(body.rows.length).toBeGreaterThan(1);
+    for (const row of body.rows) expect(row.sources).toBeUndefined();
+  });
 });

@@ -83,7 +83,7 @@ describe("GET /api/admin/export/[dataset]", () => {
     expect(row.split(",").slice(5, 8)).toEqual(['"100"', '"900"', '"1000"']);
   });
 
-  it("carries the support half of a membership payment as a surplus gift", async () => {
+  it("names the membership payment a support row came from", async () => {
     await signInAsAdmin(await createAdmin());
     const m = await makeMember({
       fullName: "محمد",
@@ -96,7 +96,8 @@ describe("GET /api/admin/export/[dataset]", () => {
 
     const body = await (await download("donations")).text();
 
-    expect(body).toContain("فائض انتساب");
+    expect(body).toContain("انتساب");
+    expect(body).not.toContain("فائض");
     expect(body).toContain("900");
     expect(body).not.toContain("1000");
   });

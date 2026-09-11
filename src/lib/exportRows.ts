@@ -22,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = memberStatusLabels;
 const SOURCE_LABEL: Record<string, string> = {
   PUBLIC: "عام",
   SELF: "من حساب",
-  MEMBERSHIP: "فائض انتساب",
+  MEMBERSHIP: "انتساب",
 };
 
 export interface ExportableMember {

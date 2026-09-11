@@ -24,7 +24,7 @@ export const adminSupporters = {
   given: "مجموع الدعم",
   empty: "لا يوجد داعمون بعد",
   fromDonation: "تبرع",
-  fromMembership: "فائض انتساب",
+  fromMembership: "من دفعة انتساب",
 } as const;
 
 export const surplusCard = {
