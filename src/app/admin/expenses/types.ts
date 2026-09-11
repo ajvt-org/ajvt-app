@@ -1,3 +1,5 @@
+import { nowLocalInput } from "@/lib/clubTime";
+
 export interface Expense {
   id: string;
   label: string;
@@ -96,8 +98,8 @@ export const emptyExpenseForm: ExpenseForm = {
 
 export const PAGE_SIZE = 30;
 
-export function todayInputValue(): string {
-  return new Date().toISOString().slice(0, 10);
+export function nowInputValue(): string {
+  return nowLocalInput();
 }
 
 export function groupDayRecords(records: DayRecord[]) {

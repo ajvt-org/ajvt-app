@@ -11,6 +11,7 @@ import {
   formatTime,
   matchDateKey,
   matchDateToLocalInput,
+  nowLocalInput,
   parseMatchDate,
   todayClubDateKey,
 } from "./clubTime";
@@ -170,5 +171,16 @@ describe("heading a day in long Arabic", () => {
 
   it("stays empty when a day has no date yet", () => {
     expect(formatLongDate(null)).toBe("");
+  });
+});
+
+describe("reading a stored moment back into an input", () => {
+  it("gives nothing back when there is no date", () => {
+    expect(matchDateToLocalInput(null)).toBe("");
+    expect(matchDateToLocalInput(undefined)).toBe("");
+  });
+
+  it("offers now in the shape the input wants", () => {
+    expect(nowLocalInput()).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
   });
 });

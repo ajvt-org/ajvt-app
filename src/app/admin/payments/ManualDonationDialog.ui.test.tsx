@@ -7,6 +7,7 @@ import { members, money } from "@/lib/messages";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { MemberOption } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
+import { nowLocalInput } from "@/lib/clubTime";
 
 const ACCOUNT: MemberOption = {
   id: "m1",
@@ -388,5 +389,16 @@ describe("recording a support payment by hand", () => {
     await userEvent.click(screen.getByText(manualDonation.submit));
 
     expect(onCreated.mock.calls[0][0].memberName).toBe("أبوبكر لمرابط");
+  });
+});
+
+describe("the date on a new support payment", () => {
+  it("opens on the moment it is being recorded, not on midnight", () => {
+    show();
+
+    const field = screen.getByLabelText(manualDonation.paidOn) as HTMLInputElement;
+
+    expect(field.type).toBe("datetime-local");
+    expect(field.value).toBe(nowLocalInput());
   });
 });

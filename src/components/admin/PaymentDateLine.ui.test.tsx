@@ -8,10 +8,10 @@ const paid = "2026-06-11T00:00:00.000Z";
 const recorded = "2026-08-02T09:31:00.000Z";
 
 describe("the date on a payment", () => {
-  it("says the day the money moved when the payment carries one", () => {
+  it("says the moment the money moved when the payment carries one", () => {
     render(<PaymentDateLine paidOn={paid} recordedAt={recorded} />);
 
-    expect(screen.getByText(formatDate(paid)).parentElement?.textContent).toContain(
+    expect(screen.getByText(formatDateTime(paid)).parentElement?.textContent).toContain(
       paymentDates.paidOn,
     );
   });
@@ -39,9 +39,9 @@ describe("the date on a payment", () => {
     expect(stamp.getAttribute("dir")).toBe("ltr");
   });
 
-  it("isolates the day the money moved as well", () => {
+  it("isolates the moment the money moved as well", () => {
     render(<PaymentDateLine paidOn={paid} recordedAt={recorded} />);
 
-    expect(screen.getByText(formatDate(paid)).tagName).toBe("BDI");
+    expect(screen.getByText(formatDateTime(paid)).tagName).toBe("BDI");
   });
 });

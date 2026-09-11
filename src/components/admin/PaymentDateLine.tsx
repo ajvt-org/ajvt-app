@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime } from "@/lib/clubTime";
+import { formatDateTime } from "@/lib/clubTime";
 import { paymentDates } from "@/lib/texts";
 
 export default function PaymentDateLine({
@@ -11,7 +11,7 @@ export default function PaymentDateLine({
   if (paidOn)
     return (
       <span>
-        {paymentDates.paidOn} <bdi dir="ltr">{formatDate(paidOn)}</bdi>
+        {paymentDates.paidOn} <bdi dir="ltr">{formatDateTime(paidOn)}</bdi>
       </span>
     );
   return (
