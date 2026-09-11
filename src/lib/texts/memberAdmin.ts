@@ -11,14 +11,6 @@ export const memberEdit = {
   cancel: "إلغاء",
 } as const;
 
-export const yearAmount = {
-  unset: (year: number) => `لم يُسجَّل مبلغ لسنة ${year}`,
-  edit: (year: number) => `تعديل مبلغ سنة ${year}`,
-  amountLabel: "المبلغ المسدد",
-  saving: "جارٍ الحفظ",
-  save: "حفظ",
-} as const;
-
 export const membershipEdit = {
   open: "تعديل",
   amount: "المبلغ المسدد (أوقية)",
