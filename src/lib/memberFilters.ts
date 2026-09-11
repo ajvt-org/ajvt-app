@@ -17,6 +17,9 @@ export const MEMBER_FILTER_KEYS = [
   "standing",
   "from",
   "to",
+  "origin",
+  "nophone",
+  "nocapture",
 ] as const;
 
 export type MemberFilterKey = (typeof MEMBER_FILTER_KEYS)[number];
@@ -34,6 +37,9 @@ export const NO_FILTERS: MemberFilters = {
   standing: "",
   from: "",
   to: "",
+  origin: "",
+  nophone: "",
+  nocapture: "",
 };
 
 export type FilterableMember = {
@@ -47,8 +53,12 @@ export type FilterableMember = {
   paidAmount: number | null;
   membershipYear: number;
   createdAt?: string;
-  user?: { phone: string } | null;
+  paymentProof?: string | null;
+  recordedByAdmin?: boolean;
+  user?: { phone: string | null } | null;
 };
+
+export const ADMIN_ORIGIN = "admin";
 
 const LEGACY_STANDING: Record<string, string> = { paid: "current", behind: "former" };
 
@@ -59,6 +69,11 @@ export function readFilters(params: URLSearchParams): MemberFilters {
     if (value) filters[key] = value;
   }
   filters.standing = LEGACY_STANDING[filters.standing] ?? filters.standing;
+  if (filters.origin !== ADMIN_ORIGIN) {
+    filters.origin = "";
+    filters.nophone = "";
+    filters.nocapture = "";
+  }
   return filters;
 }
 
@@ -83,6 +98,14 @@ function matchesText(member: FilterableMember, q: string): boolean {
     containsSearch(member.user?.phone, needle) ||
     containsSearch(member.referenceCode, needle)
   );
+}
+
+function matchesOrigin(member: FilterableMember, filters: MemberFilters): boolean {
+  if (filters.origin !== ADMIN_ORIGIN) return true;
+  if (!member.recordedByAdmin) return false;
+  if (filters.nophone && member.user?.phone) return false;
+  if (filters.nocapture && member.paymentProof) return false;
+  return true;
 }
 
 function matchesPaid(member: FilterableMember, paid: string, fee: number): boolean {
@@ -133,6 +156,7 @@ export function matchesFilters(
   if (!matchesPaid(member, filters.paid, membership.fee)) return false;
   if (!matchesStanding(member, filters.standing, membership)) return false;
   if (!matchesDateRange(member, filters.from, filters.to)) return false;
+  if (!matchesOrigin(member, filters)) return false;
   return matchesText(member, filters.q);
 }
 
