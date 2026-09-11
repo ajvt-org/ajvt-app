@@ -7,7 +7,11 @@ import { rankSupporters } from "@/lib/supportersOrder";
 
 export const SUPPORTERS_PAGE_SIZE = 20;
 
-export type PublicLeaderboardEntry = Omit<LeaderboardEntry, "accountIds">;
+export type SupportSource = "DONATION" | "MEMBERSHIP";
+
+export type PublicLeaderboardEntry = Omit<LeaderboardEntry, "accountIds" | "sources"> & {
+  sources?: SupportSource[];
+};
 
 export function toPublicEntry(e: LeaderboardEntry): PublicLeaderboardEntry {
   return {
@@ -20,6 +24,10 @@ export function toPublicEntry(e: LeaderboardEntry): PublicLeaderboardEntry {
   };
 }
 
+export function toAdminEntry(e: LeaderboardEntry): PublicLeaderboardEntry {
+  return { ...toPublicEntry(e), sources: e.sources };
+}
+
 interface LeaderboardEntry {
   rank: number;
   position: number;
@@ -27,6 +35,7 @@ interface LeaderboardEntry {
   photoUrl: string | null;
   total: number;
   accountIds: string[];
+  sources: SupportSource[];
   anonymous: boolean;
 }
 
@@ -55,15 +64,17 @@ export async function getLeaderboardData(
     total: number;
     reachedAt: Date;
     accountIds: Set<string>;
+    sources: Set<SupportSource>;
     anonymous: boolean;
   };
   const byKey = new Map<string, Row>();
 
   function add(
     key: string,
-    row: Omit<Row, "accountIds" | "total" | "reachedAt">,
+    row: Omit<Row, "accountIds" | "sources" | "total" | "reachedAt">,
     amount: number,
     at: Date,
+    source: SupportSource,
     accountId?: string | null,
   ) {
     const entry = byKey.get(key) ?? {
@@ -71,11 +82,13 @@ export async function getLeaderboardData(
       total: 0,
       reachedAt: at,
       accountIds: new Set<string>(),
+      sources: new Set<SupportSource>(),
     };
     entry.total += amount;
     if (at > entry.reachedAt) entry.reachedAt = at;
     if (!entry.photoUrl && row.photoUrl) entry.photoUrl = row.photoUrl;
     if (accountId) entry.accountIds.add(accountId);
+    entry.sources.add(source);
     byKey.set(key, entry);
   }
 
@@ -83,6 +96,7 @@ export async function getLeaderboardData(
     const amount =
       p.purpose === "MEMBERSHIP" ? splitPayment(p.amount, p.feeApplied ?? 0).surplus : p.amount;
     if (p.purpose === "MEMBERSHIP" && amount === 0) continue;
+    const source: SupportSource = p.purpose === "MEMBERSHIP" ? "MEMBERSHIP" : "DONATION";
     const named = p.anonymous ? null : attributedDonorName(p, viewer);
 
     if (p.userId && named) {
@@ -92,17 +106,19 @@ export async function getLeaderboardData(
         { name: named, photoUrl, anonymous: false },
         amount,
         p.createdAt,
+        source,
         p.userId,
       );
     } else if (named) {
       const photoUrl = p.donorPhoto ? `/api/files/donation/${p.donorPhoto}` : null;
-      add(`n:${named}`, { name: named, photoUrl, anonymous: false }, amount, p.createdAt);
+      add(`n:${named}`, { name: named, photoUrl, anonymous: false }, amount, p.createdAt, source);
     } else if (p.userId) {
       add(
         `a:${p.userId}`,
         { name: money.anonymousDonor, photoUrl: null, anonymous: true },
         amount,
         p.createdAt,
+        source,
         p.userId,
       );
     } else {
@@ -111,6 +127,7 @@ export async function getLeaderboardData(
         { name: money.anonymousDonor, photoUrl: null, anonymous: true },
         amount,
         p.createdAt,
+        source,
       );
     }
   }
@@ -124,6 +141,7 @@ export async function getLeaderboardData(
     photoUrl: e.photoUrl,
     total: e.total,
     accountIds: [...e.accountIds],
+    sources: [...e.sources],
     anonymous: e.anonymous,
   }));
 

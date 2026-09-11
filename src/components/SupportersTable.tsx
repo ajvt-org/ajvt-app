@@ -5,10 +5,15 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { PublicLeaderboardEntry } from "@/lib/donationsServer";
-import { supporters } from "@/lib/texts";
+import { adminSupporters, supporters } from "@/lib/texts";
 import Money from "@/components/Money";
 
 const MEDALS = ["#d4af37", "#9aa3ab", "#c07a3e"];
+
+const SOURCE_LABEL = {
+  DONATION: adminSupporters.fromDonation,
+  MEMBERSHIP: adminSupporters.fromMembership,
+} as const;
 
 export default function SupportersTable({
   initial,
@@ -87,7 +92,17 @@ export default function SupportersTable({
                 <td className="px-3 py-2.5 font-bold" style={{ color: "var(--text-main)" }}>
                   <span className="flex items-center gap-2 justify-start">
                     <PlayerAvatar photoUrl={entry.photoUrl} fullName={entry.name} />
-                    {entry.name}
+                    <span className="min-w-0">
+                      <span className="block">{entry.name}</span>
+                      {entry.sources && entry.sources.length > 0 && (
+                        <span
+                          className="block text-[11px] font-semibold"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          {entry.sources.map((one) => SOURCE_LABEL[one]).join(" · ")}
+                        </span>
+                      )}
+                    </span>
                   </span>
                 </td>
                 <td
