@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { SUPER_ROLE } from "@/lib/adminRoles";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { findProofReuse } from "@/lib/proofReuse";
+import { findProofReuse, proofReuseOf } from "@/lib/proofReuse";
 import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { resetDb, makeMember } from "./helpers";
 
@@ -55,8 +55,6 @@ describe("spotting a payment screenshot that has been sent before", () => {
     expect(await findProofReuse("one.webp", ADMIN)).toEqual([]);
   });
 
-  // Two different filenames, byte-identical content: the case the whole thing
-  // exists for.
   it("finds the other member who sent the same image", async () => {
     await fingerprint("one.webp", HASH);
     await fingerprint("two.webp", HASH);
@@ -100,7 +98,6 @@ describe("spotting a payment screenshot that has been sent before", () => {
     expect(await findProofReuse("two.webp", ADMIN)).toEqual([]);
   });
 
-  // A membership proof reused as a donation proof is the same trick.
   it("looks across donations and expenses too", async () => {
     await fingerprint("one.webp", HASH);
     await fingerprint("two.webp", HASH);
@@ -134,5 +131,78 @@ describe("spotting a payment screenshot that has been sent before", () => {
     const reuse = await findProofReuse("three.webp", ADMIN);
 
     expect(reuse.map((r) => r.label)).toEqual(["محمد", "أحمد"]);
+  });
+});
+
+describe("asking about a proof by its hash", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("says nothing when no image carries that hash", async () => {
+    expect(await proofReuseOf(HASH, ADMIN)).toEqual([]);
+    expect(await proofReuseOf("", ADMIN)).toEqual([]);
+  });
+
+  it("reports the one record holding the image, with nothing to leave out", async () => {
+    await fingerprint("one.webp", HASH);
+    const member = await memberWithProof("محمد", "one.webp");
+
+    const reuse = await proofReuseOf(HASH, ADMIN);
+
+    expect(reuse).toHaveLength(1);
+    expect(reuse[0]).toMatchObject({ kind: "member", id: member.userId, label: "محمد" });
+  });
+
+  it("gives the same answer the filename entry gives, minus the row it was asked from", async () => {
+    await fingerprint("one.webp", HASH);
+    await fingerprint("two.webp", HASH);
+    await memberWithProof("محمد", "one.webp");
+    await giftWithProof("أحمد", "two.webp");
+
+    const byName = await findProofReuse("two.webp", ADMIN);
+    const byHash = await proofReuseOf(HASH, ADMIN);
+
+    expect(byName.map((r) => r.label)).toEqual(["محمد"]);
+    expect(byHash.map((r) => r.label).sort()).toEqual(["أحمد", "محمد"]);
+    expect(byHash.find((r) => r.kind === "member")).toEqual(byName[0]);
+  });
+
+  it("carries the amount, the state and a way in", async () => {
+    await fingerprint("one.webp", HASH);
+    const gift = await giftWithProof("محمد", "one.webp");
+
+    const [row] = await proofReuseOf(HASH, ADMIN);
+
+    expect(row.amount).toBe(500);
+    expect(row.state).toBe("ACTIVE");
+    expect(row.href).toBe(`/admin/payments?focus=${gift.id}`);
+  });
+
+  it("carries what an expense holds as well", async () => {
+    await fingerprint("one.webp", HASH);
+    await prisma.expense.create({
+      data: { label: "كرات", amount: 900, createdBy: "admin", proof: "one.webp" },
+    });
+
+    const [row] = await proofReuseOf(HASH, ADMIN);
+
+    expect(row).toMatchObject({ kind: "expense", label: "كرات", amount: 900, state: null });
+    expect(row.href).toBe(`/admin/expenses?q=${encodeURIComponent("كرات")}`);
+  });
+
+  it("keeps a confidential supporter's name back on this door too", async () => {
+    await fingerprint("one.webp", HASH);
+    const member = await memberWithProof("محمد", "one.webp");
+    await prisma.user.update({
+      where: { id: member.userId },
+      data: { supportNameConfidential: true },
+    });
+
+    const hidden = await proofReuseOf(HASH, { role: "VIEWER" });
+    const open = await proofReuseOf(HASH, { ...ADMIN, onTheRecord: true });
+
+    expect(hidden[0].label).toBe("");
+    expect(open[0].label).toBe("محمد");
   });
 });

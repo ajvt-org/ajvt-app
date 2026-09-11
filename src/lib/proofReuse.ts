@@ -2,13 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { nameOf } from "./person";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "./donorName";
 import { seesSupporterName, type SupportViewer } from "./supportPrivacy";
-import { uniqueExpenses } from "./proofReuseRows";
+import { proofReuseHref, uniqueExpenses, type ProofReuseKind } from "./proofReuseRows";
 
 export type ProofReuse = {
-  kind: "member" | "donation" | "expense";
+  kind: ProofReuseKind;
   id: string;
   label: string;
   date: Date;
+  amount: number | null;
+  state: string | null;
+  href: string;
 };
 
 const PAYMENT_SELECT = {
@@ -17,6 +20,8 @@ const PAYMENT_SELECT = {
   userId: true,
   year: true,
   donorName: true,
+  amount: true,
+  status: true,
   createdAt: true,
   user: { select: DONOR_ACCOUNT_SELECT },
 } as const;
@@ -24,6 +29,8 @@ const PAYMENT_SELECT = {
 type MembershipPayment = {
   userId: string;
   year: number | null;
+  amount: number;
+  status: string;
   createdAt: Date;
   user: { fullName: string | null; supportNameConfidential: boolean } | null;
 };
@@ -51,8 +58,20 @@ export async function findProofReuse(
   const mine = await prisma.proofImage.findUnique({ where: { filename } });
   if (!mine) return [];
 
+  return proofReuseOf(mine.sha256, viewer, { besides: filename, ignore });
+}
+
+export async function proofReuseOf(
+  sha256: string,
+  viewer: SupportViewer,
+  options?: { besides?: string; ignore?: { kind: ProofReuse["kind"]; id: string } },
+): Promise<ProofReuse[]> {
+  if (!sha256) return [];
+  const besides = options?.besides;
+  const ignore = options?.ignore;
+
   const sameImage = await prisma.proofImage.findMany({
-    where: { sha256: mine.sha256, filename: { not: filename } },
+    where: { sha256, ...(besides ? { filename: { not: besides } } : {}) },
     select: { filename: true },
   });
   if (sameImage.length === 0) return [];
@@ -62,11 +81,11 @@ export async function findProofReuse(
     prisma.payment.findMany({ where: { proof: { in: names } }, select: PAYMENT_SELECT }),
     prisma.expenseProof.findMany({
       where: { filename: { in: names } },
-      select: { expense: { select: { id: true, label: true, date: true } } },
+      select: { expense: { select: { id: true, label: true, date: true, amount: true } } },
     }),
     prisma.expense.findMany({
       where: { proof: { in: names } },
-      select: { id: true, label: true, date: true },
+      select: { id: true, label: true, date: true, amount: true },
     }),
   ]);
 
@@ -83,18 +102,27 @@ export async function findProofReuse(
       id: m.userId,
       label: seesSupporterName(viewer, m) && m.user ? nameOf(m.user) : "",
       date: submittedAt.get(yearKey(m.userId, m.year)) ?? m.createdAt,
+      amount: m.amount,
+      state: m.status,
+      href: proofReuseHref("member", m.userId, ""),
     })),
     ...given.map((d) => ({
       kind: "donation" as const,
       id: d.id,
       label: donorNameOnRecord(d, viewer),
       date: d.createdAt,
+      amount: d.amount,
+      state: d.status,
+      href: proofReuseHref("donation", d.id, ""),
     })),
     ...uniqueExpenses([...expenseProofs.map((row) => row.expense), ...legacyExpenses]).map((e) => ({
       kind: "expense" as const,
       id: e.id,
       label: e.label,
       date: e.date,
+      amount: e.amount,
+      state: null,
+      href: proofReuseHref("expense", e.id, e.label),
     })),
   ];
 
