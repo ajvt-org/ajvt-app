@@ -1,35 +1,42 @@
 import { describe, it, expect } from "vitest";
-import { validatePaidAmount, MEMBERSHIP_FEE } from "./donations";
+import { validatePaidAmount } from "./donations";
+
+const FEE = 250;
 
 describe("validatePaidAmount", () => {
-  it("accepts the membership fee and anything above it", () => {
-    expect(validatePaidAmount(MEMBERSHIP_FEE)).toBeNull();
-    expect(validatePaidAmount(MEMBERSHIP_FEE + 1)).toBeNull();
-    expect(validatePaidAmount(5000)).toBeNull();
+  it("accepts the fee it was given and anything above it", () => {
+    expect(validatePaidAmount(FEE, FEE)).toBeNull();
+    expect(validatePaidAmount(FEE + 1, FEE)).toBeNull();
+    expect(validatePaidAmount(5000, FEE)).toBeNull();
   });
 
   it("accepts numeric strings, since form inputs arrive as strings", () => {
-    expect(validatePaidAmount(String(MEMBERSHIP_FEE))).toBeNull();
-    expect(validatePaidAmount("2000")).toBeNull();
+    expect(validatePaidAmount(String(FEE), FEE)).toBeNull();
+    expect(validatePaidAmount("2000", FEE)).toBeNull();
   });
 
-  it("rejects anything below the membership fee", () => {
-    expect(validatePaidAmount(MEMBERSHIP_FEE - 1)).not.toBeNull();
-    expect(validatePaidAmount(0)).not.toBeNull();
-    expect(validatePaidAmount(-500)).not.toBeNull();
+  it("rejects anything below the fee it was given", () => {
+    expect(validatePaidAmount(FEE - 1, FEE)).not.toBeNull();
+    expect(validatePaidAmount(0, FEE)).not.toBeNull();
+    expect(validatePaidAmount(-500, FEE)).not.toBeNull();
+  });
+
+  it("answers to the fee it was given rather than to any compiled in number", () => {
+    expect(validatePaidAmount(150, 100)).toBeNull();
+    expect(validatePaidAmount(150, 200)).not.toBeNull();
   });
 
   it("rejects non-integers", () => {
-    expect(validatePaidAmount(100.5)).not.toBeNull();
-    expect(validatePaidAmount("abc")).not.toBeNull();
-    expect(validatePaidAmount(null)).not.toBeNull();
-    expect(validatePaidAmount(undefined)).not.toBeNull();
-    expect(validatePaidAmount("")).not.toBeNull();
-    expect(validatePaidAmount(NaN)).not.toBeNull();
-    expect(validatePaidAmount(Infinity)).not.toBeNull();
+    expect(validatePaidAmount(100.5, FEE)).not.toBeNull();
+    expect(validatePaidAmount("abc", FEE)).not.toBeNull();
+    expect(validatePaidAmount(null, FEE)).not.toBeNull();
+    expect(validatePaidAmount(undefined, FEE)).not.toBeNull();
+    expect(validatePaidAmount("", FEE)).not.toBeNull();
+    expect(validatePaidAmount(NaN, FEE)).not.toBeNull();
+    expect(validatePaidAmount(Infinity, FEE)).not.toBeNull();
   });
 
   it("names the minimum in the message, so the member knows what to enter", () => {
-    expect(validatePaidAmount(0)).toContain(String(MEMBERSHIP_FEE));
+    expect(validatePaidAmount(0, FEE)).toContain(String(FEE));
   });
 });
