@@ -11,6 +11,7 @@ import { endingsBroughtBack } from "@/lib/membershipEndingHistory";
 import MembershipEnding, { BroughtBackEndings, EndedRows } from "./MembershipEnding";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
 import MembershipYears from "./MembershipYears";
+import RenewalRefusalNote from "./RenewalRefusalNote";
 import RenewForm from "./RenewForm";
 import type { MembershipHistory } from "./membershipTypes";
 
@@ -102,9 +103,12 @@ export default function MembershipCard({
 
       {history && <MembershipYears years={history.memberships} currentYear={history.currentYear} />}
 
-      {history && !history.refusal && (
-        <RenewForm memberId={member.id} year={history.currentYear} onRenewed={refresh} />
-      )}
+      {history &&
+        (history.refusal ? (
+          <RenewalRefusalNote refusal={history.refusal} onOpenPayment={() => setOpening(true)} />
+        ) : (
+          <RenewForm memberId={member.id} year={history.currentYear} onRenewed={refresh} />
+        ))}
 
       {opening && (
         <MembershipPaymentDialog
