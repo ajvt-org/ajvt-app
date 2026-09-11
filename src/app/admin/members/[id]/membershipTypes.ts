@@ -1,4 +1,5 @@
 import type { RenewalRefusal } from "@/lib/renewal";
+import type { EndingRecord } from "@/lib/membershipEndingHistory";
 
 import type { Status } from "@/app/admin/dashboard/types";
 
@@ -16,6 +17,7 @@ export interface MembershipYear {
 
 export interface MembershipHistory {
   memberships: MembershipYear[];
+  endings: EndingRecord[];
   currentYear: number;
   refusal: RenewalRefusal;
 }

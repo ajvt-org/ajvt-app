@@ -22,4 +22,7 @@ export const membershipEnding = {
   endedOn: "تاريخ الإنهاء",
   endedBy: "أنهاها",
   endedReason: "السبب",
+  restoredOn: "تاريخ الإرجاع",
+  restoredBy: "أرجعها",
+  broughtBack: "إنهاءات أُرجعت",
 } as const;

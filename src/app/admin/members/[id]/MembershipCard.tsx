@@ -7,7 +7,8 @@ import ProfileSection from "@/components/admin/ProfileSection";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
 import { membershipSummary as texts } from "@/lib/texts";
 import type { MemberProfile } from "@/components/admin/profileTypes";
-import MembershipEnding, { EndedRows } from "./MembershipEnding";
+import { endingsBroughtBack } from "@/lib/membershipEndingHistory";
+import MembershipEnding, { BroughtBackEndings, EndedRows } from "./MembershipEnding";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
 import MembershipYears from "./MembershipYears";
 import RenewForm from "./RenewForm";
@@ -70,6 +71,10 @@ export default function MembershipCard({
           />
         )}
       </dl>
+
+      {history && (
+        <BroughtBackEndings endings={endingsBroughtBack(history.endings, member.membershipYear)} />
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={() => setOpening(true)} className="btn btn-sm btn-ghost font-bold">
