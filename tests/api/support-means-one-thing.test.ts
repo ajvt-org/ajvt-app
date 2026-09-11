@@ -42,16 +42,18 @@ describe("a member who paid above the fee", () => {
     const [row] = await membershipRows();
 
     expect(row).toBeDefined();
-    expect(row.supportAmount).toBe(1000);
+    expect(row.amount).toBe(MEMBERSHIP_FEE + 1000);
+    expect(row.feeApplied).toBe(MEMBERSHIP_FEE);
     expect(row.memberName).toBe("محمد ولد أحمد");
   });
 
-  it("carries no surplus when the payment is only the fee", async () => {
+  it("carries nothing above the fee when the payment is only the fee", async () => {
     await memberPayingAbove(MEMBERSHIP_FEE, { paymentProof: "proof.webp" });
 
     const [row] = await membershipRows();
 
-    expect(row.supportAmount).toBe(0);
+    expect(row.amount).toBe(MEMBERSHIP_FEE);
+    expect(row.feeApplied).toBe(MEMBERSHIP_FEE);
   });
 
   it("stays off the payments screen when it is only the fee and has no proof", async () => {

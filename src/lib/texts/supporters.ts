@@ -24,11 +24,10 @@ export const adminSupporters = {
   given: "مجموع الدعم",
   empty: "لا يوجد داعمون بعد",
   fromDonation: "تبرع",
-  fromMembership: "فائض انتساب",
+  fromMembership: "من دفعة انتساب",
 } as const;
 
 export const surplusCard = {
-  title: "دعمك فوق رسوم الاشتراك",
   hint: (amount: number) =>
     `${money(amount)} تظهر في لوحة شرف المتبرعين. يمكنك تغيير طريقة ظهورها متى شئت.`,
   saved: "تم الحفظ",

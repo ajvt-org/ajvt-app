@@ -24,6 +24,7 @@ export interface Member {
   photo: string | null;
   paidAmount: number | null;
   supportAmount: number;
+  recordedByAdmin: boolean;
   status: Status;
   rejectionReason: string | null;
   endedAt: string | null;

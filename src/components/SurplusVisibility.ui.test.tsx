@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SurplusVisibility from "./SurplusVisibility";
-import { donorNameChoice } from "@/lib/texts";
+import { donorNameChoice, paidAmount as paidTexts } from "@/lib/texts";
 
 const patch = vi.fn();
 
@@ -21,6 +21,7 @@ function show(props: Partial<React.ComponentProps<typeof SurplusVisibility>> = {
     <SurplusVisibility
       memberId="m1"
       memberName="محمد ولد أحمد"
+      paidAmount={100}
       supportAmount={400}
       anonymous={false}
       onChanged={() => {}}
@@ -29,7 +30,7 @@ function show(props: Partial<React.ComponentProps<typeof SurplusVisibility>> = {
   );
 }
 
-describe("changing how a membership surplus appears", () => {
+describe("what a member sees about the payment they made", () => {
   it("says nothing to a member who paid only the fee", () => {
     const { container } = show({ supportAmount: 0 });
 
@@ -40,6 +41,15 @@ describe("changing how a membership surplus appears", () => {
     show();
 
     expect(screen.getByText(/400 أوقية/)).toBeDefined();
+  });
+
+  it("breaks the one payment into the fee, the part above it and the total", () => {
+    const { container } = show();
+
+    expect(screen.getByText(paidTexts.fee)).toBeDefined();
+    expect(screen.getByText(paidTexts.support)).toBeDefined();
+    expect(screen.getByText(paidTexts.total)).toBeDefined();
+    expect(container.textContent).toContain("500");
   });
 
   it("takes the name off when the member asks to be anonymous", async () => {
