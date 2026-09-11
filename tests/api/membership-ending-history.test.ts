@@ -41,7 +41,7 @@ async function acceptedMember() {
   return membership;
 }
 
-function end(userId: string, reason = REIMBURSED) {
+function end(userId: string, reason: string = REIMBURSED) {
   return END(post(`/api/admin/members/${userId}/end-membership`, { reason }), withId(userId));
 }
 
