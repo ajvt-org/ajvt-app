@@ -1,10 +1,5 @@
 import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
-import { isPaidAmount } from "./paymentMirror";
-import {
-  ensureReceiptsFor,
-  syncReceiptsFor,
-  withdrawReceiptsBeforeDelete,
-} from "./paymentReceiptServer";
+import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
 import type { MembershipVerdict } from "./membershipVerdict";
 import { currentMembership } from "./currentMembershipServer";
 
@@ -32,18 +27,12 @@ export async function writeMembershipFee(
   fee: number,
   fields: MembershipFee = {},
 ) {
+  if (total === null) return;
+
   const standing = await db.payment.findFirst({
     where: { userId, year, purpose: "MEMBERSHIP" },
     select: { id: true },
   });
-
-  if (!isPaidAmount(total)) {
-    if (standing) {
-      await withdrawReceiptsBeforeDelete(db, { id: standing.id });
-      await db.payment.delete({ where: { id: standing.id } });
-    }
-    return;
-  }
 
   const { anonymous: choice, paidOn, ...columns } = fields;
 

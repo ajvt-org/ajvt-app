@@ -4,10 +4,13 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
-import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
 import { currentMembershipPaid } from "@/lib/currentMembershipServer";
+import { amountConsequence } from "@/lib/membershipShortfall";
+import { endMembership, restoreMembership } from "@/lib/membershipEndingServer";
+import { endedDetails, restoredDetails } from "@/lib/membershipEndingAudit";
+import { AMOUNT_BELOW_FEE } from "@/lib/texts";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { memberPaymentSchema } from "./schema";
@@ -21,8 +24,15 @@ export const PUT = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { amountTransferred, paymentMethod, accountId, paymentProof, bankReference, paidOn } =
-      parse(memberPaymentSchema, await req.json());
+    const {
+      amountTransferred,
+      paymentMethod,
+      accountId,
+      paymentProof,
+      bankReference,
+      paidOn,
+      membershipDecision,
+    } = parse(memberPaymentSchema, await req.json());
     const { membershipFee } = await getAppSettings();
 
     const account = await prisma.user.findUnique({
@@ -33,10 +43,17 @@ export const PUT = withRoute(
     const current = await currentMembershipPaid(prisma, id);
     if (!current) throw new NotFoundError(messages.notFound);
 
-    if (amountTransferred !== undefined && amountTransferred !== null) {
-      const amountError = validatePaidAmount(amountTransferred, membershipFee);
-      if (amountError) throw new ValidationError(amountError);
+    const feeApplied = current.feeApplied ?? membershipFee;
+
+    const consequence =
+      amountTransferred === undefined
+        ? null
+        : amountConsequence(amountTransferred, feeApplied, current);
+    if (consequence === "endable" && membershipDecision !== "end") {
+      throw new ValidationError(messages.shortfallNeedsDecision);
     }
+    const ends = consequence === "endable";
+    const restores = consequence === "restorable" && membershipDecision === "restore";
 
     const named = paymentMethod !== undefined ? paymentMethod : current.paymentMethod;
     const wrongAccount = await accountIdError(named, accountId, current.accountId);
@@ -51,13 +68,15 @@ export const PUT = withRoute(
       bankReference !== undefined ||
       paidOn !== undefined;
 
+    const endedAt = new Date();
+
     await prisma.$transaction(async (tx) => {
       if (edited || amountTransferred !== undefined) {
         await recordMembershipPayment(
           tx,
           id,
           amountTransferred !== undefined ? amountTransferred : before,
-          membershipFee,
+          feeApplied,
           {
             method: paymentMethod !== undefined ? paymentMethod : current.paymentMethod,
             accountId: accountId !== undefined ? accountId || null : current.accountId,
@@ -72,6 +91,14 @@ export const PUT = withRoute(
           },
         );
       }
+      if (ends) {
+        await endMembership(tx, id, current.year, {
+          reason: AMOUNT_BELOW_FEE,
+          by: session.username,
+          at: endedAt,
+        });
+      }
+      if (restores) await restoreMembership(tx, id, current.year);
     });
 
     await releaseUploads(current.paymentProof);
@@ -86,6 +113,31 @@ export const PUT = withRoute(
         paymentProof: paymentProof === undefined ? current.paymentProof : paymentProof,
       },
     });
+
+    const membershipLabel = `${nameOf(account)} — ${current.year}`;
+    const onMembership = {
+      ...auditContext(session, req),
+      targetType: "Member" as const,
+      targetId: id,
+    };
+
+    if (ends) {
+      await logAction(session.username, "END_MEMBERSHIP", membershipLabel, {
+        ...onMembership,
+        ...endedDetails(current.year, {
+          reason: AMOUNT_BELOW_FEE,
+          by: session.username,
+          at: endedAt,
+        }),
+      });
+    }
+
+    if (restores) {
+      await logAction(session.username, "RESTORE_MEMBERSHIP", membershipLabel, {
+        ...onMembership,
+        ...restoredDetails(current),
+      });
+    }
 
     return NextResponse.json({ amountTransferred: await totalPaidFor(prisma, id) });
   },

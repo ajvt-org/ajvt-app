@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { FilterableMember, MemberFilters } from "./memberFilters";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "./villages";
 import {
+  ADMIN_ORIGIN,
   NO_FILTERS,
   MEMBER_FILTER_KEYS,
   readFilters,
@@ -59,6 +60,9 @@ describe("carrying the filters in the address", () => {
       standing: "former",
       from: "2026-03-01",
       to: "2026-03-31",
+      origin: "admin",
+      nophone: "yes",
+      nocapture: "yes",
     };
     expect(readFilters(new URLSearchParams(writeFilters(chosen).toString()))).toEqual(chosen);
   });
@@ -84,17 +88,28 @@ describe("carrying the filters in the address", () => {
       "standing",
       "from",
       "to",
+      "origin",
+      "nophone",
+      "nocapture",
     ]);
     expect(Object.keys(NO_FILTERS).sort()).toEqual([...MEMBER_FILTER_KEYS].sort());
   });
 
   it("writes every filter it was given and reads it back", () => {
     const every = Object.fromEntries(
-      MEMBER_FILTER_KEYS.map((key) => [key, `v-${key}`]),
+      MEMBER_FILTER_KEYS.map((key) => [key, key === "origin" ? ADMIN_ORIGIN : `v-${key}`]),
     ) as MemberFilters;
     const params = writeFilters(every);
-    for (const key of MEMBER_FILTER_KEYS) expect(params.get(key)).toBe(`v-${key}`);
+    for (const key of MEMBER_FILTER_KEYS) expect(params.get(key)).toBe(every[key]);
     expect(readFilters(params)).toEqual(every);
+  });
+
+  it("drops the two narrowings from a link that did not ask for admin entered rows", () => {
+    const read = readFilters(new URLSearchParams("nophone=yes&nocapture=yes"));
+
+    expect(read.origin).toBe("");
+    expect(read.nophone).toBe("");
+    expect(read.nocapture).toBe("");
   });
 
   it("counts what is narrowing the list, for the clear button", () => {
@@ -265,5 +280,52 @@ describe("the years a list actually holds", () => {
   it("lists them newest first, without repeats", () => {
     const members = [2025, 2026, 2025, 2024].map((membershipYear) => member({ membershipYear }));
     expect(membershipYearsPresent(members)).toEqual([2026, 2025, 2024]);
+  });
+});
+
+describe("narrowing to the memberships an admin recorded", () => {
+  const on = (over: Partial<MemberFilters> = {}) => ({ ...NO_FILTERS, ...over });
+  const byAdmin = (over: Partial<FilterableMember> = {}) =>
+    member({ recordedByAdmin: true, paymentProof: "slip.webp", ...over });
+  const bySelf = (over: Partial<FilterableMember> = {}) =>
+    member({ recordedByAdmin: false, paymentProof: "slip.webp", ...over });
+
+  it("keeps every membership when no origin was asked for", () => {
+    expect(matchesFilters(bySelf(), on(), MEMBERSHIP)).toBe(true);
+  });
+
+  it("keeps a membership an admin recorded", () => {
+    expect(matchesFilters(byAdmin(), on({ origin: ADMIN_ORIGIN }), MEMBERSHIP)).toBe(true);
+  });
+
+  it("drops a membership the member signed up for themselves", () => {
+    expect(matchesFilters(bySelf(), on({ origin: ADMIN_ORIGIN }), MEMBERSHIP)).toBe(false);
+  });
+
+  it("narrows again to the ones with no phone number", () => {
+    const filters = on({ origin: ADMIN_ORIGIN, nophone: "yes" });
+
+    expect(matchesFilters(byAdmin({ user: { phone: null } }), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(byAdmin(), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("narrows again to the ones with no payment capture", () => {
+    const filters = on({ origin: ADMIN_ORIGIN, nocapture: "yes" });
+
+    expect(matchesFilters(byAdmin({ paymentProof: null }), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(byAdmin(), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("narrows a set of the first, never a set of its own", () => {
+    const filters = on({ origin: ADMIN_ORIGIN, nocapture: "yes" });
+
+    expect(matchesFilters(bySelf({ paymentProof: null }), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("counts the origin and each narrowing", () => {
+    expect(activeFilterCount(on({ origin: ADMIN_ORIGIN }))).toBe(1);
+    expect(activeFilterCount(on({ origin: ADMIN_ORIGIN, nophone: "yes", nocapture: "yes" }))).toBe(
+      3,
+    );
   });
 });

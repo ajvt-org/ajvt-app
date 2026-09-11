@@ -6,7 +6,7 @@ import { paidOn } from "@/lib/donationFields";
 const INVALID = common.invalidBody;
 
 export const memberPaymentSchema = z.object({
-  amountTransferred: z.union([z.number(), z.null()]).optional(),
+  amountTransferred: z.number(INVALID).int(INVALID).nonnegative(INVALID).optional(),
   paymentMethod: z
     .string(INVALID)
     .refine((v) => v.trim().length > 0, INVALID)
@@ -16,4 +16,5 @@ export const memberPaymentSchema = z.object({
   paymentProof: z.string(INVALID).nullish(),
   bankReference: z.string(INVALID).max(MAX_BANK_REFERENCE, INVALID).nullish(),
   paidOn: paidOn.optional(),
+  membershipDecision: z.enum(["end", "restore"], INVALID).optional(),
 });

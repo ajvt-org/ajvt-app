@@ -31,6 +31,8 @@ export interface Proof {
   receipt?: { number: string; status: string; token?: string } | null;
   paidOn: string | null;
   submittedAt: string;
+  endedAt?: string | null;
+  endedReason?: string | null;
 }
 
 export interface DonationResponse {

@@ -11,7 +11,8 @@ import {
   membershipEdit,
   paymentAccountPicker,
 } from "@/lib/texts";
-import { validatePaidAmount } from "@/lib/donations";
+import { amountConsequence, type AmountConsequence } from "@/lib/membershipShortfall";
+import ConfirmDialogShell from "@/components/ConfirmDialogShell";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import FormField from "@/components/admin/FormField";
@@ -41,23 +42,26 @@ export default function MembershipEditForm({
   const { methods } = usePaymentMethods(form.paymentMethod);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [asking, setAsking] = useState<AmountConsequence>(null);
+
+  const fee = proof.feeApplied ?? null;
+  const year = proof.year ?? 0;
 
   const set = (changes: Partial<typeof form>) => setForm((p) => ({ ...p, ...changes }));
   const field = (name: string) => `membership-${name}-${proof.id}`;
   const accounts = accountsOfMethod(methods, form.paymentMethod);
   const offeredAccounts = withHeldAccount(accounts, proof.account ?? null);
 
-  async function save() {
-    if (!form.amount.trim()) {
-      setError(membershipEdit.amountRequired);
-      return;
-    }
-    const invalid = validatePaidAmount(form.amount);
-    if (invalid) {
-      setError(invalid);
-      return;
-    }
+  function consequenceOf(amount: number): AmountConsequence {
+    if (fee === null) return null;
+    return amountConsequence(amount, fee, {
+      status: proof.status,
+      endedAt: proof.endedAt ?? null,
+      endedReason: proof.endedReason ?? null,
+    });
+  }
 
+  async function send(decision?: "end" | "restore") {
     setError("");
     setSaving(true);
     try {
@@ -67,13 +71,36 @@ export default function MembershipEditForm({
         accountId: form.accountId || null,
         bankReference: form.bankReference.trim() || null,
         paidOn: form.paidOn || null,
+        ...(decision ? { membershipDecision: decision } : {}),
       });
+      setAsking(null);
       onSaved();
     } catch (e) {
+      setAsking(null);
       setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
+  }
+
+  async function save() {
+    if (!form.amount.trim()) {
+      setError(membershipEdit.amountRequired);
+      return;
+    }
+    const amount = Number(form.amount);
+    if (!Number.isInteger(amount) || amount < 0) {
+      setError(membershipEdit.amountRequired);
+      return;
+    }
+
+    const consequence = consequenceOf(amount);
+    if (consequence) {
+      setError("");
+      setAsking(consequence);
+      return;
+    }
+    await send();
   }
 
   return (
@@ -93,6 +120,11 @@ export default function MembershipEditForm({
             className="input text-xs"
             style={FIELD}
           />
+          {fee !== null && (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {membershipEdit.feeOnThisPayment(fee)}
+            </p>
+          )}
         </FormField>
 
         <FormField id={field("paid-on")} label={membershipEdit.paidOn} compact>
@@ -173,6 +205,46 @@ export default function MembershipEditForm({
           {membershipEdit.cancel}
         </button>
       </div>
+
+      {asking === "endable" && (
+        <ConfirmDialogShell title={membershipEdit.shortfallTitle} onClose={() => setAsking(null)}>
+          <p className="text-sm" style={{ color: "var(--text-main)" }}>
+            {membershipEdit.shortfallConsequence(proof.memberName, year)}
+          </p>
+          <button
+            onClick={() => send("end")}
+            disabled={saving}
+            className="btn w-full text-sm font-bold"
+            style={{ background: "#fee2e2", color: "#991b1b" }}
+          >
+            {membershipEdit.shortfallProceed}
+          </button>
+        </ConfirmDialogShell>
+      )}
+
+      {asking === "restorable" && (
+        <ConfirmDialogShell title={membershipEdit.restoreTitle} onClose={() => setAsking(null)}>
+          <p className="text-sm" style={{ color: "var(--text-main)" }}>
+            {membershipEdit.restoreOffer(proof.memberName, year)}
+          </p>
+          <button
+            onClick={() => send("restore")}
+            disabled={saving}
+            className="btn w-full text-sm font-bold"
+            style={PRIMARY}
+          >
+            {membershipEdit.restoreProceed}
+          </button>
+          <button
+            onClick={() => send()}
+            disabled={saving}
+            className="btn w-full text-sm font-bold"
+            style={QUIET}
+          >
+            {membershipEdit.restoreDecline}
+          </button>
+        </ConfirmDialogShell>
+      )}
     </div>
   );
 }

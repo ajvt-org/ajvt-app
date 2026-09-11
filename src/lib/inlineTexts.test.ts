@@ -5,6 +5,7 @@ import { join } from "node:path";
 const ARABIC = /[؀-ۿ]/;
 
 const KEPT_CLEAN = [
+  "src/app/admin/payments/MembershipEditForm.tsx",
   "src/app/(member)/donate/page.tsx",
   "src/components/DonorNameChoice.tsx",
   "src/app/forgot-password/page.tsx",
@@ -33,7 +34,6 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/askQuestion.ts",
   "src/app/admin/members/[id]/AccountPhoneForm.tsx",
   "src/app/admin/members/[id]/MemberEditForm.tsx",
-  "src/app/admin/members/[id]/YearAmountForm.tsx",
   "src/app/admin/members/[id]/SupportPrivacyCard.tsx",
   "src/app/admin/payments/DonationActions.tsx",
   "src/app/admin/payments/DonationEditForm.tsx",
@@ -314,6 +314,7 @@ const KEPT_CLEAN = [
   "src/app/admin/expenses/ByPaymentMethod.tsx",
   "src/app/admin/payments/proof-check",
   "src/app/api/admin/proof-check/route.ts",
+  "src/app/admin/dashboard/FilterChips.tsx",
 ];
 
 function sourceFiles(path: string): string[] {

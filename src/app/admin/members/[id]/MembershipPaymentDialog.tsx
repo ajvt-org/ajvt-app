@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
 import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
 import Sheet from "@/components/Sheet";
 import MembershipActions from "@/app/admin/payments/MembershipActions";
+import MembershipEditForm from "@/app/admin/payments/MembershipEditForm";
+import type { Proof } from "@/app/admin/payments/paymentTypes";
 import { toThumbUrl } from "@/lib/utils";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
 import { membershipSummary as texts } from "@/lib/texts";
@@ -18,6 +22,27 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <dd className="font-bold">{children}</dd>
     </div>
   );
+}
+
+function blankPayment(member: MemberProfile["member"]): Proof {
+  return {
+    id: member.id,
+    kind: "MEMBERSHIP",
+    proof: member.paymentProof,
+    memberName: member.fullName,
+    activityTitle: null,
+    amount: null,
+    feeApplied: null,
+    year: member.membershipYear,
+    status: member.status,
+    paymentMethod: member.paymentMethod,
+    accountId: member.accountId,
+    account: member.account,
+    bankReference: null,
+    userId: member.id,
+    paidOn: member.paymentPaidOn,
+    submittedAt: member.paymentRecordedAt ?? member.createdAt,
+  };
 }
 
 export default function MembershipPaymentDialog({
@@ -40,6 +65,7 @@ export default function MembershipPaymentDialog({
     currentYear,
   );
   const paid = (member.paidAmount ?? 0) + member.supportAmount;
+  const [recording, setRecording] = useState(false);
 
   return (
     <Sheet onClose={onClose}>
@@ -94,6 +120,35 @@ export default function MembershipPaymentDialog({
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             <PaymentDateLine paidOn={member.paymentPaidOn} recordedAt={member.paymentRecordedAt} />
           </p>
+        )}
+
+        {member.paidAmount === null ? (
+          <div className="space-y-2">
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {texts.noPaymentYet}
+            </p>
+            {recording ? (
+              <MembershipEditForm
+                proof={blankPayment(member)}
+                onCancel={() => setRecording(false)}
+                onSaved={() => {
+                  setRecording(false);
+                  onChanged();
+                }}
+              />
+            ) : (
+              <button onClick={() => setRecording(true)} className="btn btn-sm btn-ghost font-bold">
+                <IconLabel name="save">{texts.recordPayment}</IconLabel>
+              </button>
+            )}
+          </div>
+        ) : (
+          <Link
+            href={`/admin/payments?focus=${encodeURIComponent(member.id)}`}
+            className="btn btn-sm btn-ghost font-bold"
+          >
+            <IconLabel name="list">{texts.openOnPayments}</IconLabel>
+          </Link>
         )}
 
         <MembershipActions

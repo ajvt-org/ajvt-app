@@ -107,15 +107,21 @@ async function membershipProofPayments() {
   );
 }
 
-async function membershipTimes(userIds: string[]) {
-  const times = new Map<string, Date>();
-  if (userIds.length === 0) return times;
+interface MembershipYearRow {
+  createdAt: Date;
+  endedAt: Date | null;
+  endedReason: string | null;
+}
+
+async function membershipYears(userIds: string[]) {
+  const years = new Map<string, MembershipYearRow>();
+  if (userIds.length === 0) return years;
   const rows = await prisma.membership.findMany({
     where: { userId: { in: userIds } },
-    select: { userId: true, year: true, createdAt: true },
+    select: { userId: true, year: true, createdAt: true, endedAt: true, endedReason: true },
   });
-  for (const row of rows) times.set(yearKey(row.userId, row.year), row.createdAt);
-  return times;
+  for (const row of rows) years.set(yearKey(row.userId, row.year), row);
+  return years;
 }
 
 async function membershipSupport(userIds: string[]): Promise<Map<string, number>> {
@@ -176,15 +182,15 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
 
   const current = [...latestByAccount(memberships).values()];
   const userIds = current.map((m) => m.userId);
-  const [support, times, seenTwice] = await Promise.all([
+  const [support, years, seenTwice] = await Promise.all([
     membershipSupport(userIds),
-    membershipTimes(userIds),
+    membershipYears(userIds),
     repeatedReferences(),
   ]);
 
   const proofs = [
     ...current.map((m) => {
-      const recorded = times.get(yearKey(m.userId, m.year));
+      const year = years.get(yearKey(m.userId, m.year));
       return {
         id: m.userId,
         kind: "MEMBERSHIP" as const,
@@ -202,7 +208,9 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
         year: m.year,
         status: m.status,
         paidOn: m.paidOn,
-        submittedAt: recorded ?? m.createdAt,
+        submittedAt: year?.createdAt ?? m.createdAt,
+        endedAt: year?.endedAt ?? null,
+        endedReason: year?.endedReason ?? null,
         named: seesPaymentIdentity(viewer, {
           userId: m.userId,
           user: m.user,

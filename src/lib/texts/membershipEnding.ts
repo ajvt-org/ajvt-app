@@ -1,5 +1,8 @@
+export const AMOUNT_BELOW_FEE = "صُحّح المبلغ إلى أقل من رسوم الانتساب";
+
 export const MEMBERSHIP_ENDING_REASONS = [
   "استُرجعت رسوم الانتساب",
+  AMOUNT_BELOW_FEE,
   "مخالفة النظام الداخلي",
 ] as const;
 

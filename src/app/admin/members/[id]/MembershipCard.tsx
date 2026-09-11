@@ -11,7 +11,6 @@ import MembershipEnding, { EndedRows } from "./MembershipEnding";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
 import MembershipYears from "./MembershipYears";
 import RenewForm from "./RenewForm";
-import YearAmountForm from "./YearAmountForm";
 import type { MembershipHistory } from "./membershipTypes";
 
 function fetchHistory(memberId: string): Promise<MembershipHistory | null> {
@@ -49,7 +48,6 @@ export default function MembershipCard({
     },
     currentYear,
   );
-  const paidYear = history?.memberships.find((y) => y.year === history.currentYear);
 
   return (
     <ProfileSection icon="card" title={texts.title}>
@@ -88,17 +86,6 @@ export default function MembershipCard({
       </div>
 
       {history && <MembershipYears years={history.memberships} currentYear={history.currentYear} />}
-
-      {history?.refusal === "alreadyRenewed" && (
-        <YearAmountForm
-          memberId={member.id}
-          year={history.currentYear}
-          amount={
-            paidYear?.paidAmount == null ? null : paidYear.paidAmount + paidYear.supportAmount
-          }
-          onSaved={refresh}
-        />
-      )}
 
       {history && !history.refusal && (
         <RenewForm memberId={member.id} year={history.currentYear} onRenewed={refresh} />

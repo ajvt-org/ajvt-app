@@ -2,7 +2,7 @@
 
 import FilterChipRow, { type FilterChip } from "@/components/admin/filters/FilterChipRow";
 import { filterSheet } from "@/lib/texts";
-import { NO_FILTERS, type MemberFilters } from "@/lib/memberFilters";
+import { ADMIN_ORIGIN, NO_FILTERS, type MemberFilters } from "@/lib/memberFilters";
 
 const PAID_LABEL: Record<string, string> = {
   full: filterSheet.paidFull,
@@ -11,8 +11,8 @@ const PAID_LABEL: Record<string, string> = {
 };
 
 export function standingLabel(standing: string, year: number): string | null {
-  if (standing === "current") return `حالي ${year}`;
-  if (standing === "former") return `سابق ${year}`;
+  if (standing === "current") return filterSheet.standingCurrent(year);
+  if (standing === "former") return filterSheet.standingFormer(year);
   return null;
 }
 
@@ -28,6 +28,10 @@ function chipsFor(filters: MemberFilters, year: number): FilterChip[] {
   if (filters.to) chips.push({ key: "to", label: `${filterSheet.to} ${filters.to}` });
   const standing = standingLabel(filters.standing, year);
   if (standing) chips.push({ key: "standing", label: standing });
+  if (filters.origin === ADMIN_ORIGIN)
+    chips.push({ key: "origin", label: filterSheet.originAdmin });
+  if (filters.nophone) chips.push({ key: "nophone", label: filterSheet.noPhone });
+  if (filters.nocapture) chips.push({ key: "nocapture", label: filterSheet.noCapture });
   return chips;
 }
 
@@ -46,7 +50,13 @@ export default function FilterChips({
     <FilterChipRow
       chips={chipsFor(filters, year)}
       resultCount={resultCount}
-      onRemove={(key) => onChange({ ...filters, [key]: "" })}
+      onRemove={(key) =>
+        onChange(
+          key === "origin"
+            ? { ...filters, origin: "", nophone: "", nocapture: "" }
+            : { ...filters, [key]: "" },
+        )
+      }
       onClear={() => onChange({ ...NO_FILTERS, status: filters.status, q: filters.q })}
     />
   );
