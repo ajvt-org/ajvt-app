@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Icon from "@/components/Icon";
 import VerbButton from "@/components/admin/VerbButton";
-import { GRAVE, LEAD, RISKY, SAFE } from "@/components/admin/verbTones";
+import EditRecordButton from "@/components/admin/EditRecordButton";
+import { GRAVE, RISKY, SAFE } from "@/components/admin/verbTones";
 import TempPasswordBox from "@/components/admin/TempPasswordBox";
 import { api, errorMessage } from "@/lib/api";
 import { DETAIL_SEPARATOR, personDetails } from "@/lib/personDetails";
@@ -125,10 +126,10 @@ export default function MemberIdentityCard({
 
       <div className="flex items-center gap-x-4 gap-y-2 mt-3">
         <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2">
-          <VerbButton
-            icon={editing ? "close" : "pencil"}
-            label={editing ? memberPage.cancel : memberPage.edit}
-            tone={LEAD}
+          <EditRecordButton
+            label={memberPage.edit}
+            closeLabel={memberPage.cancel}
+            open={editing}
             onClick={onToggleEdit}
           />
           {userId &&

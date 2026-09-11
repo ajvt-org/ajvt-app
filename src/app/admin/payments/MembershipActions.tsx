@@ -6,6 +6,7 @@ import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import MemberProofButton from "@/components/admin/MemberProofButton";
 import MemberProofPanel from "@/components/admin/MemberProofPanel";
 import VerbButton from "@/components/admin/VerbButton";
+import EditRecordButton from "@/components/admin/EditRecordButton";
 import { GRAVE, LEAD, RISKY } from "@/components/admin/verbTones";
 import { api, errorMessage } from "@/lib/api";
 import { deleteMember, memberDecision as texts, membershipEdit } from "@/lib/texts";
@@ -115,10 +116,8 @@ export default function MembershipActions({
               />
             )}
             {payment && (
-              <VerbButton
-                icon="pencil"
+              <EditRecordButton
                 label={membershipEdit.open}
-                tone={LEAD}
                 disabled={busy}
                 onClick={() => setEditing((open) => !open)}
               />

@@ -3,6 +3,7 @@ import { POST as END, DELETE as RESTORE } from "@/app/api/admin/members/[id]/end
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
 import { POST as SUBMIT } from "@/app/api/members/route";
 import { prisma } from "@/lib/prisma";
+import { MAX_ENDING_REASON } from "@/lib/membershipEnding";
 import {
   resetDb,
   post,
@@ -38,7 +39,7 @@ async function acceptedMember(phone?: string) {
   return membership;
 }
 
-function end(userId: string, reason = REIMBURSED) {
+function end(userId: string, reason: string = REIMBURSED) {
   return END(post(`/api/admin/members/${userId}/end-membership`, { reason }), withId(userId));
 }
 
@@ -82,10 +83,31 @@ describe("ending a membership", () => {
     expect(payment.status).toBe("ACTIVE");
   });
 
-  it("refuses a reason a proof is turned down for", async () => {
+  it("takes a reason the list does not name and stores it as it was written", async () => {
+    const membership = await acceptedMember();
+    const written = "سبب لا تسميه القائمة";
+
+    const response = await end(membership.userId, written);
+
+    expect(response.status).toBe(200);
+    const row = await prisma.membership.findUniqueOrThrow({ where: { id: membership.id } });
+    expect(row.endedReason).toBe(written);
+  });
+
+  it("refuses a written reason that says nothing", async () => {
     const membership = await acceptedMember();
 
-    const response = await end(membership.userId, "الصورة غير واضحة");
+    const response = await end(membership.userId, "   ");
+
+    expect(response.status).toBe(400);
+    const row = await prisma.membership.findUniqueOrThrow({ where: { id: membership.id } });
+    expect(row.endedAt).toBeNull();
+  });
+
+  it("refuses a written reason longer than a card can carry", async () => {
+    const membership = await acceptedMember();
+
+    const response = await end(membership.userId, "ب".repeat(MAX_ENDING_REASON + 1));
 
     expect(response.status).toBe(400);
     const row = await prisma.membership.findUniqueOrThrow({ where: { id: membership.id } });

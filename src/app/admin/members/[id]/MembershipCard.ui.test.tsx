@@ -29,6 +29,7 @@ type Member = MemberProfile["member"];
 
 const NO_YEARS: MembershipHistory = {
   memberships: [],
+  endings: [],
   currentYear: 2026,
   refusal: "underReview",
 };
@@ -214,6 +215,81 @@ describe("one card for one membership year", () => {
     expect(screen.getByText("eminyous")).toBeTruthy();
     expect(screen.getByRole("button", { name: new RegExp(membershipEnding.restore) })).toBeTruthy();
     expect(screen.queryByRole("button", { name: new RegExp(membershipEnding.end) })).toBeNull();
+  });
+
+  it("keeps an ending on the card after it has been brought back", async () => {
+    historyLands(
+      historyOf({
+        endings: [
+          {
+            year: 2026,
+            reason: "مخالفة النظام الداخلي",
+            endedAt: "2026-09-01T00:00:00.000Z",
+            endedBy: "amina",
+            restoredAt: "2026-09-05T00:00:00.000Z",
+            restoredBy: "brahim",
+          },
+        ],
+      }),
+    );
+    show({ status: "ACTIVE" });
+
+    await waitFor(() => expect(screen.getByText(membershipEnding.broughtBack)).toBeTruthy());
+    expect(screen.getByText("مخالفة النظام الداخلي")).toBeTruthy();
+    expect(screen.getByText("2026/09/01")).toBeTruthy();
+    expect(screen.getByText("amina")).toBeTruthy();
+    expect(screen.getByText("2026/09/05")).toBeTruthy();
+    expect(screen.getByText("brahim")).toBeTruthy();
+  });
+
+  it("keeps both endings legible where a membership was ended twice", async () => {
+    historyLands(
+      historyOf({
+        endings: [
+          {
+            year: 2026,
+            reason: "الأول",
+            endedAt: "2026-07-01T00:00:00.000Z",
+            endedBy: "amina",
+            restoredAt: "2026-07-10T00:00:00.000Z",
+            restoredBy: "amina",
+          },
+          {
+            year: 2026,
+            reason: "الثاني",
+            endedAt: "2026-09-01T00:00:00.000Z",
+            endedBy: "brahim",
+            restoredAt: "2026-09-05T00:00:00.000Z",
+            restoredBy: "brahim",
+          },
+        ],
+      }),
+    );
+    show({ status: "ACTIVE" });
+
+    await waitFor(() => expect(screen.getByText("الثاني")).toBeTruthy());
+    expect(screen.getByText("الأول")).toBeTruthy();
+  });
+
+  it("leaves out an ending of another year", async () => {
+    historyLands(
+      historyOf({
+        endings: [
+          {
+            year: 2025,
+            reason: "سنة أخرى",
+            endedAt: "2025-09-01T00:00:00.000Z",
+            endedBy: "amina",
+            restoredAt: "2025-09-05T00:00:00.000Z",
+            restoredBy: "amina",
+          },
+        ],
+      }),
+    );
+    show({ status: "ACTIVE" });
+
+    await waitFor(() => expect(screen.getByText(texts.states.UP_TO_DATE)).toBeTruthy());
+    expect(screen.queryByText(membershipEnding.broughtBack)).toBeNull();
   });
 
   it("reads a membership that never became one, with nothing to end", () => {

@@ -4,6 +4,7 @@ import {
   canRestore,
   endingRefusal,
   isEndingReason,
+  MAX_ENDING_REASON,
   restoreRefusal,
 } from "./membershipEnding";
 import { MEMBERSHIP_ENDING_REASONS } from "./texts";
@@ -16,17 +17,32 @@ describe("isEndingReason", () => {
     }
   });
 
-  it("refuses a reason a proof is turned down for", () => {
-    for (const reason of REJECTION_REASONS) {
-      expect(isEndingReason(reason)).toBe(false);
+  it("keeps every offered reason inside the limit a written one has to meet", () => {
+    for (const reason of MEMBERSHIP_ENDING_REASONS) {
+      expect(reason.length).toBeLessThanOrEqual(MAX_ENDING_REASON);
     }
   });
 
-  it("refuses free text and anything that is not a string", () => {
-    expect(isEndingReason("سبب من عندي")).toBe(false);
+  it("takes a reason an admin wrote, since the list cannot name every ending", () => {
+    expect(isEndingReason("سبب من عندي")).toBe(true);
+  });
+
+  it("refuses a written reason that says nothing", () => {
     expect(isEndingReason("")).toBe(false);
+    expect(isEndingReason("   ")).toBe(false);
+    expect(isEndingReason("\n\t")).toBe(false);
+  });
+
+  it("refuses a written reason longer than a card can carry", () => {
+    expect(isEndingReason("ب".repeat(MAX_ENDING_REASON))).toBe(true);
+    expect(isEndingReason("ب".repeat(MAX_ENDING_REASON + 1))).toBe(false);
+  });
+
+  it("refuses anything that is not a string", () => {
     expect(isEndingReason(null)).toBe(false);
+    expect(isEndingReason(undefined)).toBe(false);
     expect(isEndingReason(7)).toBe(false);
+    expect(isEndingReason(["سبب"])).toBe(false);
   });
 });
 

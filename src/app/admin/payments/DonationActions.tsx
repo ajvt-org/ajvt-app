@@ -1,6 +1,7 @@
 "use client";
 
 import VerbButton from "@/components/admin/VerbButton";
+import EditRecordButton from "@/components/admin/EditRecordButton";
 import { GRAVE, LEAD, RISKY, SAFE } from "@/components/admin/verbTones";
 import { donationActions, donationEdit } from "@/lib/texts";
 import PaymentActions from "./PaymentActions";
@@ -85,13 +86,7 @@ export default function DonationActions({
         />
       )}
 
-      <VerbButton
-        icon="pencil"
-        label={donationActions.edit}
-        tone={SAFE}
-        disabled={busy}
-        onClick={onEdit}
-      />
+      <EditRecordButton label={donationActions.edit} disabled={busy} onClick={onEdit} />
       <VerbButton
         icon="tag"
         label={donationActions.classify}
