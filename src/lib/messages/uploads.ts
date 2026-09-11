@@ -6,4 +6,5 @@ export const uploads = {
   cannotConvert: "تعذّرت قراءة هذه الصورة على هذا الجهاز، اختر صورة بصيغة JPG أو PNG",
   processingFailed: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى",
   notYourUpload: "لم يتم التعرف على الصورة، أعد رفعها",
+  unreadableImage: "تعذرت قراءة هذه الصورة",
 } as const;

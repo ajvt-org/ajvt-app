@@ -312,6 +312,8 @@ const KEPT_CLEAN = [
   "src/app/membership/page.tsx",
   "src/app/admin/expenses/ExpenseList.tsx",
   "src/app/admin/expenses/ByPaymentMethod.tsx",
+  "src/app/admin/payments/proof-check",
+  "src/app/api/admin/proof-check/route.ts",
 ];
 
 function sourceFiles(path: string): string[] {

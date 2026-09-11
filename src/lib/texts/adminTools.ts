@@ -5,6 +5,7 @@ export const adminTools = {
   auditLog: "سجل الإجراءات",
   broadcast: "إرسال إشعار جماعي",
   deleted: "سلة المحذوفات",
+  proofCheck: "فحص كابتير",
 } as const;
 
 export const deletedRecords = {

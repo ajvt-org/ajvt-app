@@ -143,6 +143,7 @@ export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";
 export { playersTab } from "./playersTab";
 export { proofUpload } from "./proofUpload";
+export { proofCheck } from "./proofCheck";
 export { matchDisplay, publicTournament } from "./publicTournament";
 export { seriesResult } from "./seriesResult";
 export { seriesUnits } from "./seriesUnits";

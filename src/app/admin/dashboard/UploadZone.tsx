@@ -9,6 +9,7 @@ export default function UploadZone({
   preview,
   alt,
   uploading,
+  busyLabel = manualAdd.uploading,
   onPick,
 }: {
   label: string;
@@ -16,6 +17,7 @@ export default function UploadZone({
   preview: string | null;
   alt: string;
   uploading: boolean;
+  busyLabel?: string;
   onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
@@ -29,7 +31,7 @@ export default function UploadZone({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt={alt} className="max-h-32 mx-auto rounded-xl object-contain" />
             <p className="mt-1 text-xs text-center" style={{ color: "var(--mint-600)" }}>
-              {uploading ? manualAdd.uploading : manualAdd.imageChange}
+              {uploading ? busyLabel : manualAdd.imageChange}
             </p>
           </div>
         ) : (
