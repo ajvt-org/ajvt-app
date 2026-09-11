@@ -228,7 +228,8 @@ describe("what the support tab counts as support", () => {
     memberName: "محمد ولد أحمد",
     activityTitle: null,
     amount: 2000,
-    supportAmount: 1000,
+    feeApplied: 1000,
+    year: 2026,
     status: "ACTIVE",
     paidOn: null,
     submittedAt: "2026-08-01T09:00:00.000Z",
@@ -242,7 +243,7 @@ describe("what the support tab counts as support", () => {
   });
 
   it("does not call a membership payment at the fee a supporter", () => {
-    expect(isMembershipSurplus(membership({ supportAmount: 0 }))).toBe(false);
+    expect(isMembershipSurplus(membership({ feeApplied: 2000 }))).toBe(false);
   });
 
   it("shows the surplus under the support tab", () => {
@@ -250,7 +251,7 @@ describe("what the support tab counts as support", () => {
   });
 
   it("leaves a membership payment at the fee off the support tab", () => {
-    expect(matchesPaymentsFilters(membership({ supportAmount: 0 }), on({ kind: "DONATION" }))).toBe(
+    expect(matchesPaymentsFilters(membership({ feeApplied: 2000 }), on({ kind: "DONATION" }))).toBe(
       false,
     );
   });
@@ -264,7 +265,7 @@ describe("what the support tab counts as support", () => {
   });
 
   it("keeps a support payment off the membership tab", () => {
-    const donation = membership({ kind: "DONATION", supportAmount: undefined });
+    const donation = membership({ kind: "DONATION", feeApplied: undefined });
     expect(matchesPaymentsFilters(donation, on({ kind: "MEMBERSHIP" }))).toBe(false);
   });
 });
