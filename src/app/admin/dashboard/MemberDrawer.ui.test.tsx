@@ -26,6 +26,7 @@ function member(over: Partial<Member> = {}): Member {
     photo: null,
     paidAmount: 100,
     supportAmount: 400,
+    recordedByAdmin: false,
     status: "PENDING",
     rejectionReason: null,
     endedAt: null,
