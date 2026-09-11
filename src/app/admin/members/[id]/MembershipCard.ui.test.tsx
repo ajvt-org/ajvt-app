@@ -5,6 +5,7 @@ import MembershipCard from "./MembershipCard";
 import {
   deleteMember,
   memberDecision,
+  membershipEdit,
   membershipEnding,
   membershipSummary as texts,
   renewForm,
@@ -118,6 +119,24 @@ describe("reading one member's membership payment", () => {
     await open();
 
     expect(screen.getByText(texts.paymentTitle)).toBeTruthy();
+  });
+
+  it("sends the admin on to the payment where the amount is edited", async () => {
+    await open();
+
+    const link = screen.getByRole("link", { name: new RegExp(texts.openOnPayments) });
+    expect(link.getAttribute("href")).toBe("/admin/payments?focus=u1");
+  });
+
+  it("offers to record a payment the membership never had", async () => {
+    await open({ paidAmount: null, supportAmount: 0 });
+
+    expect(screen.getByText(texts.noPaymentYet)).toBeTruthy();
+    expect(screen.queryByRole("link", { name: new RegExp(texts.openOnPayments) })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(texts.recordPayment) }));
+
+    expect(screen.getByLabelText(membershipEdit.amount)).toBeTruthy();
   });
 
   it("carries the verbs that act on the payment", async () => {
@@ -245,12 +264,13 @@ describe("one card for the standing and the years", () => {
     );
   });
 
-  it("offers the amount instead where the year is already paid", async () => {
+  it("offers no amount box where the year is already paid", async () => {
     historyLands(historyOf({ refusal: "alreadyRenewed", memberships: [yearOf({ year: 2026 })] }));
     show({ status: "ACTIVE" });
 
-    await waitFor(() => expect(screen.getByLabelText("المبلغ المسدد")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("2026")).toBeTruthy());
     expect(screen.queryByRole("button", { name: new RegExp(renewForm.renew(2026)) })).toBeNull();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 
   it("offers neither form, and no reason, where renewal is refused", async () => {
@@ -259,27 +279,6 @@ describe("one card for the standing and the years", () => {
 
     await waitFor(() => expect(screen.getByText("2025")).toBeTruthy());
     expect(screen.queryByRole("button", { name: new RegExp(renewForm.renew(2026)) })).toBeNull();
-    expect(screen.queryByLabelText("المبلغ المسدد")).toBeNull();
-  });
-
-  it("asks the page and the years again once an amount is saved", async () => {
-    const onChanged = vi.fn();
-    historyLands(historyOf({ refusal: "alreadyRenewed", memberships: [yearOf({ year: 2026 })] }));
-    render(
-      <MembershipCard
-        member={memberOf({ status: "ACTIVE" })}
-        currentYear={2026}
-        onChanged={onChanged}
-      />,
-    );
-
-    await waitFor(() => expect(screen.getByLabelText("المبلغ المسدد")).toBeTruthy());
-    const asked = () => get.mock.calls.filter((c) => String(c[0]).includes("/memberships")).length;
-    const before = asked();
-
-    await userEvent.click(screen.getByRole("button", { name: /حفظ/ }));
-
-    await waitFor(() => expect(onChanged).toHaveBeenCalled());
-    expect(asked()).toBeGreaterThan(before);
+    expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 });
