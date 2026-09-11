@@ -40,7 +40,7 @@ import MemberSearch from "./MemberSearch";
 import FilterSheet from "./FilterSheet";
 import FilterChips from "./FilterChips";
 import UpToDateSummary from "./UpToDateSummary";
-import { useMembershipSettings } from "./useMembershipSettings";
+import { useMembershipSettings } from "@/components/admin/useMembershipSettings";
 import BulkActionsBar from "./BulkActionsBar";
 import MemberList from "./MemberList";
 import BareAccountsSection from "./BareAccountsSection";
@@ -409,6 +409,7 @@ function AdminDashboardInner() {
       {showManualAdd && (
         <ManualAddDialog
           ageGroups={ageGroups}
+          membershipFee={membership.configuredFee}
           payFor={payFor}
           onCreated={async () => {
             await fetchMembers();
