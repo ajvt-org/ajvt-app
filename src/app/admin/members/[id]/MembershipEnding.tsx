@@ -8,15 +8,13 @@ import { api, errorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/clubTime";
 import { membershipEnding as texts, MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
 
-export function EndedRows({
-  endedAt,
-  endedReason,
-  endedBy,
-}: {
+export interface Ended {
   endedAt: string;
   endedReason: string | null;
   endedBy: string | null;
-}) {
+}
+
+export function EndedRows({ endedAt, endedReason, endedBy }: Ended) {
   return (
     <>
       <Row label={texts.endedReason} value={endedReason ?? "—"} />
@@ -39,22 +37,22 @@ export default function MembershipEnding({
   memberId,
   memberName,
   year,
-  ended,
+  ending,
   onChanged,
 }: {
   memberId: string;
   memberName: string;
   year: number;
-  ended: boolean;
+  ending: Ended | null;
   onChanged: () => void;
 }) {
-  const [picking, setPicking] = useState(false);
+  const [asking, setAsking] = useState<"end" | "restore" | null>(null);
   const [reason, setReason] = useState<string>(MEMBERSHIP_ENDING_REASONS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   function close() {
-    setPicking(false);
+    setAsking(null);
     setError("");
   }
 
@@ -63,7 +61,7 @@ export default function MembershipEnding({
     setError("");
     try {
       await call;
-      setPicking(false);
+      setAsking(null);
       onChanged();
     } catch (e) {
       setError(errorMessage(e));
@@ -76,17 +74,17 @@ export default function MembershipEnding({
 
   return (
     <>
-      {ended ? (
+      {ending ? (
         <button
-          onClick={() => run(api.del(`/api/admin/members/${memberId}/end-membership`))}
+          onClick={() => setAsking("restore")}
           disabled={busy}
           className="btn btn-sm btn-ghost font-bold"
         >
-          {busy ? "..." : <IconLabel name="refresh">{texts.restore}</IconLabel>}
+          <IconLabel name="refresh">{texts.restore}</IconLabel>
         </button>
       ) : (
         <button
-          onClick={() => setPicking(true)}
+          onClick={() => setAsking("end")}
           disabled={busy}
           className="btn btn-sm btn-danger font-bold"
         >
@@ -94,9 +92,9 @@ export default function MembershipEnding({
         </button>
       )}
 
-      {!picking && notice}
+      {!asking && notice}
 
-      {picking && (
+      {asking === "end" && (
         <ConfirmDialogShell title={texts.endTitle} onClose={close}>
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
             {texts.endSubject(memberName, year)}
@@ -131,6 +129,34 @@ export default function MembershipEnding({
             className="btn btn-danger w-full text-sm font-bold disabled:opacity-40"
           >
             {busy ? "..." : texts.endConfirm}
+          </button>
+
+          {notice}
+        </ConfirmDialogShell>
+      )}
+
+      {asking === "restore" && ending && (
+        <ConfirmDialogShell title={texts.restoreTitle} onClose={close}>
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            {texts.restoreSubject(memberName, year)}
+          </p>
+
+          <div className="space-y-1">
+            <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+              {texts.restoreUndoes}
+            </p>
+            <dl className="text-sm space-y-1">
+              <EndedRows {...ending} />
+            </dl>
+          </div>
+
+          <button
+            onClick={() => run(api.del(`/api/admin/members/${memberId}/end-membership`))}
+            disabled={busy}
+            className="btn w-full text-sm font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-600)", color: "white" }}
+          >
+            {busy ? "..." : texts.restoreConfirm}
           </button>
 
           {notice}
