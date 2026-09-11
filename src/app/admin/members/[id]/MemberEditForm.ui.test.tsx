@@ -1,21 +1,15 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import MemberEditForm from "./MemberEditForm";
 import { answering } from "@tests/ui/paymentMethods";
-import { memberEdit, paymentAccountPicker } from "@/lib/texts";
 
 const member = {
   id: "m1",
   fullName: "محمد ولد أحمد",
   age: "البدريين" as string | null,
   village: HOME_VILLAGE,
-  paymentMethod: "بنكيلي",
-  accountId: null as string | null,
-  account: null as { id: string; code: string; label: string | null } | null,
-  paidAmount: 100,
-  supportAmount: 0,
   photo: null,
 };
 
@@ -56,26 +50,35 @@ describe("MemberEditForm", () => {
     expect((screen.getByLabelText("العصر") as HTMLSelectElement).value).toBe("عصر محذوف");
   });
 
-  it("sends the corrected age group and payment method", async () => {
+  it("sends the corrected age group", async () => {
     const fetchMock = mockFetch();
     const { onSaved } = setup();
     await waitFor(() => expect(screen.getByRole("option", { name: "الفائزين" })).toBeDefined());
 
     await userEvent.selectOptions(screen.getByLabelText("العصر"), "الفائزين");
-    await userEvent.selectOptions(screen.getByLabelText("طريقة الدفع"), "السداد");
     await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const patchCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PATCH");
     expect(patchCall?.[0]).toBe("/api/admin/members/m1");
-    const putCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PUT");
-    expect(putCall?.[0]).toBe("/api/admin/members/m1/payment");
-    expect(JSON.parse(String(putCall![1]?.body))).toMatchObject({ paymentMethod: "السداد" });
     expect(JSON.parse(String(patchCall![1]?.body))).toMatchObject({
       age: "الفائزين",
       fullName: "محمد ولد أحمد",
     });
-    expect(JSON.parse(String(patchCall![1]?.body))).not.toHaveProperty("paidAmount");
+  });
+
+  it("no longer offers or writes the payment", async () => {
+    const fetchMock = mockFetch();
+    const { onSaved } = setup();
+    await waitFor(() => expect(screen.getByRole("option", { name: "الفائزين" })).toBeDefined());
+
+    expect(screen.queryByLabelText(/المبلغ المسدد/)).toBeNull();
+    expect(screen.queryByLabelText("طريقة الدفع")).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PUT")).toBe(false);
   });
 
   it("refuses to save an empty name", async () => {
@@ -146,44 +149,5 @@ describe("MemberEditForm", () => {
 
     expect(screen.getByText(/يرجى اختيار العصر/)).toBeDefined();
     expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PATCH")).toBe(false);
-  });
-
-  it("refuses an amount below the membership fee", async () => {
-    const fetchMock = mockFetch();
-    setup();
-
-    const amount = screen.getByLabelText(/المبلغ المسدد/);
-    await userEvent.clear(amount);
-    await userEvent.type(amount, "10");
-    await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
-
-    expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PATCH")).toBe(false);
-  });
-});
-
-describe("the number a membership payment landed in", () => {
-  it("is offered for the method the record holds", async () => {
-    mockFetch();
-    setup();
-
-    const picker = await screen.findByLabelText(paymentAccountPicker.label);
-    expect(within(picker).getByText("111111")).toBeDefined();
-  });
-
-  it("is not offered for a method that receives into none", async () => {
-    mockFetch();
-    setup({ paymentMethod: "نقداً" });
-
-    await screen.findByLabelText(memberEdit.paymentMethodLabel);
-    expect(screen.queryByLabelText(paymentAccountPicker.label)).toBeNull();
-  });
-
-  it("keeps a closed number the record already points at", async () => {
-    mockFetch();
-    setup({ accountId: "old", account: { id: "old", code: "999999", label: null } });
-
-    const picker = (await screen.findByLabelText(paymentAccountPicker.label)) as HTMLSelectElement;
-    expect(picker.value).toBe("old");
-    expect(within(picker).getByText("999999")).toBeDefined();
   });
 });

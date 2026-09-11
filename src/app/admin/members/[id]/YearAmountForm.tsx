@@ -5,7 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { arabicValidity } from "@/lib/validationMessage";
 import IconLabel from "@/components/IconLabel";
-import { memberEdit } from "@/lib/texts/memberAdmin";
+import { memberEdit, yearAmount } from "@/lib/texts/memberAdmin";
 
 export default function YearAmountForm({
   memberId,
@@ -46,11 +46,11 @@ export default function YearAmountForm({
   return (
     <form onSubmit={submit} className="space-y-2">
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {amount === null ? `لم يُسجَّل مبلغ لسنة ${year}` : `تعديل مبلغ سنة ${year}`}
+        {amount === null ? yearAmount.unset(year) : yearAmount.edit(year)}
       </p>
       <div className="flex gap-2">
         <label htmlFor="year-amount" className="sr-only">
-          المبلغ المسدد
+          {yearAmount.amountLabel}
         </label>
         <input
           id="year-amount"
@@ -65,7 +65,7 @@ export default function YearAmountForm({
           {...arabicValidity(memberEdit.feeAtLeast(MEMBERSHIP_FEE))}
         />
         <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
-          <IconLabel name="save">{saving ? "جارٍ الحفظ" : "حفظ"}</IconLabel>
+          <IconLabel name="save">{saving ? yearAmount.saving : yearAmount.save}</IconLabel>
         </button>
       </div>
       {error && (

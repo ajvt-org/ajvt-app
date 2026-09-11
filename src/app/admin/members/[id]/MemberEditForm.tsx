@@ -6,11 +6,6 @@ import IconLabel from "@/components/IconLabel";
 import PickList from "@/components/admin/PickList";
 import { useAdminVillages } from "@/components/admin/useAdminVillages";
 import { api, errorMessage } from "@/lib/api";
-import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
-import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
-import { accountsOfMethod, methodChoiceNames } from "@/lib/paymentMethodChoices";
-import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
-import { paymentAccountPicker } from "@/lib/texts";
 import { uploadFile } from "@/lib/upload";
 import { memberEdit, memberForm, villageField } from "@/lib/texts";
 import { members as memberMessages } from "@/lib/messages";
@@ -21,11 +16,6 @@ type Member = {
   fullName: string;
   age: string | null;
   village: string;
-  paymentMethod: string | null;
-  accountId: string | null;
-  account: { id: string; code: string; label: string | null } | null;
-  paidAmount: number | null;
-  supportAmount: number;
   photo: string | null;
 };
 
@@ -41,12 +31,6 @@ export default function MemberEditForm({
   const [fullName, setFullName] = useState(member.fullName);
   const [age, setAge] = useState(member.age ?? "");
   const [village, setVillage] = useState(member.village);
-  const [paymentMethod, setPaymentMethod] = useState(member.paymentMethod ?? "");
-  const [accountId, setAccountId] = useState(member.accountId ?? "");
-  const { methods } = usePaymentMethods(member.paymentMethod);
-  const [paidAmount, setPaidAmount] = useState(
-    member.paidAmount === null ? "" : String(member.paidAmount + member.supportAmount),
-  );
   const [photo, setPhoto] = useState(member.photo);
   const [ageGroups, setAgeGroups] = useState<string[]>([]);
   const { villages } = useAdminVillages();
@@ -85,11 +69,6 @@ export default function MemberEditForm({
       setError(memberMessages.pickAgeGroup);
       return;
     }
-    const amountError = paidAmount.trim() ? validatePaidAmount(paidAmount) : null;
-    if (amountError) {
-      setError(amountError);
-      return;
-    }
     setSaving(true);
     try {
       await api.patch(`/api/admin/members/${member.id}`, {
@@ -97,11 +76,6 @@ export default function MemberEditForm({
         village,
         age: ageForVillage(village, age),
         photo,
-      });
-      await api.put(`/api/admin/members/${member.id}/payment`, {
-        amountTransferred: paidAmount.trim() ? Number(paidAmount) : null,
-        ...(paymentMethod ? { paymentMethod } : {}),
-        accountId: accountId || null,
       });
       onSaved();
     } catch (err) {
@@ -172,42 +146,6 @@ export default function MemberEditForm({
           placeholder={memberForm.agePlaceholder}
         />
       )}
-
-      <PickList
-        id="edit-method"
-        label={memberEdit.paymentMethodLabel}
-        value={paymentMethod}
-        options={methodChoiceNames(methods)}
-        onChange={(picked) => {
-          setPaymentMethod(picked);
-          setAccountId("");
-        }}
-      />
-
-      <PaymentAccountPicker
-        accounts={accountsOfMethod(methods, paymentMethod)}
-        value={accountId}
-        held={member.account}
-        label={paymentAccountPicker.label}
-        onPick={setAccountId}
-      />
-
-      <div>
-        <label className="block text-xs font-bold mb-1" htmlFor="edit-amount">
-          {memberEdit.paidAmountLabel}
-        </label>
-        <input
-          id="edit-amount"
-          type="number"
-          inputMode="numeric"
-          min={MEMBERSHIP_FEE}
-          value={paidAmount}
-          onChange={(e) => setPaidAmount(e.target.value)}
-          placeholder={String(MEMBERSHIP_FEE)}
-          className="input"
-          dir="ltr"
-        />
-      </div>
 
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>

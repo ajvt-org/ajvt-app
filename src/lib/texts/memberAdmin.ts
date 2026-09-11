@@ -10,3 +10,24 @@ export const memberEdit = {
   uploading: "جاري الرفع...",
   cancel: "إلغاء",
 } as const;
+
+export const yearAmount = {
+  unset: (year: number) => `لم يُسجَّل مبلغ لسنة ${year}`,
+  edit: (year: number) => `تعديل مبلغ سنة ${year}`,
+  amountLabel: "المبلغ المسدد",
+  saving: "جارٍ الحفظ",
+  save: "حفظ",
+} as const;
+
+export const membershipEdit = {
+  open: "تعديل",
+  amount: "المبلغ المسدد (أوقية)",
+  paidOn: "تاريخ الدفع",
+  paymentMethod: "طريقة الدفع",
+  methodUnset: "غير محددة",
+  bankReference: "المرجع البنكي",
+  save: "حفظ",
+  saving: "...",
+  cancel: "إلغاء",
+  amountRequired: "أدخل المبلغ المسدد. لحذف الدفعة استعمل حذف الدفع نهائياً.",
+} as const;
