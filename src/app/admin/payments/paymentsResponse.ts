@@ -39,6 +39,8 @@ export const proofSchema = z.object({
     .optional(),
   paidOn: nullableText,
   submittedAt: z.string(),
+  endedAt: nullableText.optional(),
+  endedReason: nullableText.optional(),
 });
 
 export const memberRowSchema = z.object({
