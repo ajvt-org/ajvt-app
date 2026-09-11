@@ -90,12 +90,14 @@ describe("a proof added after the member was registered", () => {
     expect((await feeOf(member.userId)).proof).toBe("late.webp");
   });
 
-  it("still clears the amount when it is sent as nothing", async () => {
+  it("refuses an amount sent as nothing rather than taking the payment away", async () => {
     const member = await addedByHand();
+    await pay(member.userId, { amountTransferred: 2000 });
 
-    const body = await (await pay(member.userId, { amountTransferred: null })).json();
+    const res = await pay(member.userId, { amountTransferred: null });
 
-    expect(body.amountTransferred).toBeNull();
+    expect(res.status).toBe(400);
+    expect((await feeOf(member.userId)).amount).toBe(2000);
   });
 
   it("refuses an amount under the fee", async () => {

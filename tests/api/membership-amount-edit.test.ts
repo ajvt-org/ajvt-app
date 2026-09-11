@@ -23,7 +23,6 @@ async function memberMissingAmount() {
   return m;
 }
 
-// The amount an admin enters lands on the payment for that year.
 const paidFor = (memberId: string) =>
   prisma.payment.findFirst({
     where: { userId: memberId, purpose: "MEMBERSHIP", year: YEAR },
@@ -167,6 +166,32 @@ describe("correcting a membership payment where it lives", () => {
     expect(row?.amount).toBe(500);
     expect(row?.bankReference).toBe("REF-42");
     expect(row?.paidOn?.toISOString().slice(0, 10)).toBe("2026-08-18");
+  });
+
+  it("refuses an amount sent as nothing at all", async () => {
+    const m = await paid();
+
+    const res = await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: null }),
+      withId(m.userId),
+    );
+
+    expect(res.status).toBe(400);
+    expect((await paidFor(m.userId))?.amount).toBe(200);
+  });
+
+  it("keeps the receipt behind a payment it was asked to empty", async () => {
+    const m = await paid();
+    await syncReceiptsFor(prisma, { userId: m.userId });
+    const before = await prisma.receipt.findFirstOrThrow({ where: { status: "ACTIVE" } });
+
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: null }),
+      withId(m.userId),
+    );
+
+    const after = await prisma.receipt.findFirstOrThrow({ where: { id: before.id } });
+    expect(after.status).toBe("ACTIVE");
   });
 
   it("keeps the receipt in step with the corrected amount", async () => {
