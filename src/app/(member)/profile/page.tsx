@@ -50,6 +50,7 @@ export default function ProfilePage() {
               <SurplusVisibility
                 memberId={member.id}
                 memberName={member.fullName}
+                paidAmount={member.paidAmount}
                 supportAmount={member.supportAmount}
                 anonymous={member.surplusAnonymous}
                 onChanged={(anonymous) =>

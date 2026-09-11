@@ -28,7 +28,6 @@ export const adminSupporters = {
 } as const;
 
 export const surplusCard = {
-  title: "دعمك فوق رسوم الاشتراك",
   hint: (amount: number) =>
     `${money(amount)} تظهر في لوحة شرف المتبرعين. يمكنك تغيير طريقة ظهورها متى شئت.`,
   saved: "تم الحفظ",
