@@ -4,6 +4,11 @@ export const MEMBERSHIP_ENDING_REASONS = [
   "استُرجعت رسوم الانتساب",
   AMOUNT_BELOW_FEE,
   "مخالفة النظام الداخلي",
+  "وفاة",
+  "مغادرة المنطقة",
+  "انسحاب بطلب من العضو",
+  "تسجيل مكرر",
+  "لم تعد شروط العضوية متوفرة",
 ] as const;
 
 export const membershipEnding = {
@@ -13,6 +18,8 @@ export const membershipEnding = {
   endMeaning: "تتوقف العضوية لهذه السنة، ويحتفظ الشخص بحسابه وبسجله كاملاً.",
   endConfirm: "تأكيد الإنهاء",
   reasonLabel: "سبب إنهاء العضوية",
+  otherReason: "سبب آخر",
+  writtenLabel: "اكتب السبب",
   restore: "إرجاع العضوية",
   restoreTitle: "إرجاع العضوية",
   restoreSubject: (name: string, year: number) => `إرجاع عضوية ${name} لسنة ${year}.`,

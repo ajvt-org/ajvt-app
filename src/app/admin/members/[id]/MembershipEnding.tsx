@@ -7,7 +7,10 @@ import Notice from "@/components/Notice";
 import { api, errorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/clubTime";
 import { membershipEnding as texts, MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
+import { MAX_ENDING_REASON } from "@/lib/membershipEnding";
 import type { BroughtBackEnding } from "@/lib/membershipEndingHistory";
+
+const WRITTEN = "";
 
 export interface Ended {
   endedAt: string;
@@ -77,6 +80,7 @@ export default function MembershipEnding({
 }) {
   const [asking, setAsking] = useState<"end" | "restore" | null>(null);
   const [reason, setReason] = useState<string>(MEMBERSHIP_ENDING_REASONS[0]);
+  const [written, setWritten] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -99,6 +103,7 @@ export default function MembershipEnding({
     }
   }
 
+  const picked = reason === WRITTEN ? written.trim() : reason;
   const notice = error ? <Notice tone="error">{error}</Notice> : null;
 
   return (
@@ -147,14 +152,30 @@ export default function MembershipEnding({
                   {r}
                 </option>
               ))}
+              <option value={WRITTEN}>{texts.otherReason}</option>
             </select>
           </div>
 
+          {reason === WRITTEN && (
+            <div className="space-y-2">
+              <label className="block text-xs font-bold" htmlFor="ending-reason-written">
+                {texts.writtenLabel}
+              </label>
+              <input
+                id="ending-reason-written"
+                value={written}
+                onChange={(e) => setWritten(e.target.value)}
+                maxLength={MAX_ENDING_REASON}
+                className="input text-sm"
+              />
+            </div>
+          )}
+
           <button
             onClick={() =>
-              run(api.post(`/api/admin/members/${memberId}/end-membership`, { reason }))
+              run(api.post(`/api/admin/members/${memberId}/end-membership`, { reason: picked }))
             }
-            disabled={busy}
+            disabled={busy || picked.length === 0}
             className="btn btn-danger w-full text-sm font-bold disabled:opacity-40"
           >
             {busy ? "..." : texts.endConfirm}
