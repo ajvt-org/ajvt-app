@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readMoneyDate } from "@/lib/paymentDate";
 import { prisma } from "@/lib/prisma";
 import { requireArea } from "@/lib/auth";
 import { MONEY_AREAS } from "@/lib/adminNav";
@@ -71,7 +72,8 @@ export const PATCH = withRoute(
       data.note = note?.trim() || null;
     }
 
-    if (date !== undefined) data.date = new Date(date as string);
+    const movedOn = readMoneyDate(date);
+    if (movedOn) data.date = movedOn;
 
     const held = (
       await prisma.expenseProof.findMany({

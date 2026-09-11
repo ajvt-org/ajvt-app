@@ -14,7 +14,7 @@ import { memberPaymentSchema } from "./schema";
 import { accountIdError } from "@/lib/paymentAccountsServer";
 import { nameOf } from "@/lib/person";
 import { releaseUploads } from "@/lib/uploadRelease";
-import { readPaidOn } from "@/lib/paymentDate";
+import { readMoneyDate } from "@/lib/paymentDate";
 
 export const PUT = withRoute(
   "PUT /api/admin/members/[id]/payment",
@@ -64,7 +64,7 @@ export const PUT = withRoute(
             bankReference:
               bankReference !== undefined ? bankReference || null : current.bankReference,
             proof: paymentProof !== undefined ? paymentProof : current.paymentProof,
-            ...(paidOn === undefined ? {} : { paidOn: readPaidOn(paidOn) }),
+            ...(paidOn === undefined ? {} : { paidOn: readMoneyDate(paidOn) }),
             referenceCode: current.referenceCode,
             status: current.status,
             reviewedBy: current.reviewedBy,

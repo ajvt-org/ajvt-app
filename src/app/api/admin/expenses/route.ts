@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readMoneyDate } from "@/lib/paymentDate";
 import { prisma } from "@/lib/prisma";
 import { requireArea } from "@/lib/auth";
 import { MONEY_AREAS } from "@/lib/adminNav";
@@ -51,7 +52,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
     ? await resolveShares(allocations, n)
     : [{ ...(await resolveMoneyDestination({ activityId, competitionId })), amount: n }];
   const destination = legacyDestination(shares);
-  const parsedDate = date === undefined || date === null ? new Date() : new Date(date as string);
+  const parsedDate = readMoneyDate(date) ?? new Date();
 
   const wrongAccount = await accountIdError(method, accountId, null);
   if (wrongAccount) return NextResponse.json({ error: wrongAccount }, { status: 400 });

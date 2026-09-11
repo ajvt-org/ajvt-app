@@ -321,6 +321,17 @@ describe("the payment under a hand written receipt", () => {
     expect(payment.paidOn?.toISOString()).toBe(DRAFT.issuedOn);
   });
 
+  it("reads a day with no time on it the way every other payment is read", async () => {
+    await asBoss();
+
+    const { receipt } = await (await issue({ ...DRAFT, issuedOn: "2026-07-14" })).json();
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    const payment = await prisma.payment.findUniqueOrThrow({ where: { id: row.paymentId! } });
+    expect(payment.paidOn?.toISOString()).toBe("2026-07-14T12:00:00.000Z");
+    expect(row.issuedOn.toISOString()).toBe("2026-07-14T12:00:00.000Z");
+  });
+
   it("mirrors it into the support record so every screen sees it", async () => {
     await asBoss();
 

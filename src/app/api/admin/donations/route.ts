@@ -16,7 +16,7 @@ import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import { viewerOf } from "@/lib/supportViewer";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
 import { money } from "@/lib/money";
-import { readPaidOn } from "@/lib/paymentDate";
+import { readMoneyDate } from "@/lib/paymentDate";
 
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
@@ -65,7 +65,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       status: "ACTIVE",
     },
   });
-  const madeOn = readPaidOn(paidOn) ?? new Date();
+  const madeOn = readMoneyDate(paidOn) ?? new Date();
   await mirrorDonation(prisma, donationMirrorOf(donation, undefined, madeOn));
   await logAction(
     session.username,

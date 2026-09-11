@@ -23,6 +23,14 @@ const noDay = proof({ id: "older", submittedAt: "2026-05-01T00:00:00.000Z", amou
 const ids = (rows: Proof[]) => rows.map((row) => row.id);
 
 describe("ordering the payments list", () => {
+  it("puts an afternoon payment before a morning one on the same day", () => {
+    const morning = proof({ id: "morning", paidOn: "2026-07-14T09:00:00.000Z", amount: 100 });
+    const afternoon = proof({ id: "afternoon", paidOn: "2026-07-14T16:00:00.000Z", amount: 100 });
+    expect(ids(sortPayments([morning, afternoon], "newest"))).toEqual(["afternoon", "morning"]);
+    expect(ids(sortPayments([afternoon, morning], "newest"))).toEqual(["afternoon", "morning"]);
+    expect(ids(sortPayments([afternoon, morning], "oldest"))).toEqual(["morning", "afternoon"]);
+  });
+
   it("puts the most recent payment first", () => {
     expect(ids(sortPayments([noDay, paidInJune, paidInJuly], "newest"))).toEqual([
       "july",
