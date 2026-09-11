@@ -7,6 +7,7 @@ import Notice from "@/components/Notice";
 import { api, errorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/clubTime";
 import { membershipEnding as texts, MEMBERSHIP_ENDING_REASONS } from "@/lib/texts";
+import type { BroughtBackEnding } from "@/lib/membershipEndingHistory";
 
 export interface Ended {
   endedAt: string;
@@ -21,6 +22,34 @@ export function EndedRows({ endedAt, endedReason, endedBy }: Ended) {
       <Row label={texts.endedOn} value={<bdi dir="ltr">{formatDate(endedAt)}</bdi>} />
       <Row label={texts.endedBy} value={endedBy ?? "—"} />
     </>
+  );
+}
+
+export function BroughtBackEndings({ endings }: { endings: BroughtBackEnding[] }) {
+  if (endings.length === 0) return null;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+        {texts.broughtBack}
+      </p>
+      {endings.map((ending) => (
+        <dl
+          key={`${ending.endedAt}-${ending.restoredAt}`}
+          className="text-xs space-y-1 px-2.5 py-2 rounded-lg"
+          style={{ background: "white", border: "1px solid var(--mint-100)" }}
+        >
+          <Row label={texts.endedReason} value={ending.reason ?? "—"} />
+          <Row label={texts.endedOn} value={<bdi dir="ltr">{formatDate(ending.endedAt)}</bdi>} />
+          <Row label={texts.endedBy} value={ending.endedBy ?? "—"} />
+          <Row
+            label={texts.restoredOn}
+            value={<bdi dir="ltr">{formatDate(ending.restoredAt)}</bdi>}
+          />
+          <Row label={texts.restoredBy} value={ending.restoredBy ?? "—"} />
+        </dl>
+      ))}
+    </div>
   );
 }
 

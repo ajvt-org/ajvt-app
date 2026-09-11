@@ -11,6 +11,7 @@ import { feeOnly, paidForYear } from "@/lib/paidBreakdown";
 import { paymentOfYear } from "@/lib/membershipPaymentFields";
 import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
+import { endingHistory, ENDING_ACTIONS } from "@/lib/membershipEndingHistory";
 
 export const GET = withRoute(
   "GET /api/admin/members/[id]/memberships",
@@ -39,6 +40,12 @@ export const GET = withRoute(
       },
     });
 
+    const endings = await prisma.auditLog.findMany({
+      where: { targetType: "Member", targetId: id, action: { in: [...ENDING_ACTIONS] } },
+      orderBy: { createdAt: "asc" },
+      select: { action: true, adminUsername: true, createdAt: true, before: true, after: true },
+    });
+
     const payments = await prisma.payment.findMany({
       where: { userId: id, purpose: "MEMBERSHIP" },
       select: { amount: true, feeApplied: true, year: true, method: true, recordedBy: true },
@@ -57,6 +64,7 @@ export const GET = withRoute(
           supportAmount: paid?.support ?? 0,
         };
       }),
+      endings: endingHistory(endings),
       currentYear: membershipYear,
       refusal: renewalRefusal(
         {
