@@ -131,6 +131,7 @@ const STANDING_SELECT = {
   payerName: true,
   reason: true,
   userId: true,
+  issuedBy: true,
   payment: { select: SELECT },
 } as const;
 
@@ -151,10 +152,15 @@ export interface ReceiptDrift {
 }
 
 function driftOf(receipt: StandingReceipt, payment: PaymentRow): ReceiptDrift | null {
+  const written = receipt.issuedBy !== ISSUED_BY;
   const wanted: ReceiptChange[] = [
     { field: "amount", from: receipt.amount, to: payment.amount },
-    { field: "payerName", from: receipt.payerName, to: payerOf(payment) },
-    { field: "reason", from: receipt.reason, to: reasonOf(payment) },
+    ...(written
+      ? []
+      : ([
+          { field: "payerName", from: receipt.payerName, to: payerOf(payment) },
+          { field: "reason", from: receipt.reason, to: reasonOf(payment) },
+        ] as ReceiptChange[])),
     { field: "userId", from: receipt.userId, to: payment.userId },
   ];
   const changes = wanted.filter((c) => c.from !== c.to);
