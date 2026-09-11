@@ -6,6 +6,11 @@ import { hoursLabel } from "@/lib/arabicPlural";
 import { internationalPhone } from "@/lib/utils";
 import { tempPassword as texts } from "@/lib/texts";
 
+export interface TempPassword {
+  password: string;
+  hours: number;
+}
+
 export default function TempPasswordBox({
   value,
   hours,
