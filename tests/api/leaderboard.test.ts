@@ -221,8 +221,6 @@ describe("the supporters board", () => {
     const body = await (await BOARD(get("/api/leaderboard"))).json();
 
     expect(body.total).toBe(extra);
-    // The button that asks for more loads a page, not the remainder. It used to
-    // print the remainder next to itself and promise more than it delivered.
     expect(body.rows).toHaveLength(SUPPORTERS_PAGE_SIZE);
   });
 
