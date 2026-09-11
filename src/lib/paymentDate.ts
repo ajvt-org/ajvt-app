@@ -1,3 +1,5 @@
+import { parseMatchDate } from "./clubTime";
+
 export interface PaymentDated<T> {
   paidOn: T | null;
   createdAt: T;
@@ -21,9 +23,11 @@ export function paidWithin(window: DateWindow | undefined) {
 
 const BARE_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-export function readPaidOn(value: unknown): Date | null {
+export const BARE_DAY_HOUR = "12:00";
+
+export function readMoneyDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === "") return null;
   const raw = value as string;
-  const parsed = new Date(BARE_DAY.test(raw) ? `${raw}T12:00:00.000Z` : raw);
+  const parsed = parseMatchDate(BARE_DAY.test(raw) ? `${raw}T${BARE_DAY_HOUR}` : raw);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }

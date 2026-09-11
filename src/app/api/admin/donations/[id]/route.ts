@@ -22,7 +22,7 @@ import { willBeLinked } from "@/lib/linkedDonor";
 import type { SupportViewer } from "@/lib/supportPrivacy";
 import { money as amountText } from "@/lib/money";
 import { releaseUploads } from "@/lib/uploadRelease";
-import { readPaidOn } from "@/lib/paymentDate";
+import { readMoneyDate } from "@/lib/paymentDate";
 
 async function namedAccount(userId: string | null, viewer: SupportViewer): Promise<string | null> {
   if (!userId) return null;
@@ -152,7 +152,7 @@ export const PATCH = withRoute(
       data,
       include: { user: { select: DONOR_ACCOUNT_SELECT } },
     });
-    const madeOn = paidOn === undefined ? undefined : readPaidOn(paidOn);
+    const madeOn = paidOn === undefined ? undefined : readMoneyDate(paidOn);
     await mirrorDonation(prisma, donationMirrorOf(donation, tagIds, madeOn));
 
     const target = {
