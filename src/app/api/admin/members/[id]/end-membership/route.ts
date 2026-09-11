@@ -10,6 +10,7 @@ import { currentMembership } from "@/lib/currentMembershipServer";
 import { endingRefusal, isEndingReason, restoreRefusal } from "@/lib/membershipEnding";
 import { endingRefusalMessage, restoreRefusalMessage } from "@/lib/membershipEndingMessages";
 import { endMembership, restoreMembership } from "@/lib/membershipEndingServer";
+import { endedDetails, restoredDetails } from "@/lib/membershipEndingAudit";
 import { nameOf, PERSON_SELECT } from "@/lib/person";
 import { endMembershipSchema } from "./schema";
 
@@ -42,13 +43,7 @@ export const POST = withRoute(
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: { year: membership.year, endedAt: null, endedReason: null, endedBy: null },
-      after: {
-        year: membership.year,
-        endedAt: at.toISOString(),
-        endedReason: reason,
-        endedBy: session.username,
-      },
+      ...endedDetails(membership.year, { reason, by: session.username, at }),
     });
 
     return NextResponse.json({
@@ -77,13 +72,7 @@ export const DELETE = withRoute(
         ...auditContext(session, req),
         targetType: "Member",
         targetId: id,
-        before: {
-          year: membership.year,
-          endedAt: membership.endedAt?.toISOString() ?? null,
-          endedReason: membership.endedReason,
-          endedBy: membership.endedBy,
-        },
-        after: { year: membership.year, endedAt: null, endedReason: null, endedBy: null },
+        ...restoredDetails(membership),
       },
     );
 
