@@ -2,7 +2,13 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MembershipEditForm from "./MembershipEditForm";
-import { bankReference, membershipEdit, paymentAccountPicker } from "@/lib/texts";
+import {
+  AMOUNT_BELOW_FEE,
+  bankReference,
+  membershipEdit,
+  confirmDialog,
+  paymentAccountPicker,
+} from "@/lib/texts";
 import type { Proof } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
 
@@ -14,6 +20,8 @@ function proofOf(over: Partial<Proof> = {}): Proof {
     memberName: "محمد ولد أحمد",
     activityTitle: null,
     amount: 2000,
+    feeApplied: 100,
+    year: 2026,
     status: "ACTIVE",
     paymentMethod: "بنكيلي",
     accountId: "a1",
@@ -39,6 +47,13 @@ function setup(over: Partial<Proof> = {}) {
   const onCancel = vi.fn();
   render(<MembershipEditForm proof={proofOf(over)} onSaved={onSaved} onCancel={onCancel} />);
   return { onSaved, onCancel };
+}
+
+async function typeAmount(value: string) {
+  const amount = screen.getByLabelText(membershipEdit.amount);
+  await userEvent.clear(amount);
+  await userEvent.type(amount, value);
+  await userEvent.click(screen.getByRole("button", { name: membershipEdit.save }));
 }
 
 afterEach(() => {
@@ -94,16 +109,117 @@ describe("editing a membership payment", () => {
     expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PUT")).toBe(false);
   });
 
-  it("refuses an amount below the membership fee", async () => {
+  it("says which fee this payment is measured against", () => {
+    mockPut();
+    setup();
+
+    expect(screen.getByText(membershipEdit.feeOnThisPayment(100))).toBeDefined();
+  });
+
+  it("asks before an amount below that fee ends the year", async () => {
     const fetchMock = mockPut();
     setup();
 
-    const amount = screen.getByLabelText(membershipEdit.amount);
-    await userEvent.clear(amount);
-    await userEvent.type(amount, "10");
-    await userEvent.click(screen.getByRole("button", { name: membershipEdit.save }));
+    await typeAmount("10");
 
+    expect(
+      screen.getByText(membershipEdit.shortfallConsequence("محمد ولد أحمد", 2026)),
+    ).toBeDefined();
     expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PUT")).toBe(false);
+  });
+
+  it("changes nothing at all when the admin goes back", async () => {
+    const fetchMock = mockPut();
+    const { onSaved } = setup();
+
+    await typeAmount("10");
+    const backOut = screen.getAllByRole("button", { name: confirmDialog.cancel });
+    await userEvent.click(backOut[backOut.length - 1]);
+
+    expect(
+      screen.queryByText(membershipEdit.shortfallConsequence("محمد ولد أحمد", 2026)),
+    ).toBeNull();
+    expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PUT")).toBe(false);
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it("sends the correction and the ending together once the admin goes on", async () => {
+    const fetchMock = mockPut();
+    const { onSaved } = setup();
+
+    await typeAmount("10");
+    await userEvent.click(screen.getByRole("button", { name: membershipEdit.shortfallProceed }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(sentBody(fetchMock.mock.calls)).toMatchObject({
+      amountTransferred: 10,
+      membershipDecision: "end",
+    });
+  });
+
+  it("leaves a membership nobody has accepted out of the question", async () => {
+    const fetchMock = mockPut();
+    const { onSaved } = setup({ status: "PENDING" });
+
+    await typeAmount("10");
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(sentBody(fetchMock.mock.calls)).toMatchObject({ amountTransferred: 10 });
+    expect(sentBody(fetchMock.mock.calls)).not.toHaveProperty("membershipDecision");
+  });
+});
+
+describe("correcting a membership payment back up", () => {
+  const ENDED = {
+    amount: 10,
+    endedAt: "2026-09-01T00:00:00.000Z",
+    endedReason: AMOUNT_BELOW_FEE,
+  };
+
+  it("offers the membership back rather than taking it back", async () => {
+    const fetchMock = mockPut();
+    setup(ENDED);
+
+    await typeAmount("500");
+
+    expect(screen.getByText(membershipEdit.restoreOffer("محمد ولد أحمد", 2026))).toBeDefined();
+    expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PUT")).toBe(false);
+  });
+
+  it("asks for the membership back when the offer is taken", async () => {
+    const fetchMock = mockPut();
+    const { onSaved } = setup(ENDED);
+
+    await typeAmount("500");
+    await userEvent.click(screen.getByRole("button", { name: membershipEdit.restoreProceed }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(sentBody(fetchMock.mock.calls)).toMatchObject({
+      amountTransferred: 500,
+      membershipDecision: "restore",
+    });
+  });
+
+  it("saves the amount and leaves the ending alone when the offer is turned down", async () => {
+    const fetchMock = mockPut();
+    const { onSaved } = setup(ENDED);
+
+    await typeAmount("500");
+    await userEvent.click(screen.getByRole("button", { name: membershipEdit.restoreDecline }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(sentBody(fetchMock.mock.calls)).toMatchObject({ amountTransferred: 500 });
+    expect(sentBody(fetchMock.mock.calls)).not.toHaveProperty("membershipDecision");
+  });
+
+  it("says nothing about a membership ended for another reason", async () => {
+    const fetchMock = mockPut();
+    const { onSaved } = setup({ ...ENDED, endedReason: "مخالفة النظام الداخلي" });
+
+    await typeAmount("500");
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(sentBody(fetchMock.mock.calls)).not.toHaveProperty("membershipDecision");
   });
 
   it("offers the numbers of the method the payment holds", async () => {

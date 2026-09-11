@@ -5,6 +5,7 @@ import { join } from "node:path";
 const ARABIC = /[؀-ۿ]/;
 
 const KEPT_CLEAN = [
+  "src/app/admin/payments/MembershipEditForm.tsx",
   "src/app/(member)/donate/page.tsx",
   "src/components/DonorNameChoice.tsx",
   "src/app/forgot-password/page.tsx",
