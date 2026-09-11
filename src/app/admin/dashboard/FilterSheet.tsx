@@ -1,6 +1,11 @@
 "use client";
 
-import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
+import {
+  ADMIN_ORIGIN,
+  NO_FILTERS,
+  activeFilterCount,
+  type MemberFilters,
+} from "@/lib/memberFilters";
 import { OTHER_VILLAGE } from "@/lib/villages";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
@@ -10,6 +15,11 @@ import type { AgeGroup, Village } from "./types";
 import { filterSheet as texts } from "@/lib/texts";
 
 const STANDINGS = ["current", "former"];
+
+const NARROWINGS = [
+  { key: "nophone", label: texts.noPhone },
+  { key: "nocapture", label: texts.noCapture },
+] as const;
 
 export default function FilterSheet({
   filters,
@@ -127,6 +137,46 @@ export default function FilterSheet({
           idPrefix="members"
           onChange={(range) => onChange({ ...filters, ...range })}
         />
+      </FilterField>
+
+      <FilterField label={texts.origin}>
+        <select
+          value={filters.origin}
+          onChange={(e) =>
+            onChange(
+              e.target.value === ADMIN_ORIGIN
+                ? { ...filters, origin: ADMIN_ORIGIN }
+                : { ...filters, origin: "", nophone: "", nocapture: "" },
+            )
+          }
+          className="input input-sm w-full"
+          aria-label={texts.byOrigin}
+        >
+          <option value="">{texts.allOrigins}</option>
+          <option value={ADMIN_ORIGIN}>{texts.originAdmin}</option>
+        </select>
+
+        {filters.origin === ADMIN_ORIGIN && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {NARROWINGS.map(({ key, label }) => {
+              const on = !!filters[key];
+              return (
+                <button
+                  key={key}
+                  onClick={() => onChange({ ...filters, [key]: on ? "" : "yes" })}
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                  style={{
+                    background: on ? "var(--mint-600)" : "white",
+                    color: on ? "white" : "var(--mint-700)",
+                    border: on ? "none" : "1px solid var(--mint-100)",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </FilterField>
 
       <FilterField label={texts.membershipOf(year)}>
