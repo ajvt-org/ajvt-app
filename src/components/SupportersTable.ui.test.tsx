@@ -131,7 +131,7 @@ describe("where a supporter's money came from", () => {
     );
   }
 
-  it("says a membership surplus is one", () => {
+  it("points a row back at the membership payment the money came from", () => {
     withSources(["MEMBERSHIP"]);
 
     expect(screen.getByText(adminSupporters.fromMembership)).toBeDefined();
