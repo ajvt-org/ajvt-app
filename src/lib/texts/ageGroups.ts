@@ -51,3 +51,8 @@ export const orphanAgeGroups = {
   pick: "اختر العصر الصحيح...",
   move: "نقل",
 } as const;
+
+export const ageGroupTotal = {
+  label: "العدد الإجمالي",
+  save: "حفظ",
+} as const;

@@ -12,6 +12,7 @@ import { donationEdit } from "@/lib/texts";
 import { money } from "@/lib/messages";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import NumberInput from "@/components/NumberInput";
 import PhotoUpload from "@/components/PhotoUpload";
 import PhoneInput from "@/components/form/PhoneInput";
 import DestinationSelect from "@/components/admin/DestinationSelect";
@@ -185,10 +186,8 @@ export default function DonationEditForm({
         )}
 
         <FormField id={field("amount")} label={donationEdit.amount} compact>
-          <input
+          <NumberInput
             id={field("amount")}
-            type="number"
-            dir="ltr"
             value={form.amount}
             onChange={(e) => set({ amount: e.target.value })}
             className="input text-xs"
