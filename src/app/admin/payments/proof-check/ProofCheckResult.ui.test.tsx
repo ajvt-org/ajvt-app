@@ -59,6 +59,25 @@ describe("the answer the proof checker gives", () => {
     expect(screen.queryByText(new RegExp(proofCheck.stateActive))).toBeNull();
   });
 
+  it("opens every kind of match beside the scan instead of leaving it", () => {
+    render(
+      <ProofCheckResult
+        rows={[
+          row({ kind: "member", id: "u1", href: "/admin/members/u1" }),
+          row(),
+          row({ kind: "expense", id: "e1", href: "/admin/expenses?q=%D9%83%D8%B1%D8%A7%D8%AA" }),
+        ]}
+      />,
+    );
+
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(3);
+    for (const link of links) {
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toContain("noopener");
+    }
+  });
+
   it("shows the hour the money moved, so two records on one day read apart", () => {
     render(<ProofCheckResult rows={[row()]} />);
 

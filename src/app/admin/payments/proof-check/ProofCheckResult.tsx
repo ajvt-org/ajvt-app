@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
@@ -32,8 +31,10 @@ function Row({ row }: { row: CheckedRow }) {
   const state = stateOf(row.state);
 
   return (
-    <Link
+    <a
       href={row.href}
+      target="_blank"
+      rel="noopener noreferrer"
       className="card p-3 block space-y-1"
       style={{ color: "var(--text-main)" }}
     >
@@ -56,7 +57,7 @@ function Row({ row }: { row: CheckedRow }) {
           <IconLabel name="chevronLeft">{texts.open}</IconLabel>
         </span>
       </div>
-    </Link>
+    </a>
   );
 }
 
