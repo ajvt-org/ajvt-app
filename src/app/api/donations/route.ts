@@ -124,7 +124,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       status: "PENDING",
     },
   });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
+  await prisma.$transaction((tx) => mirrorDonation(tx, donationMirrorOf(donation)));
 
   return NextResponse.json({ ok: true }, { status: 201 });
 });

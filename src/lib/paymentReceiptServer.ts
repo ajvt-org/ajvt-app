@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient, Receipt } from "@prisma/client";
-import { receiptNumber } from "./officialReceipt";
+import { nextReceiptNumber } from "./receiptNumberServer";
 import { receiptTitle, type ReceiptPurpose } from "./receipts";
 import { generateVerifyToken } from "./verifyToken";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "./donorName";
@@ -40,15 +40,6 @@ function reasonOf(payment: PaymentRow): string {
   });
 }
 
-async function nextNumber(db: Db, year: number): Promise<string> {
-  const counter = await db.counter.upsert({
-    where: { id: `receipt:${year}` },
-    update: { value: { increment: 1 } },
-    create: { id: `receipt:${year}`, value: 1 },
-  });
-  return receiptNumber(year, counter.value);
-}
-
 export async function ensureReceiptsFor(
   db: Db,
   where: Prisma.PaymentWhereInput,
@@ -64,11 +55,11 @@ export async function ensureReceiptsFor(
   const issued: Receipt[] = [];
 
   for (const payment of payments) {
-    const year = payment.createdAt.getFullYear();
+    const number = await nextReceiptNumber(db, payment.createdAt.getFullYear());
     issued.push(
       await db.receipt.create({
         data: {
-          number: await nextNumber(db, year),
+          number,
           token: generateVerifyToken(),
           payerName: payerOf(payment),
           reason: reasonOf(payment),

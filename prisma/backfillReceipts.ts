@@ -3,7 +3,7 @@ import { prisma } from "../src/lib/prisma";
 import { ensureReceiptsFor } from "../src/lib/paymentReceiptServer";
 
 async function main() {
-  const issued = await ensureReceiptsFor(prisma, {});
+  const issued = await prisma.$transaction((tx) => ensureReceiptsFor(tx, {}));
   console.log(`Receipts issued: ${issued.length}`);
 }
 

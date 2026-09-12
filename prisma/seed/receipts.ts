@@ -21,7 +21,7 @@ export async function seedOfficers() {
 }
 
 export async function seedReceipts() {
-  await ensureReceiptsFor(prisma, {});
+  await prisma.$transaction((tx) => ensureReceiptsFor(tx, {}));
 
   const standalone = await issueReceipt({
     payerName: "السيدة فاطمة محمد عبد الله",
