@@ -2,11 +2,12 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET as MEMBERS } from "@/app/api/admin/members/route";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN } from "@/lib/membershipOrigin";
 import { resetDb, get, createAdmin, signInAsAdmin, makeMember } from "./helpers";
 
 interface Row {
   fullName: string;
-  recordedByAdmin: boolean;
+  origin: string;
   paymentProof: string | null;
   phone: string | null;
 }
@@ -43,15 +44,15 @@ describe("where a membership on the members list came from", () => {
 
     const [row] = await rows();
 
-    expect(row.recordedByAdmin).toBe(true);
+    expect(row.origin).toBe(ADMIN_ORIGIN);
   });
 
-  it("does not mark a membership the member signed up for themselves", async () => {
+  it("marks a membership the member signed up for themselves as the member's", async () => {
     await memberRecordedBy("سالم", "سالم");
 
     const [row] = await rows();
 
-    expect(row.recordedByAdmin).toBe(false);
+    expect(row.origin).toBe(SELF_ORIGIN);
   });
 
   it("does not mistake a member who shares a name with an admin for one", async () => {
@@ -59,16 +60,24 @@ describe("where a membership on the members list came from", () => {
 
     const [row] = await rows();
 
-    expect(row.recordedByAdmin).toBe(false);
+    expect(row.origin).toBe(SELF_ORIGIN);
   });
 
-  it("treats a membership with no payment at all as an admin's", async () => {
+  it("leaves a membership nobody was recorded on unknown", async () => {
+    await memberRecordedBy("زينب", null);
+
+    const [row] = await rows();
+
+    expect(row.origin).toBe(UNKNOWN_ORIGIN);
+  });
+
+  it("leaves a membership with no payment at all unknown", async () => {
     const member = await memberRecordedBy("خديجة", "boss");
     await prisma.payment.deleteMany({ where: { userId: member.userId, purpose: "MEMBERSHIP" } });
 
     const [row] = await rows();
 
-    expect(row.recordedByAdmin).toBe(true);
+    expect(row.origin).toBe(UNKNOWN_ORIGIN);
   });
 
   it("keeps the raw name off the wire", async () => {

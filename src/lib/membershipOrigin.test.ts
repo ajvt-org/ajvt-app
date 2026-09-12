@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { recordedByAdmin, recordingAdminIds } from "./membershipOrigin";
+import {
+  ADMIN_ORIGIN,
+  SELF_ORIGIN,
+  UNKNOWN_ORIGIN,
+  membershipOrigin,
+  recordingAdminIds,
+} from "./membershipOrigin";
 
 const ADMINS = new Set(["boss", "amine"]);
 
@@ -9,36 +15,40 @@ const payment = (over: { recordedBy?: string | null; recordedByAdminId?: string 
   ...over,
 });
 
-describe("whether an admin recorded a membership", () => {
+describe("a membership an admin is stamped on", () => {
   it("takes the admin the payment names, whatever the live table says", () => {
-    expect(recordedByAdmin(payment({ recordedByAdminId: "a1" }), new Set<string>())).toBe(true);
+    expect(membershipOrigin(payment({ recordedByAdminId: "a1" }), new Set<string>())).toBe(
+      ADMIN_ORIGIN,
+    );
   });
 
-  it("keeps saying yes once that admin's account is gone", () => {
+  it("stays an admin membership once that admin's account is gone", () => {
     const gone = payment({ recordedBy: "boss", recordedByAdminId: "a1" });
-    expect(recordedByAdmin(gone, new Set<string>())).toBe(true);
+    expect(membershipOrigin(gone, new Set<string>())).toBe(ADMIN_ORIGIN);
   });
 
-  it("says yes when there is no payment at all, which only an admin path allows", () => {
-    expect(recordedByAdmin(null, ADMINS)).toBe(true);
+  it("still reads an admin username off a payment written before the id existed", () => {
+    expect(membershipOrigin(payment({ recordedBy: "boss" }), ADMINS)).toBe(ADMIN_ORIGIN);
   });
 });
 
-describe("a membership recorded before the payment named an admin", () => {
-  it("still reads an admin username off the payment", () => {
-    expect(recordedByAdmin(payment({ recordedBy: "boss" }), ADMINS)).toBe(true);
-  });
-
+describe("a membership the member recorded", () => {
   it("does not read a member's own name as an admin", () => {
-    expect(recordedByAdmin(payment({ recordedBy: "محمد ولد أحمد" }), ADMINS)).toBe(false);
+    expect(membershipOrigin(payment({ recordedBy: "محمد ولد أحمد" }), ADMINS)).toBe(SELF_ORIGIN);
   });
 
-  it("says no when the payment does not say who recorded it", () => {
-    expect(recordedByAdmin(payment(), ADMINS)).toBe(false);
+  it("reads a name no admin answers to as the member", () => {
+    expect(membershipOrigin(payment({ recordedBy: "boss" }), new Set<string>())).toBe(SELF_ORIGIN);
+  });
+});
+
+describe("a membership nothing recorded an origin for", () => {
+  it("is unknown when the payment names nobody", () => {
+    expect(membershipOrigin(payment(), ADMINS)).toBe(UNKNOWN_ORIGIN);
   });
 
-  it("says no when no admin answers to that name", () => {
-    expect(recordedByAdmin(payment({ recordedBy: "boss" }), new Set<string>())).toBe(false);
+  it("is unknown when there is no payment to carry a recorder", () => {
+    expect(membershipOrigin(null, ADMINS)).toBe(UNKNOWN_ORIGIN);
   });
 });
 

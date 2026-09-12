@@ -1,3 +1,5 @@
+import type { MembershipOrigin } from "@/lib/membershipOrigin";
+
 export type Status = "PENDING" | "ACTIVE" | "REJECTED";
 export type FilterTab = "ALL" | Status | "NO_REQUEST";
 
@@ -24,7 +26,7 @@ export interface Member {
   photo: string | null;
   paidAmount: number | null;
   supportAmount: number;
-  recordedByAdmin: boolean;
+  origin: MembershipOrigin;
   recordedByAdminId: string | null;
   status: Status;
   rejectionReason: string | null;
