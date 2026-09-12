@@ -96,6 +96,7 @@ const bar = () => screen.getByRole("progressbar");
 const fill = () => (bar().firstElementChild as HTMLElement).style.width;
 const announced = () => bar().getAttribute("aria-valuenow");
 const fillTone = () => (bar().firstElementChild as HTMLElement).style.background;
+const trackTone = () => bar().style.background;
 const at = (share: number) => new Date(OPEN.getTime() + (CLOSE.getTime() - OPEN.getTime()) * share);
 
 const board = (opensAt: string, closesAt: string, onReached: () => void) => (
@@ -265,5 +266,18 @@ describe("BlockTimer", () => {
     });
 
     expect(fillTone()).toContain("copper");
+  });
+
+  it("keeps a track behind the bar once the block has drained", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(CLOSE);
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(fill()).toBe("0%");
+    expect(trackTone()).toBe("var(--mint-100)");
   });
 });

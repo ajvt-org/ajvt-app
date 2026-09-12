@@ -60,7 +60,7 @@ function BlockTimer({
       aria-valuemax={100}
       aria-label={label}
       className="w-full overflow-hidden"
-      style={{ height: 6, borderRadius: 9999 }}
+      style={{ height: 6, borderRadius: 9999, background: "var(--mint-100)" }}
     >
       <div
         className="h-full"
