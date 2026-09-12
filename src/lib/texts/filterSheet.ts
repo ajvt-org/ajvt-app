@@ -26,6 +26,7 @@ export const filterSheet = {
   allOrigins: "كل العضويات",
   originAdmin: "سجّلها مشرف",
   originSelf: "سجّلها العضو بنفسه",
+  originUnknown: "لم يُسجَّل المصدر",
   byRecorder: "تصفية حسب المشرف",
   allRecorders: "كل المشرفين",
   noPhone: "بلا رقم هاتف",

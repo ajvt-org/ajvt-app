@@ -2,7 +2,8 @@
 
 import FilterChipRow, { type FilterChip } from "@/components/admin/filters/FilterChipRow";
 import { filterSheet } from "@/lib/texts";
-import { ADMIN_ORIGIN, SELF_ORIGIN, NO_FILTERS, type MemberFilters } from "@/lib/memberFilters";
+import { NO_FILTERS, type MemberFilters } from "@/lib/memberFilters";
+import { ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN } from "@/lib/membershipOrigin";
 import type { RecordingAdmin } from "./types";
 
 const PAID_LABEL: Record<string, string> = {
@@ -14,6 +15,7 @@ const PAID_LABEL: Record<string, string> = {
 const ORIGIN_LABEL: Record<string, string> = {
   [ADMIN_ORIGIN]: filterSheet.originAdmin,
   [SELF_ORIGIN]: filterSheet.originSelf,
+  [UNKNOWN_ORIGIN]: filterSheet.originUnknown,
 };
 
 export function standingLabel(standing: string, year: number): string | null {

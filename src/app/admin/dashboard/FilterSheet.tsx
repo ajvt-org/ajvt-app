@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  ADMIN_ORIGIN,
-  SELF_ORIGIN,
-  NO_FILTERS,
-  activeFilterCount,
-  type MemberFilters,
-} from "@/lib/memberFilters";
+import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
+import { ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN } from "@/lib/membershipOrigin";
 import { OTHER_VILLAGE } from "@/lib/villages";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
@@ -158,6 +153,7 @@ export default function FilterSheet({
           <option value="">{texts.allOrigins}</option>
           <option value={ADMIN_ORIGIN}>{texts.originAdmin}</option>
           <option value={SELF_ORIGIN}>{texts.originSelf}</option>
+          <option value={UNKNOWN_ORIGIN}>{texts.originUnknown}</option>
         </select>
 
         {filters.origin === ADMIN_ORIGIN && recordingAdmins.length > 0 && (

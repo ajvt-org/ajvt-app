@@ -66,7 +66,9 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     },
   });
   const madeOn = readMoneyDate(paidOn) ?? new Date();
-  await mirrorDonation(prisma, donationMirrorOf(donation, undefined, madeOn));
+  await prisma.$transaction((tx) =>
+    mirrorDonation(tx, donationMirrorOf(donation, undefined, madeOn)),
+  );
   await logAction(
     session.username,
     "CREATE_DONATION_MANUAL",

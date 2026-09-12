@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
 import type { FilterableMember, MemberFilters } from "./memberFilters";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "./villages";
+import { ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN } from "./membershipOrigin";
 import {
-  ADMIN_ORIGIN,
-  SELF_ORIGIN,
   NO_FILTERS,
   MEMBER_FILTER_KEYS,
   readFilters,
@@ -289,9 +288,11 @@ describe("the years a list actually holds", () => {
 describe("narrowing to the memberships an admin recorded", () => {
   const on = (over: Partial<MemberFilters> = {}) => ({ ...NO_FILTERS, ...over });
   const byAdmin = (over: Partial<FilterableMember> = {}) =>
-    member({ recordedByAdmin: true, paymentProof: "slip.webp", ...over });
+    member({ origin: ADMIN_ORIGIN, paymentProof: "slip.webp", ...over });
   const bySelf = (over: Partial<FilterableMember> = {}) =>
-    member({ recordedByAdmin: false, paymentProof: "slip.webp", ...over });
+    member({ origin: SELF_ORIGIN, paymentProof: "slip.webp", ...over });
+  const unrecorded = (over: Partial<FilterableMember> = {}) =>
+    member({ origin: UNKNOWN_ORIGIN, paymentProof: "slip.webp", ...over });
 
   it("keeps every membership when no origin was asked for", () => {
     expect(matchesFilters(bySelf(), on(), MEMBERSHIP)).toBe(true);
@@ -340,22 +341,53 @@ describe("narrowing to the memberships an admin recorded", () => {
     expect(matchesFilters(byAdmin(), on({ origin: SELF_ORIGIN }), MEMBERSHIP)).toBe(false);
   });
 
-  it("puts a membership with no payment row on the admin side", () => {
-    const noPayment = member({ recordedByAdmin: true, paymentProof: null });
-
-    expect(matchesFilters(noPayment, on({ origin: ADMIN_ORIGIN }), MEMBERSHIP)).toBe(true);
-    expect(matchesFilters(noPayment, on({ origin: SELF_ORIGIN }), MEMBERSHIP)).toBe(false);
+  it("keeps a membership nothing recorded an origin for", () => {
+    expect(matchesFilters(unrecorded(), on({ origin: UNKNOWN_ORIGIN }), MEMBERSHIP)).toBe(true);
   });
 
-  it("splits the list in two, with nothing in both halves and nothing in neither", () => {
-    const members = [byAdmin(), bySelf(), byAdmin({ user: { phone: null } }), bySelf()];
-    const admin = members.filter((m) =>
-      matchesFilters(m, on({ origin: ADMIN_ORIGIN }), MEMBERSHIP),
-    );
-    const self = members.filter((m) => matchesFilters(m, on({ origin: SELF_ORIGIN }), MEMBERSHIP));
+  it("leaves a membership nothing recorded out of both of the other two", () => {
+    expect(matchesFilters(unrecorded(), on({ origin: ADMIN_ORIGIN }), MEMBERSHIP)).toBe(false);
+    expect(matchesFilters(unrecorded(), on({ origin: SELF_ORIGIN }), MEMBERSHIP)).toBe(false);
+  });
 
-    expect(admin.length + self.length).toBe(members.length);
-    expect(admin.some((m) => self.includes(m))).toBe(false);
+  it("keeps the recorded origins out of the unknown one", () => {
+    expect(matchesFilters(byAdmin(), on({ origin: UNKNOWN_ORIGIN }), MEMBERSHIP)).toBe(false);
+    expect(matchesFilters(bySelf(), on({ origin: UNKNOWN_ORIGIN }), MEMBERSHIP)).toBe(false);
+  });
+
+  it("splits the list in three, with nothing in two answers and nothing in none", () => {
+    const members = [byAdmin(), bySelf(), unrecorded(), byAdmin({ user: { phone: null } })];
+    const pick = (origin: string) =>
+      members.filter((m) => matchesFilters(m, on({ origin }), MEMBERSHIP));
+    const admin = pick(ADMIN_ORIGIN);
+    const self = pick(SELF_ORIGIN);
+    const unknown = pick(UNKNOWN_ORIGIN);
+
+    expect(admin.length + self.length + unknown.length).toBe(members.length);
+    expect(admin.some((m) => self.includes(m) || unknown.includes(m))).toBe(false);
+    expect(self.some((m) => unknown.includes(m))).toBe(false);
+  });
+
+  it("counts the unknown origin as one filter", () => {
+    expect(activeFilterCount(on({ origin: UNKNOWN_ORIGIN }))).toBe(1);
+  });
+
+  it("carries the unknown origin through the address", () => {
+    const params = writeFilters(on({ origin: UNKNOWN_ORIGIN }));
+
+    expect(params.get("origin")).toBe(UNKNOWN_ORIGIN);
+    expect(readFilters(params).origin).toBe(UNKNOWN_ORIGIN);
+  });
+
+  it("drops the recorder and the two narrowings from a link asking for the unknown origin", () => {
+    const read = readFilters(
+      new URLSearchParams("origin=unknown&recorder=a1&nophone=yes&nocapture=yes"),
+    );
+
+    expect(read.origin).toBe(UNKNOWN_ORIGIN);
+    expect(read.recorder).toBe("");
+    expect(read.nophone).toBe("");
+    expect(read.nocapture).toBe("");
   });
 
   it("counts the self origin as one filter", () => {
@@ -385,7 +417,7 @@ describe("narrowing to the memberships an admin recorded", () => {
 describe("narrowing to the memberships one named admin recorded", () => {
   const on = (over: Partial<MemberFilters> = {}) => ({ ...NO_FILTERS, ...over });
   const byAdmin = (over: Partial<FilterableMember> = {}) =>
-    member({ recordedByAdmin: true, paymentProof: "slip.webp", ...over });
+    member({ origin: ADMIN_ORIGIN, paymentProof: "slip.webp", ...over });
 
   it("keeps only the memberships that admin recorded", () => {
     const filters = on({ origin: ADMIN_ORIGIN, recorder: "a1" });

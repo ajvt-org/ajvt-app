@@ -1,7 +1,8 @@
 import { prisma } from "./prisma";
 import { generateVerifyToken } from "./verifyToken";
 import { getAppSettings } from "./settingsServer";
-import { receiptNumber, type OfficialReceiptView, type ReceiptState } from "./officialReceipt";
+import type { OfficialReceiptView, ReceiptState } from "./officialReceipt";
+import { nextReceiptNumber } from "./receiptNumberServer";
 import {
   CONFIDENTIAL_SELECT,
   nameIsConfidential,
@@ -10,7 +11,7 @@ import {
   type SupportViewer,
 } from "./supportPrivacy";
 import { money } from "./messages";
-import type { Payment, Prisma, PrismaClient, Receipt } from "@prisma/client";
+import type { Payment, Prisma, Receipt } from "@prisma/client";
 
 export interface ReceiptDraft {
   payerName: string;
@@ -22,33 +23,25 @@ export interface ReceiptDraft {
   paymentId?: string | null;
 }
 
-type Db = PrismaClient | Prisma.TransactionClient;
-
-export async function nextReceiptNumber(year: number, db: Db = prisma): Promise<string> {
-  const counter = await db.counter.upsert({
-    where: { id: `receipt:${year}` },
-    update: { value: { increment: 1 } },
-    create: { id: `receipt:${year}`, value: 1 },
-  });
-  return receiptNumber(year, counter.value);
-}
-
 export async function issueReceipt(draft: ReceiptDraft): Promise<Receipt> {
   const settings = await getAppSettings();
-  return prisma.receipt.create({
-    data: {
-      number: await nextReceiptNumber(draft.issuedOn.getFullYear()),
-      token: generateVerifyToken(),
-      payerName: draft.payerName,
-      reason: draft.reason,
-      amount: draft.amount,
-      issuedOn: draft.issuedOn,
-      issuedBy: draft.issuedBy,
-      secretary: settings.secretaryName,
-      treasurer: settings.treasurerName,
-      userId: draft.userId ?? null,
-      paymentId: draft.paymentId ?? null,
-    },
+  return prisma.$transaction(async (tx) => {
+    const number = await nextReceiptNumber(tx, draft.issuedOn.getFullYear());
+    return tx.receipt.create({
+      data: {
+        number,
+        token: generateVerifyToken(),
+        payerName: draft.payerName,
+        reason: draft.reason,
+        amount: draft.amount,
+        issuedOn: draft.issuedOn,
+        issuedBy: draft.issuedBy,
+        secretary: settings.secretaryName,
+        treasurer: settings.treasurerName,
+        userId: draft.userId ?? null,
+        paymentId: draft.paymentId ?? null,
+      },
+    });
   });
 }
 
@@ -88,9 +81,10 @@ export async function issueReceiptOverPayment(
       },
     });
     const settings = await getAppSettings();
+    const number = await nextReceiptNumber(tx, draft.issuedOn.getFullYear());
     const receipt = await tx.receipt.create({
       data: {
-        number: await nextReceiptNumber(draft.issuedOn.getFullYear(), tx),
+        number,
         token: generateVerifyToken(),
         payerName: draft.payerName,
         reason: draft.reason,
@@ -105,20 +99,6 @@ export async function issueReceiptOverPayment(
     });
     return { receipt, payment };
   });
-}
-
-export async function issueReceiptForPayment(
-  paymentId: string,
-  draft: Omit<ReceiptDraft, "paymentId">,
-): Promise<Receipt> {
-  const existing = await prisma.receipt.findUnique({ where: { paymentId } });
-  if (existing) return existing;
-  try {
-    return await issueReceipt({ ...draft, paymentId });
-  } catch (err) {
-    if ((err as Prisma.PrismaClientKnownRequestError).code !== "P2002") throw err;
-    return prisma.receipt.findUniqueOrThrow({ where: { paymentId } });
-  }
 }
 
 export async function voidReceipt(

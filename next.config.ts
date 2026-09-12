@@ -17,6 +17,17 @@ const nextConfig: NextConfig = {
 
   env: { RELEASE: releaseFrom(lastSubject(), process.env.RENDER_GIT_COMMIT) },
 
+  async redirects() {
+    return [
+      {
+        source: "/:path((?!api/health$).*)",
+        has: [{ type: "host", value: "ajvt-app.onrender.com" }],
+        permanent: true,
+        destination: "https://ajvt.net/:path",
+      },
+    ];
+  },
+
   async headers() {
     if (process.env.NODE_ENV !== "production") return [];
 
