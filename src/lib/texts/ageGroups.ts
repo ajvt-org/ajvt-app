@@ -1,6 +1,5 @@
 export const pendingAgeGroups = {
   title: "أعصار مقترحة من الأعضاء",
-  intro: "لا تظهر هذه الأعصار لبقية الأعضاء حتى تقبلها.",
   approve: "قبول",
   reject: "حذف",
   confirmRejectTitle: "حذف عصر مقترح",
@@ -22,8 +21,6 @@ export const ageStandings = {
 
 export const ageGroupsDialog = {
   title: "إدارة الأعصار",
-  intro:
-    "هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل اسم عصر هنا يغيّره لدى كل الأعضاء الذين اختاروه من قبل، أما حذفه فلا يغيّر شيئاً لديهم.",
   addPlaceholder: "اسم عصر جديد...",
   add: "إضافة",
   save: "حفظ",

@@ -41,10 +41,6 @@ export default function PendingAgeGroups({
       <p className="text-xs font-bold" style={{ color: "#92400e" }}>
         <IconLabel name="clock">{pendingAgeGroups.title}</IconLabel>
       </p>
-      <p className="text-[11px]" style={{ color: "#92400e" }}>
-        {pendingAgeGroups.intro}
-      </p>
-
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
           {error}
