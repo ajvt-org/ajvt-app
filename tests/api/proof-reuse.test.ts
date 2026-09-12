@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { SUPER_ROLE } from "@/lib/adminRoles";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { findProofReuse, proofReuseOf } from "@/lib/proofReuse";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, makeMember } from "./helpers";
+import { resetDb, makeMember, giveGift } from "./helpers";
 
 const HASH = "a".repeat(64);
 const OTHER = "b".repeat(64);
@@ -25,10 +24,7 @@ async function memberWithProof(fullName: string, paymentProof: string) {
 }
 
 async function giftWithProof(donorName: string, proof: string) {
-  const donation = await prisma.donation.create({
-    data: { amount: 500, donorName, status: "ACTIVE", source: "PUBLIC", proof },
-  });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
+  const donation = await giveGift({ amount: 500, donorName, proof });
   return donation;
 }
 

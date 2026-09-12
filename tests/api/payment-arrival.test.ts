@@ -11,6 +11,7 @@ import {
   signInAsAdmin,
   makeMember,
   withId,
+  giveGift,
 } from "./helpers";
 
 vi.mock("@/lib/imageProcessing", async (orig) => {
@@ -48,10 +49,8 @@ async function aMember(phone: string, name: string) {
   return user;
 }
 
-async function gift() {
-  const donation = await prisma.donation.findFirstOrThrow();
-  const payment = await prisma.payment.findFirstOrThrow({ where: { id: donation.id } });
-  return { donation, payment };
+function gift() {
+  return prisma.payment.findFirstOrThrow();
 }
 
 describe("the payment records how a gift arrived", () => {
@@ -62,9 +61,7 @@ describe("the payment records how a gift arrived", () => {
   it("marks a gift that came in with nobody signed in as public", async () => {
     await give({ anonymous: "true" });
 
-    const { donation, payment } = await gift();
-    expect(donation.source).toBe("PUBLIC");
-    expect(payment.source).toBe("PUBLIC");
+    expect((await gift()).source).toBe("PUBLIC");
   });
 
   it("marks a gift from a signed-in member as coming from an account", async () => {
@@ -73,9 +70,7 @@ describe("the payment records how a gift arrived", () => {
 
     await give({ userId: user.id });
 
-    const { donation, payment } = await gift();
-    expect(donation.source).toBe("SELF");
-    expect(payment.source).toBe("SELF");
+    expect((await gift()).source).toBe("SELF");
   });
 
   it("marks a gift an admin records against an account as coming from an account", async () => {
@@ -85,24 +80,21 @@ describe("the payment records how a gift arrived", () => {
     const res = await RECORD(post("/api/admin/donations", { userId: user.id, amount: 3000 }));
     expect(res.status).toBe(201);
 
-    const { payment } = await gift();
-    expect(payment.source).toBe("SELF");
+    expect((await gift()).source).toBe("SELF");
   });
 
   it("keeps the arrival as public when an admin links an account afterwards", async () => {
     const user = await aMember("22110077", "محمد ولد أحمد");
-    await give({ anonymous: "true" });
+    const before = await giveGift({ amount: 5000, anonymous: true });
     await signInAsAdmin(await createAdmin());
-    const before = await prisma.donation.findFirstOrThrow();
 
     await UPDATE(
       patch(`/api/admin/donations/${before.id}`, { userId: user.id }),
       withId(before.id),
     );
 
-    const { donation, payment } = await gift();
-    expect(donation.userId).toBe(user.id);
-    expect(donation.source).toBe("PUBLIC");
+    const payment = await gift();
+    expect(payment.userId).toBe(user.id);
     expect(payment.source).toBe("PUBLIC");
   });
 });

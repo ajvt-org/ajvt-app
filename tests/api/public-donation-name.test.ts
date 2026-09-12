@@ -34,7 +34,7 @@ describe("a donation from someone with no account", () => {
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(money.nameChoiceRequired);
-    expect(await prisma.donation.count()).toBe(0);
+    expect(await prisma.payment.count()).toBe(0);
   });
 
   it("refuses a donor who asked to be named and left the name empty", async () => {
@@ -42,7 +42,7 @@ describe("a donation from someone with no account", () => {
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(money.nameRequired);
-    expect(await prisma.donation.count()).toBe(0);
+    expect(await prisma.payment.count()).toBe(0);
   });
 
   it("refuses a name longer than the board can carry", async () => {
@@ -60,28 +60,27 @@ describe("a donation from someone with no account", () => {
     );
 
     expect(res.status).toBe(201);
-    expect((await prisma.donation.findFirstOrThrow()).donorName).toBe("محمد ولد أحمد");
+    expect((await prisma.payment.findFirstOrThrow()).donorName).toBe("محمد ولد أحمد");
   });
 
   it("records nothing in the name when the donor chose to stay anonymous", async () => {
     const res = await DONATE(form({ ...base, anonymous: "true" }, nextIp()));
 
     expect(res.status).toBe(201);
-    expect((await prisma.donation.findFirstOrThrow()).donorName).toBeNull();
+    expect((await prisma.payment.findFirstOrThrow()).donorName).toBeNull();
   });
 
   it("keeps a name the donor gave even though they asked to stay anonymous", async () => {
     const res = await DONATE(form({ ...base, anonymous: "true", donorName: "محمد" }, nextIp()));
 
     expect(res.status).toBe(201);
-    const donation = await prisma.donation.findFirstOrThrow();
-    expect(donation.donorName).toBe("محمد");
-    expect(donation.anonymous).toBe(true);
+    const gift = await prisma.payment.findFirstOrThrow();
+    expect(gift.donorName).toBe("محمد");
+    expect(gift.anonymous).toBe(true);
   });
 
   it("keeps that name off the supporters board", async () => {
     await DONATE(form({ ...base, anonymous: "true", donorName: "محمد" }, nextIp()));
-    await prisma.donation.updateMany({ data: { status: "ACTIVE" } });
     await prisma.payment.updateMany({ data: { status: "ACTIVE" } });
     const { getLeaderboardData } = await import("@/lib/donationsServer");
 
@@ -93,6 +92,6 @@ describe("a donation from someone with no account", () => {
   it("still lands as pending, whichever way the donor answered", async () => {
     await DONATE(form({ ...base, anonymous: "true" }, nextIp()));
 
-    expect((await prisma.donation.findFirstOrThrow()).status).toBe("PENDING");
+    expect((await prisma.payment.findFirstOrThrow()).status).toBe("PENDING");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, post, patch, createAdmin, signInAsAdmin, withId, giveGift } from "./helpers";
 import { common } from "@/lib/messages";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
@@ -29,9 +29,7 @@ function competition(name = "مسابقة رمضان") {
 }
 
 function gift(amount = 5000) {
-  return prisma.donation.create({
-    data: { donorName: "فاعل خير", amount, source: "PUBLIC", status: "ACTIVE" },
-  });
+  return giveGift({ donorName: "فاعل خير", amount });
 }
 
 function spending(label = "طباعة") {
@@ -58,21 +56,10 @@ describe("a quiz as a place money goes", () => {
     );
 
     expect(res.status).toBe(201);
-    const donation = await prisma.donation.findFirstOrThrow();
-    expect(donation.competitionId).toBe(quiz.id);
-    expect(donation.activityId).toBeNull();
-  });
-
-  it("carries the quiz onto the mirrored payment", async () => {
-    const quiz = await competition();
-
-    await RECORD_GIFT(
-      post("/api/admin/donations", { donorName: "أحمد", amount: 3000, competitionId: quiz.id }),
-    );
-
     const payment = await prisma.payment.findFirstOrThrow();
     expect(payment.competitionId).toBe(quiz.id);
     expect(payment.activityId).toBeNull();
+    expect(payment.purpose).toBe("ACTIVITY");
   });
 
   it("takes an expense", async () => {
@@ -93,7 +80,7 @@ describe("a quiz as a place money goes", () => {
     expect((await updateGift(donation.id, { competitionId: quiz.id })).status).toBe(200);
 
     expect(
-      (await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } })).competitionId,
+      (await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } })).competitionId,
     ).toBe(quiz.id);
   });
 
@@ -116,7 +103,7 @@ describe("a quiz as a place money goes", () => {
 
     await updateGift(donation.id, { activityId: null, competitionId: quiz.id });
 
-    const after = await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } });
+    const after = await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } });
     expect(after.activityId).toBeNull();
     expect(after.competitionId).toBe(quiz.id);
   });
@@ -128,7 +115,7 @@ describe("a quiz as a place money goes", () => {
 
     expect(res.status).toBe(400);
     expect(
-      (await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } })).competitionId,
+      (await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } })).competitionId,
     ).toBeNull();
   });
 });
@@ -154,7 +141,7 @@ describe("a payment or an expense aimed at two places at once", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: common.oneDestinationOnly });
-    expect(await prisma.donation.count()).toBe(0);
+    expect(await prisma.payment.count()).toBe(0);
   });
 
   it("is refused when a recorded gift is edited", async () => {
@@ -168,7 +155,7 @@ describe("a payment or an expense aimed at two places at once", () => {
     });
 
     expect(res.status).toBe(400);
-    const after = await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } });
+    const after = await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } });
     expect(after.activityId).toBeNull();
     expect(after.competitionId).toBeNull();
   });

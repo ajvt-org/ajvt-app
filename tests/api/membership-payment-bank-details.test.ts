@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { runningYear } from "@/lib/membershipYear";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { resetDb, createUser } from "./helpers";
 
 const YEAR = runningYear();
@@ -12,7 +11,7 @@ async function anAccount() {
   return prisma.paymentAccount.findFirstOrThrow();
 }
 
-describe("the account a money row carries", () => {
+describe("the account a membership payment carries", () => {
   beforeEach(async () => {
     await resetDb();
   });
@@ -36,35 +35,6 @@ describe("the account a money row carries", () => {
     expect(payment.accountId).toBe(account.id);
   });
 
-  it("reaches the payment a donation is mirrored into", async () => {
-    const account = await anAccount();
-    const donation = await prisma.donation.create({
-      data: { amount: 5000, status: "ACTIVE", paymentMethod: "بنكيلي", accountId: account.id },
-    });
-
-    await mirrorDonation(prisma, donationMirrorOf(donation));
-
-    const payment = await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } });
-    expect(payment.accountId).toBe(account.id);
-  });
-
-  it("updates the payment when the account on a donation changes", async () => {
-    const account = await anAccount();
-    const donation = await prisma.donation.create({
-      data: { amount: 5000, status: "ACTIVE", paymentMethod: "بنكيلي", accountId: account.id },
-    });
-    await mirrorDonation(prisma, donationMirrorOf(donation));
-
-    const moved = await prisma.donation.update({
-      where: { id: donation.id },
-      data: { accountId: null },
-    });
-    await mirrorDonation(prisma, donationMirrorOf(moved));
-
-    const payment = await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } });
-    expect(payment.accountId).toBeNull();
-  });
-
   it("leaves the payment without one when the fee names none", async () => {
     const user = await createUser("22334466");
     await prisma.membership.create({
@@ -83,7 +53,7 @@ describe("the account a money row carries", () => {
   });
 });
 
-describe("the bank's own reference on a money row", () => {
+describe("the bank's own reference on a membership payment", () => {
   beforeEach(async () => {
     await resetDb();
   });
@@ -104,22 +74,6 @@ describe("the bank's own reference on a money row", () => {
       where: { userId: user.id, purpose: "MEMBERSHIP" },
     });
     expect(payment.bankReference).toBe("7026081422303210001");
-  });
-
-  it("reaches the payment a donation is mirrored into", async () => {
-    const donation = await prisma.donation.create({
-      data: {
-        amount: 5000,
-        status: "ACTIVE",
-        paymentMethod: "بنكيلي",
-        bankReference: "TR10000000001",
-      },
-    });
-
-    await mirrorDonation(prisma, donationMirrorOf(donation));
-
-    const payment = await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } });
-    expect(payment.bankReference).toBe("TR10000000001");
   });
 
   it("is not the order code the app generates, which the payment keeps apart", async () => {

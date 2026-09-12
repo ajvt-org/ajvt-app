@@ -5,7 +5,18 @@ import { POST as CREATE_EXPENSE, GET as LIST_EXPENSES } from "@/app/api/admin/ex
 import { PATCH as UPDATE_EXPENSE } from "@/app/api/admin/expenses/[id]/route";
 import { prisma } from "@/lib/prisma";
 import { PATCH as UPDATE_DONATION } from "@/app/api/admin/donations/[id]/route";
-import { resetDb, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { runningYear } from "@/lib/membershipYear";
+import {
+  resetDb,
+  post,
+  patch,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+  giveGift,
+} from "./helpers";
 
 async function aTag(name: string) {
   return prisma.financeTag.create({ data: { name } });
@@ -62,7 +73,6 @@ describe("expense tags", () => {
     expect(after.tags.map((t) => t.name)).toEqual(["مواصلات"]);
   });
 
-  // The money was still spent — only the label for it goes.
   it("keeps the expenses when a tag is deleted", async () => {
     const tag = await aTag("نقل");
     await prisma.expense.create({
@@ -133,7 +143,6 @@ describe("tagging an expense", () => {
     expect(expenses[0].tags).toEqual([{ id: tag.id, name: "نقل" }]);
   });
 
-  // The form sends the whole list, so an unticked tag has to come off.
   it("replaces the tags on edit rather than adding to them", async () => {
     const transport = await aTag("نقل");
     const gear = await aTag("تجهيزات");
@@ -196,9 +205,7 @@ describe("tagging income", () => {
   it("puts a tag on a donation and totals it as income", async () => {
     await signInAsAdmin(await createAdmin());
     const tag = await prisma.financeTag.create({ data: { name: "القافلة الصحية" } });
-    const donation = await prisma.donation.create({
-      data: { donorName: "فاعل خير", amount: 500, status: "ACTIVE" },
-    });
+    const donation = await giveGift({ donorName: "فاعل خير", amount: 500 });
 
     const res = await UPDATE_DONATION(
       patch(`/api/admin/donations/${donation.id}`, { tagIds: [tag.id] }),
@@ -210,12 +217,56 @@ describe("tagging income", () => {
     expect(tags[0]).toMatchObject({ name: "القافلة الصحية", income: 500, incomeCount: 1 });
   });
 
+  it("counts a tagged membership for what it gave above the fee and not the fee itself", async () => {
+    await signInAsAdmin(await createAdmin());
+    const tag = await prisma.financeTag.create({ data: { name: "القافلة الصحية" } });
+    const member = await makeMember({
+      fullName: "محمد ولد أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      membershipYear: runningYear(),
+      paidAmount: MEMBERSHIP_FEE + 2000,
+    });
+    const payment = await prisma.payment.findFirstOrThrow({
+      where: { userId: member.userId, purpose: "MEMBERSHIP" },
+    });
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { tags: { connect: [{ id: tag.id }] } },
+    });
+
+    const { tags } = await (await LIST_TAGS()).json();
+    expect(tags[0]).toMatchObject({ income: 2000, incomeCount: 1 });
+  });
+
+  it("leaves a tagged membership that gave nothing above the fee out of the income", async () => {
+    await signInAsAdmin(await createAdmin());
+    const tag = await prisma.financeTag.create({ data: { name: "مصاريف عامة" } });
+    const member = await makeMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      membershipYear: runningYear(),
+      paidAmount: MEMBERSHIP_FEE,
+    });
+    const payment = await prisma.payment.findFirstOrThrow({
+      where: { userId: member.userId, purpose: "MEMBERSHIP" },
+    });
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { tags: { connect: [{ id: tag.id }] } },
+    });
+
+    const { tags } = await (await LIST_TAGS()).json();
+    expect(tags[0]).toMatchObject({ income: 0, incomeCount: 0 });
+  });
+
   it("leaves a rejected donation out of the income total", async () => {
     await signInAsAdmin(await createAdmin());
     const tag = await prisma.financeTag.create({ data: { name: "مصاريف عامة" } });
-    const donation = await prisma.donation.create({
-      data: { donorName: "فاعل خير", amount: 500, status: "REJECTED" },
-    });
+    const donation = await giveGift({ donorName: "فاعل خير", amount: 500, status: "REJECTED" });
     await UPDATE_DONATION(
       patch(`/api/admin/donations/${donation.id}`, { tagIds: [tag.id] }),
       withId(donation.id),

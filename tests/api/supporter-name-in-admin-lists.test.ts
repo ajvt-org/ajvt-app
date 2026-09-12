@@ -219,7 +219,6 @@ describe("a confidential supporter on the admin lists", () => {
     await prisma.user.update({ where: { id: plain.id }, data: { fullName: "مجهول ولد مجهول" } });
     await signInOrdinary();
     const made = await giveSupport(plain.id, { donorName: "مجهول ولد مجهول" });
-    await prisma.donation.update({ where: { id: made.id }, data: { anonymous: true } });
     await prisma.payment.update({ where: { id: made.id }, data: { anonymous: true } });
 
     const proofs = await bodyOf(await PAYMENT_PROOFS(get("/api/admin/payment-proofs")));

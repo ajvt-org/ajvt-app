@@ -6,6 +6,7 @@ import { nameOf } from "./person";
 import type { AgeStanding } from "./ageStandings";
 import type { ActivityReportRow } from "./activityReport";
 import { activityReport } from "./texts/activityReport";
+import { giftSourceLabels } from "./texts/giftSource";
 
 export const DATASETS = ["members", "donations", "ages", "activities"] as const;
 export type Dataset = (typeof DATASETS)[number];
@@ -18,13 +19,6 @@ export function isDataset(value: string): value is Dataset {
 }
 
 const STATUS_LABEL: Record<string, string> = memberStatusLabels;
-
-const SOURCE_LABEL: Record<string, string> = {
-  PUBLIC: "عام",
-  SELF: "من حساب",
-  MEMBERSHIP: "انتساب",
-  UNRECORDED: "غير مسجل",
-};
 
 export interface ExportableMember {
   fullName: string;
@@ -51,11 +45,6 @@ export interface ExportableDonation {
   userId: string | null;
   user: DonorAccount | null;
   tags: { name: string }[];
-}
-
-export function sourceOnRecord(purpose: string, recorded: string | null): string {
-  if (purpose === "MEMBERSHIP") return "MEMBERSHIP";
-  return recorded ?? "UNRECORDED";
 }
 
 export const MEMBER_HEADERS = [
@@ -114,7 +103,7 @@ export function donationRows(
       d.amount ?? 0,
       d.paymentMethod ?? "",
       STATUS_LABEL[d.status] ?? d.status,
-      SOURCE_LABEL[d.source] ?? d.source,
+      giftSourceLabels[d.source] ?? d.source,
       named && d.user ? nameOf(d.user) : "",
       d.tags.map((t) => t.name).join(" / "),
       matchDateKey(d.createdAt),

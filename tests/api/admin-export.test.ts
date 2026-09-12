@@ -1,8 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/export/[dataset]/route";
 import { prisma } from "@/lib/prisma";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, get, createAdmin, signInAsAdmin, withParams, makeMember } from "./helpers";
+import {
+  resetDb,
+  get,
+  createAdmin,
+  signInAsAdmin,
+  withParams,
+  makeMember,
+  giveGift,
+} from "./helpers";
 
 function download(dataset: string) {
   return GET(get(`/api/admin/export/${dataset}`), withParams({ dataset }));
@@ -48,17 +55,10 @@ describe("GET /api/admin/export/[dataset]", () => {
   it("carries a donation's tags into the export", async () => {
     await signInAsAdmin(await createAdmin());
     const tag = await prisma.financeTag.create({ data: { name: "القافلة الصحية" } });
-    const donation = await prisma.donation.create({
-      data: {
-        donorName: "أحمد",
-        amount: 500,
-        status: "ACTIVE",
-        tags: { connect: { id: tag.id } },
-      },
-    });
-    await mirrorDonation(prisma, {
-      ...donationMirrorOf(donation),
-      tagIds: [tag.id],
+    await giveGift({
+      donorName: "أحمد",
+      amount: 500,
+      tags: { connect: { id: tag.id } },
     });
 
     const body = await (await download("donations")).text();
@@ -70,15 +70,8 @@ describe("GET /api/admin/export/[dataset]", () => {
   it("keeps a gift that arrived publicly public after a member is linked to it", async () => {
     await signInAsAdmin(await createAdmin());
     const m = await makeMember({ fullName: "محمد", age: "البدريين", status: "ACTIVE" });
-    const donation = await prisma.donation.create({
-      data: { donorName: "أحمد", amount: 500, status: "ACTIVE", source: "PUBLIC" },
-    });
-    await mirrorDonation(prisma, donationMirrorOf(donation));
-    const linked = await prisma.donation.update({
-      where: { id: donation.id },
-      data: { userId: m.userId },
-    });
-    await mirrorDonation(prisma, donationMirrorOf(linked));
+    const gift = await giveGift({ donorName: "أحمد", amount: 500 });
+    await prisma.payment.update({ where: { id: gift.id }, data: { userId: m.userId } });
 
     const body = await (await download("donations")).text();
     const row = body.split("\n").find((line) => line.includes("500")) as string;

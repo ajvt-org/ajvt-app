@@ -1,16 +1,21 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { resetDb, get, post, createAdmin, signInAsAdmin, createUsers, makeMember } from "./helpers";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
+import {
+  resetDb,
+  get,
+  post,
+  createAdmin,
+  signInAsAdmin,
+  createUsers,
+  makeMember,
+  giveGift,
+} from "./helpers";
 import { GET as PROOFS } from "@/app/api/admin/payment-proofs/route";
 import { POST as RECORD } from "@/app/api/admin/donations/route";
 
 async function giveByHand(status: "ACTIVE" | "PENDING") {
-  const gift = await prisma.donation.create({
-    data: { donorName: "زائر", amount: 500, source: "PUBLIC", status },
-  });
-  await mirrorDonation(prisma, donationMirrorOf(gift));
+  const gift = await giveGift({ donorName: "زائر", amount: 500, status });
   return gift;
 }
 

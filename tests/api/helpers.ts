@@ -10,7 +10,7 @@ import {
   TUTORIAL_BANK_ID,
   TUTORIAL_BANK_NAME,
 } from "@/lib/questionBankServer";
-import type { ReviewStatus } from "@prisma/client";
+import type { Prisma, ReviewStatus } from "@prisma/client";
 import { writeMembershipFee, type MembershipFee } from "@/lib/membershipPaymentServer";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
@@ -48,8 +48,6 @@ export async function resetDb() {
   clearCookies();
 }
 
-// withRoute() rejects a mutating request that does not say where it came from,
-// so every builder here says it, once, rather than 45 test files each saying it.
 const ORIGIN = "http://localhost";
 
 function sending(url: string, method: string, body: unknown): NextRequest {
@@ -279,8 +277,6 @@ export async function payMembershipYear(
   });
 }
 
-// The surplus of a membership payment is the part above the fee. It is worked
-// out from the payment, which is the only place the money is kept.
 export async function membershipSurplus(memberId: string) {
   const payment = await prisma.payment.findFirstOrThrow({
     where: { userId: memberId, purpose: "MEMBERSHIP" },
@@ -291,4 +287,17 @@ export async function membershipSurplus(memberId: string) {
     anonymous: payment.anonymous,
     status: payment.status,
   };
+}
+
+type GiftFields = Omit<Prisma.PaymentUncheckedCreateInput, "purpose">;
+
+export async function giveGift(data: GiftFields) {
+  return prisma.payment.create({
+    data: {
+      status: "ACTIVE",
+      source: "PUBLIC",
+      ...data,
+      purpose: data.activityId || data.competitionId ? "ACTIVITY" : "DONATION",
+    },
+  });
 }

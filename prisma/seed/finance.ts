@@ -1,10 +1,12 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "./client";
 import { PAYMENT_METHODS } from "./data";
 import { placeholder } from "./images";
 import { daysAgo, fullName, next, phone, pick } from "./random";
 import type { SeededActivity } from "./activities";
 import type { SeededMember } from "./members";
-import { donationMirrorOf, mirrorDonation } from "../../src/lib/paymentMirror";
+import { giftPurpose } from "../../src/lib/giftPayment";
+import { ensureReceiptsFor } from "../../src/lib/paymentReceiptServer";
 
 const TAG_NAMES = [
   "حملة النظافة",
@@ -31,70 +33,69 @@ export async function seedTags() {
   return tags;
 }
 
+async function gave(data: Prisma.PaymentUncheckedCreateInput) {
+  const payment = await prisma.payment.create({ data });
+  await ensureReceiptsFor(prisma, { id: payment.id });
+  return payment;
+}
+
 export async function seedDonations(
   active: SeededMember[],
   health: SeededActivity,
   tags: { id: string }[],
 ) {
   for (let i = 0; i < 12; i++) {
-    const anonymous = i % 3 === 0;
-    const donation = await prisma.donation.create({
-      data: {
-        donorName: anonymous ? null : fullName(40 + i),
-        donorPhone: anonymous ? null : phone(40 + i),
-        donorPhoto: i % 5 === 0 ? placeholder(`seed-donor-${next()}.webp`) : null,
-        amount: [2000, 5000, 10000, 15000, 25000][i % 5],
-        proof: placeholder(`seed-donation-${next()}.webp`),
-        status: i < 7 ? "ACTIVE" : i < 10 ? "PENDING" : "REJECTED",
-        source: "PUBLIC",
-        paymentMethod: pick(PAYMENT_METHODS, i),
-        activityId: i % 4 === 0 ? health.id : null,
-        tags: i % 5 === 0 ? { connect: [{ id: tags[1].id }] } : undefined,
-        createdAt: daysAgo(60 - i * 4),
-      },
-      include: { tags: { select: { id: true } } },
+    const unnamed = i % 3 === 0;
+    const activityId = i % 4 === 0 ? health.id : null;
+    const madeOn = daysAgo(60 - i * 4);
+    await gave({
+      purpose: giftPurpose({ activityId }),
+      donorName: unnamed ? null : fullName(40 + i),
+      donorPhone: unnamed ? null : phone(40 + i),
+      donorPhoto: i % 5 === 0 ? placeholder(`seed-donor-${next()}.webp`) : null,
+      amount: [2000, 5000, 10000, 15000, 25000][i % 5],
+      proof: placeholder(`seed-donation-${next()}.webp`),
+      status: i < 7 ? "ACTIVE" : i < 10 ? "PENDING" : "REJECTED",
+      source: "PUBLIC",
+      method: pick(PAYMENT_METHODS, i),
+      activityId,
+      tags: i % 5 === 0 ? { connect: [{ id: tags[1].id }] } : undefined,
+      paidOn: madeOn,
+      createdAt: madeOn,
     });
-    await mirrorDonation(
-      prisma,
-      donationMirrorOf(
-        donation,
-        donation.tags.map((t) => t.id),
-        donation.createdAt,
-      ),
-    );
   }
 
   for (let i = 0; i < 4; i++) {
-    const donation = await prisma.donation.create({
-      data: {
-        donorName: null,
-        amount: [3000, 7500, 12000, 20000][i],
-        proof: placeholder(`seed-donation-${next()}.webp`),
-        status: "ACTIVE",
-        source: "PUBLIC",
-        paymentMethod: pick(PAYMENT_METHODS, i),
-        createdAt: daysAgo(50 - i * 3),
-      },
+    const madeOn = daysAgo(50 - i * 3);
+    await gave({
+      purpose: "DONATION",
+      donorName: null,
+      amount: [3000, 7500, 12000, 20000][i],
+      proof: placeholder(`seed-donation-${next()}.webp`),
+      status: "ACTIVE",
+      source: "PUBLIC",
+      method: pick(PAYMENT_METHODS, i),
+      paidOn: madeOn,
+      createdAt: madeOn,
     });
-    await mirrorDonation(prisma, donationMirrorOf(donation, undefined, donation.createdAt));
   }
 
   const shy = active.slice(0, 2);
   for (let i = 0; i < shy.length; i++) {
     for (const amount of [4000, 6000]) {
-      const donation = await prisma.donation.create({
-        data: {
-          donorName: null,
-          amount,
-          proof: placeholder(`seed-donation-${next()}.webp`),
-          status: "ACTIVE",
-          source: "SELF",
-          paymentMethod: pick(PAYMENT_METHODS, i),
-          userId: shy[i].userId,
-          createdAt: daysAgo(30 - i * 2),
-        },
+      const madeOn = daysAgo(30 - i * 2);
+      await gave({
+        purpose: "DONATION",
+        donorName: null,
+        amount,
+        proof: placeholder(`seed-donation-${next()}.webp`),
+        status: "ACTIVE",
+        source: "SELF",
+        method: pick(PAYMENT_METHODS, i),
+        userId: shy[i].userId,
+        paidOn: madeOn,
+        createdAt: madeOn,
       });
-      await mirrorDonation(prisma, donationMirrorOf(donation, undefined, donation.createdAt));
     }
   }
 
