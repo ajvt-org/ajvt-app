@@ -94,7 +94,11 @@ async function sharedStandings(
     let blockOpensAt: Date | null = null;
     let blockClosesAt: Date | null = null;
     if (isBlock) {
-      const { first, last } = blockRange(blockInfo.block, board.blockRounds, competition.roundCount);
+      const { first, last } = blockRange(
+        blockInfo.block,
+        board.blockRounds,
+        competition.roundCount,
+      );
       const shape = shapeOf(competition);
       blockOpensAt = windowAt(shape, first)?.opensAt ?? null;
       blockClosesAt = windowAt(shape, last)?.closesAt ?? null;
