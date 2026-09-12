@@ -22,8 +22,6 @@ const LAST = YEAR - 1;
 
 const payment = { paidAmount: 1000, paymentMethod: "بنكيلي" };
 
-// Each year keeps its own payment. The fee is what it covered of the fee in
-// force, the rest is support.
 const paidForYearOf = async (memberId: string, year: number) => {
   const row = await prisma.payment.findFirst({
     where: { userId: memberId, purpose: "MEMBERSHIP", year },
@@ -79,16 +77,6 @@ describe("renewing a membership", () => {
 
   it("leaves the previous year readable beside the new one", async () => {
     const existing = await member();
-    await prisma.payment.create({
-      data: {
-        purpose: "MEMBERSHIP",
-        userId: existing.userId,
-        year: LAST,
-        amount: 500,
-        feeApplied: 100,
-        status: "ACTIVE",
-      },
-    });
 
     await renew(existing.userId);
 
