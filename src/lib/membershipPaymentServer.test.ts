@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("./paymentReceiptServer", () => ({
-  ensureReceiptsFor: vi.fn(async () => []),
   syncReceiptsFor: vi.fn(async () => []),
 }));
 
@@ -9,7 +8,7 @@ import { recordFeeVerdict, writeMembershipFee } from "./membershipPaymentServer"
 
 type Call = { op: string; args: Record<string, unknown> };
 
-function fakeDb(standing: { id: string } | null = null) {
+function fakeDb() {
   const calls: Call[] = [];
   const record =
     (op: string) =>
@@ -19,7 +18,8 @@ function fakeDb(standing: { id: string } | null = null) {
     };
   const db = {
     payment: {
-      findFirst: vi.fn(async () => standing),
+      findFirst: vi.fn(async () => null),
+      upsert: vi.fn(record("upsert")),
       create: vi.fn(record("create")),
       update: vi.fn(record("update")),
       updateMany: vi.fn(record("updateMany")),
@@ -31,6 +31,9 @@ function fakeDb(standing: { id: string } | null = null) {
 }
 
 const only = (calls: Call[], op: string) => calls.filter((c) => c.op === op);
+
+const written = (calls: Call[], half: "create" | "update") =>
+  (only(calls, "upsert")[0].args[half] ?? {}) as Record<string, unknown>;
 
 const REVIEWED_ON = new Date("2026-02-03T10:00:00.000Z");
 
@@ -49,12 +52,33 @@ const FEE = {
 beforeEach(() => vi.clearAllMocks());
 
 describe("the payment a membership fee is written to", () => {
+  it("keys the write on the member, the year and the purpose", async () => {
+    const { db, calls } = fakeDb();
+
+    await writeMembershipFee(db, "u1", 2026, 3000, 1000, FEE);
+
+    expect(only(calls, "upsert")).toHaveLength(1);
+    expect(only(calls, "upsert")[0].args.where).toEqual({
+      userId_year_purpose: { userId: "u1", year: 2026, purpose: "MEMBERSHIP" },
+    });
+  });
+
+  it("never reads first to decide which half applies", async () => {
+    const { db, calls } = fakeDb();
+
+    await writeMembershipFee(db, "u1", 2026, 3000, 1000, FEE);
+
+    expect(only(calls, "findFirst")).toHaveLength(0);
+    expect(only(calls, "create")).toHaveLength(0);
+    expect(only(calls, "update")).toHaveLength(0);
+  });
+
   it("makes one when the member has paid something", async () => {
     const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, 3000, 1000, FEE);
 
-    expect(only(calls, "create")[0].args.data).toMatchObject({
+    expect(written(calls, "create")).toMatchObject({
       purpose: "MEMBERSHIP",
       userId: "u1",
       year: 2026,
@@ -68,7 +92,7 @@ describe("the payment a membership fee is written to", () => {
 
     await writeMembershipFee(db, "u1", 2026, 3000, 1000, FEE);
 
-    expect(only(calls, "create")[0].args.data).toMatchObject({
+    expect(written(calls, "create")).toMatchObject({
       referenceCode: "AJ-1234",
       recordedBy: "boss",
       recordedByAdminId: "a1",
@@ -80,7 +104,7 @@ describe("the payment a membership fee is written to", () => {
   it("writes the recorder's name and admin id together or not at all", async () => {
     const withAdmin = fakeDb();
     await writeMembershipFee(withAdmin.db, "u1", 2026, 3000, 1000, FEE);
-    expect(only(withAdmin.calls, "create")[0].args.data).toMatchObject({
+    expect(written(withAdmin.calls, "create")).toMatchObject({
       recordedBy: "boss",
       recordedByAdminId: "a1",
     });
@@ -90,31 +114,31 @@ describe("the payment a membership fee is written to", () => {
       ...FEE,
       recorder: { name: "محمد ولد أحمد", adminId: null },
     });
-    expect(only(bySelf.calls, "create")[0].args.data).toMatchObject({
+    expect(written(bySelf.calls, "create")).toMatchObject({
       recordedBy: "محمد ولد أحمد",
       recordedByAdminId: null,
     });
   });
 
   it("clears the admin id when a member pays against a row an admin recorded", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
+    const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, 3000, 1000, {
       recorder: { name: "محمد ولد أحمد", adminId: null },
     });
 
-    expect(only(calls, "update")[0].args.data).toMatchObject({
+    expect(written(calls, "update")).toMatchObject({
       recordedBy: "محمد ولد أحمد",
       recordedByAdminId: null,
     });
   });
 
   it("leaves both alone when the caller names no recorder", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
+    const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, 3000, 1000, { method: "بنكيلي" });
 
-    const data = only(calls, "update")[0].args.data as Record<string, unknown>;
+    const data = written(calls, "update");
     expect(data).not.toHaveProperty("recordedBy");
     expect(data).not.toHaveProperty("recordedByAdminId");
   });
@@ -122,24 +146,23 @@ describe("the payment a membership fee is written to", () => {
   it("records the visibility answer on a new one and no name of its own", async () => {
     const named = fakeDb();
     await writeMembershipFee(named.db, "u1", 2026, 3000, 1000, FEE);
-    const shown = only(named.calls, "create")[0].args.data as Record<string, unknown>;
+    const shown = written(named.calls, "create");
     expect(shown.anonymous).toBe(false);
     expect(shown).not.toHaveProperty("donorName");
 
     const hidden = fakeDb();
     await writeMembershipFee(hidden.db, "u1", 2026, 3000, 1000, { ...FEE, anonymous: true });
-    const kept = only(hidden.calls, "create")[0].args.data as Record<string, unknown>;
+    const kept = written(hidden.calls, "create");
     expect(kept.anonymous).toBe(true);
     expect(kept).not.toHaveProperty("donorName");
   });
 
   it("corrects the one already standing rather than adding a second", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
+    const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, 3000, 1000, FEE);
 
-    expect(only(calls, "create")).toHaveLength(0);
-    expect(only(calls, "update")[0].args.data).toMatchObject({
+    expect(written(calls, "update")).toMatchObject({
       amount: 3000,
       referenceCode: "AJ-1234",
       reviewedBy: "boss",
@@ -148,12 +171,20 @@ describe("the payment a membership fee is written to", () => {
     });
   });
 
+  it("leaves the visibility answer alone on the one already standing", async () => {
+    const { db, calls } = fakeDb();
+
+    await writeMembershipFee(db, "u1", 2026, 3000, 1000, { ...FEE, anonymous: true });
+
+    expect(written(calls, "update")).not.toHaveProperty("anonymous");
+  });
+
   it("leaves out what the caller did not name", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
+    const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, 3000, 1000, { method: "بنكيلي" });
 
-    expect(only(calls, "update")[0].args.data).toEqual({
+    expect(written(calls, "update")).toEqual({
       method: "بنكيلي",
       amount: 3000,
       feeApplied: 1000,
@@ -161,21 +192,21 @@ describe("the payment a membership fee is written to", () => {
   });
 
   it("records nothing transferred as an amount rather than as a removal", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
+    const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, 0, 1000, FEE);
 
     expect(only(calls, "delete")).toHaveLength(0);
-    expect(only(calls, "update")[0].args.data).toMatchObject({ amount: 0, feeApplied: 1000 });
+    expect(written(calls, "update")).toMatchObject({ amount: 0, feeApplied: 1000 });
   });
 
   it("never takes a standing payment away, whatever the amount", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
+    const { db, calls } = fakeDb();
 
     await writeMembershipFee(db, "u1", 2026, null, 1000, FEE);
 
     expect(only(calls, "delete")).toHaveLength(0);
-    expect(only(calls, "update")).toHaveLength(0);
+    expect(only(calls, "upsert")).toHaveLength(0);
   });
 
   it("writes nothing at all when the caller names no amount", async () => {
@@ -183,7 +214,7 @@ describe("the payment a membership fee is written to", () => {
 
     await writeMembershipFee(db, "u1", 2026, null, 1000, FEE);
 
-    expect(calls.filter((c) => c.op !== "findFirst")).toHaveLength(0);
+    expect(calls).toHaveLength(0);
   });
 });
 
@@ -220,7 +251,7 @@ describe("the verdict a membership payment carries", () => {
   });
 
   it("never takes a payment away, whatever the verdict", async () => {
-    const { db, calls } = fakeDb({ id: "p1" });
+    const { db, calls } = fakeDb();
 
     await recordFeeVerdict(db, "u1", 2026, { status: "REJECTED" }, REVIEWED_ON);
 
