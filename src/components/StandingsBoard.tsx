@@ -37,10 +37,15 @@ function BlockTimer({
   const remainingPct = 100 - Math.round(elapsed * 100);
   const urgent = elapsed > 0.8;
 
-  const firedRef = useRef(false);
+  const fired = useRef(false);
+
   useEffect(() => {
-    if (elapsed >= 1 && !firedRef.current) {
-      firedRef.current = true;
+    fired.current = false;
+  }, [opensAt, closesAt]);
+
+  useEffect(() => {
+    if (elapsed >= 1 && !fired.current) {
+      fired.current = true;
       onReached?.();
     }
   }, [elapsed, onReached]);

@@ -96,6 +96,20 @@ const bar = () => screen.getByRole("progressbar");
 const fill = () => (bar().firstElementChild as HTMLElement).style.width;
 const announced = () => bar().getAttribute("aria-valuenow");
 
+const board = (opensAt: string, closesAt: string, onReached: () => void) => (
+  <StandingsBoard
+    title="ترتيب الأسبوع"
+    rows={rows}
+    mine={null}
+    meId={null}
+    empty="لا ترتيب بعد"
+    blockOpensAt={opensAt}
+    blockClosesAt={closesAt}
+    showBlockTimer={true}
+    onReached={onReached}
+  />
+);
+
 describe("BlockTimer", () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -189,19 +203,7 @@ describe("BlockTimer", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(CLOSE.getTime() - 30_000));
     const onReached = vi.fn();
-    render(
-      <StandingsBoard
-        title="ترتيب الأسبوع"
-        rows={rows}
-        mine={null}
-        meId={null}
-        empty="لا ترتيب بعد"
-        blockOpensAt={OPEN.toISOString()}
-        blockClosesAt={CLOSE.toISOString()}
-        showBlockTimer={true}
-        onReached={onReached}
-      />,
-    );
+    render(board(OPEN.toISOString(), CLOSE.toISOString(), onReached));
 
     expect(onReached).not.toHaveBeenCalled();
 
@@ -216,5 +218,27 @@ describe("BlockTimer", () => {
     });
 
     expect(onReached).toHaveBeenCalledOnce();
+  });
+  it("fires again when the next block closes", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(CLOSE.getTime() - 30_000));
+    const onReached = vi.fn();
+    const { rerender } = render(board(OPEN.toISOString(), CLOSE.toISOString(), onReached));
+
+    await act(async () => {
+      vi.advanceTimersByTime(65_000);
+    });
+
+    expect(onReached).toHaveBeenCalledOnce();
+
+    const nextClose = new Date(CLOSE.getTime() + (CLOSE.getTime() - OPEN.getTime()));
+    vi.setSystemTime(new Date(nextClose.getTime() - 30_000));
+    rerender(board(CLOSE.toISOString(), nextClose.toISOString(), onReached));
+
+    await act(async () => {
+      vi.advanceTimersByTime(65_000);
+    });
+
+    expect(onReached).toHaveBeenCalledTimes(2);
   });
 });
