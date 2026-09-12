@@ -105,7 +105,7 @@ export default function MembershipCard({
 
       {history &&
         (history.refusal ? (
-          <RenewalRefusalNote refusal={history.refusal} onOpenPayment={() => setOpening(true)} />
+          <RenewalRefusalNote refusal={history.refusal} />
         ) : (
           <RenewForm memberId={member.id} year={history.currentYear} onRenewed={refresh} />
         ))}
