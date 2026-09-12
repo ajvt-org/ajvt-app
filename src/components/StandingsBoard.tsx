@@ -3,6 +3,7 @@
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import NumericRanges from "@/components/NumericRanges";
 import { standingsBoard as texts } from "@/lib/texts";
+import BlockTimer from "@/components/BlockTimer";
 
 export interface BoardRow {
   rank: number;
@@ -23,12 +24,20 @@ export default function StandingsBoard({
   mine,
   meId,
   empty,
+  blockOpensAt,
+  blockClosesAt,
+  showBlockTimer,
+  onReached,
 }: {
   title?: string;
   rows: BoardRow[];
   mine: MyPlace | null;
   meId: string | null;
   empty: string;
+  blockOpensAt?: string | null;
+  blockClosesAt?: string | null;
+  showBlockTimer?: boolean;
+  onReached?: () => void;
 }) {
   const listed = rows.some((r) => r.userId === meId);
   const podium = rows.length >= 3 ? [rows[1], rows[0], rows[2]] : [];
@@ -40,6 +49,15 @@ export default function StandingsBoard({
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           {title}
         </p>
+      )}
+
+      {showBlockTimer && blockOpensAt && blockClosesAt && (
+        <BlockTimer
+          opensAt={blockOpensAt}
+          closesAt={blockClosesAt}
+          label={texts.blockTimer}
+          onReached={onReached}
+        />
       )}
 
       {podium.length === 3 && (

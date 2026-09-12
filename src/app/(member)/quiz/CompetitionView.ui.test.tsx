@@ -35,6 +35,8 @@ const standings: StandingsState = {
       blocks: 3,
       rows: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
       mine: { rank: 4, total: 10 },
+      blockOpensAt: null,
+      blockClosesAt: null,
     },
     {
       id: "b2",
@@ -47,6 +49,8 @@ const standings: StandingsState = {
       blocks: 1,
       rows: [{ rank: 1, userId: "u1", name: "أنا", photoUrl: null, total: 90 }],
       mine: { rank: 1, total: 90 },
+      blockOpensAt: null,
+      blockClosesAt: null,
     },
   ],
 };
@@ -378,5 +382,88 @@ describe("CompetitionView", () => {
 
     expect(screen.getByText(/الجولة القادمة بعد/)).toBeDefined();
     expect(screen.queryByText(/تُغلق الجولة/)).toBeNull();
+  });
+});
+
+const BLOCK_OPEN = new Date("2026-09-01T10:00:00Z").toISOString();
+const BLOCK_CLOSE = new Date("2026-09-08T10:00:00Z").toISOString();
+
+const weekly = {
+  ...standings.boards[0],
+  id: "b3",
+  title: "الترتيب الأسبوعي",
+  blockTitle: "الأسبوع",
+  blockRounds: 7,
+  counting: 6,
+  wholeRun: false,
+  block: 2,
+  blocks: 3,
+  blockOpensAt: BLOCK_OPEN,
+  blockClosesAt: BLOCK_CLOSE,
+};
+
+const overall = { ...standings.boards[1], blockOpensAt: BLOCK_OPEN, blockClosesAt: BLOCK_CLOSE };
+
+const withBlockBoard = (over: Partial<StandingsState> = {}) =>
+  setup({ roundCount: 21, boards: [weekly, overall], ...over });
+
+const timer = () => screen.queryByRole("progressbar");
+
+describe("the block timer on the standings", () => {
+  it("shows the bar on a running block board", () => {
+    withBlockBoard();
+
+    expect(timer()).not.toBeNull();
+  });
+
+  it("leaves the bar out of the overall ranking", async () => {
+    withBlockBoard();
+
+    await userEvent.click(screen.getByRole("tab", { name: "الترتيب العام" }));
+
+    expect(timer()).toBeNull();
+  });
+
+  it("leaves the bar out of a board whose block is a single round", () => {
+    withBlockBoard({ boards: [{ ...weekly, blockRounds: 1, blocks: 21 }, overall] });
+
+    expect(timer()).toBeNull();
+  });
+
+  it("leaves the bar out before the competition has started", () => {
+    withBlockBoard({ state: "before", next: { index: 0, opensAt: FUTURE } });
+
+    expect(timer()).toBeNull();
+  });
+
+  it("leaves the bar out once the competition is over", () => {
+    withBlockBoard({ state: "over" });
+
+    expect(timer()).toBeNull();
+  });
+
+  it("leaves the bar out when a past block is picked from the dropdown", async () => {
+    get.mockImplementation((url: string) =>
+      url.includes("board=")
+        ? Promise.resolve({
+            rows: [{ rank: 1, userId: "u3", name: "سالم", photoUrl: null, total: 22 }],
+            mine: null,
+          })
+        : Promise.resolve({ rounds: [] }),
+    );
+    withBlockBoard();
+
+    expect(timer()).not.toBeNull();
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "فترة الترتيب" }), "0");
+
+    await waitFor(() => expect(screen.getByText("سالم")).toBeDefined());
+    expect(timer()).toBeNull();
+  });
+
+  it("leaves the bar out when the competition has no boards", () => {
+    withBlockBoard({ boards: [] });
+
+    expect(timer()).toBeNull();
   });
 });

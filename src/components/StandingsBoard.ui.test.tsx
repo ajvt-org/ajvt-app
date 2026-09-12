@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 
@@ -86,5 +86,46 @@ describe("StandingsBoard", () => {
     const img = screen.getByAltText("محمد") as HTMLImageElement;
     expect(img.src).toContain("/api/files/member/m1-thumb.webp");
     expect(screen.queryByAltText("أحمد")).toBeNull();
+  });
+});
+
+const OPEN = new Date("2026-09-01T10:00:00Z");
+const CLOSE = new Date("2026-09-08T10:00:00Z");
+
+describe("the block timer on the board", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("does not render the bar when showBlockTimer is false", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(OPEN.getTime() + 60 * 60 * 1000));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: false,
+    });
+
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("does not render the bar when blockOpensAt or blockClosesAt is null", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(OPEN.getTime() + 60 * 60 * 1000));
+    setup({ blockOpensAt: null, blockClosesAt: null, showBlockTimer: true });
+
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("renders the bar when showBlockTimer is true and both dates are present", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(OPEN.getTime() + 60 * 60 * 1000));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(screen.getByRole("progressbar")).toBeDefined();
   });
 });

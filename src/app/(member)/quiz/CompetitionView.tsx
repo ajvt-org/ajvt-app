@@ -46,6 +46,8 @@ export interface StandingsBoard {
   blocks: number;
   rows: BoardRow[];
   mine: Place | null;
+  blockOpensAt: string | null;
+  blockClosesAt: string | null;
 }
 
 export interface StandingsState {
@@ -231,6 +233,13 @@ export default function CompetitionView({
   const finished = roundOpen && standings.me?.finished;
   const closing = roundOpen && standings.closesAt ? standings.closesAt : null;
   const champion = over ? (standings.boards.find((b) => b.wholeRun)?.rows[0] ?? null) : null;
+  const showBlockTimer =
+    open !== null &&
+    !open.wholeRun &&
+    open.blockRounds > 1 &&
+    standings.state !== "before" &&
+    standings.state !== "over" &&
+    past === null;
 
   return (
     <div className="app-shell">
@@ -436,6 +445,10 @@ export default function CompetitionView({
               mine={past ? past.mine : open.mine}
               meId={standings.meId}
               empty={texts.emptyBoard}
+              blockOpensAt={showBlockTimer ? open.blockOpensAt : null}
+              blockClosesAt={showBlockTimer ? open.blockClosesAt : null}
+              showBlockTimer={showBlockTimer}
+              onReached={onReloadStandings}
             />
           </div>
         )}

@@ -8,10 +8,12 @@ import {
   nextWindow,
   roundInPlay,
   roundState,
+  windowAt,
   type RoundState,
 } from "./quizRound";
 import {
   blockAnchor,
+  blockRange,
   boardBlocks,
   myRound,
   standingOf,
@@ -64,6 +66,8 @@ export interface StandingsBoard {
   blocks: number;
   rows: Board[];
   mine: Ranked | null;
+  blockOpensAt: Date | null;
+  blockClosesAt: Date | null;
 }
 
 type SharedBoard = Omit<StandingsBoard, "mine">;
@@ -85,6 +89,20 @@ async function sharedStandings(
   for (const board of competition.boards) {
     const rows = await rankBoard(competition.id, board, at);
     ranked.push(rows);
+    const blockInfo = boardBlocks(board, at);
+    const isBlock = board.blockRounds > 1 && !board.wholeRun;
+    let blockOpensAt: Date | null = null;
+    let blockClosesAt: Date | null = null;
+    if (isBlock) {
+      const { first, last } = blockRange(
+        blockInfo.block,
+        board.blockRounds,
+        competition.roundCount,
+      );
+      const shape = shapeOf(competition);
+      blockOpensAt = windowAt(shape, first)?.opensAt ?? null;
+      blockClosesAt = windowAt(shape, last)?.closesAt ?? null;
+    }
     boards.push({
       id: board.id,
       title: board.title,
@@ -92,8 +110,10 @@ async function sharedStandings(
       blockRounds: board.blockRounds,
       counting: board.counting,
       wholeRun: board.wholeRun,
-      ...boardBlocks(board, at),
+      ...blockInfo,
       rows: await named(rows, limit),
+      blockOpensAt,
+      blockClosesAt,
     });
   }
   return { boards, ranked };
