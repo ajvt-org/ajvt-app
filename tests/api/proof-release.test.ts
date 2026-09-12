@@ -185,12 +185,7 @@ describe("replacing the proof on a donation", () => {
     await asSuper();
     await stored("ours.webp");
     await stored("theirs.webp");
-    const kept = await giveGift({
-      amount: 100,
-      donorName: "آخر",
-      status: "ACTIVE",
-      proof: "theirs.webp",
-    });
+    await giveGift({ amount: 100, donorName: "آخر", proof: "theirs.webp" });
     const donation = await giveGift({
       amount: 500,
       donorName: "زائر",
