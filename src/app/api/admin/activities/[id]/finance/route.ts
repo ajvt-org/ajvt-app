@@ -20,8 +20,12 @@ export const GET = withRoute(
     if (!activity) throw new NotFoundError(activities.notFound);
 
     const [donations, expenses] = await Promise.all([
-      prisma.donation.findMany({
-        where: { activityId: id, status: "ACTIVE" },
+      prisma.payment.findMany({
+        where: {
+          activityId: id,
+          status: "ACTIVE",
+          purpose: { in: ["DONATION", "ACTIVITY"] },
+        },
         select: {
           id: true,
           donorName: true,
@@ -52,7 +56,7 @@ export const GET = withRoute(
         id: d.id,
         kind: "income" as const,
         label: donorNameOnRecord(d, viewerOf(session)),
-        amount: d.amount ?? 0,
+        amount: d.amount,
         date: d.createdAt.toISOString().slice(0, 10),
       })),
       ...expenses.flatMap((expense) =>
