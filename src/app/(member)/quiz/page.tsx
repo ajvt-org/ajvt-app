@@ -172,7 +172,6 @@ function QuizScreen() {
       onPick={(id) => router.push(quizPath(from, id))}
       onTutorial={practice ? () => setTutorial(true) : undefined}
       tutorialCount={practice?.questions.length ?? 0}
-      hint={canPlay ? undefined : visitor ? texts.visitorHint : texts.ineligibleHint}
       onStarted={loadMine}
     />
   );
