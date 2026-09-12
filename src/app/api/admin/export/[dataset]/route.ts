@@ -17,7 +17,7 @@ import {
   donationRows,
   ageRows,
   activityRows,
-  sourceOf,
+  sourceOnRecord,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   AGE_HEADERS,
@@ -106,7 +106,7 @@ async function buildCsv(
                 ? splitPayment(p.amount, p.feeApplied ?? 0).surplus
                 : p.amount,
             paymentMethod: p.method,
-            source: sourceOf(p.purpose, p.userId),
+            source: sourceOnRecord(p.purpose, p.source),
           }))
           .filter((p) => p.purpose !== "MEMBERSHIP" || p.amount > 0),
         viewer,

@@ -6,6 +6,7 @@ import {
   donationRows,
   ageRows,
   activityRows,
+  sourceOnRecord,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   ACTIVITY_HEADERS,
@@ -138,6 +139,47 @@ describe("donationRows", () => {
 
   it("exports his name for the role that holds the promise", () => {
     expect(donationRows([confidential], OWNER)[0][0]).toBe("الكريم");
+  });
+
+  it("calls a gift that arrived without an account public, even once a member is linked to it", () => {
+    expect(donationRows([{ ...donation, source: "PUBLIC", userId: "u1" }], ADMIN)[0][5]).toBe(
+      "عام",
+    );
+  });
+
+  it("calls a gift sent by a signed in member one from an account", () => {
+    expect(donationRows([{ ...donation, source: "SELF" }], ADMIN)[0][5]).toBe("من حساب");
+  });
+
+  it("keeps that label on a gift from an account whose link was removed", () => {
+    const row = donationRows([{ ...donation, source: "SELF", userId: null, user: null }], ADMIN)[0];
+
+    expect(row[5]).toBe("من حساب");
+  });
+
+  it("gives a membership its own label", () => {
+    expect(donationRows([{ ...donation, source: "MEMBERSHIP" }], ADMIN)[0][5]).toBe("انتساب");
+  });
+
+  it("says the arrival was never recorded rather than leaving the cell empty", () => {
+    expect(donationRows([{ ...donation, source: "UNRECORDED" }], ADMIN)[0][5]).toBe("غير مسجل");
+  });
+});
+
+describe("sourceOnRecord", () => {
+  it("hands back the arrival the payment carries", () => {
+    expect(sourceOnRecord("DONATION", "PUBLIC")).toBe("PUBLIC");
+    expect(sourceOnRecord("DONATION", "SELF")).toBe("SELF");
+    expect(sourceOnRecord("ACTIVITY", "SELF")).toBe("SELF");
+  });
+
+  it("reads a membership off its purpose, which records no arrival of its own", () => {
+    expect(sourceOnRecord("MEMBERSHIP", null)).toBe("MEMBERSHIP");
+  });
+
+  it("reports a gift with no recorded arrival as unrecorded", () => {
+    expect(sourceOnRecord("DONATION", null)).toBe("UNRECORDED");
+    expect(sourceOnRecord("ACTIVITY", null)).toBe("UNRECORDED");
   });
 });
 

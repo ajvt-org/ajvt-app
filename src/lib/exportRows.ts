@@ -23,6 +23,7 @@ const SOURCE_LABEL: Record<string, string> = {
   PUBLIC: "عام",
   SELF: "من حساب",
   MEMBERSHIP: "انتساب",
+  UNRECORDED: "غير مسجل",
 };
 
 export interface ExportableMember {
@@ -52,9 +53,9 @@ export interface ExportableDonation {
   tags: { name: string }[];
 }
 
-export function sourceOf(purpose: string, accountId: string | null): string {
+export function sourceOnRecord(purpose: string, recorded: string | null): string {
   if (purpose === "MEMBERSHIP") return "MEMBERSHIP";
-  return accountId ? "SELF" : "PUBLIC";
+  return recorded ?? "UNRECORDED";
 }
 
 export const MEMBER_HEADERS = [

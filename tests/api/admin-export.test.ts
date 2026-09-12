@@ -67,6 +67,25 @@ describe("GET /api/admin/export/[dataset]", () => {
     expect(body).toContain("القافلة الصحية");
   });
 
+  it("keeps a gift that arrived publicly public after a member is linked to it", async () => {
+    await signInAsAdmin(await createAdmin());
+    const m = await makeMember({ fullName: "محمد", age: "البدريين", status: "ACTIVE" });
+    const donation = await prisma.donation.create({
+      data: { donorName: "أحمد", amount: 500, status: "ACTIVE", source: "PUBLIC" },
+    });
+    await mirrorDonation(prisma, donationMirrorOf(donation));
+    const linked = await prisma.donation.update({
+      where: { id: donation.id },
+      data: { userId: m.userId },
+    });
+    await mirrorDonation(prisma, donationMirrorOf(linked));
+
+    const body = await (await download("donations")).text();
+    const row = body.split("\n").find((line) => line.includes("500")) as string;
+
+    expect(row.split(",")[5]).toBe('"عام"');
+  });
+
   it("splits a membership payment into the fee and the support it carried", async () => {
     await signInAsAdmin(await createAdmin());
     const m = await makeMember({
