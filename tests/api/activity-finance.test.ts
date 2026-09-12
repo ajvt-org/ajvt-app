@@ -13,6 +13,7 @@ import {
   signInAsAdmin,
   withId,
   makeMember,
+  giveGift,
 } from "./helpers";
 
 async function activity(title: string) {
@@ -24,7 +25,7 @@ function addExpense(body: Record<string, unknown>) {
 }
 
 async function donation(amount: number) {
-  return prisma.donation.create({ data: { donorName: "أحمد", amount, status: "ACTIVE" } });
+  return giveGift({ donorName: "أحمد", amount });
 }
 
 async function summaryFor(activityId?: string) {
@@ -94,8 +95,9 @@ describe("attaching finance to an activity", () => {
     );
 
     expect(res.status).toBe(200);
-    const row = await prisma.donation.findUniqueOrThrow({ where: { id: d.id } });
+    const row = await prisma.payment.findUniqueOrThrow({ where: { id: d.id } });
     expect(row.activityId).toBe(a.id);
+    expect(row.purpose).toBe("ACTIVITY");
   });
 
   it("scopes the finance summary to one activity", async () => {

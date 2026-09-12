@@ -11,6 +11,7 @@ import {
   signInAsAdmin,
   makeMember,
   withId,
+  giveGift,
 } from "./helpers";
 
 vi.mock("@/lib/imageProcessing", async (orig) => {
@@ -84,9 +85,7 @@ describe("the payment records how a gift arrived", () => {
 
   it("keeps the arrival as public when an admin links an account afterwards", async () => {
     const user = await aMember("22110077", "محمد ولد أحمد");
-    const before = await prisma.donation.create({
-      data: { amount: 5000, anonymous: true, source: "PUBLIC", status: "ACTIVE" },
-    });
+    const before = await giveGift({ amount: 5000, anonymous: true });
     await signInAsAdmin(await createAdmin());
 
     await UPDATE(

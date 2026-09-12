@@ -7,7 +7,16 @@ import { prisma } from "@/lib/prisma";
 import { PATCH as UPDATE_DONATION } from "@/app/api/admin/donations/[id]/route";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { runningYear } from "@/lib/membershipYear";
-import { resetDb, post, patch, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
+import {
+  resetDb,
+  post,
+  patch,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+  giveGift,
+} from "./helpers";
 
 async function aTag(name: string) {
   return prisma.financeTag.create({ data: { name } });
@@ -196,9 +205,7 @@ describe("tagging income", () => {
   it("puts a tag on a donation and totals it as income", async () => {
     await signInAsAdmin(await createAdmin());
     const tag = await prisma.financeTag.create({ data: { name: "القافلة الصحية" } });
-    const donation = await prisma.donation.create({
-      data: { donorName: "فاعل خير", amount: 500, status: "ACTIVE" },
-    });
+    const donation = await giveGift({ donorName: "فاعل خير", amount: 500 });
 
     const res = await UPDATE_DONATION(
       patch(`/api/admin/donations/${donation.id}`, { tagIds: [tag.id] }),
@@ -259,9 +266,7 @@ describe("tagging income", () => {
   it("leaves a rejected donation out of the income total", async () => {
     await signInAsAdmin(await createAdmin());
     const tag = await prisma.financeTag.create({ data: { name: "مصاريف عامة" } });
-    const donation = await prisma.donation.create({
-      data: { donorName: "فاعل خير", amount: 500, status: "REJECTED" },
-    });
+    const donation = await giveGift({ donorName: "فاعل خير", amount: 500, status: "REJECTED" });
     await UPDATE_DONATION(
       patch(`/api/admin/donations/${donation.id}`, { tagIds: [tag.id] }),
       withId(donation.id),
