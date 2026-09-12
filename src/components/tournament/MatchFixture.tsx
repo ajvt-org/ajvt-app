@@ -31,7 +31,7 @@ export default function MatchFixture({
           logo: match.secondTeam?.logo,
           photo: match.secondTeam?.photo,
         }}
-        size="sm"
+        size="lg"
         layout="stacked"
         entrant={entrant}
       />

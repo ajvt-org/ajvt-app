@@ -17,6 +17,7 @@ import {
   boardBlocks,
   myRound,
   standingOf,
+  type BoardShape,
   type MyRound,
   type RoundScore,
   type Ranked,
@@ -212,6 +213,21 @@ export async function getStandings(
 
 export const NO_BOARD = "لا يوجد هذا الترتيب";
 
+interface SharedBlock {
+  rows: Board[];
+  ranked: Ranked[];
+}
+
+async function sharedBlock(
+  competitionId: string,
+  board: BoardShape,
+  anchor: number,
+  limit: number,
+): Promise<SharedBlock> {
+  const ranked = await rankBoard(competitionId, board, anchor);
+  return { rows: await named(ranked, limit), ranked };
+}
+
 export async function boardBlock(
   competitionId: string,
   boardId: string,
@@ -226,10 +242,16 @@ export async function boardBlock(
   if (!board) throw new NotFoundError(NO_BOARD);
 
   const current = roundInPlay(shapeOf(competition), now);
-  const rows = await rankBoard(competition.id, board, blockAnchor(board, block, current));
+  const anchor = blockAnchor(board, block, current);
+  const shared = await sharedResult(
+    `block:${competition.id}:${board.id}:${anchor}:${limit}`,
+    now.getTime(),
+    STANDINGS_TTL_MS,
+    () => sharedBlock(competition.id, board, anchor, limit),
+  );
   return {
-    rows: await named(rows, limit),
-    mine: userId ? standingOf(rows, userId) : null,
+    rows: shared.rows,
+    mine: userId ? standingOf(shared.ranked, userId) : null,
   };
 }
 
