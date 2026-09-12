@@ -385,19 +385,8 @@ describe("a membership that cannot be renewed", () => {
     }
   });
 
-  it("points the three an admin settles on this page at the payment", async () => {
-    for (const refusal of ["underReview", "notActive", "notIssued"] as const) {
-      historyLands(historyOf({ refusal, memberships: [yearOf()] }));
-      show({ status: "ACTIVE" });
-
-      await screen.findByText(renewalRefusalMessage(refusal));
-      expect(screen.getAllByRole("button", { name: new RegExp(texts.toPayment) })).toHaveLength(2);
-      cleanup();
-    }
-  });
-
-  it("only names the two nothing on this page changes", async () => {
-    for (const refusal of ["alreadyRenewed", "yearBehind"] as const) {
+  it("offers one way into the payment beside every reason", async () => {
+    for (const refusal of REFUSALS) {
       historyLands(historyOf({ refusal, memberships: [yearOf()] }));
       show({ status: "ACTIVE" });
 
@@ -407,13 +396,12 @@ describe("a membership that cannot be renewed", () => {
     }
   });
 
-  it("opens the payment from the reason itself", async () => {
+  it("opens the payment from the card while the reason is on screen", async () => {
     historyLands(historyOf({ refusal: "underReview", memberships: [yearOf()] }));
     show({ status: "ACTIVE" });
 
     await screen.findByText(renewalRefusalMessage("underReview"));
-    const buttons = screen.getAllByRole("button", { name: new RegExp(texts.toPayment) });
-    await userEvent.click(buttons[buttons.length - 1]);
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(texts.toPayment) }));
 
     expect(screen.getByText(texts.paymentTitle)).toBeTruthy();
   });

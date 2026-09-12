@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  canRenew,
-  refusalEndsWithTheFeeDecision,
-  renewalRefusal,
-  yearsOwed,
-  type RenewableMember,
-} from "@/lib/renewal";
+import { canRenew, renewalRefusal, yearsOwed, type RenewableMember } from "@/lib/renewal";
 
 function member(over: Partial<RenewableMember> = {}): RenewableMember {
   return { status: "ACTIVE", membershipYear: 2025, memberNumber: "AJVT-2025-0001", ...over };
@@ -54,18 +48,5 @@ describe("how far behind a member is", () => {
   it("owes nothing when they are up to date or ahead", () => {
     expect(yearsOwed(member({ membershipYear: 2026 }), 2026)).toBe(0);
     expect(yearsOwed(member({ membershipYear: 2027 }), 2026)).toBe(0);
-  });
-});
-
-describe("which refusals a decision on the fee clears", () => {
-  it("names the three an admin settles by deciding the payment", () => {
-    expect(refusalEndsWithTheFeeDecision("underReview")).toBe(true);
-    expect(refusalEndsWithTheFeeDecision("notActive")).toBe(true);
-    expect(refusalEndsWithTheFeeDecision("notIssued")).toBe(true);
-  });
-
-  it("leaves out the two nothing on that page changes", () => {
-    expect(refusalEndsWithTheFeeDecision("alreadyRenewed")).toBe(false);
-    expect(refusalEndsWithTheFeeDecision("yearBehind")).toBe(false);
   });
 });
