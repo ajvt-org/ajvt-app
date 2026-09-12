@@ -66,4 +66,39 @@ describe("FilterSheet", () => {
 
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("offers both origins", () => {
+    renderSheet();
+    const origin = screen.getByLabelText("تصفية حسب مصدر العضوية");
+
+    expect(screen.getByRole("option", { name: "سجّلها مشرف" })).toBeDefined();
+    expect(screen.getByRole("option", { name: "سجّلها العضو بنفسه" })).toBeDefined();
+    expect((origin as HTMLSelectElement).value).toBe("");
+  });
+
+  it("picks the self origin and clears the two narrowings", () => {
+    const { onChange } = renderSheet({ origin: "admin", nophone: "yes", nocapture: "yes" });
+
+    fireEvent.change(screen.getByLabelText("تصفية حسب مصدر العضوية"), {
+      target: { value: "self" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "self", nophone: "", nocapture: "" }),
+    );
+  });
+
+  it("hides the two narrowings under the self origin", () => {
+    renderSheet({ origin: "self" });
+
+    expect(screen.queryByText("بلا رقم هاتف")).toBeNull();
+    expect(screen.queryByText("بلا صورة دفع")).toBeNull();
+  });
+
+  it("keeps the two narrowings under the admin origin", () => {
+    renderSheet({ origin: "admin" });
+
+    expect(screen.getByText("بلا رقم هاتف")).toBeDefined();
+    expect(screen.getByText("بلا صورة دفع")).toBeDefined();
+  });
 });
