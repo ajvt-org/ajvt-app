@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 
 const rows: BoardRow[] = [
@@ -86,5 +86,115 @@ describe("StandingsBoard", () => {
     const img = screen.getByAltText("محمد") as HTMLImageElement;
     expect(img.src).toContain("/api/files/member/m1-thumb.webp");
     expect(screen.queryByAltText("أحمد")).toBeNull();
+  });
+});
+
+const OPEN = new Date("2026-09-01T10:00:00Z");
+const CLOSE = new Date("2026-09-08T10:00:00Z");
+
+describe("BlockTimer", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("does not render the bar when showBlockTimer is false", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(OPEN.getTime() + 60 * 60 * 1000));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: false,
+    });
+
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("does not render the bar when blockOpensAt or blockClosesAt is null", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(OPEN.getTime() + 60 * 60 * 1000));
+    setup({ blockOpensAt: null, blockClosesAt: null, showBlockTimer: true });
+
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("renders the bar when showBlockTimer is true and both dates are present", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(OPEN.getTime() + 60 * 60 * 1000));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(screen.getByRole("progressbar")).toBeDefined();
+  });
+
+  it("aria-valuenow is 0 at block open", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(OPEN);
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("0");
+  });
+
+  it("aria-valuenow is 50 at the midpoint", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date((OPEN.getTime() + CLOSE.getTime()) / 2));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("50");
+  });
+
+  it("aria-valuenow is 100 when the block has closed", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(CLOSE);
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("100");
+  });
+
+  it("calls onReached once when elapsed reaches 100% and not again on subsequent ticks", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(CLOSE.getTime() - 30_000));
+    const onReached = vi.fn();
+    render(
+      <StandingsBoard
+        title="ترتيب الأسبوع"
+        rows={rows}
+        mine={null}
+        meId={null}
+        empty="لا ترتيب بعد"
+        blockOpensAt={OPEN.toISOString()}
+        blockClosesAt={CLOSE.toISOString()}
+        showBlockTimer={true}
+        onReached={onReached}
+      />,
+    );
+
+    expect(onReached).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(65_000);
+    });
+
+    expect(onReached).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(onReached).toHaveBeenCalledOnce();
   });
 });

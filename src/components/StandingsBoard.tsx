@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import NumericRanges from "@/components/NumericRanges";
 import { standingsBoard as texts } from "@/lib/texts";
+import { useNow } from "@/hooks/useNow";
 
 export interface BoardRow {
   rank: number;
@@ -17,18 +19,77 @@ export interface MyPlace {
   total: number;
 }
 
+function BlockTimer({
+  opensAt,
+  closesAt,
+  label,
+  onReached,
+}: {
+  opensAt: string;
+  closesAt: string;
+  label: string;
+  onReached?: () => void;
+}) {
+  const now = useNow(60_000);
+  const start = new Date(opensAt).getTime();
+  const end = new Date(closesAt).getTime();
+  const elapsed = Math.min(1, Math.max(0, (now - start) / Math.max(1, end - start)));
+  const elapsedPct = Math.round(elapsed * 100);
+  const remainingPct = 100 - elapsedPct;
+  const urgent = elapsed > 0.8;
+
+  const firedRef = useRef(false);
+  useEffect(() => {
+    if (elapsed >= 1 && !firedRef.current) {
+      firedRef.current = true;
+      onReached?.();
+    }
+  }, [elapsed, onReached]);
+
+  return (
+    <div
+      role="progressbar"
+      aria-valuenow={elapsedPct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label}
+      className="w-full overflow-hidden"
+      style={{ height: 6, borderRadius: 9999 }}
+    >
+      <div
+        className="h-full"
+        style={{
+          width: `${remainingPct}%`,
+          borderRadius: 9999,
+          background: urgent
+            ? "linear-gradient(135deg, var(--copper-500), var(--copper-600))"
+            : "linear-gradient(135deg, var(--mint-400), var(--mint-600))",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function StandingsBoard({
   title,
   rows,
   mine,
   meId,
   empty,
+  blockOpensAt,
+  blockClosesAt,
+  showBlockTimer,
+  onReached,
 }: {
   title?: string;
   rows: BoardRow[];
   mine: MyPlace | null;
   meId: string | null;
   empty: string;
+  blockOpensAt?: string | null;
+  blockClosesAt?: string | null;
+  showBlockTimer?: boolean;
+  onReached?: () => void;
 }) {
   const listed = rows.some((r) => r.userId === meId);
   const podium = rows.length >= 3 ? [rows[1], rows[0], rows[2]] : [];
@@ -40,6 +101,15 @@ export default function StandingsBoard({
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           {title}
         </p>
+      )}
+
+      {showBlockTimer && blockOpensAt && blockClosesAt && (
+        <BlockTimer
+          opensAt={blockOpensAt}
+          closesAt={blockClosesAt}
+          label={texts.blockTimer}
+          onReached={onReached}
+        />
       )}
 
       {podium.length === 3 && (
