@@ -11,6 +11,10 @@ export function isPaidAmount(amount: number | null): amount is number {
   return amount !== null && amount > 0;
 }
 
+export function arrivalOf(source: string): string | null {
+  return source === "MEMBERSHIP" ? null : source;
+}
+
 export interface DonationMirror {
   donationId: string;
   amount: number | null;
@@ -20,6 +24,7 @@ export interface DonationMirror {
   bankReference: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
+  source: string | null;
   donorName: string | null;
   donorPhoto: string | null;
   donorPhone: string | null;
@@ -39,6 +44,7 @@ export interface MirroredDonation {
   bankReference: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
+  source: string;
   donorName: string | null;
   donorPhoto: string | null;
   donorPhone: string | null;
@@ -61,6 +67,7 @@ export function donationMirrorOf(
     bankReference: donation.bankReference,
     proof: donation.proof,
     status: donation.status,
+    source: arrivalOf(donation.source),
     donorName: donation.donorName,
     donorPhoto: donation.donorPhoto,
     donorPhone: donation.donorPhone,
@@ -95,6 +102,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     proof: d.proof,
     status: d.status,
     anonymous: d.anonymous,
+    source: d.source,
     donorName: d.donorName,
     donorPhoto: d.donorPhoto,
     donorPhone: d.donorPhone,

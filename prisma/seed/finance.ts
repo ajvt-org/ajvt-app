@@ -4,6 +4,7 @@ import { placeholder } from "./images";
 import { daysAgo, fullName, next, phone, pick } from "./random";
 import type { SeededActivity } from "./activities";
 import type { SeededMember } from "./members";
+import { donationMirrorOf, mirrorDonation } from "../../src/lib/paymentMirror";
 
 const TAG_NAMES = [
   "حملة النظافة",
@@ -37,7 +38,7 @@ export async function seedDonations(
 ) {
   for (let i = 0; i < 12; i++) {
     const anonymous = i % 3 === 0;
-    await prisma.donation.create({
+    const donation = await prisma.donation.create({
       data: {
         donorName: anonymous ? null : fullName(40 + i),
         donorPhone: anonymous ? null : phone(40 + i),
@@ -51,11 +52,20 @@ export async function seedDonations(
         tags: i % 5 === 0 ? { connect: [{ id: tags[1].id }] } : undefined,
         createdAt: daysAgo(60 - i * 4),
       },
+      include: { tags: { select: { id: true } } },
     });
+    await mirrorDonation(
+      prisma,
+      donationMirrorOf(
+        donation,
+        donation.tags.map((t) => t.id),
+        donation.createdAt,
+      ),
+    );
   }
 
   for (let i = 0; i < 4; i++) {
-    await prisma.donation.create({
+    const donation = await prisma.donation.create({
       data: {
         donorName: null,
         amount: [3000, 7500, 12000, 20000][i],
@@ -66,12 +76,13 @@ export async function seedDonations(
         createdAt: daysAgo(50 - i * 3),
       },
     });
+    await mirrorDonation(prisma, donationMirrorOf(donation, undefined, donation.createdAt));
   }
 
   const shy = active.slice(0, 2);
   for (let i = 0; i < shy.length; i++) {
     for (const amount of [4000, 6000]) {
-      await prisma.donation.create({
+      const donation = await prisma.donation.create({
         data: {
           donorName: null,
           amount,
@@ -83,6 +94,7 @@ export async function seedDonations(
           createdAt: daysAgo(30 - i * 2),
         },
       });
+      await mirrorDonation(prisma, donationMirrorOf(donation, undefined, donation.createdAt));
     }
   }
 

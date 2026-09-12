@@ -1006,9 +1006,10 @@ model Payment {
   proof             String?
   status            ReviewStatus    @default(PENDING)
   anonymous         Boolean         @default(false)
+  source            String?
   donorName         String?
-  donorPhoto        String? // donor with no linked Member — shown on the honour board
-  donorPhone        String? // contact note for a manually entered donor with no account
+  donorPhoto        String?
+  donorPhone        String?
   userId            String?
   user              User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags              FinanceTag[]
