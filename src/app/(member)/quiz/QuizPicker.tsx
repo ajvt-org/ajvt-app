@@ -155,7 +155,6 @@ function CompetitionCard({
 export default function QuizPicker({
   competitions,
   backHref,
-  hint,
   onPick,
   onTutorial,
   tutorialCount = 0,
@@ -163,7 +162,6 @@ export default function QuizPicker({
 }: {
   competitions: RunningCompetition[];
   backHref: string;
-  hint?: string;
   onPick: (id: string) => void;
   onTutorial?: () => void;
   tutorialCount?: number;
@@ -194,11 +192,6 @@ export default function QuizPicker({
         </div>
       </div>
       <div className="px-5 pb-10 space-y-3 relative" style={{ marginTop: -24 }}>
-        {hint && (
-          <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-            {hint}
-          </p>
-        )}
         {competitions.length === 0 && (
           <div className="card p-6 text-center space-y-2">
             <div className="flex justify-center" style={{ color: "var(--mint-500)" }}>

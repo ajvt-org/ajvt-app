@@ -12,7 +12,7 @@ export default function UploadZone({
   busyLabel = manualAdd.uploading,
   onPick,
 }: {
-  label: string;
+  label?: string;
   prompt: string;
   preview: string | null;
   alt: string;
@@ -22,9 +22,11 @@ export default function UploadZone({
 }) {
   return (
     <div>
-      <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-        {label}
-      </p>
+      {label && (
+        <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          {label}
+        </p>
+      )}
       <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
         {preview ? (
           <div>

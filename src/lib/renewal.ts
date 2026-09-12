@@ -16,16 +16,6 @@ export function renewalRefusal(member: RenewableMember, year: number): RenewalRe
   return null;
 }
 
-const DECIDED_ON_THE_PAYMENT: readonly NonNullable<RenewalRefusal>[] = [
-  "underReview",
-  "notActive",
-  "notIssued",
-];
-
-export function refusalEndsWithTheFeeDecision(refusal: NonNullable<RenewalRefusal>): boolean {
-  return DECIDED_ON_THE_PAYMENT.includes(refusal);
-}
-
 export function canRenew(member: RenewableMember, year: number): boolean {
   return renewalRefusal(member, year) === null;
 }
