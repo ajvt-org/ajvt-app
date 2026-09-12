@@ -25,6 +25,7 @@ export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
 export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
 export {
+  ageGroupTotal,
   ageGroupsDialog,
   ageStandings,
   moveAgeGroup,
@@ -121,6 +122,7 @@ export {
 export {
   quizAdminToast,
   quizBankPicker,
+  quizQuestionForm,
   quizQuestionList,
   quizSettingsForm,
 } from "./quizQuestions";

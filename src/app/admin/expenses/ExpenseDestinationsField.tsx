@@ -4,6 +4,7 @@ import DestinationSelect from "@/components/admin/DestinationSelect";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
+import NumberInput from "@/components/NumberInput";
 import { destinationPicker, expenseDestinations as texts } from "@/lib/texts";
 import { evenSplit } from "@/lib/expenseSplit";
 import type { DestinationOption } from "@/lib/moneyDestination";
@@ -61,14 +62,11 @@ export default function ExpenseDestinationsField({
             />
             {many && (
               <>
-                <input
-                  type="number"
-                  dir="ltr"
+                <NumberInput
                   min={1}
                   value={share.amount}
                   onChange={(e) => patch(at, { amount: e.target.value })}
                   aria-label={texts.amountLabel(at + 1)}
-                  className="input"
                   style={{ width: "6.5rem" }}
                 />
                 <button

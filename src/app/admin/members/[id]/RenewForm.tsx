@@ -9,6 +9,7 @@ import { accountsOfMethod } from "@/lib/paymentMethodChoices";
 import { renewForm as texts } from "@/lib/texts";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
+import NumberInput from "@/components/NumberInput";
 
 const EMPTY = { paidAmount: "", paymentMethod: "", accountId: "", paymentProof: "" };
 
@@ -52,9 +53,7 @@ export default function RenewForm({
 
   return (
     <form onSubmit={submit} className="space-y-2 mt-2">
-      <input
-        type="number"
-        dir="ltr"
+      <NumberInput
         min={configuredFee ?? undefined}
         placeholder={texts.amountPlaceholder}
         value={form.paidAmount}

@@ -59,3 +59,20 @@ export const quizQuestionList = {
   moveUp: "تقديم السؤال",
   moveDown: "تأخير السؤال",
 } as const;
+
+export const quizQuestionForm = {
+  editTitle: "تعديل سؤال",
+  addTitle: "سؤال جديد",
+  text: "نص السؤال",
+  category: "التصنيف",
+  categoryPlaceholder: "تاريخ، رياضة، جغرافيا...",
+  points: "النقاط",
+  correctCount: "عدد الإجابات الصحيحة",
+  answers: "الإجابات",
+  addAnswer: "إضافة إجابة",
+  answerPlaceholder: (index: number) => `إجابة ${index}`,
+  answerCorrect: (index: number) => `الإجابة ${index} صحيحة`,
+  removeAnswer: "حذف الإجابة",
+  save: "حفظ التعديل",
+  add: "إضافة السؤال",
+} as const;

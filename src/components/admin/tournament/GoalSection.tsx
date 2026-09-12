@@ -7,6 +7,7 @@ import IconLabel from "@/components/IconLabel";
 import FieldRow from "@/components/admin/FieldRow";
 import { matchAdmin as texts } from "@/lib/texts";
 import { KIND_LABEL, goalSuffix, type GoalDraft } from "./goalDraft";
+import NumberInput from "@/components/NumberInput";
 
 export default function GoalSection({
   title,
@@ -175,12 +176,10 @@ export default function GoalSection({
 
         <FieldRow label={texts.fieldMinute} hint={texts.minuteHint}>
           {(id) => (
-            <input
+            <NumberInput
               id={id}
-              type="number"
               min={1}
               max={130}
-              inputMode="numeric"
               value={minute}
               onChange={(e) => setMinute(e.target.value)}
               className="input text-sm"

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import NumberInput from "@/components/NumberInput";
+import { ageGroupTotal as texts } from "@/lib/texts";
 import type { AgeGroup } from "./types";
 
 export default function AgeGroupTotal({
@@ -38,11 +40,10 @@ export default function AgeGroupTotal({
           className="text-xs shrink-0"
           style={{ color: "var(--text-muted)" }}
         >
-          العدد الإجمالي
+          {texts.label}
         </label>
-        <input
+        <NumberInput
           id={`total-${group.id}`}
-          type="number"
           min={0}
           value={value}
           onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
@@ -55,7 +56,7 @@ export default function AgeGroupTotal({
           className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0 disabled:opacity-40"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          {saving ? "..." : "حفظ"}
+          {saving ? "..." : texts.save}
         </button>
       </div>
       {error && (

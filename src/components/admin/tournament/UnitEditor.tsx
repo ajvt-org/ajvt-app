@@ -4,6 +4,7 @@ import IconLabel from "@/components/IconLabel";
 import { seriesResult as texts } from "@/lib/texts";
 import { countsPoints, type LevelRow } from "@/lib/matchLevels";
 import type { UnitRow } from "./seriesTypes";
+import NumberInput from "@/components/NumberInput";
 
 export interface UnitDraft {
   outcome: "SIDE_A" | "SIDE_B" | "DRAW" | "";
@@ -78,9 +79,7 @@ export default function UnitEditor({
         <div className="grid grid-cols-2 gap-2">
           <label className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
             <bdi>{texts.pointsOf(sides[0])}</bdi>
-            <input
-              type="number"
-              dir="ltr"
+            <NumberInput
               min={0}
               disabled={busy}
               value={draft.sideAPoints}
@@ -90,9 +89,7 @@ export default function UnitEditor({
           </label>
           <label className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
             <bdi>{texts.pointsOf(sides[1])}</bdi>
-            <input
-              type="number"
-              dir="ltr"
+            <NumberInput
               min={0}
               disabled={busy}
               value={draft.sideBPoints}

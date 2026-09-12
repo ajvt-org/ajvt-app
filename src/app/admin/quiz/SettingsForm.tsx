@@ -3,6 +3,7 @@
 import IconLabel from "@/components/IconLabel";
 import { quizSettingsForm as texts } from "@/lib/texts";
 import type { SettingsForm as FormValues } from "./types";
+import NumberInput from "@/components/NumberInput";
 
 interface Field {
   key: keyof FormValues;
@@ -43,10 +44,8 @@ function NumberFields({
           >
             {field.label}
           </label>
-          <input
+          <NumberInput
             id={`quiz-${field.key}`}
-            type="number"
-            dir="ltr"
             min={field.min}
             max={field.max}
             className="input text-sm"

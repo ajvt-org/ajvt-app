@@ -168,6 +168,8 @@ export default function StepPayment({
             </label>
             <input
               id="member-bank-reference"
+              type="text"
+              inputMode="numeric"
               value={form.bankReference}
               onChange={(e) => setForm((p) => ({ ...p, bankReference: e.target.value }))}
               maxLength={40}

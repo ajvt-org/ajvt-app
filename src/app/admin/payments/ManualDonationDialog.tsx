@@ -16,6 +16,7 @@ import {
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import NumberInput from "@/components/NumberInput";
 import PhotoUpload from "@/components/PhotoUpload";
 import Sheet from "@/components/Sheet";
 import PhoneInput from "@/components/form/PhoneInput";
@@ -191,13 +192,10 @@ export default function ManualDonationDialog({
         )}
 
         <FormField id="manual-amount" label={manualDonation.amount}>
-          <input
+          <NumberInput
             id="manual-amount"
-            type="number"
-            dir="ltr"
             value={form.amount}
             onChange={(e) => set({ amount: e.target.value })}
-            className="input"
           />
         </FormField>
 
@@ -245,6 +243,8 @@ export default function ManualDonationDialog({
         <FormField id="manual-bank-reference" label={bankReferenceTexts.label}>
           <input
             id="manual-bank-reference"
+            type="text"
+            inputMode="text"
             value={form.bankReference}
             onChange={(e) => set({ bankReference: e.target.value })}
             maxLength={40}
