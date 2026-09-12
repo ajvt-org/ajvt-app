@@ -1,5 +1,4 @@
 export const proofCheck = {
-  intro: "اختر كابتير التحويل لمعرفة ما إذا كان مرفقاً بسجل موجود، دون حفظ أي شيء.",
   prompt: "اختر صورة الكابتير",
   change: "اختر صورة أخرى",
   checking: "جاري الفحص...",
@@ -10,5 +9,4 @@ export const proofCheck = {
   open: "فتح السجل",
   stateActive: "قائم",
   stateOther: (state: string) => `الحالة ${state}`,
-  nothingSaved: "لم يُحفظ شيء من هذا الفحص",
 } as const;

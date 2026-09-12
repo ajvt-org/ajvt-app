@@ -5,7 +5,7 @@ import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import Notice from "@/components/Notice";
 import UploadZone from "@/app/admin/dashboard/UploadZone";
 import { errorMessage } from "@/lib/api";
-import { adminTools, proofCheck as texts } from "@/lib/texts";
+import { proofCheck as texts } from "@/lib/texts";
 import ProofCheckResult, { type CheckedRow } from "./ProofCheckResult";
 
 export default function ProofCheckPage() {
@@ -39,14 +39,9 @@ export default function ProofCheckPage() {
 
   return (
     <div className="admin-page space-y-3">
-      <AdminToolHeader href="/admin/payments/proof-check" note={texts.nothingSaved} />
-
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.intro}
-      </p>
+      <AdminToolHeader href="/admin/payments/proof-check" />
 
       <UploadZone
-        label={adminTools.proofCheck}
         prompt={texts.prompt}
         preview={preview}
         alt={texts.prompt}
