@@ -58,6 +58,7 @@ const GIFT: MirroredDonation = {
   bankReference: null,
   proof: null,
   status: "ACTIVE",
+  source: "PUBLIC",
   donorName: "أحمد",
   donorPhoto: null,
   donorPhone: null,
@@ -104,6 +105,15 @@ describe("the payment a donation is mirrored into", () => {
 
   it("renames the method, since a donation and a payment call it different things", () => {
     expect(donationMirrorOf(GIFT).method).toBe("بنكيلي");
+  });
+
+  it("carries how the gift arrived", () => {
+    expect(donationMirrorOf(GIFT).source).toBe("PUBLIC");
+    expect(donationMirrorOf({ ...GIFT, source: "SELF" }).source).toBe("SELF");
+  });
+
+  it("leaves the arrival unset when the donation came from a membership", () => {
+    expect(donationMirrorOf({ ...GIFT, source: "MEMBERSHIP" }).source).toBeNull();
   });
 });
 

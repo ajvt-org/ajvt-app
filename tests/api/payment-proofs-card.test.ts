@@ -2,8 +2,17 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { resetDb, get, post, createAdmin, signInAsAdmin, createUsers, makeMember } from "./helpers";
+import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { GET as PROOFS } from "@/app/api/admin/payment-proofs/route";
 import { POST as RECORD } from "@/app/api/admin/donations/route";
+
+async function giveByHand(status: "ACTIVE" | "PENDING") {
+  const gift = await prisma.donation.create({
+    data: { donorName: "زائر", amount: 500, source: "PUBLIC", status },
+  });
+  await mirrorDonation(prisma, donationMirrorOf(gift));
+  return gift;
+}
 
 async function proofFor(id: string) {
   const body = await (await PROOFS(get("/api/admin/payment-proofs"))).json();
@@ -92,17 +101,13 @@ describe("what the payments list hands the card", () => {
   });
 
   it("leaves the account off a gift nobody has linked", async () => {
-    const gift = await prisma.donation.create({
-      data: { donorName: "زائر", amount: 500, source: "PUBLIC", status: "ACTIVE" },
-    });
+    const gift = await giveByHand("ACTIVE");
 
     expect((await proofFor(gift.id)).userId).toBeNull();
   });
 
   it("leaves the receipt out of a gift that has none yet", async () => {
-    const gift = await prisma.donation.create({
-      data: { donorName: "زائر", amount: 500, source: "PUBLIC", status: "PENDING" },
-    });
+    const gift = await giveByHand("PENDING");
 
     expect((await proofFor(gift.id)).receipt).toBeNull();
   });
