@@ -518,7 +518,6 @@ model Admin {
   createdAt    DateTime        @default(now())
   activities   AdminActivity[]
   uploads      ProofImage[]
-  recorded     Payment[]
 }
 
 model AdminActivity {
@@ -1019,7 +1018,6 @@ model Payment {
   competition       Competition?    @relation(fields: [competitionId], references: [id], onDelete: SetNull)
   recordedBy        String?
   recordedByAdminId String?
-  recordedByAdmin   Admin?          @relation(fields: [recordedByAdminId], references: [id], onDelete: SetNull)
   reviewedBy        String?
   reviewedAt        DateTime?
   referenceCode     String?         @unique
