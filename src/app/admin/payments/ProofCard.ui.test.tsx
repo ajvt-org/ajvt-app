@@ -454,6 +454,36 @@ describe("what a donation opens inside its own card", () => {
     expect(unlink.parentElement!.contains(change)).toBe(false);
   });
 
+  it("puts severing the link at the head of the group that ends a payment", () => {
+    mockFetch([]);
+    show({ status: "ACTIVE", userId: "u1" }, [ACCOUNT]);
+
+    const unlink = screen.getByRole("button", { name: donationEdit.unlink });
+    const revoke = screen.getByRole("button", { name: new RegExp(donationActions.revoke) });
+    const remove = screen.getByRole("button", { name: new RegExp(donationActions.remove) });
+    const group = [...unlink.parentElement!.children];
+
+    expect(group.indexOf(unlink)).toBeLessThan(group.indexOf(revoke));
+    expect(group.indexOf(revoke)).toBeLessThan(group.indexOf(remove));
+  });
+
+  it("leaves cancelling and deleting next to each other whether or not an account is attached", () => {
+    mockFetch([]);
+    const attached = show({ status: "ACTIVE", userId: "u1" }, [ACCOUNT]);
+    const gapWith = (): number => {
+      const revoke = screen.getByRole("button", { name: new RegExp(donationActions.revoke) });
+      const remove = screen.getByRole("button", { name: new RegExp(donationActions.remove) });
+      const group = [...revoke.parentElement!.children];
+      return group.indexOf(remove) - group.indexOf(revoke);
+    };
+
+    expect(gapWith()).toBe(1);
+    attached.unmount();
+    show({ status: "ACTIVE" });
+
+    expect(gapWith()).toBe(1);
+  });
+
   it("draws changing the link and severing it on two different icons", () => {
     mockFetch([]);
     show({ userId: "u1" }, [ACCOUNT]);
