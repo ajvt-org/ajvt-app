@@ -1027,7 +1027,7 @@ model Payment {
 
   receipt Receipt?
 
-  @@index([userId, year, purpose])
+  @@unique([userId, year, purpose])
   @@index([status])
   @@index([activityId])
   @@index([competitionId])
