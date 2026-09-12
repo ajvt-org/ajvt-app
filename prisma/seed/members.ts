@@ -8,6 +8,7 @@ import { writeMembershipFee } from "../../src/lib/membershipPaymentServer";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
 import { saveMembershipYear } from "../../src/lib/membershipRecord";
+import { adminRecorder } from "../../src/lib/membershipRecorder";
 
 export type SeededUser = { id: string; phone: string | null };
 export type SeededMember = { userId: string; createdAt: Date; fullName: string };
@@ -45,6 +46,11 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
   const pending: SeededMember[] = [];
   let memberNumber = 0;
   const current = runningYear();
+  const staff = await prisma.admin.findUniqueOrThrow({
+    where: { username: "admin" },
+    select: { id: true, username: true },
+  });
+  const byStaff = adminRecorder({ username: staff.username, adminId: staff.id });
 
   for (let i = 0; i < slots.length; i++) {
     const { age, village, status } = slots[i];
@@ -97,7 +103,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         status,
         reviewedBy: "admin",
         reviewedAt: reviewedLastYear,
-        recordedBy: "admin",
+        recorder: byStaff,
         anonymous: false,
       });
     }
@@ -111,7 +117,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       status,
       reviewedBy: isActive ? "admin" : null,
       reviewedAt: isActive ? reviewedOn : null,
-      recordedBy: isActive ? "admin" : null,
+      ...(isActive ? { recorder: byStaff } : {}),
       anonymous: false,
     });
 

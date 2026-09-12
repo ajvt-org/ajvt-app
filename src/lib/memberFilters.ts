@@ -18,6 +18,7 @@ export const MEMBER_FILTER_KEYS = [
   "from",
   "to",
   "origin",
+  "recorder",
   "nophone",
   "nocapture",
 ] as const;
@@ -38,6 +39,7 @@ export const NO_FILTERS: MemberFilters = {
   from: "",
   to: "",
   origin: "",
+  recorder: "",
   nophone: "",
   nocapture: "",
 };
@@ -55,6 +57,7 @@ export type FilterableMember = {
   createdAt?: string;
   paymentProof?: string | null;
   recordedByAdmin?: boolean;
+  recordedByAdminId?: string | null;
   user?: { phone: string | null } | null;
 };
 
@@ -74,6 +77,7 @@ export function readFilters(params: URLSearchParams): MemberFilters {
   filters.standing = LEGACY_STANDING[filters.standing] ?? filters.standing;
   if (!ORIGINS.includes(filters.origin)) filters.origin = "";
   if (filters.origin !== ADMIN_ORIGIN) {
+    filters.recorder = "";
     filters.nophone = "";
     filters.nocapture = "";
   }
@@ -107,6 +111,7 @@ function matchesOrigin(member: FilterableMember, filters: MemberFilters): boolea
   if (filters.origin === SELF_ORIGIN) return !member.recordedByAdmin;
   if (filters.origin !== ADMIN_ORIGIN) return true;
   if (!member.recordedByAdmin) return false;
+  if (filters.recorder && member.recordedByAdminId !== filters.recorder) return false;
   if (filters.nophone && member.user?.phone) return false;
   if (filters.nocapture && member.paymentProof) return false;
   return true;

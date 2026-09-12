@@ -3,10 +3,23 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import FilterChips from "./FilterChips";
 import { NO_FILTERS } from "@/lib/memberFilters";
 
+const RECORDING_ADMINS = [
+  { id: "a1", username: "boss" },
+  { id: "a2", username: "amine" },
+];
+
 function renderChips(over: Partial<typeof NO_FILTERS>, onChange = vi.fn()) {
   cleanup();
   const filters = { ...NO_FILTERS, ...over };
-  render(<FilterChips filters={filters} year={2026} resultCount={7} onChange={onChange} />);
+  render(
+    <FilterChips
+      filters={filters}
+      year={2026}
+      recordingAdmins={RECORDING_ADMINS}
+      resultCount={7}
+      onChange={onChange}
+    />,
+  );
   return { filters, onChange };
 }
 
@@ -60,5 +73,36 @@ describe("FilterChips", () => {
     fireEvent.click(screen.getByText("سجّلها العضو بنفسه"));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ origin: "" }));
+  });
+
+  it("shows the named admin as its own chip", () => {
+    renderChips({ origin: "admin", recorder: "a1" });
+
+    expect(screen.getByText("سجّلها مشرف")).toBeDefined();
+    expect(screen.getByText("boss")).toBeDefined();
+  });
+
+  it("shows no chip for an admin the list no longer offers", () => {
+    renderChips({ origin: "admin", recorder: "gone" });
+
+    expect(screen.queryByText("gone")).toBeNull();
+  });
+
+  it("removes just the named admin and keeps the origin", () => {
+    const { onChange } = renderChips({ origin: "admin", recorder: "a1" });
+
+    fireEvent.click(screen.getByText("boss").closest("button") as HTMLElement);
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "admin", recorder: "" }),
+    );
+  });
+
+  it("lets go of the named admin when the origin chip is removed", () => {
+    const { onChange } = renderChips({ origin: "admin", recorder: "a1" });
+
+    fireEvent.click(screen.getByText("سجّلها مشرف").closest("button") as HTMLElement);
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ origin: "", recorder: "" }));
   });
 });

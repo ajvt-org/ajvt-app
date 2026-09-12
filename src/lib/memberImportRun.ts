@@ -5,6 +5,7 @@ import { generateTempPassword } from "./tempPassword";
 import { addMembership } from "./membershipCreate";
 import { ageForVillage } from "./villages";
 import type { RowValues } from "./memberImportValues";
+import type { Recorder } from "./membershipRecorder";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -24,7 +25,7 @@ export interface ImportedRow {
 export interface RunSettings {
   membershipYear: number;
   membershipFee: number;
-  recordedBy: string;
+  recorder: Recorder;
 }
 
 async function payFor(db: Db, userId: string, values: RowValues, settings: RunSettings) {
@@ -43,7 +44,7 @@ async function payFor(db: Db, userId: string, values: RowValues, settings: RunSe
     status: "ACTIVE",
     membershipYear: settings.membershipYear,
     fee: settings.membershipFee,
-    recordedBy: settings.recordedBy,
+    recorder: settings.recorder,
     issued: account.memberNumber ? undefined : await issueMembership(db),
   });
 }

@@ -994,35 +994,36 @@ enum PaymentPurpose {
 }
 
 model Payment {
-  id            String          @id @default(cuid())
-  purpose       PaymentPurpose
-  amount        Int
-  feeApplied    Int?
-  year          Int?
-  method        String?
-  accountId     String?
-  bankReference String?
-  account       PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  proof         String?
-  status        ReviewStatus    @default(PENDING)
-  anonymous     Boolean         @default(false)
-  donorName     String?
-  donorPhoto    String? // donor with no linked Member — shown on the honour board
-  donorPhone    String? // contact note for a manually entered donor with no account
-  userId        String?
-  user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags          FinanceTag[]
-  activityId    String?
-  activity      Activity?       @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  competitionId String?
-  competition   Competition?    @relation(fields: [competitionId], references: [id], onDelete: SetNull)
-  recordedBy    String?
-  reviewedBy    String?
-  reviewedAt    DateTime?
-  referenceCode String?         @unique
-  paidOn        DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id                String          @id @default(cuid())
+  purpose           PaymentPurpose
+  amount            Int
+  feeApplied        Int?
+  year              Int?
+  method            String?
+  accountId         String?
+  bankReference     String?
+  account           PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  proof             String?
+  status            ReviewStatus    @default(PENDING)
+  anonymous         Boolean         @default(false)
+  donorName         String?
+  donorPhoto        String? // donor with no linked Member — shown on the honour board
+  donorPhone        String? // contact note for a manually entered donor with no account
+  userId            String?
+  user              User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags              FinanceTag[]
+  activityId        String?
+  activity          Activity?       @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId     String?
+  competition       Competition?    @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  recordedBy        String?
+  recordedByAdminId String?
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  referenceCode     String?         @unique
+  paidOn            DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   receipt Receipt?
 

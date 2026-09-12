@@ -8,6 +8,7 @@ import { methodsWithAccounts } from "@/lib/paymentMethodsServer";
 import { accountIsOpenOn, methodNames, payableMethods } from "@/lib/paymentMethods";
 import { readBankReference } from "@/lib/bankReference";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { selfRecorder } from "@/lib/membershipRecorder";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { renewalRefusal } from "@/lib/renewal";
 import { renewalRefusalMessage } from "@/lib/renewalMessages";
@@ -57,7 +58,7 @@ export const POST = withRoute("Member renew", async (req: NextRequest) => {
       bankReference: bankNumber,
       proof: paymentProof,
       status: "PENDING",
-      recordedBy: nameOf(account),
+      recorder: selfRecorder(nameOf(account)),
       anonymous: surplusAnonymous,
     });
   });

@@ -5,8 +5,12 @@ import { NO_FILTERS } from "@/lib/memberFilters";
 
 const AGE_GROUPS = [{ id: "g1", name: "البدريين" }];
 const VILLAGES = [{ id: "v1", name: "أفجار" }];
+const RECORDING_ADMINS = [
+  { id: "a1", username: "boss" },
+  { id: "a2", username: "amine" },
+];
 
-function renderSheet(over: Partial<typeof NO_FILTERS> = {}) {
+function renderSheet(over: Partial<typeof NO_FILTERS> = {}, recordingAdmins = RECORDING_ADMINS) {
   cleanup();
   const onChange = vi.fn();
   const onClose = vi.fn();
@@ -15,6 +19,7 @@ function renderSheet(over: Partial<typeof NO_FILTERS> = {}) {
       filters={{ ...NO_FILTERS, ...over }}
       ageGroups={AGE_GROUPS}
       villages={VILLAGES}
+      recordingAdmins={recordingAdmins}
       paymentMethods={["بنكيلي"]}
       years={[2025, 2026]}
       year={2026}
@@ -100,5 +105,44 @@ describe("FilterSheet", () => {
 
     expect(screen.getByText("بلا رقم هاتف")).toBeDefined();
     expect(screen.getByText("بلا صورة دفع")).toBeDefined();
+  });
+
+  it("offers the recording admins by name under the admin origin", () => {
+    renderSheet({ origin: "admin" });
+
+    const picker = screen.getByLabelText("تصفية حسب المشرف");
+    expect(picker).toBeDefined();
+    expect(screen.getByText("boss")).toBeDefined();
+    expect(screen.getByText("amine")).toBeDefined();
+  });
+
+  it("offers no admin by name until the admin origin is picked", () => {
+    renderSheet();
+
+    expect(screen.queryByLabelText("تصفية حسب المشرف")).toBeNull();
+  });
+
+  it("offers nobody when no admin has recorded a membership", () => {
+    renderSheet({ origin: "admin" }, []);
+
+    expect(screen.queryByLabelText("تصفية حسب المشرف")).toBeNull();
+  });
+
+  it("narrows to the admin that was picked", () => {
+    const { onChange } = renderSheet({ origin: "admin" });
+
+    fireEvent.change(screen.getByLabelText("تصفية حسب المشرف"), { target: { value: "a1" } });
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ recorder: "a1" }));
+  });
+
+  it("lets go of the named admin when the origin changes", () => {
+    const { onChange } = renderSheet({ origin: "admin", recorder: "a1" });
+
+    fireEvent.change(screen.getByLabelText("تصفية حسب مصدر العضوية"), {
+      target: { value: "self" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ recorder: "" }));
   });
 });

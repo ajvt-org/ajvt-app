@@ -43,7 +43,7 @@ const FEE = {
   status: "ACTIVE" as const,
   reviewedBy: "boss",
   reviewedAt: REVIEWED_ON,
-  recordedBy: "boss",
+  recorder: { name: "boss", adminId: "a1" },
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -71,9 +71,52 @@ describe("the payment a membership fee is written to", () => {
     expect(only(calls, "create")[0].args.data).toMatchObject({
       referenceCode: "AJ-1234",
       recordedBy: "boss",
+      recordedByAdminId: "a1",
       reviewedBy: "boss",
       reviewedAt: REVIEWED_ON,
     });
+  });
+
+  it("writes the recorder's name and admin id together or not at all", async () => {
+    const withAdmin = fakeDb();
+    await writeMembershipFee(withAdmin.db, "u1", 2026, 3000, 1000, FEE);
+    expect(only(withAdmin.calls, "create")[0].args.data).toMatchObject({
+      recordedBy: "boss",
+      recordedByAdminId: "a1",
+    });
+
+    const bySelf = fakeDb();
+    await writeMembershipFee(bySelf.db, "u1", 2026, 3000, 1000, {
+      ...FEE,
+      recorder: { name: "محمد ولد أحمد", adminId: null },
+    });
+    expect(only(bySelf.calls, "create")[0].args.data).toMatchObject({
+      recordedBy: "محمد ولد أحمد",
+      recordedByAdminId: null,
+    });
+  });
+
+  it("clears the admin id when a member pays against a row an admin recorded", async () => {
+    const { db, calls } = fakeDb({ id: "p1" });
+
+    await writeMembershipFee(db, "u1", 2026, 3000, 1000, {
+      recorder: { name: "محمد ولد أحمد", adminId: null },
+    });
+
+    expect(only(calls, "update")[0].args.data).toMatchObject({
+      recordedBy: "محمد ولد أحمد",
+      recordedByAdminId: null,
+    });
+  });
+
+  it("leaves both alone when the caller names no recorder", async () => {
+    const { db, calls } = fakeDb({ id: "p1" });
+
+    await writeMembershipFee(db, "u1", 2026, 3000, 1000, { method: "بنكيلي" });
+
+    const data = only(calls, "update")[0].args.data as Record<string, unknown>;
+    expect(data).not.toHaveProperty("recordedBy");
+    expect(data).not.toHaveProperty("recordedByAdminId");
   });
 
   it("records the visibility answer on a new one and no name of its own", async () => {
@@ -100,6 +143,8 @@ describe("the payment a membership fee is written to", () => {
       amount: 3000,
       referenceCode: "AJ-1234",
       reviewedBy: "boss",
+      recordedBy: "boss",
+      recordedByAdminId: "a1",
     });
   });
 

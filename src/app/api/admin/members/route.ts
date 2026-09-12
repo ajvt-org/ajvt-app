@@ -13,7 +13,7 @@ import {
   paymentOfYear,
 } from "@/lib/membershipPaymentFields";
 import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
-import { recordedByAdmin } from "@/lib/membershipOrigin";
+import { recordedByAdmin, recordingAdminIds } from "@/lib/membershipOrigin";
 import { viewerOf } from "@/lib/supportViewer";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
@@ -52,29 +52,36 @@ export const GET = withRoute("GET /api/admin/members", async () => {
 
   const current = byReviewOrder([...latestByAccount(memberships).values()]);
 
-  return NextResponse.json({
-    members: current.map((membership) => {
-      const { year, user, userId, ...rest } = membership;
-      const { payments, registrations, supportNameConfidential, ...account } = user;
-      const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
-      const banked = paidForYear(payments, year);
-      const paid = named ? banked : feeOnly(banked);
-      const payment = paymentOfYear(payments, year);
-      const mirrored = mirroredColumns(payment);
-      return {
-        ...withPerson({
-          ...rest,
-          ...mirrored,
-          id: userId,
-          userId,
-          membershipYear: year,
-          user: account,
-        }),
-        registrations,
-        paidAmount: paid?.fee ?? null,
-        supportAmount: paid?.support ?? 0,
-        recordedByAdmin: recordedByAdmin(payment, adminNames),
-      };
-    }),
+  const members = current.map((membership) => {
+    const { year, user, userId, ...rest } = membership;
+    const { payments, registrations, supportNameConfidential, ...account } = user;
+    const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
+    const banked = paidForYear(payments, year);
+    const paid = named ? banked : feeOnly(banked);
+    const payment = paymentOfYear(payments, year);
+    const mirrored = mirroredColumns(payment);
+    return {
+      ...withPerson({
+        ...rest,
+        ...mirrored,
+        id: userId,
+        userId,
+        membershipYear: year,
+        user: account,
+      }),
+      registrations,
+      paidAmount: paid?.fee ?? null,
+      supportAmount: paid?.support ?? 0,
+      recordedByAdmin: recordedByAdmin(payment, adminNames),
+      recordedByAdminId: payment?.recordedByAdminId ?? null,
+    };
   });
+
+  const recordingAdmins = await prisma.admin.findMany({
+    where: { id: { in: recordingAdminIds(members) } },
+    select: { id: true, username: true },
+    orderBy: { username: "asc" },
+  });
+
+  return NextResponse.json({ members, recordingAdmins });
 });

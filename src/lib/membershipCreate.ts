@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { saveMembershipYear } from "./membershipRecord";
 import { recordMembershipPayment } from "./membershipPaymentServer";
+import type { Recorder } from "./membershipRecorder";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -14,7 +15,7 @@ export interface NewMembership {
   status: "PENDING" | "ACTIVE";
   membershipYear: number;
   fee: number;
-  recordedBy: string;
+  recorder: Recorder;
   issued?: { memberNumber: string; verifyToken: string };
 }
 
@@ -26,7 +27,7 @@ export async function addMembership(db: Db, m: NewMembership): Promise<void> {
     accountId: m.accountId,
     proof: m.paymentProof,
     status: m.status,
-    recordedBy: m.recordedBy,
+    recorder: m.recorder,
     anonymous: m.surplusAnonymous,
   });
 
