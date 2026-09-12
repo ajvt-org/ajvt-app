@@ -3,6 +3,7 @@ import type { FilterableMember, MemberFilters } from "./memberFilters";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "./villages";
 import {
   ADMIN_ORIGIN,
+  SELF_ORIGIN,
   NO_FILTERS,
   MEMBER_FILTER_KEYS,
   readFilters,
@@ -327,5 +328,54 @@ describe("narrowing to the memberships an admin recorded", () => {
     expect(activeFilterCount(on({ origin: ADMIN_ORIGIN, nophone: "yes", nocapture: "yes" }))).toBe(
       3,
     );
+  });
+
+  it("keeps a membership the member filled in themselves", () => {
+    expect(matchesFilters(bySelf(), on({ origin: SELF_ORIGIN }), MEMBERSHIP)).toBe(true);
+  });
+
+  it("drops a membership an admin recorded", () => {
+    expect(matchesFilters(byAdmin(), on({ origin: SELF_ORIGIN }), MEMBERSHIP)).toBe(false);
+  });
+
+  it("puts a membership with no payment row on the admin side", () => {
+    const noPayment = member({ recordedByAdmin: true, paymentProof: null });
+
+    expect(matchesFilters(noPayment, on({ origin: ADMIN_ORIGIN }), MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(noPayment, on({ origin: SELF_ORIGIN }), MEMBERSHIP)).toBe(false);
+  });
+
+  it("splits the list in two, with nothing in both halves and nothing in neither", () => {
+    const members = [byAdmin(), bySelf(), byAdmin({ user: { phone: null } }), bySelf()];
+    const admin = members.filter((m) =>
+      matchesFilters(m, on({ origin: ADMIN_ORIGIN }), MEMBERSHIP),
+    );
+    const self = members.filter((m) => matchesFilters(m, on({ origin: SELF_ORIGIN }), MEMBERSHIP));
+
+    expect(admin.length + self.length).toBe(members.length);
+    expect(admin.some((m) => self.includes(m))).toBe(false);
+  });
+
+  it("counts the self origin as one filter", () => {
+    expect(activeFilterCount(on({ origin: SELF_ORIGIN }))).toBe(1);
+  });
+
+  it("carries the self origin through the address", () => {
+    const params = writeFilters(on({ origin: SELF_ORIGIN }));
+
+    expect(params.get("origin")).toBe(SELF_ORIGIN);
+    expect(readFilters(params).origin).toBe(SELF_ORIGIN);
+  });
+
+  it("drops the two narrowings from a link asking for the self origin", () => {
+    const read = readFilters(new URLSearchParams("origin=self&nophone=yes&nocapture=yes"));
+
+    expect(read.origin).toBe(SELF_ORIGIN);
+    expect(read.nophone).toBe("");
+    expect(read.nocapture).toBe("");
+  });
+
+  it("ignores an origin it does not know", () => {
+    expect(readFilters(new URLSearchParams("origin=whoever")).origin).toBe("");
   });
 });
