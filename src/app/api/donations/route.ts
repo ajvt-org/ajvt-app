@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/lib/prisma";
-import { getUploadDir } from "@/lib/uploadDir";
-import { processImage } from "@/lib/imageProcessing";
 import { MAX_UPLOAD_SIZE, READABLE_UPLOAD_TYPES } from "@/lib/uploadLimits";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import { getUserSession } from "@/lib/auth";
 import { payableMethodNames } from "@/lib/paymentMethodsServer";
 import { withRoute } from "@/lib/route";
-import { logger } from "@/lib/logger";
 import { ValidationError } from "@/lib/errors";
 import { common, members, money, uploads } from "@/lib/messages";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { asMembershipState } from "@/lib/currentMembership";
 import { holdsMembership, membershipState } from "@/lib/membershipState";
 import { validateDonorChoice, donorNameFor } from "@/lib/donorChoice";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { getAppSettings } from "@/lib/settingsServer";
+import { storeProofImage } from "./proofImage";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -96,35 +90,23 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   }
   const paymentMethod = paymentMethodRaw;
 
-  const id = uuidv4();
-  const filename = `${id}.webp`;
-  const uploadDir = getUploadDir();
-  let processed;
-  try {
-    processed = await processImage(Buffer.from(await file.arrayBuffer()));
-  } catch (err) {
-    logger.error("image.processing.error", err);
-    return NextResponse.json({ error: uploads.processingFailed }, { status: 400 });
-  }
-  await mkdir(uploadDir, { recursive: true });
-  await Promise.all([
-    writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
-    writeFile(join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`), processed.thumbnail),
-  ]);
+  const { id, filename } = await storeProofImage(file);
 
-  const donation = await prisma.donation.create({
+  await prisma.payment.create({
     data: {
-      anonymous,
-      donorName,
+      id,
+      purpose: "DONATION",
       amount,
-      paymentMethod,
+      method: paymentMethod,
       proof: filename,
-      userId: selfUserId,
-      source: selfUserId ? "SELF" : "PUBLIC",
       status: "PENDING",
+      anonymous,
+      source: selfUserId ? "SELF" : "PUBLIC",
+      donorName,
+      userId: selfUserId,
+      paidOn: new Date(),
     },
   });
-  await prisma.$transaction((tx) => mirrorDonation(tx, donationMirrorOf(donation)));
 
   return NextResponse.json({ ok: true }, { status: 201 });
 });

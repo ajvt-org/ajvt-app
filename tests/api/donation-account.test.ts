@@ -68,7 +68,7 @@ describe("the account behind a donation", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "بيانات غير صالحة" });
-    expect(await prisma.donation.count()).toBe(0);
+    expect(await prisma.payment.count()).toBe(0);
   });
 
   it("stamps the giver's account on a donation they send themselves", async () => {
@@ -78,8 +78,8 @@ describe("the account behind a donation", () => {
     const res = await give(member.userId);
     expect(res.status).toBe(201);
 
-    const donation = await prisma.donation.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(donation.userId).toBe(user.id);
+    const gift = await prisma.payment.findFirstOrThrow({ where: { userId: member.userId } });
+    expect(gift.userId).toBe(user.id);
   });
 
   it("stores no name of its own on a donation the giver sent themselves", async () => {
@@ -88,18 +88,8 @@ describe("the account behind a donation", () => {
 
     await give(member.userId);
 
-    const donation = await prisma.donation.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(donation.donorName).toBeNull();
-  });
-
-  it("carries the account onto the mirrored payment", async () => {
-    const { user, member } = await aMember("22110022", "أحمد سالم");
-    await signInAs(user);
-
-    await give(member.userId);
-
-    const payment = await prisma.payment.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(payment.userId).toBe(user.id);
+    const gift = await prisma.payment.findFirstOrThrow({ where: { userId: member.userId } });
+    expect(gift.donorName).toBeNull();
   });
 
   it("moves the account when an admin links the donation to someone else", async () => {
