@@ -60,6 +60,12 @@ describe("FilterChips", () => {
     expect(onChange).toHaveBeenCalledWith({ ...NO_FILTERS, status: "ACTIVE", q: "محمد" });
   });
 
+  it("shows the unknown origin as its own chip", () => {
+    renderChips({ origin: "unknown" });
+
+    expect(screen.getByText("لم يُسجَّل المصدر")).toBeDefined();
+  });
+
   it("shows the self origin as its own chip", () => {
     renderChips({ origin: "self" });
 

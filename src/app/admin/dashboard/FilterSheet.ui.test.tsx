@@ -72,13 +72,39 @@ describe("FilterSheet", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("offers both origins", () => {
+  it("offers all three origins", () => {
     renderSheet();
     const origin = screen.getByLabelText("تصفية حسب مصدر العضوية");
 
     expect(screen.getByRole("option", { name: "سجّلها مشرف" })).toBeDefined();
     expect(screen.getByRole("option", { name: "سجّلها العضو بنفسه" })).toBeDefined();
+    expect(screen.getByRole("option", { name: "لم يُسجَّل المصدر" })).toBeDefined();
     expect((origin as HTMLSelectElement).value).toBe("");
+  });
+
+  it("picks the unknown origin and clears the recorder and the two narrowings", () => {
+    const { onChange } = renderSheet({
+      origin: "admin",
+      recorder: "a1",
+      nophone: "yes",
+      nocapture: "yes",
+    });
+
+    fireEvent.change(screen.getByLabelText("تصفية حسب مصدر العضوية"), {
+      target: { value: "unknown" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "unknown", recorder: "", nophone: "", nocapture: "" }),
+    );
+  });
+
+  it("hides the recorder and the two narrowings under the unknown origin", () => {
+    renderSheet({ origin: "unknown" });
+
+    expect(screen.queryByLabelText("تصفية حسب المشرف")).toBeNull();
+    expect(screen.queryByText("بلا رقم هاتف")).toBeNull();
+    expect(screen.queryByText("بلا صورة دفع")).toBeNull();
   });
 
   it("picks the self origin and clears the two narrowings", () => {

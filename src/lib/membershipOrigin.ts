@@ -1,15 +1,23 @@
+export const ADMIN_ORIGIN = "admin";
+export const SELF_ORIGIN = "self";
+export const UNKNOWN_ORIGIN = "unknown";
+
+export type MembershipOrigin = typeof ADMIN_ORIGIN | typeof SELF_ORIGIN | typeof UNKNOWN_ORIGIN;
+
+export const MEMBERSHIP_ORIGINS: readonly string[] = [ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN];
+
 export interface RecordedPayment {
   recordedBy: string | null;
   recordedByAdminId: string | null;
 }
 
-export function recordedByAdmin(
+export function membershipOrigin(
   payment: RecordedPayment | null,
   adminNames: ReadonlySet<string>,
-): boolean {
-  if (payment === null) return true;
-  if (payment.recordedByAdminId !== null) return true;
-  return payment.recordedBy !== null && adminNames.has(payment.recordedBy);
+): MembershipOrigin {
+  if (payment?.recordedByAdminId != null) return ADMIN_ORIGIN;
+  if (payment?.recordedBy == null) return UNKNOWN_ORIGIN;
+  return adminNames.has(payment.recordedBy) ? ADMIN_ORIGIN : SELF_ORIGIN;
 }
 
 export function recordingAdminIds(rows: readonly { recordedByAdminId: string | null }[]): string[] {

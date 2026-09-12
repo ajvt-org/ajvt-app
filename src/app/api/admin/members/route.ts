@@ -13,7 +13,7 @@ import {
   paymentOfYear,
 } from "@/lib/membershipPaymentFields";
 import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
-import { recordedByAdmin, recordingAdminIds } from "@/lib/membershipOrigin";
+import { membershipOrigin, recordingAdminIds } from "@/lib/membershipOrigin";
 import { viewerOf } from "@/lib/supportViewer";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
@@ -72,7 +72,7 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       registrations,
       paidAmount: paid?.fee ?? null,
       supportAmount: paid?.support ?? 0,
-      recordedByAdmin: recordedByAdmin(payment, adminNames),
+      origin: membershipOrigin(payment, adminNames),
       recordedByAdminId: payment?.recordedByAdminId ?? null,
     };
   });
