@@ -5,6 +5,7 @@ import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { expenses as messages } from "@/lib/messages";
+import { tagIncome } from "@/lib/tagIncome";
 
 export const GET = withRoute("GET /api/admin/finance-tags", async () => {
   await requireArea(MONEY_AREAS.expenses);
@@ -12,18 +13,24 @@ export const GET = withRoute("GET /api/admin/finance-tags", async () => {
     orderBy: { createdAt: "asc" },
     include: {
       expenses: { select: { amount: true } },
-      donations: { where: { status: "ACTIVE" }, select: { amount: true } },
+      payments: {
+        where: { status: "ACTIVE" },
+        select: { purpose: true, amount: true, feeApplied: true },
+      },
     },
   });
   return NextResponse.json({
-    tags: tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
-      count: tag.expenses.length,
-      total: tag.expenses.reduce((sum, e) => sum + e.amount, 0),
-      incomeCount: tag.donations.length,
-      income: tag.donations.reduce((sum, d) => sum + (d.amount ?? 0), 0),
-    })),
+    tags: tags.map((tag) => {
+      const income = tagIncome(tag.payments);
+      return {
+        id: tag.id,
+        name: tag.name,
+        count: tag.expenses.length,
+        total: tag.expenses.reduce((sum, e) => sum + e.amount, 0),
+        incomeCount: income.count,
+        income: income.total,
+      };
+    }),
   });
 });
 
