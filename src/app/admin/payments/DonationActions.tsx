@@ -30,15 +30,6 @@ export default function DonationActions({
     <PaymentActions
       danger={
         <>
-          {proof.status === "ACTIVE" && (
-            <VerbButton
-              icon="ban"
-              label={donationActions.revoke}
-              tone={RISKY}
-              disabled={busy}
-              onClick={() => onReview("REJECTED")}
-            />
-          )}
           {proof.userId && (
             <VerbButton
               icon="unlink"
@@ -46,6 +37,15 @@ export default function DonationActions({
               tone={RISKY}
               disabled={busy}
               onClick={onUnlink}
+            />
+          )}
+          {proof.status === "ACTIVE" && (
+            <VerbButton
+              icon="ban"
+              label={donationActions.revoke}
+              tone={RISKY}
+              disabled={busy}
+              onClick={() => onReview("REJECTED")}
             />
           )}
           <VerbButton
