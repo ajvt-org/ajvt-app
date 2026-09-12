@@ -69,7 +69,7 @@ function MoreMenu({
                   setOpen(false);
                   item.run();
                 }}
-                className="w-full text-start text-xs font-bold px-3 py-2.5"
+                className="w-full text-xs font-bold px-3 py-2.5"
                 style={{ color: "var(--text-main)" }}
               >
                 <IconLabel name={item.icon}>{item.label}</IconLabel>
