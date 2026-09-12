@@ -172,6 +172,8 @@ export default function MembershipEditForm({
         <FormField id={field("bank-reference")} label={bankReferenceTexts.label} compact>
           <input
             id={field("bank-reference")}
+            type="text"
+            inputMode="text"
             value={form.bankReference}
             onChange={(e) => set({ bankReference: e.target.value })}
             maxLength={40}
