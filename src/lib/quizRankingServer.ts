@@ -8,10 +8,12 @@ import {
   nextWindow,
   roundInPlay,
   roundState,
+  windowAt,
   type RoundState,
 } from "./quizRound";
 import {
   blockAnchor,
+  blockRange,
   boardBlocks,
   myRound,
   standingOf,
