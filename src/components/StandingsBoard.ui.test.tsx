@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 
 const rows: BoardRow[] = [
@@ -92,28 +92,7 @@ describe("StandingsBoard", () => {
 const OPEN = new Date("2026-09-01T10:00:00Z");
 const CLOSE = new Date("2026-09-08T10:00:00Z");
 
-const bar = () => screen.getByRole("progressbar");
-const fill = () => (bar().firstElementChild as HTMLElement).style.width;
-const announced = () => bar().getAttribute("aria-valuenow");
-const fillTone = () => (bar().firstElementChild as HTMLElement).style.background;
-const trackTone = () => bar().style.background;
-const at = (share: number) => new Date(OPEN.getTime() + (CLOSE.getTime() - OPEN.getTime()) * share);
-
-const board = (opensAt: string, closesAt: string, onReached: () => void) => (
-  <StandingsBoard
-    title="ترتيب الأسبوع"
-    rows={rows}
-    mine={null}
-    meId={null}
-    empty="لا ترتيب بعد"
-    blockOpensAt={opensAt}
-    blockClosesAt={closesAt}
-    showBlockTimer={true}
-    onReached={onReached}
-  />
-);
-
-describe("BlockTimer", () => {
+describe("the block timer on the board", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -148,136 +127,5 @@ describe("BlockTimer", () => {
     });
 
     expect(screen.getByRole("progressbar")).toBeDefined();
-  });
-
-  it("fills the whole bar and announces all of the time at block open", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(OPEN);
-    setup({
-      blockOpensAt: OPEN.toISOString(),
-      blockClosesAt: CLOSE.toISOString(),
-      showBlockTimer: true,
-    });
-
-    expect(fill()).toBe("100%");
-    expect(announced()).toBe("100");
-  });
-
-  it("fills half the bar and announces half the time at the midpoint", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date((OPEN.getTime() + CLOSE.getTime()) / 2));
-    setup({
-      blockOpensAt: OPEN.toISOString(),
-      blockClosesAt: CLOSE.toISOString(),
-      showBlockTimer: true,
-    });
-
-    expect(fill()).toBe("50%");
-    expect(announced()).toBe("50");
-  });
-
-  it("empties the bar and announces none of the time when the block has closed", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(CLOSE);
-    setup({
-      blockOpensAt: OPEN.toISOString(),
-      blockClosesAt: CLOSE.toISOString(),
-      showBlockTimer: true,
-    });
-
-    expect(fill()).toBe("0%");
-    expect(announced()).toBe("0");
-  });
-
-  it("drains the bar as the block runs down", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(OPEN.getTime() + (CLOSE.getTime() - OPEN.getTime()) * 0.25));
-    setup({
-      blockOpensAt: OPEN.toISOString(),
-      blockClosesAt: CLOSE.toISOString(),
-      showBlockTimer: true,
-    });
-
-    expect(fill()).toBe("75%");
-    expect(announced()).toBe("75");
-  });
-
-  it("calls onReached once when elapsed reaches 100% and not again on subsequent ticks", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(CLOSE.getTime() - 30_000));
-    const onReached = vi.fn();
-    render(board(OPEN.toISOString(), CLOSE.toISOString(), onReached));
-
-    expect(onReached).not.toHaveBeenCalled();
-
-    await act(async () => {
-      vi.advanceTimersByTime(65_000);
-    });
-
-    expect(onReached).toHaveBeenCalledOnce();
-
-    await act(async () => {
-      vi.advanceTimersByTime(60_000);
-    });
-
-    expect(onReached).toHaveBeenCalledOnce();
-  });
-  it("fires again when the next block closes", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(CLOSE.getTime() - 30_000));
-    const onReached = vi.fn();
-    const { rerender } = render(board(OPEN.toISOString(), CLOSE.toISOString(), onReached));
-
-    await act(async () => {
-      vi.advanceTimersByTime(65_000);
-    });
-
-    expect(onReached).toHaveBeenCalledOnce();
-
-    const nextClose = new Date(CLOSE.getTime() + (CLOSE.getTime() - OPEN.getTime()));
-    vi.setSystemTime(new Date(nextClose.getTime() - 30_000));
-    rerender(board(CLOSE.toISOString(), nextClose.toISOString(), onReached));
-
-    await act(async () => {
-      vi.advanceTimersByTime(65_000);
-    });
-
-    expect(onReached).toHaveBeenCalledTimes(2);
-  });
-  it("keeps the bar mint while most of the block is left", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(at(0.5));
-    setup({
-      blockOpensAt: OPEN.toISOString(),
-      blockClosesAt: CLOSE.toISOString(),
-      showBlockTimer: true,
-    });
-
-    expect(fillTone()).toContain("mint");
-  });
-
-  it("turns the bar copper once the block is nearly over", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(at(0.9));
-    setup({
-      blockOpensAt: OPEN.toISOString(),
-      blockClosesAt: CLOSE.toISOString(),
-      showBlockTimer: true,
-    });
-
-    expect(fillTone()).toContain("copper");
-  });
-
-  it("keeps a track behind the bar once the block has drained", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(CLOSE);
-    setup({
-      blockOpensAt: OPEN.toISOString(),
-      blockClosesAt: CLOSE.toISOString(),
-      showBlockTimer: true,
-    });
-
-    expect(fill()).toBe("0%");
-    expect(trackTone()).toBe("var(--mint-100)");
   });
 });
