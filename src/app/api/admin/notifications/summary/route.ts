@@ -15,7 +15,9 @@ export const GET = withRoute("GET /api/admin/notifications/summary", async () =>
     ),
     activityAttentionCount(null),
     hasFullAccess(session.role)
-      ? prisma.donation.count({ where: { status: "PENDING" } })
+      ? prisma.payment.count({
+          where: { status: "PENDING", purpose: { in: ["DONATION", "ACTIVITY"] } },
+        })
       : Promise.resolve(0),
   ]);
   return NextResponse.json({ pendingMembers, pendingActivityWork, pendingDonations });
