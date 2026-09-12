@@ -7,6 +7,7 @@ import {
   type RoundScore,
   blockAnchor,
   blockLabel,
+  blockRange,
   boardBlocks,
   myRound,
 } from "./quizRanking";
@@ -176,6 +177,37 @@ describe("standingOf", () => {
 
   it("says nothing for a member who has not played", () => {
     expect(standingOf(roundRanking([], 0), "a")).toBeNull();
+  });
+});
+
+describe("blockRange", () => {
+  it("gives the zero based rounds a block covers", () => {
+    expect(blockRange(0, 7, 30)).toEqual({ first: 0, last: 6 });
+    expect(blockRange(1, 7, 30)).toEqual({ first: 7, last: 13 });
+    expect(blockRange(3, 7, 30)).toEqual({ first: 21, last: 27 });
+  });
+
+  it("clamps the last block to the final round when the count is not a multiple", () => {
+    expect(blockRange(4, 7, 30)).toEqual({ first: 28, last: 29 });
+    expect(blockRange(4, 7, 29)).toEqual({ first: 28, last: 28 });
+  });
+
+  it("leaves the last block whole when the count divides evenly", () => {
+    expect(blockRange(2, 4, 12)).toEqual({ first: 8, last: 11 });
+  });
+
+  it("gives one round per block when a block is a single round", () => {
+    expect(blockRange(0, 1, 30)).toEqual({ first: 0, last: 0 });
+    expect(blockRange(6, 1, 30)).toEqual({ first: 6, last: 6 });
+  });
+
+  it("runs every round of the competition through consecutive blocks", () => {
+    const rounds = [0, 1, 2].flatMap((block) => {
+      const { first, last } = blockRange(block, 4, 10);
+      return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+    });
+
+    expect(rounds).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
   });
 });
 

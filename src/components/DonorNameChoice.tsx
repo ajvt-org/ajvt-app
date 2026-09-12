@@ -45,7 +45,7 @@ export default function DonorNameChoice({
           role="radio"
           aria-checked={wantsName === true}
           onClick={() => onPick(true)}
-          className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+          className="py-3 rounded-xl text-sm font-bold transition-all border-2 justify-center"
           style={choiceStyle(wantsName === true)}
         >
           <IconLabel name="pencil">{memberName ? texts.yesNamed(memberName) : texts.yes}</IconLabel>
@@ -55,7 +55,7 @@ export default function DonorNameChoice({
           role="radio"
           aria-checked={wantsName === false}
           onClick={() => onPick(false)}
-          className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+          className="py-3 rounded-xl text-sm font-bold transition-all border-2 justify-center"
           style={choiceStyle(wantsName === false)}
         >
           <IconLabel name="lock">{texts.no}</IconLabel>

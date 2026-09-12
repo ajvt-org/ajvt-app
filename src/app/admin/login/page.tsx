@@ -8,7 +8,7 @@ import { safeNextPath } from "@/lib/utils";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
 import Logo from "@/components/Logo";
-import { association } from "@/lib/texts";
+import { adminShell } from "@/lib/texts";
 
 export default function AdminLoginPage() {
   return (
@@ -55,20 +55,8 @@ function AdminLoginForm() {
     >
       <div className="w-full max-w-sm fade-up">
         <div className="text-center mb-8">
-          <div
-            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{
-              background: "rgba(255,255,255,0.18)",
-              border: "2px solid rgba(255,255,255,0.35)",
-              padding: "8px",
-            }}
-          >
-            <Logo mark="symbol" size={80} priority />
-          </div>
-          <h1 className="text-xl font-black text-white mb-1">لوحة تحكم المشرف</h1>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-            {association.name}
-          </p>
+          <Logo mark="roundel" size={96} className="mx-auto mb-4" priority />
+          <h1 className="text-xl font-black text-white">{adminShell.title}</h1>
         </div>
 
         <div
