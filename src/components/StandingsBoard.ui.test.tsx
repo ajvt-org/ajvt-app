@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 
 const rows: BoardRow[] = [
@@ -86,5 +86,92 @@ describe("StandingsBoard", () => {
     const img = screen.getByAltText("محمد") as HTMLImageElement;
     expect(img.src).toContain("/api/files/member/m1-thumb.webp");
     expect(screen.queryByAltText("أحمد")).toBeNull();
+  });
+});
+
+describe("StandingsBoard — block timer bar", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function openBlock() {
+    return {
+      blockOpensAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      blockClosesAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    };
+  }
+
+  it("shows the progress bar while the block is open", () => {
+    setup({ ...openBlock(), showBlockTimer: true });
+
+    expect(screen.getByRole("progressbar")).toBeDefined();
+  });
+
+  it("hides the bar when showBlockTimer is false (before the competition opens)", () => {
+    setup({ ...openBlock(), showBlockTimer: false });
+
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("hides the bar when showBlockTimer is false (after the competition ends)", () => {
+    setup({ ...openBlock(), showBlockTimer: false });
+
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("hides the bar when blockOpensAt or blockClosesAt is absent", () => {
+    setup({ blockOpensAt: null, blockClosesAt: null, showBlockTimer: true });
+
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("turns copper when less than a fifth of the block time remains", () => {
+    // 60-minute block; only 10 minutes left → fill ≈ 1/6 < 1/5 → urgent
+    setup({
+      blockOpensAt: new Date(Date.now() - 50 * 60 * 1000).toISOString(),
+      blockClosesAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      showBlockTimer: true,
+    });
+
+    const bar = screen.getByRole("progressbar").firstElementChild as HTMLElement;
+    expect(bar.style.background).toContain("copper");
+  });
+
+  it("stays mint when more than a fifth of the block time remains", () => {
+    // 60-minute block; 40 minutes left → fill ≈ 2/3 > 1/5 → mint
+    setup({
+      blockOpensAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+      blockClosesAt: new Date(Date.now() + 40 * 60 * 1000).toISOString(),
+      showBlockTimer: true,
+    });
+
+    const bar = screen.getByRole("progressbar").firstElementChild as HTMLElement;
+    expect(bar.style.background).toContain("mint");
+  });
+
+  it("calls onReloadStandings when the block closes", async () => {
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    const onReloadStandings = vi.fn();
+
+    render(
+      <StandingsBoard
+        title="ترتيب الأسبوع"
+        rows={rows}
+        mine={null}
+        meId={null}
+        empty="لا ترتيب بعد"
+        blockOpensAt={new Date(t0 - 60 * 60 * 1000).toISOString()}
+        blockClosesAt={new Date(t0 + 1000).toISOString()}
+        showBlockTimer={true}
+        onReloadStandings={onReloadStandings}
+      />,
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(65_000);
+    });
+
+    expect(onReloadStandings).toHaveBeenCalledOnce();
   });
 });

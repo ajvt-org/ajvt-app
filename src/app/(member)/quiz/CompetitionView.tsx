@@ -46,6 +46,8 @@ export interface StandingsBoard {
   blocks: number;
   rows: BoardRow[];
   mine: Place | null;
+  blockOpensAt: string | null;
+  blockClosesAt: string | null;
 }
 
 export interface StandingsState {
@@ -436,6 +438,10 @@ export default function CompetitionView({
               mine={past ? past.mine : open.mine}
               meId={standings.meId}
               empty={texts.emptyBoard}
+              blockOpensAt={past ? null : open.blockOpensAt}
+              blockClosesAt={past ? null : open.blockClosesAt}
+              showBlockTimer={standings.state !== "before" && standings.state !== "over"}
+              onReloadStandings={onReloadStandings}
             />
           </div>
         )}

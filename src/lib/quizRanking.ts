@@ -125,6 +125,17 @@ export function blockAnchor(board: BoardShape, block: number, current: number): 
   return board.wholeRun ? current : block * Math.max(1, board.blockRounds);
 }
 
+export function blockRange(
+  blockRounds: number,
+  block: number,
+  roundCount: number,
+): { first: number; last: number } {
+  const size = Math.max(1, blockRounds);
+  const first = block * size;
+  const last = Math.min(first + size - 1, roundCount - 1);
+  return { first, last };
+}
+
 export function blockLabel(
   blockRounds: number,
   block: number,
@@ -133,7 +144,6 @@ export function blockLabel(
 ): string {
   if (blockTitle.trim()) return `${blockTitle.trim()} ${block + 1}`;
   if (blockRounds <= 1) return `الجولة ${block + 1}`;
-  const first = block * blockRounds + 1;
-  const last = Math.min((block + 1) * blockRounds, roundCount);
-  return first === last ? `الجولة ${first}` : `الجولات ${first} - ${last}`;
+  const { first, last } = blockRange(blockRounds, block, roundCount);
+  return first === last ? `الجولة ${first + 1}` : `الجولات ${first + 1} - ${last + 1}`;
 }

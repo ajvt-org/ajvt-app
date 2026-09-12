@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import NumericRanges from "@/components/NumericRanges";
 import { standingsBoard as texts } from "@/lib/texts";
+import { useNow } from "@/hooks/useNow";
 
 export interface BoardRow {
   rank: number;
@@ -17,18 +19,73 @@ export interface MyPlace {
   total: number;
 }
 
+function BlockTimer({
+  name,
+  opensAt,
+  closesAt,
+  onReached,
+}: {
+  name: string;
+  opensAt: string;
+  closesAt: string;
+  onReached?: () => void;
+}) {
+  const now = useNow(60_000);
+  const start = new Date(opensAt).getTime();
+  const end = new Date(closesAt).getTime();
+  const fill = Math.min(1, Math.max(0, (end - now) / Math.max(1, end - start)));
+  const urgent = fill < 0.2;
+  const fired = useRef("");
+
+  useEffect(() => {
+    if (now < end || fired.current === closesAt) return;
+    fired.current = closesAt;
+    onReached?.();
+  }, [now, end, closesAt, onReached]);
+
+  return (
+    <div
+      className="w-full overflow-hidden"
+      style={{ height: 4, background: "var(--mint-100)", borderRadius: 4 }}
+      role="progressbar"
+      aria-label={texts.blockTimer(name)}
+      aria-valuenow={100 - Math.round(fill * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div
+        className="h-full"
+        style={{
+          width: `${Math.round(fill * 100)}%`,
+          background: urgent
+            ? "linear-gradient(135deg, var(--copper-500), var(--copper-600))"
+            : "linear-gradient(135deg, var(--mint-400), var(--mint-500))",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function StandingsBoard({
   title,
   rows,
   mine,
   meId,
   empty,
+  blockOpensAt,
+  blockClosesAt,
+  showBlockTimer,
+  onReloadStandings,
 }: {
   title?: string;
   rows: BoardRow[];
   mine: MyPlace | null;
   meId: string | null;
   empty: string;
+  blockOpensAt?: string | null;
+  blockClosesAt?: string | null;
+  showBlockTimer?: boolean;
+  onReloadStandings?: () => void;
 }) {
   const listed = rows.some((r) => r.userId === meId);
   const podium = rows.length >= 3 ? [rows[1], rows[0], rows[2]] : [];
@@ -40,6 +97,15 @@ export default function StandingsBoard({
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           {title}
         </p>
+      )}
+
+      {blockOpensAt && blockClosesAt && showBlockTimer && (
+        <BlockTimer
+          name={title ?? ""}
+          opensAt={blockOpensAt}
+          closesAt={blockClosesAt}
+          onReached={onReloadStandings}
+        />
       )}
 
       {podium.length === 3 && (
