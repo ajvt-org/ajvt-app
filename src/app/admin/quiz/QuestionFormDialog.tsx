@@ -6,6 +6,8 @@ import { POINTS_MIN, POINTS_MAX } from "@/lib/quizDifficulty";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import type { AnswerFormRow } from "./types";
+import NumberInput from "@/components/NumberInput";
+import { quizQuestionForm as texts } from "@/lib/texts";
 
 export interface QuestionFormValues {
   text: string;
@@ -36,7 +38,7 @@ function AnswerRowInput({
         type="button"
         onClick={onToggle}
         aria-pressed={row.isCorrect}
-        aria-label={`الإجابة ${index + 1} صحيحة`}
+        aria-label={texts.answerCorrect(index + 1)}
         className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
         style={
           row.isCorrect
@@ -55,13 +57,13 @@ function AnswerRowInput({
         value={row.text}
         onChange={(e) => onText(e.target.value)}
         className="input text-sm"
-        placeholder={`إجابة ${index + 1}`}
+        placeholder={texts.answerPlaceholder(index + 1)}
       />
       <button
         type="button"
         onClick={onRemove}
         disabled={!removable}
-        aria-label="حذف الإجابة"
+        aria-label={texts.removeAnswer}
         className="text-sm shrink-0"
         style={{ color: "#dc2626", opacity: removable ? 1 : 0.3 }}
       >
@@ -112,9 +114,9 @@ export default function QuestionFormDialog({
         >
           <h2 className="font-black text-white text-base">
             {editing ? (
-              <IconLabel name="pencil">تعديل سؤال</IconLabel>
+              <IconLabel name="pencil">{texts.editTitle}</IconLabel>
             ) : (
-              <IconLabel name="plus">سؤال جديد</IconLabel>
+              <IconLabel name="plus">{texts.addTitle}</IconLabel>
             )}
           </h2>
           <DialogClose onClick={onClose} />
@@ -127,7 +129,7 @@ export default function QuestionFormDialog({
               style={{ color: "var(--text-main)" }}
               htmlFor="quiz-text"
             >
-              نص السؤال <span style={{ color: "var(--copper-500)" }}>*</span>
+              {texts.text} <span style={{ color: "var(--copper-500)" }}>*</span>
             </label>
             <textarea
               id="quiz-text"
@@ -145,14 +147,14 @@ export default function QuestionFormDialog({
               style={{ color: "var(--text-main)" }}
               htmlFor="quiz-category"
             >
-              التصنيف <span style={{ color: "var(--copper-500)" }}>*</span>
+              {texts.category} <span style={{ color: "var(--copper-500)" }}>*</span>
             </label>
             <input
               id="quiz-category"
               type="text"
               value={values.category}
               onChange={(e) => onChange({ category: e.target.value })}
-              placeholder="تاريخ، رياضة، جغرافيا..."
+              placeholder={texts.categoryPlaceholder}
               required
               className="input"
             />
@@ -165,18 +167,15 @@ export default function QuestionFormDialog({
                 style={{ color: "var(--text-main)" }}
                 htmlFor="quiz-points"
               >
-                النقاط
+                {texts.points}
               </label>
-              <input
+              <NumberInput
                 id="quiz-points"
-                type="number"
-                dir="ltr"
                 min={POINTS_MIN}
                 max={POINTS_MAX}
                 required
                 value={values.points}
                 onChange={(e) => onChange({ points: e.target.value })}
-                className="input"
               />
               <DifficultyHint points={values.points} />
             </div>
@@ -186,16 +185,13 @@ export default function QuestionFormDialog({
                 style={{ color: "var(--text-main)" }}
                 htmlFor="quiz-correct"
               >
-                عدد الإجابات الصحيحة
+                {texts.correctCount}
               </label>
-              <input
+              <NumberInput
                 id="quiz-correct"
-                type="number"
-                dir="ltr"
                 min={1}
                 value={values.correctCount}
                 onChange={(e) => onChange({ correctCount: e.target.value })}
-                className="input"
               />
             </div>
           </div>
@@ -203,7 +199,7 @@ export default function QuestionFormDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                الإجابات
+                {texts.answers}
               </p>
               <button
                 type="button"
@@ -211,7 +207,7 @@ export default function QuestionFormDialog({
                 className="text-xs px-2.5 py-1 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                <IconLabel name="plus">إضافة إجابة</IconLabel>
+                <IconLabel name="plus">{texts.addAnswer}</IconLabel>
               </button>
             </div>
 
@@ -238,13 +234,7 @@ export default function QuestionFormDialog({
           )}
 
           <button type="submit" disabled={saving} className="btn btn-primary text-sm">
-            {saving ? (
-              "..."
-            ) : editing ? (
-              <IconLabel name="save">حفظ التعديل</IconLabel>
-            ) : (
-              "إضافة السؤال"
-            )}
+            {saving ? "..." : editing ? <IconLabel name="save">{texts.save}</IconLabel> : texts.add}
           </button>
         </form>
       </div>

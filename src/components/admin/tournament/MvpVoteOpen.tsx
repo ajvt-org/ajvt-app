@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import FieldRow from "@/components/admin/FieldRow";
 import { mvpVote as texts } from "@/lib/texts";
+import NumberInput from "@/components/NumberInput";
 
 const MAX_CANDIDATES = 6;
 const MIN_CANDIDATES = 2;
@@ -84,9 +85,8 @@ export default function MvpVoteOpen({
 
       <FieldRow label={texts.minutesLabel}>
         {(id) => (
-          <input
+          <NumberInput
             id={id}
-            type="number"
             min={1}
             value={minutes}
             onChange={(e) => setMinutes(e.target.value)}

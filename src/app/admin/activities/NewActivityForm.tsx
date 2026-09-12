@@ -14,6 +14,7 @@ import {
   type ActivityNature,
   type NewActivityDraft,
 } from "./activityTypes";
+import NumberInput from "@/components/NumberInput";
 
 const NATURES: { value: ActivityNature; label: string; icon: IconName }[] = [
   { value: "normal", label: texts.natures.normal, icon: "calendar" },
@@ -106,13 +107,11 @@ export default function NewActivityForm({
           className="input flex-1 min-w-0"
         />
       </div>
-      <input
-        type="number"
+      <NumberInput
         min={1}
         placeholder={texts.capacityPlaceholder}
         value={draft.capacity}
         onChange={(e) => setDraft((p) => ({ ...p, capacity: e.target.value }))}
-        className="input"
       />
       <div>
         <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
