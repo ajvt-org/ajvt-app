@@ -7,6 +7,7 @@ import { accountsOfMethod } from "@/lib/paymentMethodChoices";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
 import IconLabel from "@/components/IconLabel";
+import NumberInput from "@/components/NumberInput";
 import type { ReceiptForm as Form } from "./types";
 
 export default function ReceiptForm({
@@ -66,10 +67,8 @@ export default function ReceiptForm({
       <label className="block text-sm font-bold" htmlFor="receipt-amount">
         {receiptAdmin.amountLabel}
       </label>
-      <input
+      <NumberInput
         id="receipt-amount"
-        className="input"
-        type="number"
         min={1}
         step={1}
         required

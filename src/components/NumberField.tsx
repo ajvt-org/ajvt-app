@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NumberInput from "./NumberInput";
 
 export default function NumberField({
   id,
@@ -30,13 +31,10 @@ export default function NumberField({
   }
 
   return (
-    <input
+    <NumberInput
       id={id}
-      type="number"
-      inputMode="numeric"
       min={min}
       max={max}
-      dir="ltr"
       aria-label={ariaLabel}
       disabled={disabled}
       className={className}

@@ -3,6 +3,7 @@
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import NumberInput from "@/components/NumberInput";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import ExpenseProofsField from "./ExpenseProofsField";
 import ExpenseDestinationsField from "./ExpenseDestinationsField";
@@ -113,15 +114,12 @@ export default function ExpenseFormDialog({
           </Field>
 
           <Field id="expense-amount" label={texts.amount} required>
-            <input
+            <NumberInput
               id="expense-amount"
-              type="number"
-              dir="ltr"
               min={1}
               value={form.amount}
               onChange={(e) => onChange({ amount: e.target.value })}
               required
-              className="input"
             />
           </Field>
 
