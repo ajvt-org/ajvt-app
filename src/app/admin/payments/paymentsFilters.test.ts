@@ -241,8 +241,25 @@ describe("which tab one payment is listed under", () => {
     expect(matchesPaymentsFilters(membership(), on({ kind: "MEMBERSHIP" }))).toBe(true);
   });
 
-  it("leaves that same payment off the support tab, where it was never a second payment", () => {
-    expect(matchesPaymentsFilters(membership(), on({ kind: "DONATION" }))).toBe(false);
+  it("lists that same payment under support too, because the amount above the fee is support", () => {
+    expect(matchesPaymentsFilters(membership(), on({ kind: "DONATION" }))).toBe(true);
+  });
+
+  it("leaves a membership payment that stops at the fee off the support tab", () => {
+    const exact = membership({ amount: 1000 });
+    expect(matchesPaymentsFilters(exact, on({ kind: "MEMBERSHIP" }))).toBe(true);
+    expect(matchesPaymentsFilters(exact, on({ kind: "DONATION" }))).toBe(false);
+  });
+
+  it("leaves a membership payment short of the fee off the support tab", () => {
+    const short = membership({ amount: 400 });
+    expect(matchesPaymentsFilters(short, on({ kind: "MEMBERSHIP" }))).toBe(true);
+    expect(matchesPaymentsFilters(short, on({ kind: "DONATION" }))).toBe(false);
+  });
+
+  it("leaves a membership payment with no amount recorded off the support tab", () => {
+    const unpriced = membership({ amount: null, feeApplied: null });
+    expect(matchesPaymentsFilters(unpriced, on({ kind: "DONATION" }))).toBe(false);
   });
 
   it("keeps a support payment off the membership tab", () => {
@@ -255,7 +272,20 @@ describe("which tab one payment is listed under", () => {
     expect(matchesPaymentsFilters(donation, on({ kind: "DONATION" }))).toBe(true);
   });
 
+  it("leaves an activity payment on its own tab and nowhere else", () => {
+    const activity = membership({ kind: "ACTIVITY", amount: null, feeApplied: undefined });
+    expect(matchesPaymentsFilters(activity, on({ kind: "ACTIVITY" }))).toBe(true);
+    expect(matchesPaymentsFilters(activity, on({ kind: "DONATION" }))).toBe(false);
+  });
+
   it("lists every payment under all", () => {
     expect(matchesPaymentsFilters(membership(), on({ kind: "ALL" }))).toBe(true);
+    expect(matchesPaymentsFilters(membership({ amount: 1000 }), on({ kind: "ALL" }))).toBe(true);
+    expect(
+      matchesPaymentsFilters(
+        membership({ kind: "DONATION", feeApplied: undefined }),
+        on({ kind: "ALL" }),
+      ),
+    ).toBe(true);
   });
 });
