@@ -34,8 +34,7 @@ function BlockTimer({
   const start = new Date(opensAt).getTime();
   const end = new Date(closesAt).getTime();
   const elapsed = Math.min(1, Math.max(0, (now - start) / Math.max(1, end - start)));
-  const elapsedPct = Math.round(elapsed * 100);
-  const remainingPct = 100 - elapsedPct;
+  const remainingPct = 100 - Math.round(elapsed * 100);
   const urgent = elapsed > 0.8;
 
   const firedRef = useRef(false);
@@ -49,7 +48,7 @@ function BlockTimer({
   return (
     <div
       role="progressbar"
-      aria-valuenow={elapsedPct}
+      aria-valuenow={remainingPct}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={label}

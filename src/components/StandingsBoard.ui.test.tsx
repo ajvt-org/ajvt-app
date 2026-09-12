@@ -92,6 +92,10 @@ describe("StandingsBoard", () => {
 const OPEN = new Date("2026-09-01T10:00:00Z");
 const CLOSE = new Date("2026-09-08T10:00:00Z");
 
+const bar = () => screen.getByRole("progressbar");
+const fill = () => (bar().firstElementChild as HTMLElement).style.width;
+const announced = () => bar().getAttribute("aria-valuenow");
+
 describe("BlockTimer", () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -129,7 +133,7 @@ describe("BlockTimer", () => {
     expect(screen.getByRole("progressbar")).toBeDefined();
   });
 
-  it("aria-valuenow is 0 at block open", () => {
+  it("fills the whole bar and announces all of the time at block open", () => {
     vi.useFakeTimers();
     vi.setSystemTime(OPEN);
     setup({
@@ -138,10 +142,11 @@ describe("BlockTimer", () => {
       showBlockTimer: true,
     });
 
-    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("0");
+    expect(fill()).toBe("100%");
+    expect(announced()).toBe("100");
   });
 
-  it("aria-valuenow is 50 at the midpoint", () => {
+  it("fills half the bar and announces half the time at the midpoint", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date((OPEN.getTime() + CLOSE.getTime()) / 2));
     setup({
@@ -150,10 +155,11 @@ describe("BlockTimer", () => {
       showBlockTimer: true,
     });
 
-    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("50");
+    expect(fill()).toBe("50%");
+    expect(announced()).toBe("50");
   });
 
-  it("aria-valuenow is 100 when the block has closed", () => {
+  it("empties the bar and announces none of the time when the block has closed", () => {
     vi.useFakeTimers();
     vi.setSystemTime(CLOSE);
     setup({
@@ -162,7 +168,21 @@ describe("BlockTimer", () => {
       showBlockTimer: true,
     });
 
-    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("100");
+    expect(fill()).toBe("0%");
+    expect(announced()).toBe("0");
+  });
+
+  it("drains the bar as the block runs down", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(OPEN.getTime() + (CLOSE.getTime() - OPEN.getTime()) * 0.25));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(fill()).toBe("75%");
+    expect(announced()).toBe("75");
   });
 
   it("calls onReached once when elapsed reaches 100% and not again on subsequent ticks", async () => {
