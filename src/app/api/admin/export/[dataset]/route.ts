@@ -11,13 +11,13 @@ import { latestByAccount } from "@/lib/currentMembership";
 import { activityFinanceReport } from "@/lib/activityReportServer";
 import { dateSpanSchema, spanBounds } from "@/lib/dateSpan";
 import { parse } from "@/lib/validation";
+import { givenAmount, sourceOnRecord } from "@/lib/gifts";
 import {
   isDataset,
   memberRows,
   donationRows,
   ageRows,
   activityRows,
-  sourceOnRecord,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   AGE_HEADERS,
@@ -101,10 +101,7 @@ async function buildCsv(
         payments
           .map((p) => ({
             ...p,
-            amount:
-              p.purpose === "MEMBERSHIP"
-                ? splitPayment(p.amount, p.feeApplied ?? 0).surplus
-                : p.amount,
+            amount: givenAmount(p),
             paymentMethod: p.method,
             source: sourceOnRecord(p.purpose, p.source),
           }))
