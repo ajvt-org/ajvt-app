@@ -21,18 +21,11 @@ async function rowsOf(table: MoneyTable): Promise<AttachableRow[]> {
     });
     return rows.map((row) => ({ id: row.id, method: row.method, amount: row.amount }));
   }
-  if (table === "Expense") {
-    const rows = await prisma.expense.findMany({
-      where,
-      select: { id: true, method: true, amount: true },
-    });
-    return rows.map((row) => ({ id: row.id, method: row.method, amount: row.amount }));
-  }
-  const rows = await prisma.donation.findMany({
+  const rows = await prisma.expense.findMany({
     where,
-    select: { id: true, paymentMethod: true, amount: true },
+    select: { id: true, method: true, amount: true },
   });
-  return rows.map((row) => ({ id: row.id, method: row.paymentMethod, amount: row.amount ?? 0 }));
+  return rows.map((row) => ({ id: row.id, method: row.method, amount: row.amount }));
 }
 
 async function main() {

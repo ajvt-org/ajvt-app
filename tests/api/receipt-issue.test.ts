@@ -332,16 +332,12 @@ describe("the payment under a hand written receipt", () => {
     expect(row.issuedOn.toISOString()).toBe("2026-07-14T12:00:00.000Z");
   });
 
-  it("mirrors it into the support record so every screen sees it", async () => {
+  it("writes no second row beside it", async () => {
     await asBoss();
 
-    const { receipt } = await (await issue()).json();
+    await issue();
 
-    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
-    const donation = await prisma.donation.findUniqueOrThrow({ where: { id: row.paymentId! } });
-    expect(donation.amount).toBe(DRAFT.amount);
-    expect(donation.status).toBe("ACTIVE");
-    expect(donation.source).not.toBe("MEMBERSHIP");
+    expect(await prisma.donation.count()).toBe(0);
   });
 
   it("keeps the payer and the reason the admin wrote", async () => {

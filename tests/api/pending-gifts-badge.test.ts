@@ -1,8 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, get, postForm, createAdmin, signInAsAdmin, makeMember } from "./helpers";
+import {
+  resetDb,
+  get,
+  postForm,
+  createAdmin,
+  signInAsAdmin,
+  makeMember,
+  giveGift,
+} from "./helpers";
 
 vi.mock("@/lib/imageProcessing", async (orig) => {
   const actual = await orig<typeof import("@/lib/imageProcessing")>();
@@ -18,11 +24,7 @@ import { POST as GIVE } from "@/app/api/donations/route";
 let seq = 0;
 
 async function give(status: "PENDING" | "ACTIVE" | "REJECTED") {
-  const donation = await prisma.donation.create({
-    data: { donorName: "زائر", amount: 500, source: "PUBLIC", status },
-  });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
-  return donation;
+  return giveGift({ donorName: "زائر", amount: 500, status });
 }
 
 async function pendingGifts() {

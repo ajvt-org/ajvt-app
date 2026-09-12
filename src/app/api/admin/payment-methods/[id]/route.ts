@@ -82,10 +82,6 @@ export const PATCH = withRoute(
         await Promise.all([
           tx.expense.updateMany({ where: { method: existing.name }, data: { method: data.name } }),
           tx.payment.updateMany({ where: { method: existing.name }, data: { method: data.name } }),
-          tx.donation.updateMany({
-            where: { paymentMethod: existing.name },
-            data: { paymentMethod: data.name },
-          }),
         ]);
       }
       return saved;

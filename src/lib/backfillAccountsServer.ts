@@ -6,8 +6,7 @@ type Tx = Prisma.TransactionClient;
 function attach(db: Tx, table: MoneyTable, accountId: string, ids: string[]) {
   const where = { id: { in: ids }, accountId: null };
   if (table === "Payment") return db.payment.updateMany({ where, data: { accountId } });
-  if (table === "Expense") return db.expense.updateMany({ where, data: { accountId } });
-  return db.donation.updateMany({ where, data: { accountId } });
+  return db.expense.updateMany({ where, data: { accountId } });
 }
 
 export async function attachPlanned(db: PrismaClient, plan: AttachPlan[]): Promise<void> {
