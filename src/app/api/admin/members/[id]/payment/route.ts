@@ -17,7 +17,12 @@ import { memberPaymentSchema } from "./schema";
 import { accountIdError } from "@/lib/paymentAccountsServer";
 import { nameOf } from "@/lib/person";
 import { releaseUploads } from "@/lib/uploadRelease";
-import { readMoneyDate } from "@/lib/paymentDate";
+import {
+  amountAfterEdit,
+  feeAfterEdit,
+  methodAfterEdit,
+  touchesPayment,
+} from "@/lib/membershipFeeEdit";
 
 export const PUT = withRoute(
   "PUT /api/admin/members/[id]/payment",
@@ -55,40 +60,34 @@ export const PUT = withRoute(
     const ends = consequence === "endable";
     const restores = consequence === "restorable" && membershipDecision === "restore";
 
-    const named = paymentMethod !== undefined ? paymentMethod : current.paymentMethod;
-    const wrongAccount = await accountIdError(named, accountId, current.accountId);
+    const edit = {
+      amountTransferred,
+      paymentMethod,
+      accountId,
+      paymentProof,
+      bankReference,
+      paidOn,
+    };
+
+    const wrongAccount = await accountIdError(
+      methodAfterEdit(edit, current),
+      accountId,
+      current.accountId,
+    );
     if (wrongAccount) throw new ValidationError(wrongAccount);
 
     const before = await totalPaidFor(prisma, id);
 
-    const edited =
-      paymentMethod !== undefined ||
-      accountId !== undefined ||
-      paymentProof !== undefined ||
-      bankReference !== undefined ||
-      paidOn !== undefined;
-
     const endedAt = new Date();
 
     await prisma.$transaction(async (tx) => {
-      if (edited || amountTransferred !== undefined) {
+      if (touchesPayment(edit)) {
         await recordMembershipPayment(
           tx,
           id,
-          amountTransferred !== undefined ? amountTransferred : before,
+          amountAfterEdit(edit, before),
           feeApplied,
-          {
-            method: paymentMethod !== undefined ? paymentMethod : current.paymentMethod,
-            accountId: accountId !== undefined ? accountId || null : current.accountId,
-            bankReference:
-              bankReference !== undefined ? bankReference || null : current.bankReference,
-            proof: paymentProof !== undefined ? paymentProof : current.paymentProof,
-            ...(paidOn === undefined ? {} : { paidOn: readMoneyDate(paidOn) }),
-            referenceCode: current.referenceCode,
-            status: current.status,
-            reviewedBy: current.reviewedBy,
-            reviewedAt: current.reviewedAt,
-          },
+          feeAfterEdit(edit, current),
         );
       }
       if (ends) {
