@@ -37,7 +37,7 @@ export type MemberProfile = {
     }[];
     donations: {
       id: string;
-      amount: number | null;
+      amount: number;
       status: string;
       source: string;
       paymentMethod: string | null;

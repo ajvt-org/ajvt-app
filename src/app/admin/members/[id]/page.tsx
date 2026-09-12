@@ -18,7 +18,7 @@ import ProfileGroup from "./ProfileGroup";
 import ProfileList from "./ProfileList";
 import SupportPrivacyCard from "./SupportPrivacyCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
-import { memberPage as texts, registrationStatusLabels } from "@/lib/texts";
+import { giftSourceLabel, memberPage as texts, registrationStatusLabels } from "@/lib/texts";
 import Money from "@/components/Money";
 
 function AdminMemberProfilePageInner({ id }: { id: string }) {
@@ -121,12 +121,13 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
               key: d.id,
               main: (
                 <span className="font-bold">
-                  {d.amount === null ? "—" : <Money value={d.amount} />}
+                  <Money value={d.amount} />
                 </span>
               ),
               aside: (
                 <>
-                  {d.paymentMethod || d.source} · <bdi dir="ltr">{formatDate(d.createdAt)}</bdi>
+                  {d.paymentMethod || giftSourceLabel(d.source)} ·{" "}
+                  <bdi dir="ltr">{formatDate(d.createdAt)}</bdi>
                 </>
               ),
             }))}

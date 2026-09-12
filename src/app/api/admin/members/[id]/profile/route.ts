@@ -11,6 +11,7 @@ import { viewerOf } from "@/lib/supportViewer";
 import { latestMembership } from "@/lib/currentMembership";
 import { paymentOfYear } from "@/lib/membershipPaymentFields";
 import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
+import { memberGifts } from "@/lib/gifts";
 import { getAppSettings } from "@/lib/settingsServer";
 
 export const GET = withRoute(
@@ -57,29 +58,20 @@ export const GET = withRoute(
           },
         },
         payments: {
-          where: { purpose: "MEMBERSHIP" },
           select: {
+            id: true,
+            purpose: true,
             amount: true,
             feeApplied: true,
             year: true,
+            status: true,
+            source: true,
             method: true,
             accountId: true,
             account: { select: { id: true, code: true, label: true } },
             proof: true,
             referenceCode: true,
             paidOn: true,
-            createdAt: true,
-          },
-        },
-        donations: {
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            amount: true,
-            status: true,
-            source: true,
-            membershipYear: true,
-            paymentMethod: true,
             createdAt: true,
           },
         },
@@ -92,7 +84,6 @@ export const GET = withRoute(
       registrations,
       teamMemberships,
       payments,
-      donations,
       memberships,
       supportNameConfidential,
       ...person
@@ -114,9 +105,10 @@ export const GET = withRoute(
       userId: id,
       user: { supportNameConfidential },
     });
-    const banked = paidForYear(payments, year);
+    const membershipPayments = payments.filter((row) => row.purpose === "MEMBERSHIP");
+    const banked = paidForYear(membershipPayments, year);
     const paid = named ? banked : feeOnly(banked);
-    const payment = paymentOfYear(payments, year);
+    const payment = paymentOfYear(membershipPayments, year);
 
     const supportPrivacy = isOwner(session.role)
       ? {
@@ -141,7 +133,7 @@ export const GET = withRoute(
         membershipYear: year,
         registrations,
         teamMemberships,
-        donations: named ? donations : [],
+        donations: named ? memberGifts(payments) : [],
         paidAmount: paid?.fee ?? null,
         supportAmount: paid?.support ?? 0,
       },

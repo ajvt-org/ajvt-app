@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as PROFILE } from "@/app/api/admin/members/[id]/profile/route";
 import { prisma } from "@/lib/prisma";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { runningYear } from "@/lib/membershipYear";
 import { resetDb, get, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
+
+const YEAR = runningYear();
 
 function ask(id: string) {
   return [get(`/api/admin/members/${id}/profile`), withId(id)] as const;
@@ -50,8 +54,14 @@ describe("a member's whole file, in one answer", () => {
     await prisma.teamMember.create({
       data: { teamId: team.id, userId: member.userId, status: "ACTIVE" },
     });
-    await prisma.donation.create({
-      data: { amount: 500, userId: member.userId, status: "ACTIVE", source: "SELF" },
+    await prisma.payment.create({
+      data: {
+        purpose: "DONATION",
+        amount: 500,
+        userId: member.userId,
+        status: "ACTIVE",
+        source: "SELF",
+      },
     });
 
     const body = await (await PROFILE(...ask(member.userId))).json();
@@ -61,8 +71,54 @@ describe("a member's whole file, in one answer", () => {
     expect(body.member.donations[0].amount).toBe(500);
   });
 
-  // The trail was already written on every change; this is the first thing
-  // that can read one record's share of it.
+  it("lists the money a member paid above the fee, showing the surplus and not the whole payment", async () => {
+    await signInAsAdmin(await createAdmin());
+    const member = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      membershipYear: YEAR,
+      paidAmount: MEMBERSHIP_FEE + 4000,
+    });
+
+    const body = await (await PROFILE(...ask(member.userId))).json();
+
+    expect(body.member.donations).toHaveLength(1);
+    expect(body.member.donations[0].amount).toBe(4000);
+    expect(body.member.donations[0].source).toBe("MEMBERSHIP");
+    expect(body.member.supportAmount).toBe(4000);
+  });
+
+  it("lists no gift for a member who paid the fee and nothing more", async () => {
+    await signInAsAdmin(await createAdmin());
+    const member = await makeMember({
+      fullName: "أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      membershipYear: YEAR,
+      paidAmount: MEMBERSHIP_FEE,
+    });
+
+    const body = await (await PROFILE(...ask(member.userId))).json();
+
+    expect(body.member.donations).toEqual([]);
+    expect(body.member.paidAmount).toBe(MEMBERSHIP_FEE);
+  });
+
+  it("says a gift arrived unrecorded rather than leaving the arrival empty", async () => {
+    await signInAsAdmin(await createAdmin());
+    const member = await aMember();
+    await prisma.payment.create({
+      data: { purpose: "DONATION", amount: 900, userId: member.userId, status: "ACTIVE" },
+    });
+
+    const body = await (await PROFILE(...ask(member.userId))).json();
+
+    expect(body.member.donations[0].source).toBe("UNRECORDED");
+  });
+
   it("carries only this member's own history", async () => {
     await signInAsAdmin(await createAdmin());
     const mine = await aMember("محمد");
