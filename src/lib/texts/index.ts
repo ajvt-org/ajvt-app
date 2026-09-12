@@ -43,6 +43,7 @@ export { bareAccounts } from "./bareAccounts";
 export { confirmDelete, confirmDialog, deleteMember } from "./deleteRecords";
 export { bulkReview, reviewQueue } from "./reviewQueue";
 export { financeTags } from "./financeTags";
+export { giftSourceLabel, giftSourceLabels } from "./giftSource";
 export { memberDecision } from "./memberDecision";
 export { memberRejected } from "./memberRejected";
 export { membershipForm, membershipSubmitted } from "./membershipForm";
