@@ -64,7 +64,7 @@ const REGISTRATION_SELECT = {
   activity: { select: { title: true } },
 } as const;
 
-const DONATION_SELECT = {
+const DONATION_PAYMENT_SELECT = {
   id: true,
   anonymous: true,
   donorName: true,
@@ -74,7 +74,7 @@ const DONATION_SELECT = {
   proof: true,
   status: true,
   source: true,
-  paymentMethod: true,
+  method: true,
   accountId: true,
   account: { select: { id: true, code: true, label: true } },
   bankReference: true,
@@ -85,6 +85,7 @@ const DONATION_SELECT = {
   competition: { select: { name: true } },
   user: { select: DONOR_ACCOUNT_SELECT },
   tags: { select: { id: true, name: true } },
+  paidOn: true,
   createdAt: true,
 } as const;
 
@@ -94,6 +95,14 @@ function yearKey(userId: string, year: number): string {
 
 function surplusOf(row: { amount: number; feeApplied: number | null }): number {
   return splitPayment(row.amount, row.feeApplied ?? 0).surplus;
+}
+
+function donationProofPayments() {
+  return prisma.payment.findMany({
+    where: { purpose: { in: ["DONATION", "ACTIVITY"] } },
+    select: DONATION_PAYMENT_SELECT,
+    orderBy: { createdAt: "desc" },
+  });
 }
 
 async function membershipProofPayments() {
@@ -151,28 +160,14 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
           orderBy: { createdAt: "desc" },
         })
       : Promise.resolve([]),
-    scope.donations
-      ? prisma.donation.findMany({
-          where: { source: { not: "MEMBERSHIP" } },
-          select: DONATION_SELECT,
-          orderBy: { createdAt: "desc" },
-        })
-      : Promise.resolve([]),
+    scope.donations ? donationProofPayments() : Promise.resolve([]),
   ]);
 
-  const donationIds = donations.map((d) => d.id);
-  const [receipts, mirrored] = await Promise.all([
-    prisma.receipt.findMany({
-      where: { paymentId: { in: donationIds } },
-      select: { paymentId: true, number: true, status: true, token: true },
-    }),
-    prisma.payment.findMany({
-      where: { id: { in: donationIds } },
-      select: { id: true, paidOn: true },
-    }),
-  ]);
+  const receipts = await prisma.receipt.findMany({
+    where: { paymentId: { in: donations.map((d) => d.id) } },
+    select: { paymentId: true, number: true, status: true, token: true },
+  });
   const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
-  const paidOnOf = new Map(mirrored.map((p) => [p.id, p.paidOn]));
 
   const receiptFor = (id: string, named: boolean) => {
     const receipt = receiptOf.get(id);
@@ -241,10 +236,10 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       activityTitle: d.activity?.title ?? null,
       competitionId: d.competitionId,
       competitionName: d.competition?.name ?? null,
-      amount: d.amount,
+      amount: d.amount as number | null,
       status: d.status,
-      source: d.source,
-      paymentMethod: d.paymentMethod,
+      source: d.source ?? undefined,
+      paymentMethod: d.method,
       accountId: d.accountId,
       account: d.account,
       bankReference: d.bankReference,
@@ -256,7 +251,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       donorPhoto: d.donorPhoto,
       tags: d.tags,
       receipt: receiptFor(d.id, seesSupporterName(viewer, d)),
-      paidOn: paidOnOf.get(d.id) ?? null,
+      paidOn: d.paidOn,
       submittedAt: d.createdAt,
       named: seesSupporterName(viewer, d),
     })),
