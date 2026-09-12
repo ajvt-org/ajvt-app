@@ -245,6 +245,8 @@ export default function ManualDonationDialog({
         <FormField id="manual-bank-reference" label={bankReferenceTexts.label}>
           <input
             id="manual-bank-reference"
+            type="text"
+            inputMode="text"
             value={form.bankReference}
             onChange={(e) => set({ bankReference: e.target.value })}
             maxLength={40}
