@@ -18,7 +18,7 @@ import { memberCardHref } from "@/lib/adminBackLink";
 import { awaitsReview, nextAwaitingReview } from "@/lib/reviewQueue";
 import { pageCount, paginate } from "@/lib/listUrlState";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
-import type { FilterTab, Member, AgeGroup, OrphanAge, Village } from "./types";
+import type { FilterTab, Member, AgeGroup, OrphanAge, RecordingAdmin, Village } from "./types";
 import { PAGE_SIZE } from "./constants";
 import { initialFilterTab } from "./initialTab";
 import { useReviewShortcuts } from "./useReviewShortcuts";
@@ -60,6 +60,7 @@ function AdminDashboardInner() {
   const origin = useAdminOrigin();
   const membership = useMembershipSettings();
   const [members, setMembers] = useState<Member[]>([]);
+  const [recordingAdmins, setRecordingAdmins] = useState<RecordingAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const { filters, page, go, goToPage } = useAdminListUrlState("/admin/dashboard", {
     keys: [...MEMBER_FILTER_KEYS],
@@ -114,9 +115,12 @@ function AdminDashboardInner() {
 
   async function fetchMembers() {
     try {
-      const data = await api.get<{ members: Member[] }>("/api/admin/members");
+      const data = await api.get<{ members: Member[]; recordingAdmins: RecordingAdmin[] }>(
+        "/api/admin/members",
+      );
       const loaded = data.members || [];
       setMembers(loaded);
+      setRecordingAdmins(data.recordingAdmins || []);
       if (!tabPicked.current) {
         tabPicked.current = true;
         if (!searchParams.get("status")) setFilter(initialFilterTab(loaded));
@@ -309,6 +313,7 @@ function AdminDashboardInner() {
           <FilterChips
             filters={filters}
             year={membership.year}
+            recordingAdmins={recordingAdmins}
             resultCount={filtered.length}
             onChange={go}
           />
@@ -394,6 +399,7 @@ function AdminDashboardInner() {
           ageGroups={ageGroups}
           villages={villages}
           paymentMethods={paymentMethods}
+          recordingAdmins={recordingAdmins}
           years={years}
           year={membership.year}
           resultCount={filtered.length}

@@ -12,7 +12,7 @@ import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
 import { standingLabel } from "./FilterChips";
 import { villageField, villagesDialog } from "@/lib/texts";
-import type { AgeGroup, Village } from "./types";
+import type { AgeGroup, RecordingAdmin, Village } from "./types";
 import { filterSheet as texts } from "@/lib/texts";
 
 const STANDINGS = ["current", "former"];
@@ -27,6 +27,7 @@ export default function FilterSheet({
   ageGroups,
   villages,
   paymentMethods,
+  recordingAdmins,
   years,
   year,
   resultCount,
@@ -36,6 +37,7 @@ export default function FilterSheet({
   filters: MemberFilters;
   ageGroups: AgeGroup[];
   villages: Village[];
+  recordingAdmins: RecordingAdmin[];
   paymentMethods: string[];
   years: number[];
   year: number;
@@ -147,7 +149,7 @@ export default function FilterSheet({
             onChange(
               e.target.value === ADMIN_ORIGIN
                 ? { ...filters, origin: ADMIN_ORIGIN }
-                : { ...filters, origin: e.target.value, nophone: "", nocapture: "" },
+                : { ...filters, origin: e.target.value, recorder: "", nophone: "", nocapture: "" },
             )
           }
           className="input input-sm w-full"
@@ -157,6 +159,22 @@ export default function FilterSheet({
           <option value={ADMIN_ORIGIN}>{texts.originAdmin}</option>
           <option value={SELF_ORIGIN}>{texts.originSelf}</option>
         </select>
+
+        {filters.origin === ADMIN_ORIGIN && recordingAdmins.length > 0 && (
+          <select
+            value={filters.recorder}
+            onChange={(e) => onChange({ ...filters, recorder: e.target.value })}
+            className="input input-sm w-full mt-2"
+            aria-label={texts.byRecorder}
+          >
+            <option value="">{texts.allRecorders}</option>
+            {recordingAdmins.map((admin) => (
+              <option key={admin.id} value={admin.id}>
+                {admin.username}
+              </option>
+            ))}
+          </select>
+        )}
 
         {filters.origin === ADMIN_ORIGIN && (
           <div className="flex flex-wrap gap-2 mt-2">
