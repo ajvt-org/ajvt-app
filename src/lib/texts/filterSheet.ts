@@ -25,6 +25,7 @@ export const filterSheet = {
   byOrigin: "تصفية حسب مصدر العضوية",
   allOrigins: "كل العضويات",
   originAdmin: "سجّلها مشرف",
+  originSelf: "سجّلها العضو بنفسه",
   noPhone: "بلا رقم هاتف",
   noCapture: "بلا صورة دفع",
   from: "من",

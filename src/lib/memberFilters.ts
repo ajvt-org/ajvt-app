@@ -59,6 +59,9 @@ export type FilterableMember = {
 };
 
 export const ADMIN_ORIGIN = "admin";
+export const SELF_ORIGIN = "self";
+
+const ORIGINS: readonly string[] = [ADMIN_ORIGIN, SELF_ORIGIN];
 
 const LEGACY_STANDING: Record<string, string> = { paid: "current", behind: "former" };
 
@@ -69,8 +72,8 @@ export function readFilters(params: URLSearchParams): MemberFilters {
     if (value) filters[key] = value;
   }
   filters.standing = LEGACY_STANDING[filters.standing] ?? filters.standing;
+  if (!ORIGINS.includes(filters.origin)) filters.origin = "";
   if (filters.origin !== ADMIN_ORIGIN) {
-    filters.origin = "";
     filters.nophone = "";
     filters.nocapture = "";
   }
@@ -101,6 +104,7 @@ function matchesText(member: FilterableMember, q: string): boolean {
 }
 
 function matchesOrigin(member: FilterableMember, filters: MemberFilters): boolean {
+  if (filters.origin === SELF_ORIGIN) return !member.recordedByAdmin;
   if (filters.origin !== ADMIN_ORIGIN) return true;
   if (!member.recordedByAdmin) return false;
   if (filters.nophone && member.user?.phone) return false;

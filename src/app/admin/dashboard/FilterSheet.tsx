@@ -2,6 +2,7 @@
 
 import {
   ADMIN_ORIGIN,
+  SELF_ORIGIN,
   NO_FILTERS,
   activeFilterCount,
   type MemberFilters,
@@ -146,7 +147,7 @@ export default function FilterSheet({
             onChange(
               e.target.value === ADMIN_ORIGIN
                 ? { ...filters, origin: ADMIN_ORIGIN }
-                : { ...filters, origin: "", nophone: "", nocapture: "" },
+                : { ...filters, origin: e.target.value, nophone: "", nocapture: "" },
             )
           }
           className="input input-sm w-full"
@@ -154,6 +155,7 @@ export default function FilterSheet({
         >
           <option value="">{texts.allOrigins}</option>
           <option value={ADMIN_ORIGIN}>{texts.originAdmin}</option>
+          <option value={SELF_ORIGIN}>{texts.originSelf}</option>
         </select>
 
         {filters.origin === ADMIN_ORIGIN && (

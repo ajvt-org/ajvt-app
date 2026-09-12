@@ -46,4 +46,19 @@ describe("FilterChips", () => {
 
     expect(onChange).toHaveBeenCalledWith({ ...NO_FILTERS, status: "ACTIVE", q: "محمد" });
   });
+
+  it("shows the self origin as its own chip", () => {
+    renderChips({ origin: "self" });
+
+    expect(screen.getByText("سجّلها العضو بنفسه")).toBeDefined();
+    expect(screen.queryByText("سجّلها مشرف")).toBeNull();
+  });
+
+  it("removes the self origin chip", () => {
+    const { onChange } = renderChips({ origin: "self" });
+
+    fireEvent.click(screen.getByText("سجّلها العضو بنفسه"));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ origin: "" }));
+  });
 });
