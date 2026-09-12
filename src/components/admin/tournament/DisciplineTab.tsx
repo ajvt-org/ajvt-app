@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/clubTime";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import IconLabel from "@/components/IconLabel";
 import type { DisciplineRules, Suspension, Team } from "./types";
+import NumberInput from "@/components/NumberInput";
 
 function scopeText(s: Suspension): React.ReactNode {
   if (s.scope === "INDEFINITE") return texts.indefinite;
@@ -274,15 +275,13 @@ export default function DisciplineTab({
           </div>
         </div>
         {form.scope === "MATCHES" && (
-          <input
-            type="number"
+          <NumberInput
             min={1}
             max={50}
             value={form.matches}
             onChange={(e) => setForm((p) => ({ ...p, matches: e.target.value }))}
             aria-label={texts.matchesCount}
             required
-            className="input"
           />
         )}
         {form.scope === "DAYS" && (
@@ -318,8 +317,7 @@ export default function DisciplineTab({
         </p>
         <label className="block text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
           {texts.yellowsForBan}
-          <input
-            type="number"
+          <NumberInput
             min={1}
             max={10}
             value={rulesDraft.yellowsForBan}
@@ -330,8 +328,7 @@ export default function DisciplineTab({
         </label>
         <label className="block text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
           {texts.redBanMatches}
-          <input
-            type="number"
+          <NumberInput
             min={1}
             max={10}
             value={rulesDraft.redBanMatches}

@@ -8,6 +8,7 @@ import { matchAdmin as texts } from "@/lib/texts";
 import FieldRow from "@/components/admin/FieldRow";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import NumberInput from "@/components/NumberInput";
 
 export default function BookingsForm({
   match,
@@ -188,12 +189,10 @@ export default function BookingsForm({
 
         <FieldRow label={texts.fieldMinute} hint={texts.minuteHint}>
           {(id) => (
-            <input
+            <NumberInput
               id={id}
-              type="number"
               min={1}
               max={130}
-              inputMode="numeric"
               value={minute}
               onChange={(e) => setMinute(e.target.value)}
               className="input text-sm"

@@ -14,6 +14,7 @@ import { isFootball } from "@/lib/matchShape";
 import MatchLevelsCard from "@/components/admin/tournament/MatchLevelsCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { activityForm as texts } from "@/lib/texts";
+import NumberInput from "@/components/NumberInput";
 
 export default function DetailsTab({
   activity,
@@ -97,14 +98,12 @@ export default function DetailsTab({
               <label htmlFor="activity-capacity" className="block text-sm font-bold mb-1.5">
                 {texts.capacity}
               </label>
-              <input
+              <NumberInput
                 id="activity-capacity"
-                type="number"
                 min={1}
                 value={form.capacity}
                 onChange={(e) => setForm((p) => ({ ...p, capacity: e.target.value }))}
                 placeholder={texts.noCapacity}
-                className="input"
               />
             </div>
             <div className="flex-1 min-w-0">

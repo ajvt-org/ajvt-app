@@ -6,6 +6,7 @@ import { mvpVote, tournamentSetup as texts } from "@/lib/texts";
 import { MVP_VOTE_MINUTES_MAX, MVP_VOTE_MINUTES_MIN } from "@/lib/mvpVote";
 import { isSinglesSquad, normalizePlayerCount } from "@/lib/squadSize";
 import type { IconName } from "@/components/Icon";
+import NumberInput from "@/components/NumberInput";
 
 export type MatchShapeValue = "FOOTBALL" | "SERIES";
 
@@ -50,16 +51,13 @@ function NumberField({
       >
         {label}
       </label>
-      <input
+      <NumberInput
         id={id}
-        type="number"
         min={min}
         max={max}
-        inputMode="numeric"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="input"
       />
     </div>
   );

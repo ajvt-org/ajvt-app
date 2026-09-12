@@ -316,6 +316,7 @@ const KEPT_CLEAN = [
   "src/app/api/admin/proof-check/route.ts",
   "src/app/admin/dashboard/FilterChips.tsx",
   "src/app/admin/dashboard/AgeGroupTotal.tsx",
+  "src/app/admin/quiz/QuestionFormDialog.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
