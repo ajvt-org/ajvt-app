@@ -13,7 +13,7 @@ import {
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
-import { getStandings, STANDINGS_TTL_MS } from "@/lib/quizRankingServer";
+import { boardBlock, getStandings, STANDINGS_TTL_MS } from "@/lib/quizRankingServer";
 import { GET as WINNERS } from "@/app/api/admin/quiz/competitions/[id]/winners/route";
 
 const START = (() => {
@@ -129,7 +129,6 @@ describe("standings a member can see", () => {
   });
 
   it("hands back the ranking of a past block", async () => {
-    const { boardBlock } = await import("@/lib/quizRankingServer");
     const c = await competition();
     const [a, b] = await createUsers(2);
     await member(a.id, "أحمد");
@@ -351,6 +350,129 @@ describe("standings shared between readers", () => {
     await getStandings(one.id, a.id, 10, at);
 
     expect((await getStandings(other.id, a.id, 10, at)).boards[0].rows).toEqual([]);
+  });
+});
+
+describe("a block board shared between readers", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  const weeklyBoard = (competitionId: string) =>
+    prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId, title: "ترتيب الأسبوع" },
+    });
+  const overallBoard = (competitionId: string) =>
+    prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId, title: "الترتيب العام" },
+    });
+
+  it("hands a second reader the rows the first one ranked", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    const board = await weeklyBoard(c.id);
+    const at = atNoon(today());
+
+    const first = await boardBlock(c.id, board.id, 0, a.id, 10, at);
+    await attempt(c.id, b.id, 0, 90);
+    const second = await boardBlock(c.id, board.id, 0, b.id, 10, at);
+
+    expect(second.rows).toEqual(first.rows);
+  });
+
+  it("keeps each reader's own place their own", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    await attempt(c.id, b.id, 0, 90);
+    const board = await weeklyBoard(c.id);
+    const at = atNoon(today());
+
+    const first = await boardBlock(c.id, board.id, 0, a.id, 10, at);
+    const second = await boardBlock(c.id, board.id, 0, b.id, 10, at);
+
+    expect(first.mine?.userId).toBe(a.id);
+    expect(second.mine?.userId).toBe(b.id);
+  });
+
+  it("tells a reader outside the named rows where they stand", async () => {
+    const c = await competition();
+    const [a, b, d] = await createUsers(3);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await member(d.id, "علي");
+    await attempt(c.id, a.id, 0, 90);
+    await attempt(c.id, b.id, 0, 60);
+    await attempt(c.id, d.id, 0, 30);
+    const board = await weeklyBoard(c.id);
+    const at = atNoon(today());
+
+    await boardBlock(c.id, board.id, 0, a.id, 2, at);
+    const last = await boardBlock(c.id, board.id, 0, d.id, 2, at);
+
+    expect(last.rows).toHaveLength(2);
+    expect(last.mine?.rank).toBe(3);
+  });
+
+  it("ranks the whole run board once whatever block number is asked for", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    const board = await overallBoard(c.id);
+    const at = atNoon(today());
+
+    const first = await boardBlock(c.id, board.id, 0, a.id, 10, at);
+    await attempt(c.id, b.id, 0, 90);
+    const other = await boardBlock(c.id, board.id, 3, a.id, 10, at);
+
+    expect(other.rows).toEqual(first.rows);
+  });
+
+  it("keeps one block's ranking out of another's", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    await attempt(c.id, b.id, 7, 90);
+    const board = await weeklyBoard(c.id);
+    const at = atNoon(today());
+
+    const early = await boardBlock(c.id, board.id, 0, a.id, 10, at);
+    const later = await boardBlock(c.id, board.id, 1, a.id, 10, at);
+
+    expect(early.rows.map((r) => r.name)).toEqual(["أحمد"]);
+    expect(later.rows.map((r) => r.name)).toEqual(["محمد"]);
+  });
+
+  it("takes the newer scores once the window has passed", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    const board = await weeklyBoard(c.id);
+    const at = atNoon(today());
+
+    await boardBlock(c.id, board.id, 0, a.id, 10, at);
+    await attempt(c.id, b.id, 0, 90);
+    const later = await boardBlock(
+      c.id,
+      board.id,
+      0,
+      a.id,
+      10,
+      new Date(at.getTime() + STANDINGS_TTL_MS),
+    );
+
+    expect(later.rows.map((r) => r.total)).toEqual([90, 30]);
   });
 });
 
