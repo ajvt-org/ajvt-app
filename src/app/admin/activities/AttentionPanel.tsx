@@ -32,7 +32,7 @@ export default function AttentionPanel({
         type="button"
         onClick={() => setOpen((shown) => !shown)}
         aria-expanded={open}
-        className="text-sm font-bold w-full text-start"
+        className="text-sm font-bold w-full"
         style={{ color: "var(--text-main)" }}
       >
         <IconLabel name="clock">{`${texts.title} (${rows.length})`}</IconLabel>

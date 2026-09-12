@@ -96,7 +96,7 @@ export default function ActivityRowMenu({ label, items }: { label: string; items
               <Link
                 key={item.key}
                 href={item.href}
-                className="block text-xs font-bold px-3 py-2.5 text-start"
+                className="w-full text-xs font-bold px-3 py-2.5"
                 style={{ color: "var(--text-main)" }}
               >
                 <IconLabel name={item.icon}>{item.label}</IconLabel>
@@ -109,7 +109,7 @@ export default function ActivityRowMenu({ label, items }: { label: string; items
                   close();
                   item.onPick?.();
                 }}
-                className="block w-full text-xs font-bold px-3 py-2.5 text-start"
+                className="w-full text-xs font-bold px-3 py-2.5"
                 style={{ color: "var(--text-main)" }}
               >
                 <IconLabel name={item.icon}>{item.label}</IconLabel>

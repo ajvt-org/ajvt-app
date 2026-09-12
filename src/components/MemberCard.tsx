@@ -131,7 +131,7 @@ export default function MemberCard({
         <button
           onClick={() => run("image", (node) => savePng(node, fileName("png")))}
           disabled={busy !== null}
-          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
+          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 justify-center disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
           {busy === "image" ? (
@@ -143,7 +143,7 @@ export default function MemberCard({
         <button
           onClick={() => run("pdf", (node) => savePdf(node, fileName("pdf")))}
           disabled={busy !== null}
-          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
+          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 justify-center disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
           {busy === "pdf" ? memberCard.busy : <IconLabel name="file">{memberCard.pdf}</IconLabel>}
@@ -160,7 +160,7 @@ export default function MemberCard({
             )
           }
           disabled={busy !== null}
-          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
+          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 justify-center disabled:opacity-40"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
           {busy === "share" ? (

@@ -668,12 +668,13 @@ button:disabled {
    the text baseline. That box takes its own baseline from its first item,
    the icon, which has none, so the browser uses the icon's bottom edge and
    the line box still reserves descender room below it. Making the button a
-   flex container takes the baseline out of the question. */
+   flex container takes the baseline out of the question. Where the label sits
+   along the row is left to the button, so one that is wider than its label
+   starts where its text starts and .btn goes on centring its own. */
 :where(button, a):has(> .icon-label),
 :where(button, a):has(> .arrow-label) {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
 }
 .btn:has(> .icon-label),
 .btn:has(> .arrow-label) {
