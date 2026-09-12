@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { adminRecorder } from "@/lib/membershipRecorder";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
@@ -72,7 +73,7 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
     return NextResponse.json({ error: memberImportRun.batchAlreadyRan }, { status: 409 });
   }
 
-  const settings = { membershipFee, membershipYear, recordedBy: session.username };
+  const settings = { membershipFee, membershipYear, recorder: adminRecorder(session) };
   const results: ImportedRow[] = [];
 
   for (const [at, row] of run.rows.entries()) {

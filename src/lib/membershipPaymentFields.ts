@@ -6,6 +6,7 @@ export const MEMBERSHIP_PAYMENT_SELECT = {
   proof: true,
   referenceCode: true,
   recordedBy: true,
+  recordedByAdminId: true,
 } as const;
 
 export interface MirroredPayment {

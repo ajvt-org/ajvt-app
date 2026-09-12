@@ -7,6 +7,7 @@ import { parse } from "@/lib/validation";
 import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
+import { adminRecorder } from "@/lib/membershipRecorder";
 import { validatePaidAmount } from "@/lib/donations";
 import { renewalRefusal } from "@/lib/renewal";
 import { renewalRefusalMessage } from "@/lib/renewalMessages";
@@ -65,7 +66,7 @@ export const POST = withRoute(
         accountId: accountId || null,
         proof: paymentProof || null,
         status: "ACTIVE",
-        recordedBy: session.username,
+        recorder: adminRecorder(session),
         reviewedBy: session.username,
         reviewedAt,
       });

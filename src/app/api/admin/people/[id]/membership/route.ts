@@ -9,6 +9,7 @@ import { parse } from "@/lib/validation";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { addMembership } from "@/lib/membershipCreate";
+import { adminRecorder } from "@/lib/membershipRecorder";
 import { accounts, members } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
 import { adminMembershipCreateSchema } from "./schema";
@@ -61,7 +62,7 @@ export const POST = withRoute(
         status,
         membershipYear,
         fee: membershipFee,
-        recordedBy: session.username,
+        recorder: adminRecorder(session),
         issued: needsNumber ? await issueMembership(tx) : undefined,
       }),
     );

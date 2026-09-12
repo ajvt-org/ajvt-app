@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
 import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
 import type { MembershipVerdict } from "./membershipVerdict";
 import { currentMembership } from "./currentMembershipServer";
+import type { Recorder } from "./membershipRecorder";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -14,9 +15,14 @@ export interface MembershipFee {
   status?: ReviewStatus;
   reviewedBy?: string | null;
   reviewedAt?: Date | null;
-  recordedBy?: string | null;
+  recorder?: Recorder;
   anonymous?: boolean;
   paidOn?: Date | null;
+}
+
+function recorderColumns(recorder: Recorder | undefined) {
+  if (recorder === undefined) return {};
+  return { recordedBy: recorder.name, recordedByAdminId: recorder.adminId };
 }
 
 export async function writeMembershipFee(
@@ -34,13 +40,15 @@ export async function writeMembershipFee(
     select: { id: true },
   });
 
-  const { anonymous: choice, paidOn, ...columns } = fields;
+  const { anonymous: choice, paidOn, recorder, ...columns } = fields;
+  const recorded = recorderColumns(recorder);
 
   if (standing) {
     await db.payment.update({
       where: { id: standing.id },
       data: {
         ...columns,
+        ...recorded,
         ...(paidOn === undefined ? {} : { paidOn }),
         amount: total,
         feeApplied: fee,
@@ -53,6 +61,7 @@ export async function writeMembershipFee(
   const made = await db.payment.create({
     data: {
       ...columns,
+      ...recorded,
       purpose: "MEMBERSHIP",
       userId,
       year,

@@ -9,6 +9,7 @@ import { withRoute } from "@/lib/route";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { selfRecorder } from "@/lib/membershipRecorder";
 import { saveMembershipYear } from "@/lib/membershipRecord";
 import { currentMembershipPaid } from "@/lib/currentMembershipServer";
 import { asMembershipState } from "@/lib/currentMembership";
@@ -82,7 +83,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         proof: paymentProof,
         ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
         status: "PENDING",
-        recordedBy: nameOf(person),
+        recorder: selfRecorder(nameOf(person)),
         anonymous: surplusAnonymous,
       });
     });
@@ -109,7 +110,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           proof: paymentProof,
           referenceCode: code,
           status: "PENDING",
-          recordedBy: nameOf(person),
+          recorder: selfRecorder(nameOf(person)),
           anonymous: surplusAnonymous,
         });
       });

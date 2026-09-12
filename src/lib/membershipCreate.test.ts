@@ -24,7 +24,7 @@ function input(over: Partial<NewMembership> = {}): NewMembership {
     status: "PENDING",
     membershipYear: 2026,
     fee: 100,
-    recordedBy: "admin",
+    recorder: { name: "admin", adminId: "a1" },
     ...over,
   };
 }
@@ -41,7 +41,7 @@ describe("addMembership", () => {
       accountId: null,
       proof: null,
       status: "PENDING",
-      recordedBy: "admin",
+      recorder: { name: "admin", adminId: "a1" },
       anonymous: false,
     });
   });
