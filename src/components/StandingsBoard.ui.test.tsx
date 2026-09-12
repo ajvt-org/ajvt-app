@@ -95,6 +95,8 @@ const CLOSE = new Date("2026-09-08T10:00:00Z");
 const bar = () => screen.getByRole("progressbar");
 const fill = () => (bar().firstElementChild as HTMLElement).style.width;
 const announced = () => bar().getAttribute("aria-valuenow");
+const fillTone = () => (bar().firstElementChild as HTMLElement).style.background;
+const at = (share: number) => new Date(OPEN.getTime() + (CLOSE.getTime() - OPEN.getTime()) * share);
 
 const board = (opensAt: string, closesAt: string, onReached: () => void) => (
   <StandingsBoard
@@ -240,5 +242,28 @@ describe("BlockTimer", () => {
     });
 
     expect(onReached).toHaveBeenCalledTimes(2);
+  });
+  it("keeps the bar mint while most of the block is left", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(at(0.5));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(fillTone()).toContain("mint");
+  });
+
+  it("turns the bar copper once the block is nearly over", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(at(0.9));
+    setup({
+      blockOpensAt: OPEN.toISOString(),
+      blockClosesAt: CLOSE.toISOString(),
+      showBlockTimer: true,
+    });
+
+    expect(fillTone()).toContain("copper");
   });
 });

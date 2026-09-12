@@ -19,6 +19,8 @@ export interface MyPlace {
   total: number;
 }
 
+const URGENT_SHARE = 0.8;
+
 function BlockTimer({
   opensAt,
   closesAt,
@@ -35,7 +37,7 @@ function BlockTimer({
   const end = new Date(closesAt).getTime();
   const elapsed = Math.min(1, Math.max(0, (now - start) / Math.max(1, end - start)));
   const remainingPct = 100 - Math.round(elapsed * 100);
-  const urgent = elapsed > 0.8;
+  const urgent = elapsed > URGENT_SHARE;
 
   const fired = useRef(false);
 
