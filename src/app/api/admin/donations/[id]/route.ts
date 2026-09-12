@@ -153,7 +153,9 @@ export const PATCH = withRoute(
       include: { user: { select: DONOR_ACCOUNT_SELECT } },
     });
     const madeOn = paidOn === undefined ? undefined : readMoneyDate(paidOn);
-    await mirrorDonation(prisma, donationMirrorOf(donation, tagIds, madeOn));
+    await prisma.$transaction((tx) =>
+      mirrorDonation(tx, donationMirrorOf(donation, tagIds, madeOn)),
+    );
 
     const target = {
       ...auditContext(session, req),

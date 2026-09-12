@@ -34,7 +34,7 @@ async function main() {
     return;
   }
 
-  const issued = await syncReceiptsFor(prisma, {});
+  const issued = await prisma.$transaction((tx) => syncReceiptsFor(tx, {}));
   console.log(`Receipts issued: ${issued.length}`);
 }
 
