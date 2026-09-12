@@ -55,28 +55,16 @@ export async function issueReceiptOverPayment(
   source: HandReceiptSource,
 ): Promise<{ receipt: Receipt; payment: Payment }> {
   return prisma.$transaction(async (tx) => {
-    const donation = await tx.donation.create({
-      data: {
-        donorName: draft.payerName,
-        amount: draft.amount,
-        paymentMethod: source.paymentMethod || null,
-        accountId: source.accountId || null,
-        userId: draft.userId ?? null,
-        source: draft.userId ? "SELF" : "PUBLIC",
-        status: "ACTIVE",
-      },
-    });
     const payment = await tx.payment.create({
       data: {
-        id: donation.id,
         purpose: "DONATION",
         amount: draft.amount,
-        method: donation.paymentMethod,
-        accountId: donation.accountId,
+        method: source.paymentMethod || null,
+        accountId: source.accountId || null,
         status: "ACTIVE",
         anonymous: false,
-        donorName: donation.donorName,
-        userId: donation.userId,
+        donorName: draft.payerName,
+        userId: draft.userId ?? null,
         paidOn: draft.issuedOn,
       },
     });
@@ -93,7 +81,7 @@ export async function issueReceiptOverPayment(
         issuedBy: draft.issuedBy,
         secretary: settings.secretaryName,
         treasurer: settings.treasurerName,
-        userId: donation.userId,
+        userId: payment.userId,
         paymentId: payment.id,
       },
     });

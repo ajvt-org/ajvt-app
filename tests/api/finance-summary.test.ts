@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { SUPER_ROLE } from "@/lib/adminRoles";
 import { getFinanceSummary } from "@/lib/financeServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, makeMember } from "./helpers";
+import { resetDb, makeMember, giveGift } from "./helpers";
 
 const ANON = "فاعل خير";
 
@@ -26,16 +25,12 @@ async function feePaid(m: { userId: string; status: "ACTIVE" | "PENDING" }, amou
 }
 
 async function gift(amount: number, opts: { name?: string | null; method?: string | null } = {}) {
-  const donation = await prisma.donation.create({
-    data: {
-      amount,
-      anonymous: opts.name == null,
-      donorName: opts.name ?? null,
-      paymentMethod: opts.method ?? null,
-      status: "ACTIVE",
-    },
+  const donation = await giveGift({
+    amount,
+    anonymous: opts.name == null,
+    donorName: opts.name ?? null,
+    method: opts.method ?? null,
   });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
   return donation;
 }
 

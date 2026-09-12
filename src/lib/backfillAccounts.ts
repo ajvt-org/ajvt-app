@@ -1,4 +1,4 @@
-export const MONEY_TABLES = ["Payment", "Donation", "Expense"] as const;
+export const MONEY_TABLES = ["Payment", "Expense"] as const;
 
 export type MoneyTable = (typeof MONEY_TABLES)[number];
 

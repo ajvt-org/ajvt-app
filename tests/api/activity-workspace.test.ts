@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as FINANCE } from "@/app/api/admin/activities/[id]/finance/route";
 import { prisma } from "@/lib/prisma";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, get, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withId, giveGift } from "./helpers";
 
 async function activity(title = "القافلة الصحية") {
   return prisma.activity.create({ data: { title, description: "وصف" } });
@@ -14,8 +13,7 @@ async function gift(data: {
   status: "ACTIVE" | "PENDING" | "REJECTED";
   activityId: string;
 }) {
-  const donation = await prisma.donation.create({ data });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
+  const donation = await giveGift(data);
   return donation;
 }
 

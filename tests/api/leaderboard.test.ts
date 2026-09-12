@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { SUPER_ROLE } from "@/lib/adminRoles";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { GET as BOARD } from "@/app/api/leaderboard/route";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
-import { get, makeMember } from "./helpers";
+import { get, makeMember, giveGift } from "./helpers";
 import { resetDb } from "./helpers";
 
 async function member(fullName: string) {
@@ -22,17 +21,14 @@ async function gift(
 ) {
   const status = opts.status ?? "ACTIVE";
   const owner = opts.memberId ? { userId: opts.memberId } : null;
-  const donation = await prisma.donation.create({
-    data: {
-      amount,
-      anonymous: opts.name == null,
-      donorName: opts.name ?? null,
-      userId: owner?.userId ?? null,
-      status,
-      source: opts.memberId ? "SELF" : "PUBLIC",
-    },
+  const donation = await giveGift({
+    amount,
+    anonymous: opts.name == null,
+    donorName: opts.name ?? null,
+    userId: owner?.userId ?? null,
+    status,
+    source: opts.memberId ? "SELF" : "PUBLIC",
   });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
   return donation;
 }
 
@@ -204,10 +200,7 @@ describe("the supporters board", () => {
   });
 
   it("keeps the photo of a donor who has no account", async () => {
-    const donation = await prisma.donation.create({
-      data: { amount: 500, donorName: "زائر", donorPhoto: "guest.webp", status: "ACTIVE" },
-    });
-    await mirrorDonation(prisma, donationMirrorOf(donation));
+    await giveGift({ amount: 500, donorName: "زائر", donorPhoto: "guest.webp" });
 
     const { leaderboard } = await getLeaderboardData(ADMIN);
 
