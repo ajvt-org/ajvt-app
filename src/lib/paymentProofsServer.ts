@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { splitPayment } from "./membershipPayment";
 import { proofScope } from "./proofScope";
 import { nameOf } from "./person";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "./donorName";
@@ -92,7 +93,7 @@ function yearKey(userId: string, year: number): string {
 }
 
 function surplusOf(row: { amount: number; feeApplied: number | null }): number {
-  return Math.max(0, row.amount - Math.min(row.amount, row.feeApplied ?? 0));
+  return splitPayment(row.amount, row.feeApplied ?? 0).surplus;
 }
 
 async function membershipProofPayments() {
@@ -133,8 +134,7 @@ async function membershipSupport(userIds: string[]): Promise<Map<string, number>
   const support = new Map<string, number>();
   for (const p of payments) {
     if (!p.userId) continue;
-    const above = p.amount - Math.min(p.amount, p.feeApplied ?? 0);
-    support.set(p.userId, Math.max(support.get(p.userId) ?? 0, above));
+    support.set(p.userId, Math.max(support.get(p.userId) ?? 0, surplusOf(p)));
   }
   return support;
 }
