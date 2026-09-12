@@ -102,10 +102,6 @@ export default function AgeGroupsDialog({
         />
 
         <div className="p-5 space-y-4">
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {texts.intro}
-          </p>
-
           <PendingAgeGroups
             groups={ageGroups.filter((g) => g.approved === false)}
             onChanged={onChanged}
