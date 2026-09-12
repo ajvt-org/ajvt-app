@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { donationMirrorOf, mirrorDonation, removeMirroredDonation } from "@/lib/paymentMirror";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
@@ -10,7 +9,7 @@ import { accountIdError } from "@/lib/paymentAccountsServer";
 import { readBankReference } from "@/lib/bankReference";
 import { acceptedNames } from "@/lib/paymentMethods";
 import { donationUpdateSchema } from "./schema";
-import type { ReviewStatus } from "@prisma/client";
+import type { PaymentPurpose, ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
@@ -23,6 +22,8 @@ import type { SupportViewer } from "@/lib/supportPrivacy";
 import { money as amountText } from "@/lib/money";
 import { releaseUploads } from "@/lib/uploadRelease";
 import { readMoneyDate } from "@/lib/paymentDate";
+import { GIFT_SELECT, giftPurpose, giftRow, isMembershipMoney } from "@/lib/giftPayment";
+import { syncReceiptsFor, withdrawReceiptsBeforeDelete } from "@/lib/paymentReceiptServer";
 
 async function namedAccount(userId: string | null, viewer: SupportViewer): Promise<string | null> {
   if (!userId) return null;
@@ -33,16 +34,28 @@ async function namedAccount(userId: string | null, viewer: SupportViewer): Promi
   return account ? donorNameOnRecord({ donorName: null, userId, user: account }, viewer) : null;
 }
 
+function findGift(id: string) {
+  return prisma.payment.findUnique({ where: { id }, select: GIFT_SELECT });
+}
+
+function refuseMembershipMoney(payment: { purpose: PaymentPurpose }): NextResponse | null {
+  if (!isMembershipMoney(payment)) return null;
+  return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
+}
+
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("SUPER");
     const viewer = viewerOf(session);
     const { id } = await params;
-    const existing = await prisma.donation.findUnique({ where: { id } });
-    if (!existing) {
+    const found = await findGift(id);
+    if (!found) {
       return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
     }
+    const refused = refuseMembershipMoney(found);
+    if (refused) return refused;
+    const existing = giftRow(found);
 
     const accepted = acceptedNames(await offeredMethodNames(), existing.paymentMethod);
     const {
@@ -62,28 +75,6 @@ export const PATCH = withRoute(
       competitionId,
       paidOn,
     } = parse(donationUpdateSchema(accepted), await req.json());
-    if (
-      existing.source === "MEMBERSHIP" &&
-      [
-        status,
-        userId,
-        anonymous,
-        donorName,
-        donorPhone,
-        donorPhoto,
-        amount,
-        proof,
-        paymentMethod,
-        accountId,
-        bankReference,
-        tagIds,
-        activityId,
-        competitionId,
-        paidOn,
-      ].some((v) => v !== undefined)
-    ) {
-      return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
-    }
 
     const data: {
       status?: ReviewStatus;
@@ -92,14 +83,16 @@ export const PATCH = withRoute(
       donorPhone?: string | null;
       donorPhoto?: string | null;
       amount?: number;
-      paymentMethod?: string | null;
+      method?: string | null;
       accountId?: string | null;
       bankReference?: string | null;
       proof?: string | null;
       tags?: { set: { id: string }[] };
+      purpose?: PaymentPurpose;
       activityId?: string | null;
       competitionId?: string | null;
       userId?: string | null;
+      paidOn?: Date | null;
     } = {};
     if (status !== undefined) data.status = status;
 
@@ -120,7 +113,8 @@ export const PATCH = withRoute(
     if (donorPhoto !== undefined) data.donorPhoto = donorPhoto;
     if (proof !== undefined) data.proof = proof;
     if (amount !== undefined) data.amount = amount;
-    if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
+    if (paymentMethod !== undefined) data.method = paymentMethod;
+    if (paidOn !== undefined) data.paidOn = readMoneyDate(paidOn);
 
     if (bankReference !== undefined) {
       data.bankReference = readBankReference(bankReference) || null;
@@ -143,24 +137,23 @@ export const PATCH = withRoute(
     }
     if (activityId !== undefined || competitionId !== undefined) {
       const destination = await resolveMoneyDestination({ activityId, competitionId });
+      data.purpose = giftPurpose(destination);
       data.activityId = destination.activityId;
       data.competitionId = destination.competitionId;
     }
 
-    const donation = await prisma.donation.update({
-      where: { id },
-      data,
-      include: { user: { select: DONOR_ACCOUNT_SELECT } },
-    });
-    const madeOn = paidOn === undefined ? undefined : readMoneyDate(paidOn);
-    await prisma.$transaction((tx) =>
-      mirrorDonation(tx, donationMirrorOf(donation, tagIds, madeOn)),
+    const gift = giftRow(
+      await prisma.$transaction(async (tx) => {
+        const saved = await tx.payment.update({ where: { id }, data, select: GIFT_SELECT });
+        await syncReceiptsFor(tx, { id });
+        return saved;
+      }),
     );
 
     const target = {
       ...auditContext(session, req),
       targetType: "Donation",
-      targetId: donation.id,
+      targetId: gift.id,
     };
 
     if (status !== undefined) {
@@ -168,38 +161,35 @@ export const PATCH = withRoute(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
         logLabelFor(
-          donation,
+          gift,
           donorNameOnRecord(
-            { donorName: existing.donorName, userId: donation.userId, user: donation.user },
+            { donorName: existing.donorName, userId: gift.userId, user: gift.user },
             viewer,
           ),
         ),
-        { ...target, before: { status: existing.status }, after: { status: donation.status } },
+        { ...target, before: { status: existing.status }, after: { status: gift.status } },
       );
     }
     if (userId !== undefined) {
       const wasNamed = await namedAccount(existing.userId, viewer);
-      const nowNamed = userId ? donorNameOnRecord(donation, viewer) : null;
+      const nowNamed = userId ? donorNameOnRecord(gift, viewer) : null;
       const typed = donorNameOnRecord(
-        { donorName: existing.donorName, userId: donation.userId, user: donation.user },
+        { donorName: existing.donorName, userId: gift.userId, user: gift.user },
         viewer,
       );
       await logAction(
         session.username,
         userId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
-        logLabelFor(
-          donation,
-          nowNamed ? `${wasNamed ?? typed} → ${nowNamed}` : (wasNamed ?? typed),
-        ),
+        logLabelFor(gift, nowNamed ? `${wasNamed ?? typed} → ${nowNamed}` : (wasNamed ?? typed)),
         {
           ...target,
-          before: logSnapshotFor(donation, {
+          before: logSnapshotFor(gift, {
             userId: existing.userId,
             donorName: existing.donorName,
           }),
-          after: logSnapshotFor(donation, {
-            userId: donation.userId,
-            donorName: donation.donorName,
+          after: logSnapshotFor(gift, {
+            userId: gift.userId,
+            donorName: gift.donorName,
           }),
         },
       );
@@ -220,25 +210,18 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         "UPDATE_DONATION",
-        logLabelFor(donation, donorNameOnRecord(donation, viewer)),
+        logLabelFor(gift, donorNameOnRecord(gift, viewer)),
         {
           ...target,
-          before: logSnapshotFor(donation, existing),
-          after: logSnapshotFor(donation, donationLogSnapshot(donation)),
+          before: logSnapshotFor(gift, existing),
+          after: logSnapshotFor(gift, donationLogSnapshot(gift)),
         },
       );
     }
 
     await releaseUploads(existing.proof, existing.donorPhoto);
 
-    const mirrored = await prisma.payment.findUnique({
-      where: { id },
-      select: { paidOn: true },
-    });
-
-    return NextResponse.json({
-      donation: { ...donationView(donation, viewer), paidOn: mirrored?.paidOn ?? null },
-    });
+    return NextResponse.json({ donation: donationView(gift, viewer) });
   },
 );
 
@@ -249,19 +232,18 @@ export const DELETE = withRoute(
     const viewer = viewerOf(session);
     const { id } = await params;
 
-    const existing = await prisma.donation.findUnique({
-      where: { id },
-      include: { user: { select: DONOR_ACCOUNT_SELECT } },
-    });
-    if (!existing) {
+    const found = await findGift(id);
+    if (!found) {
       return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
     }
-    if (existing.source === "MEMBERSHIP") {
-      return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
-    }
+    const refused = refuseMembershipMoney(found);
+    if (refused) return refused;
+    const existing = giftRow(found);
 
-    await prisma.donation.delete({ where: { id } });
-    await removeMirroredDonation(prisma, id);
+    await prisma.$transaction(async (tx) => {
+      await withdrawReceiptsBeforeDelete(tx, { id });
+      await tx.payment.delete({ where: { id } });
+    });
     await releaseUploads(existing.proof, existing.donorPhoto);
     await logAction(
       session.username,

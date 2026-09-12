@@ -1,19 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, patch, createAdmin, signInAsAdmin, withId, giveGift } from "./helpers";
 
 import { PATCH as UPDATE } from "@/app/api/admin/donations/[id]/route";
 
 async function aDonation() {
-  return prisma.donation.create({
-    data: {
-      donorName: "خالد الأمين",
-      amount: 5000,
-      source: "PUBLIC",
-      status: "ACTIVE",
-      paymentMethod: "بنكيلي",
-    },
-  });
+  return giveGift({ donorName: "خالد الأمين", amount: 5000, method: "بنكيلي" });
 }
 
 function edit(id: string, body: Record<string, unknown>) {

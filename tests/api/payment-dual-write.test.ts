@@ -291,11 +291,14 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin edits a donation", async () => {
     await signInAsAdmin(await createAdmin());
     await ADMIN_DONATION(post("/api/admin/donations", { donorName: "أحمد", amount: 3000 }));
-    const d = await prisma.donation.findFirstOrThrow();
+    const gift = await prisma.payment.findFirstOrThrow({ where: { purpose: "DONATION" } });
 
-    await EDIT_DONATION(patch(`/api/admin/donations/${d.id}`, { amount: 4000 }), withId(d.id));
+    await EDIT_DONATION(
+      patch(`/api/admin/donations/${gift.id}`, { amount: 4000 }),
+      withId(gift.id),
+    );
 
     expect(await moneyKeptAnywhereElse()).toBe(0);
-    expect((await prisma.payment.findFirstOrThrow({ where: { id: d.id } })).amount).toBe(4000);
+    expect((await prisma.payment.findFirstOrThrow({ where: { id: gift.id } })).amount).toBe(4000);
   });
 });

@@ -10,8 +10,16 @@ import { countUploadReferrers } from "@/lib/uploadFields";
 import { releaseUploads } from "@/lib/uploadRelease";
 import { thumbnailOf } from "@/lib/uploadNames";
 import { findProofReuse } from "@/lib/proofReuse";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, createAdmin, signInAsAdmin, patch, del, withId, makeMember } from "./helpers";
+import {
+  resetDb,
+  createAdmin,
+  signInAsAdmin,
+  patch,
+  del,
+  withId,
+  makeMember,
+  giveGift,
+} from "./helpers";
 
 import {
   PATCH as DONATION_PATCH,
@@ -135,16 +143,12 @@ describe("replacing the proof on a donation", () => {
     await asSuper();
     await stored("first.webp");
     await stored("second.webp");
-    const donation = await prisma.donation.create({
-      data: {
-        amount: 500,
-        donorName: "زائر",
-        status: "PENDING",
-        source: "PUBLIC",
-        proof: "first.webp",
-      },
+    const donation = await giveGift({
+      amount: 500,
+      donorName: "زائر",
+      status: "PENDING",
+      proof: "first.webp",
     });
-    await mirrorDonation(prisma, donationMirrorOf(donation));
 
     const res = await DONATION_PATCH(
       patch(`/api/admin/donations/${donation.id}`, { proof: "second.webp" }),
@@ -162,16 +166,12 @@ describe("replacing the proof on a donation", () => {
     await asSuper();
     await stored("before.webp");
     await stored("after.webp");
-    const donation = await prisma.donation.create({
-      data: {
-        amount: 500,
-        donorName: "زائر",
-        status: "PENDING",
-        source: "PUBLIC",
-        proof: "before.webp",
-      },
+    const donation = await giveGift({
+      amount: 500,
+      donorName: "زائر",
+      status: "PENDING",
+      proof: "before.webp",
     });
-    await mirrorDonation(prisma, donationMirrorOf(donation));
 
     await DONATION_PATCH(
       patch(`/api/admin/donations/${donation.id}`, { proof: "after.webp" }),
@@ -185,26 +185,13 @@ describe("replacing the proof on a donation", () => {
     await asSuper();
     await stored("ours.webp");
     await stored("theirs.webp");
-    const kept = await prisma.donation.create({
-      data: {
-        amount: 100,
-        donorName: "آخر",
-        status: "ACTIVE",
-        source: "PUBLIC",
-        proof: "theirs.webp",
-      },
+    await giveGift({ amount: 100, donorName: "آخر", proof: "theirs.webp" });
+    const donation = await giveGift({
+      amount: 500,
+      donorName: "زائر",
+      status: "PENDING",
+      proof: "old.webp",
     });
-    await mirrorDonation(prisma, donationMirrorOf(kept));
-    const donation = await prisma.donation.create({
-      data: {
-        amount: 500,
-        donorName: "زائر",
-        status: "PENDING",
-        source: "PUBLIC",
-        proof: "old.webp",
-      },
-    });
-    await mirrorDonation(prisma, donationMirrorOf(donation));
 
     await DONATION_PATCH(
       patch(`/api/admin/donations/${donation.id}`, { proof: "ours.webp" }),
@@ -217,16 +204,12 @@ describe("replacing the proof on a donation", () => {
   it("lets go of the proof when the donation goes", async () => {
     await asSuper();
     await stored("gone.webp");
-    const donation = await prisma.donation.create({
-      data: {
-        amount: 500,
-        donorName: "زائر",
-        status: "PENDING",
-        source: "PUBLIC",
-        proof: "gone.webp",
-      },
+    const donation = await giveGift({
+      amount: 500,
+      donorName: "زائر",
+      status: "PENDING",
+      proof: "gone.webp",
     });
-    await mirrorDonation(prisma, donationMirrorOf(donation));
 
     const res = await DONATION_DELETE(
       del(`/api/admin/donations/${donation.id}`),

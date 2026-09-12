@@ -2,15 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/donations/[id]/route";
 import { GET as proofsRoute } from "@/app/api/admin/payment-proofs/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, patch, get, withId, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, patch, get, withId, createAdmin, signInAsAdmin, giveGift } from "./helpers";
 
 const METHOD = "بنكيلي";
 const REFERENCE = "TR10000000001";
 
-async function aDonation(over: Record<string, unknown> = {}) {
-  return prisma.donation.create({
-    data: { amount: 5000, status: "ACTIVE", source: "PUBLIC", paymentMethod: METHOD, ...over },
-  });
+async function aDonation(over: { bankReference?: string } = {}) {
+  return giveGift({ amount: 5000, method: METHOD, ...over });
 }
 
 function editing(id: string, body: unknown) {
@@ -30,15 +28,6 @@ describe("the bank's transaction number at review", () => {
 
     expect(res.status).toBe(200);
     expect(
-      (await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } })).bankReference,
-    ).toBe(REFERENCE);
-  });
-
-  it("reaches the unified table through the mirror", async () => {
-    const donation = await aDonation();
-    await PATCH(...editing(donation.id, { bankReference: REFERENCE }));
-
-    expect(
       (await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } })).bankReference,
     ).toBe(REFERENCE);
   });
@@ -48,7 +37,7 @@ describe("the bank's transaction number at review", () => {
     await PATCH(...editing(donation.id, { bankReference: "TR 100 000 000 01" }));
 
     expect(
-      (await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } })).bankReference,
+      (await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } })).bankReference,
     ).toBe(REFERENCE);
   });
 
@@ -57,7 +46,7 @@ describe("the bank's transaction number at review", () => {
     await PATCH(...editing(donation.id, { bankReference: null }));
 
     expect(
-      (await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } })).bankReference,
+      (await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } })).bankReference,
     ).toBeNull();
   });
 
@@ -112,7 +101,7 @@ describe("the same transfer submitted twice", () => {
 
     expect(res.status).toBe(200);
     expect(
-      (await prisma.donation.findUniqueOrThrow({ where: { id: second.id } })).bankReference,
+      (await prisma.payment.findUniqueOrThrow({ where: { id: second.id } })).bankReference,
     ).toBe(REFERENCE);
   });
 

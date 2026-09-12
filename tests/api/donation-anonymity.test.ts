@@ -9,18 +9,19 @@ import {
   patch,
   signInAsAdmin,
   withId,
+  giveGift,
 } from "./helpers";
 import { PATCH as UPDATE } from "@/app/api/admin/donations/[id]/route";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { getLeaderboardData } from "@/lib/donationsServer";
 import { money } from "@/lib/messages";
 
-async function aGift(over: Record<string, unknown>) {
-  const donation = await prisma.donation.create({
-    data: { amount: 2000, status: "ACTIVE", source: "PUBLIC", ...over },
-  });
-  await mirrorDonation(prisma, donationMirrorOf(donation));
-  return donation;
+async function aGift(over: {
+  anonymous?: boolean;
+  donorName?: string | null;
+  userId?: string;
+  source?: string;
+}) {
+  return giveGift({ amount: 2000, ...over });
 }
 
 const ADMIN = { role: SUPER_ROLE };
@@ -90,7 +91,7 @@ describe("a giver's choice to stay unnamed", () => {
       withId(donation.id),
     );
 
-    const after = await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } });
+    const after = await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } });
     expect(after.anonymous).toBe(true);
     expect(after.donorName).toBe("أحمد سالم");
   });
@@ -122,18 +123,5 @@ describe("a giver's choice to stay unnamed", () => {
 
     const { leaderboard } = await getLeaderboardData(ADMIN);
     expect(leaderboard[0].name).toBe("أحمد سالم");
-  });
-
-  it("says where to edit a membership's own support rather than refusing flatly", async () => {
-    const donation = await aGift({ anonymous: false, donorName: "أحمد", source: "MEMBERSHIP" });
-    await signInAsAdmin(await createAdmin("boss", "SUPER"));
-
-    const res = await UPDATE(
-      patch(`/api/admin/donations/${donation.id}`, { anonymous: true }),
-      withId(donation.id),
-    );
-
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(money.membershipDonationReadOnly);
   });
 });

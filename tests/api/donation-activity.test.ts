@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, post, patch, createAdmin, signInAsAdmin, withId, giveGift } from "./helpers";
 
 import { POST as CREATE } from "@/app/api/admin/donations/route";
 import { PATCH as UPDATE } from "@/app/api/admin/donations/[id]/route";
@@ -12,9 +12,7 @@ function activity(title = "القافلة الصحية") {
 }
 
 function donation(amount = 5000) {
-  return prisma.donation.create({
-    data: { donorName: "فاعل خير", amount, source: "PUBLIC", status: "ACTIVE" },
-  });
+  return giveGift({ donorName: "فاعل خير", amount });
 }
 
 const update = (id: string, body: unknown) =>
@@ -45,7 +43,7 @@ describe("attributing a donation to an activity", () => {
 
     await update(gift.id, { activityId: null });
 
-    expect((await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } })).activityId).toBe(
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: gift.id } })).activityId).toBe(
       null,
     );
   });
@@ -56,7 +54,7 @@ describe("attributing a donation to an activity", () => {
     const res = await update(gift.id, { activityId: "missing" });
 
     expect(res.status).toBe(400);
-    expect((await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } })).activityId).toBe(
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: gift.id } })).activityId).toBe(
       null,
     );
   });
@@ -73,7 +71,7 @@ describe("attributing a donation to an activity", () => {
     );
 
     expect(res.status).toBe(201);
-    expect((await prisma.donation.findFirstOrThrow()).activityId).toBe(caravan.id);
+    expect((await prisma.payment.findFirstOrThrow()).activityId).toBe(caravan.id);
   });
 
   it("refuses a hand-recorded gift pointed at an activity that does not exist", async () => {
@@ -82,7 +80,7 @@ describe("attributing a donation to an activity", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(await prisma.donation.count()).toBe(0);
+    expect(await prisma.payment.count()).toBe(0);
   });
 
   it("reports which activity a gift belongs to in the payments list", async () => {

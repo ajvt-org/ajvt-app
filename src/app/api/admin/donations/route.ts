@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
@@ -14,7 +13,9 @@ import { members } from "@/lib/messages";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import { viewerOf } from "@/lib/supportViewer";
-import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
+import { donorNameOnRecord } from "@/lib/donorName";
+import { GIFT_SELECT, giftPurpose, giftRow } from "@/lib/giftPayment";
+import { ensureReceiptsFor } from "@/lib/paymentReceiptServer";
 import { money } from "@/lib/money";
 import { readMoneyDate } from "@/lib/paymentDate";
 
@@ -46,54 +47,57 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     : null;
   if (userId && !giver) return NextResponse.json({ error: members.notFound }, { status: 404 });
 
-  const donation = await prisma.donation.create({
-    include: { user: { select: DONOR_ACCOUNT_SELECT } },
-    data: {
-      anonymous: anonymous ?? false,
-      donorName: donorName ?? null,
-      donorPhone: donorPhone ?? null,
-      amount,
-      proof: proof ?? null,
-      donorPhoto: donorPhoto ?? null,
-      paymentMethod: paymentMethod || null,
-      accountId: accountId || null,
-      bankReference: readBankReference(bankReference) || null,
-      activityId: destination.activityId,
-      competitionId: destination.competitionId,
-      userId: giver?.id ?? null,
-      source: giver ? "SELF" : "PUBLIC",
-      status: "ACTIVE",
-    },
-  });
   const madeOn = readMoneyDate(paidOn) ?? new Date();
-  await prisma.$transaction((tx) =>
-    mirrorDonation(tx, donationMirrorOf(donation, undefined, madeOn)),
+  const gift = giftRow(
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.payment.create({
+        select: GIFT_SELECT,
+        data: {
+          purpose: giftPurpose(destination),
+          anonymous: anonymous ?? false,
+          donorName: donorName ?? null,
+          donorPhone: donorPhone ?? null,
+          amount,
+          proof: proof ?? null,
+          donorPhoto: donorPhoto ?? null,
+          method: paymentMethod || null,
+          accountId: accountId || null,
+          bankReference: readBankReference(bankReference) || null,
+          activityId: destination.activityId,
+          competitionId: destination.competitionId,
+          userId: giver?.id ?? null,
+          source: giver ? "SELF" : "PUBLIC",
+          status: "ACTIVE",
+          paidOn: madeOn,
+        },
+      });
+      await ensureReceiptsFor(tx, { id: created.id });
+      return created;
+    }),
   );
+
   await logAction(
     session.username,
     "CREATE_DONATION_MANUAL",
-    logLabelFor(donation, `${donorNameOnRecord(donation, viewer)} — ${money(amount)}`),
+    logLabelFor(gift, `${donorNameOnRecord(gift, viewer)} — ${money(amount)}`),
     {
       ...auditContext(session, req),
       targetType: "Donation",
-      targetId: donation.id,
-      after: logSnapshotFor(donation, {
-        anonymous: donation.anonymous,
-        donorName: donation.donorName,
-        donorPhone: donation.donorPhone,
-        amount: donation.amount,
-        paymentMethod: donation.paymentMethod,
-        accountId: donation.accountId,
-        bankReference: donation.bankReference,
-        status: donation.status,
-        source: donation.source,
-        userId: donation.userId,
+      targetId: gift.id,
+      after: logSnapshotFor(gift, {
+        anonymous: gift.anonymous,
+        donorName: gift.donorName,
+        donorPhone: gift.donorPhone,
+        amount: gift.amount,
+        paymentMethod: gift.paymentMethod,
+        accountId: gift.accountId,
+        bankReference: gift.bankReference,
+        status: gift.status,
+        source: gift.source,
+        userId: gift.userId,
       }),
     },
   );
 
-  return NextResponse.json(
-    { donation: { ...donationView(donation, viewer), paidOn: madeOn } },
-    { status: 201 },
-  );
+  return NextResponse.json({ donation: donationView(gift, viewer) }, { status: 201 });
 });
