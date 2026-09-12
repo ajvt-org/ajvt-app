@@ -3,6 +3,7 @@
 import FilterChipRow, { type FilterChip } from "@/components/admin/filters/FilterChipRow";
 import { filterSheet } from "@/lib/texts";
 import { ADMIN_ORIGIN, SELF_ORIGIN, NO_FILTERS, type MemberFilters } from "@/lib/memberFilters";
+import type { RecordingAdmin } from "./types";
 
 const PAID_LABEL: Record<string, string> = {
   full: filterSheet.paidFull,
@@ -21,7 +22,11 @@ export function standingLabel(standing: string, year: number): string | null {
   return null;
 }
 
-function chipsFor(filters: MemberFilters, year: number): FilterChip[] {
+function chipsFor(
+  filters: MemberFilters,
+  year: number,
+  recordingAdmins: RecordingAdmin[],
+): FilterChip[] {
   const chips: FilterChip[] = [];
   if (filters.age) chips.push({ key: "age", label: filters.age });
   if (filters.method) chips.push({ key: "method", label: filters.method });
@@ -35,6 +40,8 @@ function chipsFor(filters: MemberFilters, year: number): FilterChip[] {
   if (standing) chips.push({ key: "standing", label: standing });
   const origin = ORIGIN_LABEL[filters.origin];
   if (origin) chips.push({ key: "origin", label: origin });
+  const recorder = recordingAdmins.find((admin) => admin.id === filters.recorder);
+  if (recorder) chips.push({ key: "recorder", label: recorder.username });
   if (filters.nophone) chips.push({ key: "nophone", label: filterSheet.noPhone });
   if (filters.nocapture) chips.push({ key: "nocapture", label: filterSheet.noCapture });
   return chips;
@@ -43,22 +50,24 @@ function chipsFor(filters: MemberFilters, year: number): FilterChip[] {
 export default function FilterChips({
   filters,
   year,
+  recordingAdmins,
   resultCount,
   onChange,
 }: {
   filters: MemberFilters;
   year: number;
+  recordingAdmins: RecordingAdmin[];
   resultCount: number;
   onChange: (next: MemberFilters) => void;
 }) {
   return (
     <FilterChipRow
-      chips={chipsFor(filters, year)}
+      chips={chipsFor(filters, year, recordingAdmins)}
       resultCount={resultCount}
       onRemove={(key) =>
         onChange(
           key === "origin"
-            ? { ...filters, origin: "", nophone: "", nocapture: "" }
+            ? { ...filters, origin: "", recorder: "", nophone: "", nocapture: "" }
             : { ...filters, [key]: "" },
         )
       }

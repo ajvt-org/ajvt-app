@@ -62,6 +62,7 @@ describe("carrying the filters in the address", () => {
       from: "2026-03-01",
       to: "2026-03-31",
       origin: "admin",
+      recorder: "a1",
       nophone: "yes",
       nocapture: "yes",
     };
@@ -90,6 +91,7 @@ describe("carrying the filters in the address", () => {
       "from",
       "to",
       "origin",
+      "recorder",
       "nophone",
       "nocapture",
     ]);
@@ -377,5 +379,48 @@ describe("narrowing to the memberships an admin recorded", () => {
 
   it("ignores an origin it does not know", () => {
     expect(readFilters(new URLSearchParams("origin=whoever")).origin).toBe("");
+  });
+});
+
+describe("narrowing to the memberships one named admin recorded", () => {
+  const on = (over: Partial<MemberFilters> = {}) => ({ ...NO_FILTERS, ...over });
+  const byAdmin = (over: Partial<FilterableMember> = {}) =>
+    member({ recordedByAdmin: true, paymentProof: "slip.webp", ...over });
+
+  it("keeps only the memberships that admin recorded", () => {
+    const filters = on({ origin: ADMIN_ORIGIN, recorder: "a1" });
+
+    expect(matchesFilters(byAdmin({ recordedByAdminId: "a1" }), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(byAdmin({ recordedByAdminId: "a2" }), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("drops a membership no admin id was written onto", () => {
+    const filters = on({ origin: ADMIN_ORIGIN, recorder: "a1" });
+
+    expect(matchesFilters(byAdmin({ recordedByAdminId: null }), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("keeps every admin recorded membership when no admin was named", () => {
+    const filters = on({ origin: ADMIN_ORIGIN });
+
+    expect(matchesFilters(byAdmin({ recordedByAdminId: "a1" }), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(byAdmin({ recordedByAdminId: null }), filters, MEMBERSHIP)).toBe(true);
+  });
+
+  it("carries the named admin through the address", () => {
+    const params = writeFilters(on({ origin: ADMIN_ORIGIN, recorder: "a1" }));
+
+    expect(params.get("recorder")).toBe("a1");
+    expect(readFilters(params).recorder).toBe("a1");
+  });
+
+  it("drops the named admin from a link that did not ask for admin entered rows", () => {
+    expect(readFilters(new URLSearchParams("recorder=a1")).recorder).toBe("");
+    expect(readFilters(new URLSearchParams("origin=self&recorder=a1")).recorder).toBe("");
+  });
+
+  it("counts the named admin as a filter of its own", () => {
+    expect(activeFilterCount(on({ origin: ADMIN_ORIGIN }))).toBe(1);
+    expect(activeFilterCount(on({ origin: ADMIN_ORIGIN, recorder: "a1" }))).toBe(2);
   });
 });

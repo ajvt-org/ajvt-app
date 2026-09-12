@@ -11,3 +11,11 @@ export function recordedByAdmin(
   if (payment.recordedByAdminId !== null) return true;
   return payment.recordedBy !== null && adminNames.has(payment.recordedBy);
 }
+
+export function recordingAdminIds(rows: readonly { recordedByAdminId: string | null }[]): string[] {
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (row.recordedByAdminId) ids.add(row.recordedByAdminId);
+  }
+  return [...ids];
+}

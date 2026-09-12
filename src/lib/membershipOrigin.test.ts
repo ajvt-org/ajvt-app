@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { recordedByAdmin } from "./membershipOrigin";
+import { recordedByAdmin, recordingAdminIds } from "./membershipOrigin";
 
 const ADMINS = new Set(["boss", "amine"]);
 
@@ -39,5 +39,22 @@ describe("a membership recorded before the payment named an admin", () => {
 
   it("says no when no admin answers to that name", () => {
     expect(recordedByAdmin(payment({ recordedBy: "boss" }), new Set<string>())).toBe(false);
+  });
+});
+
+describe("which admins a list of memberships was recorded by", () => {
+  it("names each one once", () => {
+    const rows = [
+      { recordedByAdminId: "a1" },
+      { recordedByAdminId: "a2" },
+      { recordedByAdminId: "a1" },
+    ];
+    expect(recordingAdminIds(rows)).toEqual(["a1", "a2"]);
+  });
+
+  it("names nobody for memberships no admin id was written onto", () => {
+    expect(recordingAdminIds([{ recordedByAdminId: null }, { recordedByAdminId: null }])).toEqual(
+      [],
+    );
   });
 });

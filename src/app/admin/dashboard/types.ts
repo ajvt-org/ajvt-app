@@ -25,6 +25,7 @@ export interface Member {
   paidAmount: number | null;
   supportAmount: number;
   recordedByAdmin: boolean;
+  recordedByAdminId: string | null;
   status: Status;
   rejectionReason: string | null;
   endedAt: string | null;
@@ -42,6 +43,11 @@ export interface AgeGroup {
   count?: number;
   totalCount?: number;
   approved?: boolean;
+}
+
+export interface RecordingAdmin {
+  id: string;
+  username: string;
 }
 
 export interface Village {
