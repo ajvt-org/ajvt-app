@@ -10,7 +10,7 @@ import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { expenseCreateSchema } from "./schema";
 import { money } from "@/lib/money";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
-import { legacyDestination, resolveShares } from "@/lib/expenseSharesServer";
+import { resolveShares } from "@/lib/expenseSharesServer";
 import { cleanProofNames, leadProof } from "@/lib/expenseProofs";
 import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
@@ -50,7 +50,6 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
   const shares = allocations?.length
     ? await resolveShares(allocations, n)
     : [{ ...(await resolveMoneyDestination({ activityId, competitionId })), amount: n }];
-  const destination = legacyDestination(shares);
   const parsedDate = readMoneyDate(date) ?? new Date();
 
   const wrongAccount = await accountIdError(method, accountId, null);
@@ -63,7 +62,6 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       method: method?.trim() || null,
       accountId: accountId || null,
       note: note?.trim() || null,
-      proof: leadProof(files),
       proofs: files.length ? { create: files.map((filename) => ({ filename })) } : undefined,
       allocations: {
         create: shares.map((share) => ({
@@ -75,8 +73,6 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       date: parsedDate,
       createdBy: session.username,
       tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
-      activityId: destination.activityId,
-      competitionId: destination.competitionId,
     },
     include: {
       tags: { select: { id: true, name: true } },
@@ -98,7 +94,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
         method: expense.method,
         note: expense.note,
         date: expense.date,
-        proof: expense.proof,
+        proof: leadProof(files),
       },
     },
   );

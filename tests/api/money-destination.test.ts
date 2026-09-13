@@ -70,7 +70,7 @@ describe("a quiz as a place money goes", () => {
     );
 
     expect(res.status).toBe(201);
-    expect((await prisma.expense.findFirstOrThrow()).competitionId).toBe(quiz.id);
+    expect((await prisma.expenseAllocation.findFirstOrThrow()).competitionId).toBe(quiz.id);
   });
 
   it("takes a gift that was already recorded", async () => {
@@ -91,7 +91,8 @@ describe("a quiz as a place money goes", () => {
     expect((await updateExpense(expense.id, { competitionId: quiz.id })).status).toBe(200);
 
     expect(
-      (await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).competitionId,
+      (await prisma.expenseAllocation.findFirstOrThrow({ where: { expenseId: expense.id } }))
+        .competitionId,
     ).toBe(quiz.id);
   });
 

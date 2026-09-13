@@ -138,30 +138,6 @@ describe("recording one expense across several destinations", () => {
     expect(made.status).toBe(400);
   });
 
-  it("leaves the old columns empty when there is more than one destination", async () => {
-    const made = await record({
-      allocations: [
-        { activityId: "a1", amount: 1500 },
-        { activityId: "a2", amount: 1501 },
-      ],
-    });
-
-    const expense = await prisma.expense.findUniqueOrThrow({
-      where: { id: made.body.expense.id },
-    });
-    expect(expense.activityId).toBeNull();
-    expect(expense.competitionId).toBeNull();
-  });
-
-  it("still fills the old columns when there is only one", async () => {
-    const made = await record({ allocations: [{ activityId: "a1", amount: 3001 }] });
-
-    const expense = await prisma.expense.findUniqueOrThrow({
-      where: { id: made.body.expense.id },
-    });
-    expect(expense.activityId).toBe("a1");
-  });
-
   it("records a single destination expense the way it always did", async () => {
     const made = await record({ amount: 700, activityId: "a1" });
 
