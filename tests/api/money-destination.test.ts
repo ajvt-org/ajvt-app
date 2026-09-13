@@ -33,7 +33,14 @@ function gift(amount = 5000) {
 }
 
 function spending(label = "طباعة") {
-  return prisma.expense.create({ data: { label, amount: 1200, createdBy: "boss" } });
+  return prisma.expense.create({
+    data: {
+      label,
+      amount: 1200,
+      createdBy: "boss",
+      allocations: { create: [{ amount: 1200 }] },
+    },
+  });
 }
 
 const updateGift = (id: string, body: unknown) =>
@@ -189,7 +196,9 @@ describe("a payment or an expense aimed at two places at once", () => {
     });
 
     expect(res.status).toBe(400);
-    const after = await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } });
+    const after = await prisma.expenseAllocation.findFirstOrThrow({
+      where: { expenseId: expense.id },
+    });
     expect(after.activityId).toBeNull();
     expect(after.competitionId).toBeNull();
   });
