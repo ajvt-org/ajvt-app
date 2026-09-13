@@ -37,16 +37,6 @@ export async function resolveShares(
   return resolved;
 }
 
-export function legacyDestination(shares: DestinationShare[]): {
-  activityId: string | null;
-  competitionId: string | null;
-} {
-  if (shares.length === 1) {
-    return { activityId: shares[0].activityId, competitionId: shares[0].competitionId };
-  }
-  return { activityId: null, competitionId: null };
-}
-
 export async function sharesForUpdate(input: {
   id: string;
   total: number;

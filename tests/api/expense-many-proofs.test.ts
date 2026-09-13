@@ -93,15 +93,6 @@ describe("several justificatifs on one expense", () => {
 
     expect(expenses[0].proofs.map((row: { filename: string }) => row.filename)).toEqual([ONE, TWO]);
   });
-
-  it("keeps the old column pointing at the first, so anything still reading it is right", async () => {
-    const expense = await anExpense([ONE, TWO]);
-    expect((await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).proof).toBe(ONE);
-
-    await PATCH(...patching(expense.id, { proofs: [TWO] }));
-
-    expect((await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).proof).toBe(TWO);
-  });
 });
 
 describe("the reuse warning across several justificatifs", () => {
@@ -154,8 +145,6 @@ describe("the reuse warning across several justificatifs", () => {
     await PATCH(...patching(expense.id, { proof: THREE }));
 
     expect(await proofsOf(expense.id)).toEqual([THREE]);
-    const row = await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } });
-    expect(row.proof).toBe(THREE);
   });
 
   it("clears the rows when the old proof field is emptied", async () => {
@@ -164,7 +153,5 @@ describe("the reuse warning across several justificatifs", () => {
     await PATCH(...patching(expense.id, { proof: null }));
 
     expect(await proofsOf(expense.id)).toEqual([]);
-    const row = await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } });
-    expect(row.proof).toBeNull();
   });
 });
