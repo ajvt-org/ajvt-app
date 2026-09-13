@@ -9,17 +9,10 @@ export async function GET(
 ) {
   const { filename } = await params;
   return servePublicUpload(filename, async (donorPhoto) => {
-    const [donation, payment] = await Promise.all([
-      prisma.donation.findFirst({
-        where: { donorPhoto },
-        select: { userId: true, user: { select: CONFIDENTIAL_SELECT } },
-      }),
-      prisma.payment.findFirst({
-        where: { donorPhoto },
-        select: { userId: true, user: { select: CONFIDENTIAL_SELECT } },
-      }),
-    ]);
-    const row = donation ?? payment;
-    return row !== null && !nameIsConfidential(row);
+    const payment = await prisma.payment.findFirst({
+      where: { donorPhoto },
+      select: { userId: true, user: { select: CONFIDENTIAL_SELECT } },
+    });
+    return payment !== null && !nameIsConfidential(payment);
   });
 }
