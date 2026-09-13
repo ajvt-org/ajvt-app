@@ -17,13 +17,10 @@ function expense(over: Partial<Expense> = {}): Expense {
     accountId: null,
     account: null,
     note: null,
-    proof: null,
     proofs: [],
     date: "2026-09-01",
     createdBy: "المشرف",
     tags: [],
-    activity: null,
-    competition: null,
     allocations: [],
     ...over,
   };
