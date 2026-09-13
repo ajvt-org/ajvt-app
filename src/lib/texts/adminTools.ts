@@ -17,4 +17,6 @@ export const deletedRecords = {
 
 export const auditLogPage = {
   noMatch: "لا يوجد سجل مطابق",
+  kept: (window: string, loginWindow: string) =>
+    `يُحفظ السجل ${window} ثم يُمحى · وتسجيلات الدخول ${loginWindow}`,
 } as const;
