@@ -83,7 +83,12 @@ describe("letting go of an upload nothing names any more", () => {
   it("keeps everything while a single record still names the file", async () => {
     await stored("held.webp");
     await prisma.expense.create({
-      data: { label: "مصروف", amount: 10, proof: "held.webp", createdBy: "admin" },
+      data: {
+        label: "مصروف",
+        amount: 10,
+        createdBy: "admin",
+        proofs: { create: [{ filename: "held.webp" }] },
+      },
     });
 
     await releaseUploads("held.webp");
@@ -128,7 +133,12 @@ describe("letting go of an upload nothing names any more", () => {
     await stored("mine.webp");
     await stored("theirs.webp");
     await prisma.expense.create({
-      data: { label: "مصروف", amount: 10, proof: "theirs.webp", createdBy: "admin" },
+      data: {
+        label: "مصروف",
+        amount: 10,
+        createdBy: "admin",
+        proofs: { create: [{ filename: "theirs.webp" }] },
+      },
     });
 
     await releaseUploads("mine.webp");

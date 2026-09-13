@@ -11,12 +11,6 @@ export interface DestinationOption {
   kind: Exclude<DestinationKind, "general">;
 }
 
-export const EXPENSE_DESTINATION_SELECT = {
-  tags: { select: { id: true, name: true } },
-  activity: { select: { id: true, title: true } },
-  competition: { select: { id: true, name: true } },
-} as const;
-
 export function destinationKind(destination: MoneyDestination): DestinationKind {
   if (destination.activityId) return "activity";
   if (destination.competitionId) return "competition";

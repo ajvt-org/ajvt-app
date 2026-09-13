@@ -37,8 +37,6 @@ export async function activityFinanceReport(from: Date, to: Date): Promise<Activ
         id: true,
         amount: true,
         date: true,
-        activityId: true,
-        competitionId: true,
         tags: { select: { name: true } },
         allocations: {
           select: { id: true, amount: true, activityId: true, competitionId: true },

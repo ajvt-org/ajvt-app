@@ -77,15 +77,11 @@ export async function proofReuseOf(
   if (sameImage.length === 0) return [];
 
   const names = sameImage.map((row) => row.filename);
-  const [payments, expenseProofs, legacyExpenses] = await Promise.all([
+  const [payments, expenseProofs] = await Promise.all([
     prisma.payment.findMany({ where: { proof: { in: names } }, select: PAYMENT_SELECT }),
     prisma.expenseProof.findMany({
       where: { filename: { in: names } },
       select: { expense: { select: { id: true, label: true, date: true, amount: true } } },
-    }),
-    prisma.expense.findMany({
-      where: { proof: { in: names } },
-      select: { id: true, label: true, date: true, amount: true },
     }),
   ]);
 
@@ -115,7 +111,7 @@ export async function proofReuseOf(
       state: d.status,
       href: proofReuseHref("donation", d.id, ""),
     })),
-    ...uniqueExpenses([...expenseProofs.map((row) => row.expense), ...legacyExpenses]).map((e) => ({
+    ...uniqueExpenses(expenseProofs.map((row) => row.expense)).map((e) => ({
       kind: "expense" as const,
       id: e.id,
       label: e.label,

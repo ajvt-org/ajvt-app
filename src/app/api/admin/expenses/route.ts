@@ -11,7 +11,6 @@ import { expenseCreateSchema } from "./schema";
 import { money } from "@/lib/money";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { legacyDestination, resolveShares } from "@/lib/expenseSharesServer";
-import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 import { cleanProofNames, leadProof } from "@/lib/expenseProofs";
 import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
@@ -21,7 +20,7 @@ export const GET = withRoute("GET /api/admin/expenses", async () => {
   const expenses = await prisma.expense.findMany({
     orderBy: { date: "desc" },
     include: {
-      ...EXPENSE_DESTINATION_SELECT,
+      tags: { select: { id: true, name: true } },
       ...EXPENSE_PROOF_SELECT,
       ...EXPENSE_ALLOCATION_SELECT,
       account: { select: { id: true, code: true, label: true } },
@@ -80,7 +79,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       competitionId: destination.competitionId,
     },
     include: {
-      ...EXPENSE_DESTINATION_SELECT,
+      tags: { select: { id: true, name: true } },
       ...EXPENSE_PROOF_SELECT,
       ...EXPENSE_ALLOCATION_SELECT,
     },

@@ -96,7 +96,12 @@ async function seedEverything() {
     },
   });
   await prisma.expense.create({
-    data: { label: "مصروف", amount: 50, proof: "expense-proof.webp", createdBy: "admin" },
+    data: {
+      label: "مصروف",
+      amount: 50,
+      createdBy: "admin",
+      proofs: { create: [{ filename: "expense-proof.webp" }] },
+    },
   });
   return { owner, other };
 }

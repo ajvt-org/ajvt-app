@@ -111,12 +111,7 @@ function AdminExpensesPageInner() {
             destinationId: share.activity?.id || share.competition?.id || "",
             amount: expense.allocations.length > 1 ? String(share.amount) : "",
           }))
-        : [
-            {
-              destinationId: expense.activity?.id || expense.competition?.id || "",
-              amount: "",
-            },
-          ],
+        : [{ destinationId: "", amount: "" }],
     });
     setFormError("");
     setShowForm(true);
@@ -177,9 +172,7 @@ function AdminExpensesPageInner() {
         (share) =>
           share.activity?.id === filters.destinationId ||
           share.competition?.id === filters.destinationId,
-      ) &&
-      e.activity?.id !== filters.destinationId &&
-      e.competition?.id !== filters.destinationId
+      )
     )
       return false;
     const day = e.date.slice(0, 10);
