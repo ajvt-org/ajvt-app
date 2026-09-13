@@ -54,9 +54,8 @@ export async function sharesForUpdate(input: {
   destinationGiven: boolean;
   destination: { activityId?: string | null; competitionId?: string | null };
   amountGiven: boolean;
-  existing: { activityId: string | null; competitionId: string | null };
 }): Promise<DestinationShare[] | null> {
-  const { id, total, allocations, destinationGiven, destination, amountGiven, existing } = input;
+  const { id, total, allocations, destinationGiven, destination, amountGiven } = input;
 
   if (allocations !== undefined) return resolveShares(allocations, total);
 
@@ -73,6 +72,6 @@ export async function sharesForUpdate(input: {
   });
   if (held.length > 1) throw new ValidationError(messages.sharesDoNotMatch);
 
-  const only = held[0] ?? existing;
+  const only = held[0] ?? { activityId: null, competitionId: null };
   return [{ activityId: only.activityId, competitionId: only.competitionId, amount: total }];
 }
