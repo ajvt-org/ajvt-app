@@ -1,5 +1,8 @@
 import { memberStatusLabels } from "./messages";
-import { matchDateKey } from "./clubTime";
+import { formatDateTime, matchDateKey } from "./clubTime";
+import { auditDiff } from "./auditDiff";
+import { auditFieldLabel, auditTargetLabel, auditValueLabel } from "./auditFields";
+import { auditActionLabel } from "./auditLabels";
 import { donorNameOnRecord, type DonorAccount } from "./donorName";
 import { seesSupporterName, type SupportViewer } from "./supportPrivacy";
 import { nameOf } from "./person";
@@ -8,7 +11,7 @@ import type { ActivityReportRow } from "./activityReport";
 import { activityReport } from "./texts/activityReport";
 import { giftSourceLabels } from "./texts/giftSource";
 
-export const DATASETS = ["members", "donations", "ages", "activities"] as const;
+export const DATASETS = ["members", "donations", "ages", "activities", "audit"] as const;
 export type Dataset = (typeof DATASETS)[number];
 
 export const PLAIN_DATASETS = ["members", "donations", "ages"] as const;
@@ -145,9 +148,55 @@ export function activityRows(rows: ActivityReportRow[]): (string | number)[][] {
   ]);
 }
 
+export interface ExportableAuditEntry {
+  createdAt: Date;
+  adminUsername: string;
+  adminRole: string | null;
+  action: string;
+  targetType: string | null;
+  targetLabel: string | null;
+  before: unknown;
+  after: unknown;
+  ip: string | null;
+}
+
+export const AUDIT_HEADERS = [
+  "التاريخ",
+  "المشرف",
+  "الصلاحية",
+  "الإجراء",
+  "النوع",
+  "السجل",
+  "ما تغيّر",
+  "عنوان الشبكة",
+];
+
+function changedText(before: unknown, after: unknown): string {
+  return auditDiff(before, after)
+    .map(
+      (change) =>
+        `${auditFieldLabel(change.key)} ${auditValueLabel(change.from)} ← ${auditValueLabel(change.to)}`,
+    )
+    .join(" / ");
+}
+
+export function auditRows(entries: ExportableAuditEntry[]): (string | number)[][] {
+  return entries.map((entry) => [
+    formatDateTime(entry.createdAt),
+    entry.adminUsername,
+    entry.adminRole ? auditValueLabel(entry.adminRole) : "",
+    auditActionLabel(entry.action),
+    entry.targetType ? auditTargetLabel(entry.targetType) : "",
+    entry.targetLabel ?? "",
+    changedText(entry.before, entry.after),
+    entry.ip ?? "",
+  ]);
+}
+
 export const FILENAMES: Record<Dataset, string> = {
   members: "members",
   donations: "donations",
   ages: "age-groups",
   activities: "activities",
+  audit: "audit-log",
 };
