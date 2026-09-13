@@ -9,7 +9,6 @@ const LINKED = [
   "matchBooking",
   "matchGoal",
   "matchPenaltyKick",
-  "donation",
   "membership",
   "payment",
   "receipt",

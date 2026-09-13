@@ -81,12 +81,8 @@ describe("a member who paid above the fee", () => {
 
   it("says both when the same person also gave support", async () => {
     const m = await memberPayingAbove(MEMBERSHIP_FEE + 1000);
-    const donation = await prisma.donation.create({
-      data: { amount: 500, status: "ACTIVE", source: "SELF", userId: m.userId },
-    });
     await prisma.payment.create({
       data: {
-        id: donation.id,
         purpose: "DONATION",
         amount: 500,
         status: "ACTIVE",

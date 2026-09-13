@@ -26,17 +26,7 @@ async function supportOf(userId: string) {
       status: "ACTIVE",
       userId,
       donorName: GIVER,
-    },
-  });
-  await prisma.donation.create({
-    data: {
-      id: payment.id,
-      donorName: GIVER,
-      amount: 5000,
-      status: "ACTIVE",
       source: "SELF",
-      paymentMethod: "بنكيلي",
-      userId,
     },
   });
   await ensureReceiptsFor(prisma, { id: payment.id });
