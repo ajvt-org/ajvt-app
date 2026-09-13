@@ -5,17 +5,13 @@ import { sharesTotal } from "./expenseSplit";
 export const ALLOCATED_EXPENSE_SELECT = {
   id: true,
   amount: true,
-  activityId: true,
-  competitionId: true,
   allocations: {
     select: { id: true, amount: true, activityId: true, competitionId: true },
   },
 } as const;
 
 export function spentOnActivity(activityId: string) {
-  return {
-    OR: [{ allocations: { some: { activityId } } }, { allocations: { none: {} }, activityId }],
-  };
+  return { allocations: { some: { activityId } } };
 }
 
 export async function activitySpending(activityId: string): Promise<number> {

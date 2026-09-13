@@ -42,8 +42,6 @@ export const GET = withRoute(
           label: true,
           amount: true,
           date: true,
-          activityId: true,
-          competitionId: true,
           allocations: {
             select: { id: true, amount: true, activityId: true, competitionId: true },
           },
