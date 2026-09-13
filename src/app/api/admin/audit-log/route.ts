@@ -7,6 +7,7 @@ import { seesEverySupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
 import { confidentialNames } from "@/lib/supportPrivacyServer";
 import { scrubNames } from "@/lib/auditLogRedaction";
+import { purgeExpiredAuditLog } from "@/lib/auditRetentionServer";
 import type { Prisma } from "@prisma/client";
 
 function dayRange(from: string, to: string) {
@@ -45,6 +46,7 @@ async function choices() {
 
 export const GET = withRoute("GET /api/admin/audit-log", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
+  await purgeExpiredAuditLog();
   const params = req.nextUrl.searchParams;
   const where = buildWhere(params);
   const page = readPage(params);

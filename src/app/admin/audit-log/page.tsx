@@ -7,6 +7,8 @@ import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import Pagination from "@/components/admin/Pagination";
 import AuditLogEntryCard from "@/components/admin/AuditLogEntryCard";
 import { counted } from "@/lib/arabicCount";
+import { countedNoun, DAYS } from "@/lib/arabicPlural";
+import { AUDIT_LOGIN_DAYS, AUDIT_LOG_DAYS } from "@/lib/auditRetention";
 import { auditLogPage } from "@/lib/texts";
 import { RESULT } from "@/lib/messages";
 import {
@@ -38,6 +40,10 @@ function AuditLogInner() {
       <div className="mb-3">
         <AdminToolHeader href="/admin/audit-log" note={counted(total, RESULT)} />
       </div>
+
+      <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+        {auditLogPage.kept(countedNoun(AUDIT_LOG_DAYS, DAYS), countedNoun(AUDIT_LOGIN_DAYS, DAYS))}
+      </p>
 
       <AuditFilterRow
         filters={filters}
