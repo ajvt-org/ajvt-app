@@ -48,7 +48,7 @@ describe("attaching finance to an activity", () => {
     const res = await addExpense({});
 
     expect(res.status).toBe(201);
-    expect((await res.json()).expense.activity).toBeNull();
+    expect((await res.json()).expense.allocations[0].activity).toBeNull();
   });
 
   it("attaches an activity on create", async () => {
@@ -56,7 +56,10 @@ describe("attaching finance to an activity", () => {
 
     const body = await (await addExpense({ activityId: a.id })).json();
 
-    expect(body.expense.activity).toMatchObject({ id: a.id, title: "القافلة الصحية" });
+    expect(body.expense.allocations[0].activity).toMatchObject({
+      id: a.id,
+      title: "القافلة الصحية",
+    });
   });
 
   it("attaches and detaches on update", async () => {
@@ -67,13 +70,13 @@ describe("attaching finance to an activity", () => {
       patch(`/api/admin/expenses/${created.id}`, { activityId: a.id }),
       withId(created.id),
     );
-    expect((await attached.json()).expense.activity.id).toBe(a.id);
+    expect((await attached.json()).expense.allocations[0].activity.id).toBe(a.id);
 
     const detached = await UPDATE_EXPENSE(
       patch(`/api/admin/expenses/${created.id}`, { activityId: null }),
       withId(created.id),
     );
-    expect((await detached.json()).expense.activity).toBeNull();
+    expect((await detached.json()).expense.allocations[0].activity).toBeNull();
   });
 
   it("carries the activity through the list", async () => {
@@ -82,7 +85,7 @@ describe("attaching finance to an activity", () => {
 
     const { expenses } = await (await LIST_EXPENSES()).json();
 
-    expect(expenses[0].activity.title).toBe("حملة النظافة");
+    expect(expenses[0].allocations[0].activity.title).toBe("حملة النظافة");
   });
 
   it("attaches a donation to an activity", async () => {

@@ -12,7 +12,6 @@ import { expenseUpdateSchema } from "../schema";
 import { money } from "@/lib/money";
 import { expenses as expenseMessages } from "@/lib/messages";
 import { legacyDestination, sharesForUpdate } from "@/lib/expenseSharesServer";
-import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 import { cleanProofNames, leadProof, proofsToAdd, proofsToRemove } from "@/lib/expenseProofs";
 import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
@@ -94,7 +93,6 @@ export const PATCH = withRoute(
       destinationGiven: activityId !== undefined || competitionId !== undefined,
       destination: { activityId, competitionId },
       amountGiven: amount !== undefined,
-      existing,
     });
     if (shares) {
       const destination = legacyDestination(shares);
@@ -113,16 +111,6 @@ export const PATCH = withRoute(
           data: added.map((filename) => ({ expenseId: id, filename })),
         });
       }
-      const saved = await tx.expense.update({
-        where: { id },
-        data,
-        include: {
-          ...EXPENSE_DESTINATION_SELECT,
-          ...EXPENSE_PROOF_SELECT,
-          ...EXPENSE_ALLOCATION_SELECT,
-        },
-      });
-
       if (shares) {
         await tx.expenseAllocation.deleteMany({ where: { expenseId: id } });
         await tx.expenseAllocation.createMany({
@@ -135,7 +123,15 @@ export const PATCH = withRoute(
         });
       }
 
-      return saved;
+      return tx.expense.update({
+        where: { id },
+        data,
+        include: {
+          tags: { select: { id: true, name: true } },
+          ...EXPENSE_PROOF_SELECT,
+          ...EXPENSE_ALLOCATION_SELECT,
+        },
+      });
     });
     await releaseUploads(...proofsToRemove(held, wanted));
     await logAction(
@@ -178,7 +174,7 @@ export const DELETE = withRoute(
     ).map((row) => row.filename);
 
     await prisma.expense.delete({ where: { id } });
-    await releaseUploads(existing.proof, ...held);
+    await releaseUploads(...held);
     await logAction(
       session.username,
       "DELETE_EXPENSE",
