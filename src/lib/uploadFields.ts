@@ -1,12 +1,7 @@
 import type { PrismaPromise } from "@prisma/client";
 import { prisma } from "./prisma";
 import { mostRestrictive, type OwnedMatch, type ProofKind } from "./uploadMatch";
-import {
-  CONFIDENTIAL_SELECT,
-  PUBLIC_VIEWER,
-  nameIsConfidential,
-  seesPaymentIdentity,
-} from "./supportPrivacy";
+import { CONFIDENTIAL_SELECT, PUBLIC_VIEWER, seesPaymentIdentity } from "./supportPrivacy";
 
 export type { OwnedMatch, ProofKind };
 
@@ -75,26 +70,6 @@ export const UPLOAD_FIELDS: UploadField[] = [
           select: { userId: true },
         });
         return row ? { kind: "activity", ownerId: row.userId, confidential: false } : null;
-      },
-    },
-  },
-  {
-    id: "donation.proof",
-    names: async () =>
-      (await prisma.donation.findMany({ select: { proof: true } })).map((r) => r.proof),
-    holds: (filename) => prisma.donation.count({ where: { proof: filename } }),
-    rename: (from, to) =>
-      prisma.donation.updateMany({ where: { proof: from }, data: { proof: to } }),
-    serve: {
-      via: "authenticated",
-      locate: async (base) => {
-        const row = await prisma.donation.findFirst({
-          where: { proof: base },
-          select: { userId: true, user: { select: CONFIDENTIAL_SELECT } },
-        });
-        return row
-          ? { kind: "donations", ownerId: row.userId, confidential: nameIsConfidential(row) }
-          : null;
       },
     },
   },
@@ -178,15 +153,6 @@ export const UPLOAD_FIELDS: UploadField[] = [
     holds: (filename) => prisma.team.count({ where: { logo: filename } }),
     rename: (from, to) => prisma.team.updateMany({ where: { logo: from }, data: { logo: to } }),
     serve: { via: "public-route", route: "/api/files/team" },
-  },
-  {
-    id: "donation.donorPhoto",
-    names: async () =>
-      (await prisma.donation.findMany({ select: { donorPhoto: true } })).map((r) => r.donorPhoto),
-    holds: (filename) => prisma.donation.count({ where: { donorPhoto: filename } }),
-    rename: (from, to) =>
-      prisma.donation.updateMany({ where: { donorPhoto: from }, data: { donorPhoto: to } }),
-    serve: { via: "public-route", route: "/api/files/donation" },
   },
   {
     id: "payment.donorPhoto",
