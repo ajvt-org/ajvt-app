@@ -19,4 +19,5 @@ export const auditLogPage = {
   noMatch: "لا يوجد سجل مطابق",
   kept: (window: string, loginWindow: string) =>
     `يُحفظ السجل ${window} ثم يُمحى · وتسجيلات الدخول ${loginWindow}`,
+  exportCsv: "تصدير المعروض",
 } as const;

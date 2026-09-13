@@ -18,10 +18,12 @@ import {
   donationRows,
   ageRows,
   activityRows,
+  auditRows,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   AGE_HEADERS,
   ACTIVITY_HEADERS,
+  AUDIT_HEADERS,
   FILENAMES,
   type Dataset,
 } from "@/lib/exportRows";
@@ -32,7 +34,14 @@ import {
   paymentOfYear,
 } from "@/lib/membershipPaymentFields";
 import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
-import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
+import {
+  CONFIDENTIAL_SELECT,
+  seesEverySupporterName,
+  seesSupporterName,
+} from "@/lib/supportPrivacy";
+import { confidentialNames } from "@/lib/supportPrivacyServer";
+import { scrubNames } from "@/lib/auditLogRedaction";
+import { buildWhere } from "@/lib/auditFilters";
 import { viewerOf } from "@/lib/supportViewer";
 import type { SupportViewer } from "@/lib/supportPrivacy";
 
@@ -119,6 +128,15 @@ async function buildCsv(
     const span = spanBounds(from, to);
     const report = await activityFinanceReport(span.from, span.to);
     return toCsv(ACTIVITY_HEADERS, activityRows(report.rows));
+  }
+
+  if (dataset === "audit") {
+    const withheld = seesEverySupporterName(viewer) ? [] : await confidentialNames();
+    const logs = await prisma.auditLog.findMany({
+      where: buildWhere(req.nextUrl.searchParams),
+      orderBy: { createdAt: "desc" },
+    });
+    return toCsv(AUDIT_HEADERS, auditRows(logs.map((log) => scrubNames(log, withheld))));
   }
 
   return toCsv(AGE_HEADERS, ageRows(await getAgeStandings({ everyGroup: true })));
