@@ -25,7 +25,6 @@ export async function wipe() {
   await prisma.quizSettings.deleteMany();
   await prisma.deletedRecord.deleteMany();
   await prisma.receipt.deleteMany();
-  await prisma.donation.deleteMany();
   await prisma.expense.deleteMany();
   await prisma.financeTag.deleteMany();
   await prisma.siteVisit.deleteMany();

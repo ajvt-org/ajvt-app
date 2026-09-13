@@ -39,13 +39,11 @@ describe("the upload field registry", () => {
     expect(UPLOAD_FIELDS.map((f) => f.id)).toEqual([
       "user.photo",
       "activityRegistration.paymentProof",
-      "donation.proof",
       "payment.proof",
       "expense.proof",
       "expenseProof.filename",
       "activity.photo",
       "team.logo",
-      "donation.donorPhoto",
       "payment.donorPhoto",
     ]);
   });
@@ -55,7 +53,6 @@ describe("the upload field registry", () => {
     expect(served).toEqual([
       "user.photo",
       "activityRegistration.paymentProof",
-      "donation.proof",
       "payment.proof",
       "expense.proof",
       "expenseProof.filename",
@@ -134,8 +131,6 @@ const ROWS: Record<string, (filename: string) => Promise<unknown>> = {
     const activity = await prisma.activity.create({ data: { title: "بطولة", description: "وصف" } });
     return prisma.team.create({ data: { activityId: activity.id, name: "فريق", logo } });
   },
-  "donation.donorPhoto": (donorPhoto) =>
-    prisma.donation.create({ data: { amount: 100, donorName: "زائر", donorPhoto } }),
   "payment.donorPhoto": (donorPhoto) =>
     prisma.payment.create({
       data: { purpose: "DONATION", amount: 100, donorName: "زائر", donorPhoto, status: "ACTIVE" },

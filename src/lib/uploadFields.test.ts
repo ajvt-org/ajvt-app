@@ -152,14 +152,7 @@ describe("locateUpload", () => {
     await locateUpload("shared.webp");
 
     const asked = state.calls.filter((c) => c.op === "findFirst").map((c) => c.model);
-    expect(asked).toEqual([
-      "user",
-      "activityRegistration",
-      "donation",
-      "payment",
-      "expense",
-      "expenseProof",
-    ]);
+    expect(asked).toEqual(["user", "activityRegistration", "payment", "expense", "expenseProof"]);
   });
 });
 

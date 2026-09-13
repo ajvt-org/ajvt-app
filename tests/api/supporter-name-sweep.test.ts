@@ -52,21 +52,9 @@ async function seed(): Promise<Fixture> {
         status: "ACTIVE",
         userId: giver.id,
         donorName: GIVER,
-        proof: `slip-${activityId ?? "plain"}.webp`,
-        activityId,
-      },
-    });
-    await prisma.donation.create({
-      data: {
-        id: payment.id,
-        donorName: GIVER,
         donorPhone: "44001122",
-        amount: 5000,
-        status: "ACTIVE",
         source: "SELF",
-        paymentMethod: "بنكيلي",
-        userId: giver.id,
-        proof: payment.proof,
+        proof: `slip-${activityId ?? "plain"}.webp`,
         activityId,
       },
     });

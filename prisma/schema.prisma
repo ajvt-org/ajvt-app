@@ -55,7 +55,6 @@ model User {
   matchBookings           MatchBooking[]
   motmMatches             Match[]                  @relation("ManOfTheMatchUser")
   mvpCandidacies          MvpCandidate[]
-  donations               Donation[]
   memberships             Membership[]
   payments                Payment[]
   suspensions             Suspension[]
@@ -133,7 +132,6 @@ model Activity {
   groups                 Group[]
   expenses               Expense[]
   expenseAllocations     ExpenseAllocation[]
-  donations              Donation[]
   admins                 AdminActivity[]
   payments               Payment[]
   days                   TournamentDay[]
@@ -555,41 +553,6 @@ model Village {
   createdAt DateTime @default(now())
 }
 
-model Donation {
-  id             String          @id @default(cuid())
-  // Whether the giver asked to stay unnamed. Read on its own: donorName is
-  // kept so an admin can still see who gave.
-  anonymous      Boolean         @default(false)
-  donorName      String? // the name on the gift — typed by hand, or taken from the account the moment one is linked
-  donorPhone     String? // recorded for manually-entered donors with no app account, or as a general contact note
-  donorPhoto     String? // photo for a donor with no linked Member (manually-entered) — shown on the public leaderboard
-  amount         Int?
-  proof          String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
-  status         ReviewStatus    @default(PENDING) // MEMBERSHIP-source rows are always created ACTIVE
-  source         String          @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
-  paymentMethod  String?
-  accountId      String?
-  bankReference  String?
-  account        PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  userId         String?
-  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  membershipYear Int?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  tags           FinanceTag[]
-  activityId     String?
-  activity       Activity?       @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  competitionId  String?
-  competition    Competition?    @relation(fields: [competitionId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([status])
-  @@index([activityId])
-  @@index([competitionId])
-  @@index([accountId])
-  @@index([bankReference])
-}
-
 model Expense {
   id            String              @id @default(cuid())
   label         String
@@ -649,11 +612,10 @@ model ExpenseProof {
 // spending can be totalled by tag. Many per expense: one payment can be both
 // transport and a tournament.
 model FinanceTag {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  createdAt DateTime   @default(now())
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
   expenses  Expense[]
-  donations Donation[]
   payments  Payment[]
 }
 
@@ -684,22 +646,13 @@ model PaymentAccount {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  payments  Payment[]
-  donations Donation[]
-  expenses  Expense[]
+  payments Payment[]
+  expenses Expense[]
 
   @@unique([methodId, code])
   @@index([methodId, active])
 }
 
-// One row per (day, anonymous visitor) — the visitor cookie is set by
-// /api/track-visit and never tied to a User/Member/Admin. pageViews counts
-// repeat navigations within the same day for that visitor; the row count
-// per day is the daily unique-visitor count.
-// The fingerprint of a stored proof image, keyed by the filename the records
-// point at. One table rather than a column per model: Member.paymentProof,
-// Donation.proof and Expense.proof all hold a filename, so "who else sent
-// this exact image" is one query instead of three.
 model ProofImage {
   filename          String   @id
   sha256            String
@@ -885,7 +838,6 @@ model Competition {
   payments           Payment[]
   expenses           Expense[]
   expenseAllocations ExpenseAllocation[]
-  donations          Donation[]
   startedAt          DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt

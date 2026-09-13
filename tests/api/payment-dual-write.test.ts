@@ -51,10 +51,6 @@ function donateForm(fields: Record<string, string>) {
   return postForm("/api/donations", fd, { "x-forwarded-for": `10.1.0.${++ip}` });
 }
 
-async function moneyKeptAnywhereElse() {
-  return prisma.donation.count({ where: { source: "MEMBERSHIP" } });
-}
-
 const CARRIED = [
   "method",
   "accountId",
@@ -81,7 +77,7 @@ async function columnsMissingFromThePayment() {
   return missing;
 }
 
-describe("every path that touches money writes only the payment", () => {
+describe("every path that touches money writes the payment", () => {
   beforeEach(async () => {
     await resetDb();
     await saveAppSettings({ membershipYear: YEAR, membershipFee: 100 });
@@ -91,7 +87,8 @@ describe("every path that touches money writes only the payment", () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
+    const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
+    expect(payment.amount).toBe(2100);
   });
 
   it("agrees after an admin approves that member", async () => {
@@ -102,7 +99,6 @@ describe("every path that touches money writes only the payment", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
     const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
     expect(payment.amount).toBe(2100);
     expect(payment.status).toBe("ACTIVE");
@@ -199,7 +195,6 @@ describe("every path that touches money writes only the payment", () => {
       }),
     );
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow()).status).toBe("REJECTED");
   });
 
@@ -214,7 +209,6 @@ describe("every path that touches money writes only the payment", () => {
       withId(m.userId),
     );
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow()).amount).toBe(600);
   });
 
@@ -230,7 +224,6 @@ describe("every path that touches money writes only the payment", () => {
     );
 
     expect(res.status).toBe(400);
-    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect(await prisma.payment.count()).toBe(1);
   });
 
@@ -246,7 +239,8 @@ describe("every path that touches money writes only the payment", () => {
       paidAmount: 900,
     });
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
+    const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
+    expect(payment.amount).toBe(900);
   });
 
   it("agrees after a renewal, keeping each year its own payment", async () => {
@@ -266,14 +260,12 @@ describe("every path that touches money writes only the payment", () => {
       withId(m.userId),
     );
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect(await prisma.payment.count({ where: { purpose: "MEMBERSHIP" } })).toBe(2);
   });
 
   it("agrees after a donation from someone with no account", async () => {
     await DONATE(donateForm({ amount: "5000", paymentMethod: "بنكيلي", anonymous: "true" }));
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
     const p = await prisma.payment.findFirstOrThrow({ where: { purpose: "DONATION" } });
     expect(p.amount).toBe(5000);
     expect(p.anonymous).toBe(true);
@@ -285,7 +277,8 @@ describe("every path that touches money writes only the payment", () => {
 
     await ADMIN_DONATION(post("/api/admin/donations", { donorName: "أحمد", amount: 3000 }));
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
+    const gift = await prisma.payment.findFirstOrThrow({ where: { purpose: "DONATION" } });
+    expect(gift.amount).toBe(3000);
   });
 
   it("agrees after an admin edits a donation", async () => {
@@ -298,7 +291,6 @@ describe("every path that touches money writes only the payment", () => {
       withId(gift.id),
     );
 
-    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow({ where: { id: gift.id } })).amount).toBe(4000);
   });
 });

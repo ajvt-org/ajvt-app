@@ -10,8 +10,6 @@ const SUBTABS = 1;
 
 const OVERFLOWS_A_PAGE = 25;
 
-// The board these tests fill is the one every other spec reads, so the giving
-// carries a marker and is taken back off the board when the file is done.
 const MARKER = `داعم اختبار ${randomInt(100_000)}`;
 
 function donor(label: string): string {
@@ -23,9 +21,7 @@ test.afterAll(async () => {
     connectionString: process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e"),
   });
   await client.connect();
-  for (const table of ["Payment", "Donation"]) {
-    await client.query(`DELETE FROM "${table}" WHERE "donorName" LIKE $1`, [`${MARKER}%`]);
-  }
+  await client.query(`DELETE FROM "Payment" WHERE "donorName" LIKE $1`, [`${MARKER}%`]);
   await client.end();
 });
 

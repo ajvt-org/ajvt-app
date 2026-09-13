@@ -84,7 +84,9 @@ async function seedEverything() {
       paymentProof: "registration-proof.webp",
     },
   });
-  await prisma.donation.create({ data: { proof: "donation-proof.webp", amount: 100 } });
+  await prisma.payment.create({
+    data: { purpose: "DONATION", amount: 100, proof: "donation-proof.webp", status: "ACTIVE" },
+  });
   await prisma.payment.create({
     data: {
       purpose: "MEMBERSHIP",

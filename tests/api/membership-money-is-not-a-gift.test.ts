@@ -106,13 +106,4 @@ describe("an id the payments table does not hold", () => {
     expect(res.status).toBe(404);
     expect((await res.json()).error).toBe(money.donationNotFound);
   });
-
-  it("is not found when the id belongs to a row only the old table holds", async () => {
-    const leftover = await prisma.donation.create({
-      data: { amount: 1900, source: "MEMBERSHIP", status: "ACTIVE" },
-    });
-
-    expect((await editing(leftover.id, { amount: 7000 })).status).toBe(404);
-    expect((await removing(leftover.id)).status).toBe(404);
-  });
 });
