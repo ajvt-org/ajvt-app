@@ -8,6 +8,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/ageStandingsServer.ts",
   "src/lib/attachAccount.ts",
   "src/lib/audit.ts",
+  "src/lib/auditRetentionServer.ts",
   "src/lib/auth.ts",
   "src/lib/bareAccountsServer.ts",
   "src/lib/bracketServer.ts",
