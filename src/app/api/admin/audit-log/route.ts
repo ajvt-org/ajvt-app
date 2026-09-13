@@ -2,30 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
-import { AUDIT_PAGE_SIZE, readAuditFilters, readPage } from "@/lib/auditFilters";
+import { AUDIT_PAGE_SIZE, buildWhere, readPage } from "@/lib/auditFilters";
 import { seesEverySupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
 import { confidentialNames } from "@/lib/supportPrivacyServer";
 import { scrubNames } from "@/lib/auditLogRedaction";
 import { purgeExpiredAuditLog } from "@/lib/auditRetentionServer";
-import type { Prisma } from "@prisma/client";
-
-function dayRange(from: string, to: string) {
-  const range: Prisma.DateTimeFilter = {};
-  if (from) range.gte = new Date(`${from}T00:00:00.000Z`);
-  if (to) range.lte = new Date(`${to}T23:59:59.999Z`);
-  return range;
-}
-
-function buildWhere(params: URLSearchParams): Prisma.AuditLogWhereInput {
-  const { admin, action, target, from, to } = readAuditFilters(params);
-  const where: Prisma.AuditLogWhereInput = {};
-  if (admin) where.adminUsername = admin;
-  if (action) where.action = action;
-  if (target) where.targetType = target;
-  if (from || to) where.createdAt = dayRange(from, to);
-  return where;
-}
 
 async function choices() {
   const [admins, actions, targets] = await Promise.all([
