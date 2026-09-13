@@ -266,20 +266,6 @@ describe("changing a number an admin already added", () => {
     expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
   });
 
-  it("counts a donation once, not once more for its mirror", async () => {
-    const { method, account } = await anAccount();
-    const donation = await prisma.donation.create({
-      data: { amount: 100, status: "ACTIVE", source: "PUBLIC", accountId: account.id },
-    });
-    await prisma.payment.create({
-      data: { id: donation.id, purpose: "DONATION", amount: 100, accountId: account.id },
-    });
-
-    const rows = await listed(method.id);
-
-    expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
-  });
-
   it("counts the payment a membership fee went into", async () => {
     const { method, account } = await anAccount();
     const user = await prisma.user.create({ data: { fullName: "عضو" } });

@@ -181,8 +181,14 @@ describe("a confidential supporter on the admin lists", () => {
         { filename: OTHER_PROOF, sha256: "same" },
       ],
     });
-    await prisma.donation.create({
-      data: { donorName: "زائر", amount: 100, proof: OTHER_PROOF, status: "ACTIVE" },
+    await prisma.payment.create({
+      data: {
+        purpose: "DONATION",
+        donorName: "زائر",
+        amount: 100,
+        proof: OTHER_PROOF,
+        status: "ACTIVE",
+      },
     });
 
     const body = await bodyOf(

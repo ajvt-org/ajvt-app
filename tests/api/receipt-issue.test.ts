@@ -332,14 +332,6 @@ describe("the payment under a hand written receipt", () => {
     expect(row.issuedOn.toISOString()).toBe("2026-07-14T12:00:00.000Z");
   });
 
-  it("writes no second row beside it", async () => {
-    await asBoss();
-
-    await issue();
-
-    expect(await prisma.donation.count()).toBe(0);
-  });
-
   it("keeps the payer and the reason the admin wrote", async () => {
     await asBoss();
 

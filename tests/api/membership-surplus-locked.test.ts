@@ -38,14 +38,6 @@ describe("the surplus of a membership payment", () => {
     expect(row?.total).toBe(1900);
   });
 
-  it("is not a donation anyone can file, because no such row exists", async () => {
-    const { member } = await aMemberWhoGaveMore();
-
-    const donations = await prisma.donation.findMany({ where: { userId: member.userId } });
-
-    expect(donations).toEqual([]);
-  });
-
   it("leaves one payment carrying the whole transfer", async () => {
     const { member } = await aMemberWhoGaveMore();
 
