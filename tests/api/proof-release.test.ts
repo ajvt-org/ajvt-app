@@ -83,7 +83,12 @@ describe("letting go of an upload nothing names any more", () => {
   it("keeps everything while a single record still names the file", async () => {
     await stored("held.webp");
     await prisma.expense.create({
-      data: { label: "مصروف", amount: 10, proof: "held.webp", createdBy: "admin" },
+      data: {
+        label: "مصروف",
+        amount: 10,
+        createdBy: "admin",
+        proofs: { create: [{ filename: "held.webp" }] },
+      },
     });
 
     await releaseUploads("held.webp");
@@ -128,7 +133,12 @@ describe("letting go of an upload nothing names any more", () => {
     await stored("mine.webp");
     await stored("theirs.webp");
     await prisma.expense.create({
-      data: { label: "مصروف", amount: 10, proof: "theirs.webp", createdBy: "admin" },
+      data: {
+        label: "مصروف",
+        amount: 10,
+        createdBy: "admin",
+        proofs: { create: [{ filename: "theirs.webp" }] },
+      },
     });
 
     await releaseUploads("mine.webp");
@@ -228,7 +238,7 @@ describe("the proofs on an expense", () => {
     await stored("kept.webp");
     await stored("dropped.webp");
     const expense = await prisma.expense.create({
-      data: { label: "مصروف", amount: 100, proof: "kept.webp", createdBy: "super" },
+      data: { label: "مصروف", amount: 100, createdBy: "super" },
     });
     await prisma.expenseProof.createMany({
       data: [
@@ -254,7 +264,7 @@ describe("the proofs on an expense", () => {
     await stored("one.webp");
     await stored("two.webp");
     const expense = await prisma.expense.create({
-      data: { label: "مصروف", amount: 100, proof: "one.webp", createdBy: "super" },
+      data: { label: "مصروف", amount: 100, createdBy: "super" },
     });
     await prisma.expenseProof.createMany({
       data: [

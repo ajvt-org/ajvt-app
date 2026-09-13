@@ -11,8 +11,8 @@ import {
   giveGift,
 } from "./helpers";
 
-function download(dataset: string) {
-  return GET(get(`/api/admin/export/${dataset}`), withParams({ dataset }));
+function download(dataset: string, query = "") {
+  return GET(get(`/api/admin/export/${dataset}${query}`), withParams({ dataset }));
 }
 
 describe("GET /api/admin/export/[dataset]", () => {
@@ -144,5 +144,102 @@ describe("GET /api/admin/export/[dataset]", () => {
 
     expect(body).toContain("البدريين");
     expect(body).toContain("10%");
+  });
+});
+
+describe("exporting the action log", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  async function entry(over: Record<string, unknown> = {}) {
+    return prisma.auditLog.create({
+      data: {
+        adminUsername: "boss",
+        action: "UPDATE_EXPENSE",
+        targetType: "Expense",
+        targetLabel: "طباعة",
+        ...over,
+      },
+    });
+  }
+
+  it("refuses an admin who is not SUPER", async () => {
+    await signInAsAdmin(await createAdmin("members-only", "MEMBERS"));
+
+    expect((await download("audit")).status).toBe(403);
+  });
+
+  it("sends the log as a downloadable csv", async () => {
+    await signInAsAdmin(await createAdmin());
+    await entry();
+
+    const res = await download("audit");
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/csv");
+    expect(res.headers.get("content-disposition")).toContain("audit-log-");
+  });
+
+  it("takes only what the filters on the screen leave", async () => {
+    await signInAsAdmin(await createAdmin());
+    await entry({ adminUsername: "boss" });
+    await entry({ adminUsername: "other" });
+
+    const body = await (await download("audit", "?admin=other")).text();
+
+    expect(body.trim().split("\n")).toHaveLength(2);
+    expect(body).toContain("other");
+    expect(body).not.toContain("boss");
+  });
+
+  it("flattens a snapshot into one readable cell", async () => {
+    await signInAsAdmin(await createAdmin());
+    await entry({ before: { amount: 100 }, after: { amount: 250 } });
+
+    const body = await (await download("audit")).text();
+
+    expect(body).toContain("المبلغ 100 ← 250");
+  });
+
+  it("holds back a confidential supporter's name the way the screen does", async () => {
+    const supporter = await prisma.user.create({
+      data: { phone: "22004400", password: "x", fullName: "سالم ولد أحمد" },
+    });
+    await prisma.user.update({
+      where: { id: supporter.id },
+      data: { supportNameConfidential: true },
+    });
+    await entry({ targetLabel: "سالم ولد أحمد", after: { donorName: "سالم ولد أحمد" } });
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    const body = await (await download("audit")).text();
+
+    expect(body).not.toContain("سالم ولد أحمد");
+  });
+
+  it("shows that name to a viewer allowed to see every supporter", async () => {
+    const supporter = await prisma.user.create({
+      data: { phone: "22004401", password: "x", fullName: "سالم ولد أحمد" },
+    });
+    await prisma.user.update({
+      where: { id: supporter.id },
+      data: { supportNameConfidential: true },
+    });
+    await entry({ targetLabel: "سالم ولد أحمد" });
+    await signInAsAdmin(await createAdmin("owner", "OWNER"));
+
+    const body = await (await download("audit")).text();
+
+    expect(body).toContain("سالم ولد أحمد");
+  });
+
+  it("records the download in the log it just exported", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    await download("audit");
+
+    const logged = await prisma.auditLog.findFirst({ where: { action: "EXPORT_DATA" } });
+    expect(logged?.targetId).toBe("audit");
   });
 });

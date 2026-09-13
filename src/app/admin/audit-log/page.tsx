@@ -7,6 +7,8 @@ import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import Pagination from "@/components/admin/Pagination";
 import AuditLogEntryCard from "@/components/admin/AuditLogEntryCard";
 import { counted } from "@/lib/arabicCount";
+import { countedNoun, DAYS } from "@/lib/arabicPlural";
+import { AUDIT_LOGIN_DAYS, AUDIT_LOG_DAYS } from "@/lib/auditRetention";
 import { auditLogPage } from "@/lib/texts";
 import { RESULT } from "@/lib/messages";
 import {
@@ -16,6 +18,7 @@ import {
   writeAuditFilters,
   type AuditFilters,
 } from "@/lib/auditFilters";
+import IconLabel from "@/components/IconLabel";
 import AuditFilterRow from "./AuditFilterRow";
 import { useAuditLog } from "./useAuditLog";
 
@@ -35,9 +38,24 @@ function AuditLogInner() {
 
   return (
     <div className="admin-page">
-      <div className="mb-3">
+      <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
         <AdminToolHeader href="/admin/audit-log" note={counted(total, RESULT)} />
+        <a
+          href={`/api/admin/export/audit?${writeAuditFilters(filters)}`}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{
+            background: "var(--mint-100)",
+            color: "var(--mint-700)",
+            border: "1px solid var(--mint-200)",
+          }}
+        >
+          <IconLabel name="download">{auditLogPage.exportCsv}</IconLabel>
+        </a>
       </div>
+
+      <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+        {auditLogPage.kept(countedNoun(AUDIT_LOG_DAYS, DAYS), countedNoun(AUDIT_LOGIN_DAYS, DAYS))}
+      </p>
 
       <AuditFilterRow
         filters={filters}

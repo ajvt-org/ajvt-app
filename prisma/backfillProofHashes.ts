@@ -6,15 +6,15 @@ import { getUploadDir } from "../src/lib/uploadDir";
 import { proofHash } from "../src/lib/proofHash";
 
 async function main() {
-  const [payments, expenses, known] = await Promise.all([
+  const [payments, expenseProofs, known] = await Promise.all([
     prisma.payment.findMany({ where: { proof: { not: null } }, select: { proof: true } }),
-    prisma.expense.findMany({ where: { proof: { not: null } }, select: { proof: true } }),
+    prisma.expenseProof.findMany({ select: { filename: true } }),
     prisma.proofImage.findMany({ select: { filename: true } }),
   ]);
 
   const seen = new Set(known.map((row) => row.filename));
   const names = new Set(
-    [...payments.map((p) => p.proof), ...expenses.map((e) => e.proof)].filter(
+    [...payments.map((p) => p.proof), ...expenseProofs.map((e) => e.filename)].filter(
       (n): n is string => !!n,
     ),
   );

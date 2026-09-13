@@ -11,8 +11,7 @@ import { acceptedNames } from "@/lib/paymentMethods";
 import { expenseUpdateSchema } from "../schema";
 import { money } from "@/lib/money";
 import { expenses as expenseMessages } from "@/lib/messages";
-import { legacyDestination, sharesForUpdate } from "@/lib/expenseSharesServer";
-import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
+import { sharesForUpdate } from "@/lib/expenseSharesServer";
 import { cleanProofNames, leadProof, proofsToAdd, proofsToRemove } from "@/lib/expenseProofs";
 import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
@@ -51,10 +50,7 @@ export const PATCH = withRoute(
       accountId?: string | null;
       note?: string | null;
       date?: Date;
-      proof?: string | null;
       tags?: { set: { id: string }[] };
-      activityId?: string | null;
-      competitionId?: string | null;
     } = {};
 
     if (label !== undefined) data.label = label;
@@ -84,7 +80,6 @@ export const PATCH = withRoute(
     ).map((row) => row.filename);
     const given = proofs !== undefined ? proofs : proof !== undefined ? [proof] : undefined;
     const wanted = given === undefined ? held : cleanProofNames(given);
-    if (given !== undefined) data.proof = leadProof(wanted);
     if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
 
     const shares = await sharesForUpdate({
@@ -94,13 +89,7 @@ export const PATCH = withRoute(
       destinationGiven: activityId !== undefined || competitionId !== undefined,
       destination: { activityId, competitionId },
       amountGiven: amount !== undefined,
-      existing,
     });
-    if (shares) {
-      const destination = legacyDestination(shares);
-      data.activityId = destination.activityId;
-      data.competitionId = destination.competitionId;
-    }
 
     const expense = await prisma.$transaction(async (tx) => {
       const removed = proofsToRemove(held, wanted);
@@ -113,16 +102,6 @@ export const PATCH = withRoute(
           data: added.map((filename) => ({ expenseId: id, filename })),
         });
       }
-      const saved = await tx.expense.update({
-        where: { id },
-        data,
-        include: {
-          ...EXPENSE_DESTINATION_SELECT,
-          ...EXPENSE_PROOF_SELECT,
-          ...EXPENSE_ALLOCATION_SELECT,
-        },
-      });
-
       if (shares) {
         await tx.expenseAllocation.deleteMany({ where: { expenseId: id } });
         await tx.expenseAllocation.createMany({
@@ -135,7 +114,15 @@ export const PATCH = withRoute(
         });
       }
 
-      return saved;
+      return tx.expense.update({
+        where: { id },
+        data,
+        include: {
+          tags: { select: { id: true, name: true } },
+          ...EXPENSE_PROOF_SELECT,
+          ...EXPENSE_ALLOCATION_SELECT,
+        },
+      });
     });
     await releaseUploads(...proofsToRemove(held, wanted));
     await logAction(
@@ -153,7 +140,7 @@ export const PATCH = withRoute(
           method: expense.method,
           note: expense.note,
           date: expense.date,
-          proof: expense.proof,
+          proof: leadProof(wanted),
         },
       },
     );
@@ -178,7 +165,7 @@ export const DELETE = withRoute(
     ).map((row) => row.filename);
 
     await prisma.expense.delete({ where: { id } });
-    await releaseUploads(existing.proof, ...held);
+    await releaseUploads(...held);
     await logAction(
       session.username,
       "DELETE_EXPENSE",

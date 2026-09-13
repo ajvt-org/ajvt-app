@@ -181,13 +181,4 @@ describe("the finance readers when one expense covers several destinations", () 
     expect((await summaryFor("a1")).totalExpenses).toBe(200);
     expect((await summaryFor()).totalExpenses).toBe(500);
   });
-
-  it("still scopes the summary for an expense that has no allocation", async () => {
-    await activity("a1", "أ");
-    await prisma.expense.create({
-      data: { label: "قديم", amount: 400, createdBy: "admin", activityId: "a1" },
-    });
-
-    expect((await summaryFor("a1")).totalExpenses).toBe(400);
-  });
 });

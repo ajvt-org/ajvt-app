@@ -6,16 +6,19 @@ import {
   donationRows,
   ageRows,
   activityRows,
+  auditRows,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   ACTIVITY_HEADERS,
+  AUDIT_HEADERS,
   PLAIN_DATASETS,
+  type ExportableAuditEntry,
 } from "@/lib/exportRows";
 import { HOME_VILLAGE } from "./villages";
 
 describe("isDataset", () => {
   it("accepts every dataset the export route serves", () => {
-    expect(["members", "donations", "ages", "activities"].every(isDataset)).toBe(true);
+    expect(["members", "donations", "ages", "activities", "audit"].every(isDataset)).toBe(true);
   });
 
   it("refuses anything else", () => {
@@ -211,5 +214,72 @@ describe("activityRows", () => {
 
   it("leaves the parameterless export list alone", () => {
     expect([...PLAIN_DATASETS]).toEqual(["members", "donations", "ages"]);
+  });
+});
+
+describe("the action log as a spreadsheet", () => {
+  function entry(over: Partial<ExportableAuditEntry> = {}): ExportableAuditEntry {
+    return {
+      createdAt: new Date("2026-03-15T10:20:00.000Z"),
+      adminUsername: "boss",
+      adminRole: SUPER_ROLE,
+      action: "UPDATE_EXPENSE",
+      targetType: "Expense",
+      targetLabel: "طباعة",
+      before: null,
+      after: null,
+      ip: null,
+      ...over,
+    };
+  }
+
+  it("gives a cell for every heading", () => {
+    expect(auditRows([entry()])[0]).toHaveLength(AUDIT_HEADERS.length);
+  });
+
+  it("reads the action, the kind and the role the way the screen does", () => {
+    const [made] = auditRows([entry()]);
+
+    expect(made[2]).toBe("كامل الصلاحيات");
+    expect(made[3]).toBe("تعديل مصروف");
+    expect(made[4]).toBe("مصروف");
+  });
+
+  it("writes what changed as one readable cell rather than a raw snapshot", () => {
+    const [made] = auditRows([
+      entry({ before: { amount: 100, label: "طباعة" }, after: { amount: 250, label: "طباعة" } }),
+    ]);
+
+    expect(made[6]).toBe("المبلغ 100 ← 250");
+  });
+
+  it("joins several changes into the same cell", () => {
+    const [made] = auditRows([
+      entry({ before: { amount: 100, note: "قديم" }, after: { amount: 250, note: "جديد" } }),
+    ]);
+
+    expect(made[6]).toBe("المبلغ 100 ← 250 / ملاحظة قديم ← جديد");
+  });
+
+  it("reads a value that was not there before as nothing", () => {
+    const [made] = auditRows([entry({ before: null, after: { note: "جديد" } })]);
+
+    expect(made[6]).toBe("ملاحظة — ← جديد");
+  });
+
+  it("leaves the change cell empty when the entry carries no snapshot", () => {
+    expect(auditRows([entry()])[0][6]).toBe("");
+  });
+
+  it("leaves every optional column empty rather than writing null into it", () => {
+    const [made] = auditRows([
+      entry({ adminRole: null, targetType: null, targetLabel: null, ip: null }),
+    ]);
+
+    expect([made[2], made[4], made[5], made[7]]).toEqual(["", "", "", ""]);
+  });
+
+  it("keeps the export off the parameterless list, since it carries the filters", () => {
+    expect([...PLAIN_DATASETS]).not.toContain("audit");
   });
 });

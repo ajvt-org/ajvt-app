@@ -8,13 +8,10 @@ export interface Expense {
   accountId: string | null;
   account: { id: string; code: string; label: string | null } | null;
   note: string | null;
-  proof: string | null;
   proofs: { filename: string }[];
   date: string;
   createdBy: string;
   tags: { id: string; name: string }[];
-  activity: { id: string; title: string } | null;
-  competition: { id: string; name: string } | null;
   allocations: {
     id: string;
     amount: number;

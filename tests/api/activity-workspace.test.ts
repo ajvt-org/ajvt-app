@@ -51,10 +51,20 @@ describe("GET /api/admin/activities/[id]/finance", () => {
     await gift({ donorName: "أحمد", amount: 500, status: "ACTIVE", activityId: mine.id });
     await gift({ donorName: "سالم", amount: 900, status: "ACTIVE", activityId: other.id });
     await prisma.expense.create({
-      data: { label: "أدوية", amount: 200, createdBy: "admin", activityId: mine.id },
+      data: {
+        label: "أدوية",
+        amount: 200,
+        createdBy: "admin",
+        allocations: { create: [{ amount: 200, activityId: mine.id }] },
+      },
     });
     await prisma.expense.create({
-      data: { label: "كرات", amount: 50, createdBy: "admin", activityId: other.id },
+      data: {
+        label: "كرات",
+        amount: 50,
+        createdBy: "admin",
+        allocations: { create: [{ amount: 50, activityId: other.id }] },
+      },
     });
 
     const body = await (await finance(mine.id)).json();

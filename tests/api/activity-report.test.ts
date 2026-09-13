@@ -46,7 +46,7 @@ async function spending(
       amount,
       date: new Date(at),
       createdBy: "boss",
-      activityId: extra.activityId ?? null,
+      allocations: { create: [{ amount, activityId: extra.activityId ?? null }] },
       tags: {
         connectOrCreate: (extra.tags ?? []).map((name) => ({ where: { name }, create: { name } })),
       },

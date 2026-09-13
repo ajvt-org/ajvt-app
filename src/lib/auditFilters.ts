@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 export type AuditFilters = {
   admin: string;
   action: string;
@@ -46,4 +48,21 @@ export function readPage(params: URLSearchParams): number {
 
 export function pageCount(total: number, size = AUDIT_PAGE_SIZE): number {
   return Math.max(1, Math.ceil(total / size));
+}
+
+export function dayRange(from: string, to: string): Prisma.DateTimeFilter {
+  const range: Prisma.DateTimeFilter = {};
+  if (from) range.gte = new Date(`${from}T00:00:00.000Z`);
+  if (to) range.lte = new Date(`${to}T23:59:59.999Z`);
+  return range;
+}
+
+export function buildWhere(params: URLSearchParams): Prisma.AuditLogWhereInput {
+  const { admin, action, target, from, to } = readAuditFilters(params);
+  const where: Prisma.AuditLogWhereInput = {};
+  if (admin) where.adminUsername = admin;
+  if (action) where.action = action;
+  if (target) where.targetType = target;
+  if (from || to) where.createdAt = dayRange(from, to);
+  return where;
 }

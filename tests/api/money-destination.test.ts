@@ -33,7 +33,14 @@ function gift(amount = 5000) {
 }
 
 function spending(label = "طباعة") {
-  return prisma.expense.create({ data: { label, amount: 1200, createdBy: "boss" } });
+  return prisma.expense.create({
+    data: {
+      label,
+      amount: 1200,
+      createdBy: "boss",
+      allocations: { create: [{ amount: 1200 }] },
+    },
+  });
 }
 
 const updateGift = (id: string, body: unknown) =>
@@ -70,7 +77,7 @@ describe("a quiz as a place money goes", () => {
     );
 
     expect(res.status).toBe(201);
-    expect((await prisma.expense.findFirstOrThrow()).competitionId).toBe(quiz.id);
+    expect((await prisma.expenseAllocation.findFirstOrThrow()).competitionId).toBe(quiz.id);
   });
 
   it("takes a gift that was already recorded", async () => {
@@ -91,7 +98,8 @@ describe("a quiz as a place money goes", () => {
     expect((await updateExpense(expense.id, { competitionId: quiz.id })).status).toBe(200);
 
     expect(
-      (await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).competitionId,
+      (await prisma.expenseAllocation.findFirstOrThrow({ where: { expenseId: expense.id } }))
+        .competitionId,
     ).toBe(quiz.id);
   });
 
@@ -188,7 +196,9 @@ describe("a payment or an expense aimed at two places at once", () => {
     });
 
     expect(res.status).toBe(400);
-    const after = await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } });
+    const after = await prisma.expenseAllocation.findFirstOrThrow({
+      where: { expenseId: expense.id },
+    });
     expect(after.activityId).toBeNull();
     expect(after.competitionId).toBeNull();
   });

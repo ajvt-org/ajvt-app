@@ -130,7 +130,6 @@ model Activity {
   teams                  Team[]
   matches                Match[]
   groups                 Group[]
-  expenses               Expense[]
   expenseAllocations     ExpenseAllocation[]
   admins                 AdminActivity[]
   payments               Payment[]
@@ -554,29 +553,22 @@ model Village {
 }
 
 model Expense {
-  id            String              @id @default(cuid())
-  label         String
-  amount        Int
-  method        String?
-  accountId     String?
-  account       PaymentAccount?     @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  note          String?
-  proof         String?
-  date          DateTime            @default(now())
-  createdBy     String
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  tags          FinanceTag[]
-  proofs        ExpenseProof[]
-  allocations   ExpenseAllocation[]
-  activityId    String?
-  activity      Activity?           @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  competitionId String?
-  competition   Competition?        @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  id          String              @id @default(cuid())
+  label       String
+  amount      Int
+  method      String?
+  accountId   String?
+  account     PaymentAccount?     @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  note        String?
+  date        DateTime            @default(now())
+  createdBy   String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  tags        FinanceTag[]
+  proofs      ExpenseProof[]
+  allocations ExpenseAllocation[]
 
   @@index([date])
-  @@index([activityId])
-  @@index([competitionId])
   @@index([accountId])
 }
 
@@ -836,7 +828,6 @@ model Competition {
   boards             QuizBoard[]
   participants       QuizParticipant[]
   payments           Payment[]
-  expenses           Expense[]
   expenseAllocations ExpenseAllocation[]
   startedAt          DateTime?
   createdAt          DateTime            @default(now())
