@@ -238,7 +238,7 @@ describe("the proofs on an expense", () => {
     await stored("kept.webp");
     await stored("dropped.webp");
     const expense = await prisma.expense.create({
-      data: { label: "مصروف", amount: 100, proof: "kept.webp", createdBy: "super" },
+      data: { label: "مصروف", amount: 100, createdBy: "super" },
     });
     await prisma.expenseProof.createMany({
       data: [
@@ -264,7 +264,7 @@ describe("the proofs on an expense", () => {
     await stored("one.webp");
     await stored("two.webp");
     const expense = await prisma.expense.create({
-      data: { label: "مصروف", amount: 100, proof: "one.webp", createdBy: "super" },
+      data: { label: "مصروف", amount: 100, createdBy: "super" },
     });
     await prisma.expenseProof.createMany({
       data: [
