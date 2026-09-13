@@ -40,7 +40,6 @@ describe("the upload field registry", () => {
       "user.photo",
       "activityRegistration.paymentProof",
       "payment.proof",
-      "expense.proof",
       "expenseProof.filename",
       "activity.photo",
       "team.logo",
@@ -54,7 +53,6 @@ describe("the upload field registry", () => {
       "user.photo",
       "activityRegistration.paymentProof",
       "payment.proof",
-      "expense.proof",
       "expenseProof.filename",
     ]);
   });
@@ -82,7 +80,12 @@ describe("renameUpload", () => {
   it("moves every reference and the fingerprint together", async () => {
     const member = await memberWith({ paymentProof: "old.png", photo: "old.png" });
     await prisma.expense.create({
-      data: { label: "مصروف", amount: 10, proof: "old.png", createdBy: "admin" },
+      data: {
+        label: "مصروف",
+        amount: 10,
+        createdBy: "admin",
+        proofs: { create: [{ filename: "old.png" }] },
+      },
     });
     await prisma.proofImage.create({ data: { filename: "old.png", sha256: "oldhash" } });
 
@@ -90,7 +93,7 @@ describe("renameUpload", () => {
 
     expect((await proofOf(member.userId)).proof).toBe("new.webp");
     expect((await personFor(member.id)).photo).toBe("new.webp");
-    expect((await prisma.expense.findFirstOrThrow()).proof).toBe("new.webp");
+    expect((await prisma.expenseProof.findFirstOrThrow()).filename).toBe("new.webp");
     const fingerprint = await prisma.proofImage.findUniqueOrThrow({
       where: { filename: "new.webp" },
     });

@@ -100,7 +100,12 @@ describe("spotting a payment screenshot that has been sent before", () => {
     await fingerprint("three.webp", HASH);
     await giftWithProof("محمد", "one.webp");
     await prisma.expense.create({
-      data: { label: "كرات", amount: 900, createdBy: "admin", proof: "two.webp" },
+      data: {
+        label: "كرات",
+        amount: 900,
+        createdBy: "admin",
+        proofs: { create: [{ filename: "two.webp" }] },
+      },
     });
     await memberWithProof("أحمد", "three.webp");
 
@@ -178,7 +183,12 @@ describe("asking about a proof by its hash", () => {
   it("carries what an expense holds as well", async () => {
     await fingerprint("one.webp", HASH);
     await prisma.expense.create({
-      data: { label: "كرات", amount: 900, createdBy: "admin", proof: "one.webp" },
+      data: {
+        label: "كرات",
+        amount: 900,
+        createdBy: "admin",
+        proofs: { create: [{ filename: "one.webp" }] },
+      },
     });
 
     const [row] = await proofReuseOf(HASH, ADMIN);
