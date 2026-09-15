@@ -186,6 +186,32 @@ describe("getClientIp", () => {
     expect(new Set(spoofed)).toEqual(new Set(["10.0.0.1"]));
   });
 
+  it("takes the address the edge connected from, not the hop behind it", () => {
+    expect(
+      getClientIp(
+        requestWith({ "cf-connecting-ip": "1.2.3.4", "x-forwarded-for": "1.2.3.4, 172.71.0.1" }),
+      ),
+    ).toBe("1.2.3.4");
+  });
+
+  it("keeps two callers behind one edge in separate buckets", () => {
+    const forwarded = "x-forwarded-for";
+    const first = getClientIp(
+      requestWith({ "cf-connecting-ip": "1.2.3.4", [forwarded]: "1.2.3.4, 172.71.0.1" }),
+    );
+    const second = getClientIp(
+      requestWith({ "cf-connecting-ip": "5.6.7.8", [forwarded]: "5.6.7.8, 172.71.0.1" }),
+    );
+
+    expect(first).not.toBe(second);
+  });
+
+  it("ignores an empty edge address and reads the hops instead", () => {
+    expect(
+      getClientIp(requestWith({ "cf-connecting-ip": "   ", "x-forwarded-for": "1.2.3.4" })),
+    ).toBe("1.2.3.4");
+  });
+
   it("falls back to x-real-ip", () => {
     expect(getClientIp(requestWith({ "x-real-ip": "5.6.7.8" }))).toBe("5.6.7.8");
   });
