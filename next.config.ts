@@ -2,6 +2,31 @@ import type { NextConfig } from "next";
 import { execSync } from "node:child_process";
 import { releaseFrom } from "./src/lib/release";
 
+const YEAR = 31536000;
+const WEEK = 604800;
+const DAY = 86400;
+
+const RENAMED_ON_CHANGE = ["/fonts/:path*"];
+
+const EDITED_IN_PLACE = [
+  "/og.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/logo-mark.svg",
+  "/logo-roundel.svg",
+  "/logo-horizontal.svg",
+  "/receipt-logo.svg",
+  "/receipt-seal.svg",
+  "/offline.html",
+  "/deploying.html",
+];
+
+const ALWAYS_FRESH = ["/sw.js", "/manifest.json"];
+
+function cached(value: string) {
+  return (source: string) => ({ source, headers: [{ key: "Cache-Control", value }] });
+}
+
 function lastSubject(): string | null {
   try {
     return execSync("git log -1 --format=%s", { stdio: ["ignore", "pipe", "ignore"] })
@@ -42,6 +67,9 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      ...RENAMED_ON_CHANGE.map(cached(`public, max-age=${YEAR}, immutable`)),
+      ...EDITED_IN_PLACE.map(cached(`public, max-age=${WEEK}, stale-while-revalidate=${DAY}`)),
+      ...ALWAYS_FRESH.map(cached("no-cache")),
     ];
   },
 };
