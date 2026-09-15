@@ -10,7 +10,7 @@ import {
   membershipSummary as texts,
   renewForm,
 } from "@/lib/texts";
-import type { MemberProfile } from "@/components/admin/profileTypes";
+import type { MemberWithMembership } from "@/components/admin/profileTypes";
 import type { MembershipHistory } from "./membershipTypes";
 import { renewalRefusalMessage } from "@/lib/renewalMessages";
 import type { RenewalRefusal } from "@/lib/renewal";
@@ -35,7 +35,7 @@ vi.mock("@/lib/api", () => ({
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-type Member = MemberProfile["member"];
+type Member = MemberWithMembership;
 
 const NO_YEARS: MembershipHistory = {
   memberships: [],

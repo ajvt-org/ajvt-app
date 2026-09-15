@@ -7,7 +7,7 @@ export type MemberProfile = {
     village: string;
     photo: string | null;
     photoLocked: boolean;
-    status: string;
+    status: string | null;
     memberNumber: string | null;
     paidAmount: number | null;
     supportAmount: number;
@@ -17,12 +17,12 @@ export type MemberProfile = {
     paymentProof: string | null;
     paymentPaidOn: string | null;
     paymentRecordedAt: string | null;
-    membershipYear: number;
+    membershipYear: number | null;
     endedAt: string | null;
     endedReason: string | null;
     endedBy: string | null;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: string | null;
+    updatedAt: string | null;
     user: { id: string; phone: string | null; createdAt: string } | null;
     registrations: {
       id: string;
@@ -54,3 +54,15 @@ export type MemberProfile = {
     targetLabel: string | null;
   }[];
 };
+
+export type MemberWithMembership = MemberProfile["member"] & {
+  membershipYear: number;
+  status: string;
+  createdAt: string;
+};
+
+export function withMembership(member: MemberProfile["member"]): MemberWithMembership | null {
+  const { membershipYear, status, createdAt } = member;
+  if (membershipYear === null || status === null || createdAt === null) return null;
+  return { ...member, membershipYear, status, createdAt };
+}

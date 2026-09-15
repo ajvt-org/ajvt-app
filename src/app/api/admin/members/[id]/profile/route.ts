@@ -14,6 +14,17 @@ import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 import { memberGifts } from "@/lib/gifts";
 import { getAppSettings } from "@/lib/settingsServer";
 
+const NO_MEMBERSHIP = {
+  year: null,
+  status: null,
+  rejectionReason: null,
+  endedAt: null,
+  endedReason: null,
+  endedBy: null,
+  createdAt: null,
+  updatedAt: null,
+} as const;
+
 export const GET = withRoute(
   "GET /api/admin/members/[id]/profile",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -89,8 +100,7 @@ export const GET = withRoute(
       ...person
     } = account;
     const current = latestMembership(memberships);
-    if (!current) return NextResponse.json({ error: messages.notFound }, { status: 404 });
-    const { year, ...membership } = current;
+    const { year, ...membership } = current ?? NO_MEMBERSHIP;
 
     const history = await prisma.auditLog.findMany({
       where: { targetType: "Member", targetId: id },
@@ -106,9 +116,9 @@ export const GET = withRoute(
       user: { supportNameConfidential },
     });
     const membershipPayments = payments.filter((row) => row.purpose === "MEMBERSHIP");
-    const banked = paidForYear(membershipPayments, year);
+    const banked = year === null ? null : paidForYear(membershipPayments, year);
     const paid = named ? banked : feeOnly(banked);
-    const payment = paymentOfYear(membershipPayments, year);
+    const payment = year === null ? null : paymentOfYear(membershipPayments, year);
 
     const supportPrivacy = isOwner(session.role)
       ? {

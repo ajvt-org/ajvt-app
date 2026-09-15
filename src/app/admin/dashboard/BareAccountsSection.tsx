@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import Notice from "@/components/Notice";
@@ -12,6 +13,8 @@ import { push } from "@/lib/messages";
 import { daysWaiting } from "@/lib/waitingRequests";
 import { personDetails } from "@/lib/personDetails";
 import { matchesSearch, searchTokens } from "@/lib/arabicText";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import TempPasswordBox from "@/components/admin/TempPasswordBox";
 import { bareAccounts as texts, confirmDelete as confirmDeleteTexts } from "@/lib/texts";
@@ -89,6 +92,8 @@ function Row({
 }) {
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState("");
+  const router = useRouter();
+  const origin = useAdminOrigin();
 
   const age = ageForVillage(user.village, user.age);
   const details = personDetails({
@@ -162,6 +167,14 @@ function Row({
             </VerbButton>
           </>
         )}
+        <VerbButton
+          icon="user"
+          label={texts.openProfile}
+          tone={SAFE}
+          onClick={() => router.push(memberCardHref(user.id, origin))}
+        >
+          {texts.openProfile}
+        </VerbButton>
         <span className="flex-1" aria-hidden />
         <VerbButton icon="trash" label={texts.remove} tone={GRAVE} onClick={onDelete}>
           {texts.remove}
