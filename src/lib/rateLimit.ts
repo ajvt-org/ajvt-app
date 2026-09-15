@@ -57,6 +57,9 @@ export function bucketKeys(): string[] {
 }
 
 export function getClientIp(req: NextRequest): string {
+  const edge = req.headers.get("cf-connecting-ip")?.trim();
+  if (edge) return edge;
+
   const forwarded = req.headers.get("x-forwarded-for");
   const hops = (forwarded ?? "")
     .split(",")
