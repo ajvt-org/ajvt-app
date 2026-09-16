@@ -25,7 +25,6 @@ export const matchAdmin = {
   confirmDeleteMatchTitle: "حذف مباراة",
   confirmDeleteMatch: "هل تريد حذف هذه المباراة؟",
   deleteMatch: "حذف المباراة",
-  reorderFailed: "خطأ في إعادة الترتيب",
   generateSemis: "توليد نصف النهائي",
   suggestionTitle: "جدول الإقصاء المقترح",
   suggestionHint:
@@ -63,8 +62,6 @@ export const matchAdmin = {
   knockoutBadge: "إقصائية",
   priorMeetings: "مواجهات سابقة:",
   upcomingShort: "قادمة",
-  moveUp: "تقديم",
-  moveDown: "تأخير",
   motm: "رجل المباراة:",
   hideMvp: "إخفاء التصويت",
   mvpVote: "أفضل لاعب",
