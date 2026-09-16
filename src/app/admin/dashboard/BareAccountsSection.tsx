@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/lib/api";
+import Link from "next/link";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import PageLoading from "@/components/PageLoading";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
@@ -92,7 +93,6 @@ function Row({
 }) {
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState("");
-  const router = useRouter();
   const origin = useAdminOrigin();
 
   const age = ageForVillage(user.village, user.age);
@@ -167,14 +167,16 @@ function Row({
             </VerbButton>
           </>
         )}
-        <VerbButton
-          icon="user"
-          label={texts.openProfile}
-          tone={SAFE}
-          onClick={() => router.push(memberCardHref(user.id, origin))}
+        <Link
+          href={memberCardHref(user.id, origin)}
+          title={texts.openProfile}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0 inline-flex items-center justify-center"
+          style={SAFE}
         >
-          {texts.openProfile}
-        </VerbButton>
+          <IconLabel name="user" size={16}>
+            {texts.openProfile}
+          </IconLabel>
+        </Link>
         <span className="flex-1" aria-hidden />
         <VerbButton icon="trash" label={texts.remove} tone={GRAVE} onClick={onDelete}>
           {texts.remove}
