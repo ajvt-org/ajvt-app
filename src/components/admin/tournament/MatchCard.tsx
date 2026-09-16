@@ -41,8 +41,6 @@ export default function MatchCard({
   onToggleMvp,
   showDetails,
   onToggleDetails,
-  onMoveUp,
-  onMoveDown,
   onSaved,
   onChange,
 }: {
@@ -61,8 +59,6 @@ export default function MatchCard({
   onToggleMvp: () => void;
   showDetails: boolean;
   onToggleDetails: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
   onSaved: () => void;
   onChange: () => void;
 }) {
@@ -169,8 +165,6 @@ export default function MatchCard({
         onToggleResultForm={onToggleResultForm}
         onToggleMvp={onToggleMvp}
         onToggleDetails={onToggleDetails}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
       />
 
       {decided && resultAllowed && showResultForm && (
