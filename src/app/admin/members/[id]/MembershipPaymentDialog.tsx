@@ -13,7 +13,7 @@ import { toThumbUrl } from "@/lib/utils";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
 import { membershipSummary as texts } from "@/lib/texts";
 import PaymentDateLine from "@/components/admin/PaymentDateLine";
-import type { MemberProfile } from "@/components/admin/profileTypes";
+import type { MemberWithMembership } from "@/components/admin/profileTypes";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -24,7 +24,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function blankPayment(member: MemberProfile["member"]): Proof {
+function blankPayment(member: MemberWithMembership): Proof {
   return {
     id: member.id,
     kind: "MEMBERSHIP",
@@ -51,7 +51,7 @@ export default function MembershipPaymentDialog({
   onChanged,
   onClose,
 }: {
-  member: MemberProfile["member"];
+  member: MemberWithMembership;
   currentYear: number;
   onChanged: () => void;
   onClose: () => void;

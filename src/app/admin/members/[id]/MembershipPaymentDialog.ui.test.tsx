@@ -3,9 +3,9 @@ import { render, screen } from "@testing-library/react";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
 import { paymentDates } from "@/lib/texts";
 import { formatDate, formatDateTime } from "@/lib/clubTime";
-import type { MemberProfile } from "@/components/admin/profileTypes";
+import type { MemberWithMembership } from "@/components/admin/profileTypes";
 
-type Member = MemberProfile["member"];
+type Member = MemberWithMembership;
 
 const PAID_ON = "2026-06-11T12:00:00.000Z";
 const RECORDED_AT = "2026-08-02T09:31:00.000Z";

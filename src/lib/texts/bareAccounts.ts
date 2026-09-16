@@ -12,6 +12,7 @@ export const bareAccounts = {
   nudge: "تذكير",
   resetPassword: "إعادة تعيين",
   addRequest: "إضافة طلب",
+  openProfile: "الملف",
   remove: "حذف",
   busy: "...",
 } as const;

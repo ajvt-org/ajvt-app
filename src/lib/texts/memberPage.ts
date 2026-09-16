@@ -8,6 +8,7 @@ export const memberPage = {
   cancel: "إلغاء",
   edit: "تعديل",
   groupMembership: "الاشتراك",
+  noMembershipYet: "لم يملأ استمارة الانخراط بعد",
   groupParticipation: "المشاركة",
   groupRecord: "السجل",
   activities: (count: number) => `الأنشطة (${count})`,
