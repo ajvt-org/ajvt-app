@@ -1,6 +1,5 @@
 "use client";
 
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts } from "@/lib/texts";
 
@@ -18,8 +17,6 @@ export default function MatchCardActions({
   onToggleResultForm,
   onToggleMvp,
   onToggleDetails,
-  onMoveUp,
-  onMoveDown,
 }: {
   played: boolean;
   decided: boolean;
@@ -31,8 +28,6 @@ export default function MatchCardActions({
   onToggleResultForm: () => void;
   onToggleMvp: () => void;
   onToggleDetails: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
 }) {
   const outline = {
     background: "white",
@@ -43,30 +38,6 @@ export default function MatchCardActions({
   return (
     <div className="mt-2 space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        {(onMoveUp || onMoveDown) && (
-          <>
-            <button
-              onClick={onMoveUp}
-              disabled={!onMoveUp}
-              title={texts.moveUp}
-              aria-label={texts.moveUp}
-              className={SQUARE}
-              style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
-            >
-              <Icon name="chevronUp" size={15} />
-            </button>
-            <button
-              onClick={onMoveDown}
-              disabled={!onMoveDown}
-              title={texts.moveDown}
-              aria-label={texts.moveDown}
-              className={SQUARE}
-              style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
-            >
-              <Icon name="chevronDown" size={15} />
-            </button>
-          </>
-        )}
         {decided && (
           <button
             onClick={onToggleResultForm}

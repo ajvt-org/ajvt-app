@@ -34,7 +34,6 @@ export default function MatchListSection({
   panels,
   onDelete,
   onChange,
-  onMove,
 }: {
   title: string;
   icon: "calendar" | "check";
@@ -43,7 +42,6 @@ export default function MatchListSection({
   panels: MatchCardPanels;
   onDelete: (matchId: string) => void;
   onChange: () => void;
-  onMove?: (index: number, direction: "up" | "down") => void;
 }) {
   if (matches.length === 0) return null;
 
@@ -53,7 +51,7 @@ export default function MatchListSection({
         <IconLabel name={icon}>{title}</IconLabel>
       </p>
       <div className="space-y-3">
-        {matches.map((match, i) => (
+        {matches.map((match) => (
           <MatchCard
             key={match.id}
             match={match}
@@ -65,8 +63,6 @@ export default function MatchListSection({
             onToggleMvp={() => panels.onToggleMvp(match.id)}
             showDetails={panels.detailsFor === match.id}
             onToggleDetails={() => panels.onToggleDetails(match.id)}
-            onMoveUp={onMove && i > 0 ? () => onMove(i, "up") : undefined}
-            onMoveDown={onMove && i < matches.length - 1 ? () => onMove(i, "down") : undefined}
             onSaved={() => {
               panels.onCloseResultForm();
               onChange();

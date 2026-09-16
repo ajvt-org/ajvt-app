@@ -117,7 +117,12 @@ export async function listMatches(activityId: string) {
   const read = () =>
     prisma.match.findMany({
       where: { activityId },
-      orderBy: [{ status: "asc" }, { order: "asc" }, { createdAt: "asc" }],
+      orderBy: [
+        { status: "asc" },
+        { matchDate: { sort: "asc", nulls: "last" } },
+        { order: "asc" },
+        { createdAt: "asc" },
+      ],
       include: MATCH_INCLUDE,
     });
 

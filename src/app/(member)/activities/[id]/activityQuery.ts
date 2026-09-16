@@ -71,7 +71,12 @@ async function loadActivity(id: string) {
         },
       },
       matches: {
-        orderBy: [{ status: "asc" }, { order: "asc" }, { matchDate: "asc" }, { createdAt: "asc" }],
+        orderBy: [
+          { status: "asc" },
+          { matchDate: { sort: "asc", nulls: "last" } },
+          { order: "asc" },
+          { createdAt: "asc" },
+        ],
         select: {
           id: true,
           homeTeam: MATCH_SIDE,

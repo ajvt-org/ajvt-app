@@ -69,30 +69,6 @@ export default function MatchesTab({
 
   const state = matchesState({ format, groups, matches });
 
-  async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= list.length) return;
-    const a = list[index];
-    const b = list[swapIndex];
-    try {
-      await Promise.all([
-        fetch(`/api/admin/matches/${a.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order: b.order }),
-        }),
-        fetch(`/api/admin/matches/${b.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order: a.order }),
-        }),
-      ]);
-      onChange();
-    } catch {
-      setError(texts.reorderFailed);
-    }
-  }
-
   async function deleteMatch(matchId: string) {
     setAsking(null);
     try {
@@ -176,7 +152,6 @@ export default function MatchesTab({
         panels={panels}
         onDelete={askDeleteMatch}
         onChange={onChange}
-        onMove={(index, direction) => moveMatch(scheduled, index, direction)}
       />
 
       <MatchListSection

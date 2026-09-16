@@ -43,7 +43,7 @@ describe("MatchCardActions", () => {
   });
 
   it("keeps the delete off the row the ordinary actions wrap on", () => {
-    const { container } = show({ onMoveUp: noop, onMoveDown: noop });
+    const { container } = show();
     const [ordinary, destructive] = container.firstElementChild!.children;
 
     expect(ordinary.querySelector(`[aria-label="${texts.confirmDeleteMatch}"]`)).toBeNull();
@@ -57,12 +57,11 @@ describe("MatchCardActions", () => {
     expect(screen.getByLabelText(texts.confirmDeleteMatch).textContent).toContain(texts.remove);
   });
 
-  it("offers the reorder arrows only where a match can move", () => {
+  it("offers no way to reorder a match by hand", () => {
     show();
-    expect(screen.queryByLabelText(/تقديم/)).toBeNull();
 
-    show({ onMoveUp: noop, onMoveDown: noop });
-    expect(screen.getByLabelText(/تقديم/)).toBeDefined();
+    expect(screen.queryByLabelText(/تقديم/)).toBeNull();
+    expect(screen.queryByLabelText(/تأخير/)).toBeNull();
   });
 
   it("keeps the best player button out of a series match", () => {
