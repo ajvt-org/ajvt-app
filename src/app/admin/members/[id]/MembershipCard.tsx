@@ -6,7 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import ProfileSection from "@/components/admin/ProfileSection";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
 import { membershipSummary as texts } from "@/lib/texts";
-import type { MemberProfile } from "@/components/admin/profileTypes";
+import type { MemberWithMembership } from "@/components/admin/profileTypes";
 import { endingsBroughtBack } from "@/lib/membershipEndingHistory";
 import MembershipEnding, { BroughtBackEndings, EndedRows } from "./MembershipEnding";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
@@ -24,7 +24,7 @@ export default function MembershipCard({
   currentYear,
   onChanged,
 }: {
-  member: MemberProfile["member"];
+  member: MemberWithMembership;
   currentYear: number;
   onChanged: () => void;
 }) {

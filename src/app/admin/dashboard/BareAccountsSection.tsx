@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import Link from "next/link";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import PageLoading from "@/components/PageLoading";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
@@ -12,6 +14,8 @@ import { push } from "@/lib/messages";
 import { daysWaiting } from "@/lib/waitingRequests";
 import { personDetails } from "@/lib/personDetails";
 import { matchesSearch, searchTokens } from "@/lib/arabicText";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import TempPasswordBox from "@/components/admin/TempPasswordBox";
 import { bareAccounts as texts, confirmDelete as confirmDeleteTexts } from "@/lib/texts";
@@ -89,6 +93,7 @@ function Row({
 }) {
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState("");
+  const origin = useAdminOrigin();
 
   const age = ageForVillage(user.village, user.age);
   const details = personDetails({
@@ -162,6 +167,16 @@ function Row({
             </VerbButton>
           </>
         )}
+        <Link
+          href={memberCardHref(user.id, origin)}
+          title={texts.openProfile}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0 inline-flex items-center justify-center"
+          style={SAFE}
+        >
+          <IconLabel name="user" size={16}>
+            {texts.openProfile}
+          </IconLabel>
+        </Link>
         <span className="flex-1" aria-hidden />
         <VerbButton icon="trash" label={texts.remove} tone={GRAVE} onClick={onDelete}>
           {texts.remove}

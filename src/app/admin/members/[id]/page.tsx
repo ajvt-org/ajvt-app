@@ -17,7 +17,7 @@ import MembershipCard from "./MembershipCard";
 import ProfileGroup from "./ProfileGroup";
 import ProfileList from "./ProfileList";
 import SupportPrivacyCard from "./SupportPrivacyCard";
-import type { MemberProfile } from "@/components/admin/profileTypes";
+import { withMembership, type MemberProfile } from "@/components/admin/profileTypes";
 import { giftSourceLabel, memberPage as texts, registrationStatusLabels } from "@/lib/texts";
 import Money from "@/components/Money";
 
@@ -73,6 +73,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
   }
 
   const { member, supportPrivacy, history, currentYear } = data;
+  const joined = withMembership(member);
   const activities = member.registrations.length > 0;
   const teams = member.teamMemberships.length > 0;
 
@@ -109,7 +110,13 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
       )}
 
       <ProfileGroup title={texts.groupMembership}>
-        <MembershipCard member={member} currentYear={currentYear} onChanged={load} />
+        {joined === null ? (
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            {texts.noMembershipYet}
+          </p>
+        ) : (
+          <MembershipCard member={joined} currentYear={currentYear} onChanged={load} />
+        )}
 
         <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
 
