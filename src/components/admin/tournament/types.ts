@@ -86,10 +86,18 @@ export interface MvpVote {
   candidates: MvpCandidate[];
 }
 
+export interface MatchSide {
+  id: string;
+  name: string;
+  logo: string | null;
+  photo?: string | null;
+  disabledAt?: string | null;
+}
+
 export interface Match {
   id: string;
-  firstTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
-  secondTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
+  firstTeam: MatchSide | null;
+  secondTeam: MatchSide | null;
   matchDate: string | null;
   round: string | null;
   venue: string | null;

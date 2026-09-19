@@ -3,6 +3,7 @@ import MatchMeta from "./matchCard/MatchMeta";
 import MatchCardHead from "./matchCard/MatchCardHead";
 import { formatTime } from "@/lib/clubTime";
 import { teamName } from "@/lib/fixtureTeams";
+import { DISABLED_CARD, matchIsDisabled } from "@/lib/disabledTeam";
 import type { PublicMatch } from "./publicTypes";
 import type { EntrantKind } from "@/lib/entrant";
 
@@ -16,7 +17,10 @@ export default function MatchFixture({
   entrant?: EntrantKind;
 }) {
   return (
-    <div className="card p-3 space-y-1.5">
+    <div
+      className="card p-3 space-y-1.5"
+      style={matchIsDisabled(match) ? DISABLED_CARD : undefined}
+    >
       <MatchCardHead time={match.matchDate ? formatTime(match.matchDate) : null}>
         <MatchMeta round={day.round ? null : match.round} venue={day.venue ? null : match.venue} />
       </MatchCardHead>

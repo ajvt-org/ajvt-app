@@ -62,6 +62,7 @@ export const publicTournament = {
       following: "متابَع",
     },
   },
+  disabledTeam: "معطّل",
   standingsColumns: {
     rank: "#",
     points: "نقاط",

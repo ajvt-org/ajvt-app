@@ -223,3 +223,33 @@ describe("a member reading their own standings", () => {
     expect(mineOf(container)).toHaveLength(0);
   });
 });
+
+describe("a disabled team in the table", () => {
+  const withOneOff = [rows[0], { ...rows[1], disabled: true }];
+
+  it("fades its row and says so in words", () => {
+    cleanup();
+    render(<StandingsTable title={null} rows={withOneOff} />);
+
+    const row = screen.getByText("فريق الوحدة").closest("tr") as HTMLElement;
+    expect(row.style.opacity).toBe("0.5");
+    expect(row.textContent).toContain(publicTournament.disabledTeam);
+  });
+
+  it("leaves a team that is still counting at full strength", () => {
+    cleanup();
+    render(<StandingsTable title={null} rows={withOneOff} />);
+
+    const row = screen.getByText("فريق النجم").closest("tr") as HTMLElement;
+    expect(row.style.opacity).toBe("");
+    expect(row.textContent).not.toContain(publicTournament.disabledTeam);
+  });
+
+  it("still gives it a place in the order", () => {
+    cleanup();
+    render(<StandingsTable title={null} rows={withOneOff} />);
+
+    const row = screen.getByText("فريق الوحدة").closest("tr") as HTMLElement;
+    expect(row.querySelector("td")?.textContent).toBe("2");
+  });
+});

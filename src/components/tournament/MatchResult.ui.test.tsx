@@ -298,3 +298,31 @@ describe("a match won by forfeit", () => {
     expect(screen.getAllByText(/12/).length).toBeGreaterThan(0);
   });
 });
+
+describe("a match one of whose teams is disabled", () => {
+  function show(disabledAt: string | null) {
+    rtlCleanup();
+    return render(
+      <MatchResult
+        match={{ ...match(), secondTeam: { ...match().secondTeam, disabledAt } }}
+        day={{ round: null, venue: null }}
+        allMatches={[match()]}
+        football
+        loggedIn={false}
+        myVoteCandidateId={null}
+      />,
+    );
+  }
+
+  it("fades the card", () => {
+    const { container } = show("2026-09-19T00:00:00.000Z");
+
+    expect((container.firstChild as HTMLElement).style.opacity).toBe("0.5");
+  });
+
+  it("leaves a match between two counting teams at full strength", () => {
+    const { container } = show(null);
+
+    expect((container.firstChild as HTMLElement).style.opacity).toBe("");
+  });
+});
