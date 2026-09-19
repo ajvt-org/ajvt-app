@@ -7,6 +7,8 @@ import IconLabel from "@/components/IconLabel";
 import FieldRow from "@/components/admin/FieldRow";
 import { matchAdmin as texts } from "@/lib/texts";
 import { KIND_LABEL, goalSuffix, type GoalDraft } from "./goalDraft";
+import { SQUARE } from "./MatchCardActions";
+import { ROW_ACTION_ICON } from "./TeamIdentityEditor";
 import NumberInput from "@/components/NumberInput";
 
 export default function GoalSection({
@@ -83,10 +85,10 @@ export default function GoalSection({
             type="button"
             onClick={() => startEditing(index)}
             aria-label={texts.edit}
-            className="px-1.5 rounded-lg"
+            className={SQUARE}
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <Icon name="pencil" size={12} />
+            <Icon name="pencil" size={ROW_ACTION_ICON} />
           </button>
           <button
             type="button"
@@ -95,10 +97,10 @@ export default function GoalSection({
               reset();
             }}
             aria-label={texts.remove}
-            className="px-1.5 rounded-lg"
+            className={SQUARE}
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
-            <Icon name="close" size={12} />
+            <Icon name="close" size={ROW_ACTION_ICON} />
           </button>
         </div>
       ))}
