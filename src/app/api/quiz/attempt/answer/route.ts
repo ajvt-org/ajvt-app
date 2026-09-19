@@ -5,7 +5,6 @@ import { parse } from "@/lib/validation";
 import { ForbiddenError } from "@/lib/errors";
 import { isQuizEligible, touchUserActivity } from "@/lib/quiz";
 import { submitAnswer, currentQuestion } from "@/lib/quizAttemptServer";
-import { prisma } from "@/lib/prisma";
 import { quiz } from "@/lib/messages";
 import { attemptAnswerSchema } from "./schema";
 
@@ -14,13 +13,8 @@ export const POST = withRoute("POST /api/quiz/attempt/answer", async (req: NextR
   if (!(await isQuizEligible(session.userId))) throw new ForbiddenError(quiz.paidMembersOnly);
 
   const { answerId, selectedAnswerIds } = parse(attemptAnswerSchema, await req.json());
-  await submitAnswer(answerId, session.userId, selectedAnswerIds);
-
-  const row = await prisma.quizAttemptAnswer.findUniqueOrThrow({
-    where: { id: answerId },
-    select: { attemptId: true },
-  });
-  const view = await currentQuestion(row.attemptId, session.userId);
+  const { attemptId } = await submitAnswer(answerId, session.userId, selectedAnswerIds);
+  const view = await currentQuestion(attemptId, session.userId);
 
   await touchUserActivity(session.userId);
 

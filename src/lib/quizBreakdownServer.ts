@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { NotFoundError } from "./errors";
+import { ForbiddenError, NotFoundError } from "./errors";
 import { breakdownOf, roundEntries, type AnswerRow, type Breakdown } from "./quizBreakdown";
 import { getCompetition, shapeOf } from "./competitionServer";
 import { roundWindows } from "./quizRound";
@@ -21,6 +21,19 @@ export interface AttemptDetail {
   finishedAt: Date | null;
   voided: boolean;
   breakdown: Breakdown;
+}
+
+export async function requireOwnClosedAttempt(
+  attemptId: string,
+  userId: string,
+  now = new Date(),
+): Promise<void> {
+  const attempt = await prisma.quizAttempt.findUnique({
+    where: { id: attemptId },
+    select: { userId: true, round: { select: { closesAt: true } } },
+  });
+  if (!attempt || attempt.userId !== userId) throw new NotFoundError(NO_ATTEMPT);
+  if (attempt.round.closesAt > now) throw new ForbiddenError(ROUND_STILL_OPEN);
 }
 
 export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
