@@ -171,6 +171,154 @@ describe("a match won by forfeit", () => {
   });
 });
 
+describe("the goals the committee awards on a forfeit", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("stores the award with the forfeit", async () => {
+    const { home, match } = await football();
+
+    await save(match.id, {
+      goalEvents: [],
+      forfeitWinnerTeamId: home.id,
+      forfeitExtraGoals: 2,
+    });
+
+    expect(await stored(match.id)).toMatchObject({
+      forfeitWinnerTeamId: home.id,
+      forfeitExtraGoals: 2,
+      homeScore: 3,
+      awayScore: 0,
+    });
+  });
+
+  it("starts every match at no award at all", async () => {
+    const { home, match } = await football();
+
+    await save(match.id, { goalEvents: [], forfeitWinnerTeamId: home.id });
+
+    expect(await stored(match.id)).toMatchObject({ forfeitExtraGoals: 0 });
+  });
+
+  it("leaves the score on the match where it was", async () => {
+    const { home, players, match } = await football();
+
+    await save(match.id, {
+      goalEvents: [{ teamId: home.id, userId: players[0].userId, minute: 10 }],
+      forfeitWinnerTeamId: home.id,
+      forfeitExtraGoals: 4,
+    });
+
+    expect(await stored(match.id)).toMatchObject({ homeScore: 3, awayScore: 0 });
+    expect(await prisma.matchGoal.count({ where: { matchId: match.id } })).toBe(1);
+  });
+
+  it("refuses a negative award", async () => {
+    const { home, match } = await football();
+
+    const res = await save(match.id, {
+      goalEvents: [],
+      forfeitWinnerTeamId: home.id,
+      forfeitExtraGoals: -1,
+    });
+
+    expect(res.status).toBe(400);
+    expect(await stored(match.id)).toMatchObject({ forfeitExtraGoals: 0 });
+  });
+
+  it("refuses an award that is not a whole number", async () => {
+    const { home, match } = await football();
+
+    const res = await save(match.id, {
+      goalEvents: [],
+      forfeitWinnerTeamId: home.id,
+      forfeitExtraGoals: 1.5,
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("refuses an award far past anything a committee would decide", async () => {
+    const { home, match } = await football();
+
+    const res = await save(match.id, {
+      goalEvents: [],
+      forfeitWinnerTeamId: home.id,
+      forfeitExtraGoals: 100,
+    });
+
+    expect(res.status).toBe(400);
+    expect(await stored(match.id)).toMatchObject({ forfeitExtraGoals: 0 });
+  });
+
+  it("clears the award when the forfeit is lifted", async () => {
+    const { home, match } = await football();
+    await save(match.id, {
+      goalEvents: [],
+      forfeitWinnerTeamId: home.id,
+      forfeitExtraGoals: 3,
+    });
+
+    await save(match.id, { forfeitWinnerTeamId: null });
+
+    expect(await stored(match.id)).toMatchObject({
+      forfeitWinnerTeamId: null,
+      forfeitExtraGoals: 0,
+    });
+  });
+
+  it("clears the award even when one is sent with the forfeit being lifted", async () => {
+    const { home, match } = await football();
+    await save(match.id, { goalEvents: [], forfeitWinnerTeamId: home.id, forfeitExtraGoals: 3 });
+
+    await save(match.id, { forfeitWinnerTeamId: null, forfeitExtraGoals: 5 });
+
+    expect(await stored(match.id)).toMatchObject({ forfeitExtraGoals: 0 });
+  });
+
+  it("keeps no award on a match nobody forfeited", async () => {
+    const { match } = await football();
+
+    await save(match.id, { forfeitExtraGoals: 2 });
+
+    expect(await stored(match.id)).toMatchObject({
+      forfeitWinnerTeamId: null,
+      forfeitExtraGoals: 0,
+    });
+  });
+
+  it("records the award in the audit entry for the forfeit", async () => {
+    const { home, match } = await football();
+
+    await save(match.id, { goalEvents: [], forfeitWinnerTeamId: home.id, forfeitExtraGoals: 2 });
+
+    const entry = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "SET_MATCH_FORFEIT" },
+    });
+    expect(entry.after).toMatchObject({ forfeitExtraGoals: 2 });
+    expect(entry.before).toMatchObject({ forfeitExtraGoals: 0 });
+  });
+
+  it("records a change to the award on its own", async () => {
+    const { home, match } = await football();
+    await save(match.id, { goalEvents: [], forfeitWinnerTeamId: home.id, forfeitExtraGoals: 2 });
+
+    await save(match.id, { forfeitExtraGoals: 5 });
+
+    const entries = await prisma.auditLog.findMany({
+      where: { action: "SET_MATCH_FORFEIT" },
+      orderBy: { createdAt: "asc" },
+    });
+    expect(entries.at(-1)!.after).toMatchObject({
+      forfeitExtraGoals: 5,
+      forfeitWinnerTeamId: home.id,
+    });
+    expect(await stored(match.id)).toMatchObject({ forfeitExtraGoals: 5 });
+  });
+});
+
 describe("correcting a card after the fact", () => {
   beforeEach(async () => {
     await resetDb();
