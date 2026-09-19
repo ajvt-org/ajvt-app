@@ -14,10 +14,11 @@ import MyScores from "./MyScores";
 import RoundRecap from "./RoundRecap";
 import ScoreFormula from "./ScoreFormula";
 import NextRoundCountdown from "./NextRoundCountdown";
-import { countedNoun, POINTS, ROUNDS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
 import { useNow } from "@/hooks/useNow";
 import { landingActivities, quizBoard as texts } from "@/lib/texts";
+import { counted } from "@/lib/arabicCount";
+import { POINT, ROUND } from "@/lib/messages";
 
 interface AttemptState {
   attemptId: string;
@@ -281,7 +282,7 @@ export default function CompetitionView({
               <p className="text-xl font-black text-white">{texts.competitionOver}</p>
               {standings.roundCount !== null && (
                 <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
-                  {countedNoun(standings.roundCount, ROUNDS)}
+                  {counted(standings.roundCount, ROUND)}
                 </p>
               )}
             </>
@@ -320,7 +321,7 @@ export default function CompetitionView({
               <p className="text-lg font-black text-white">{texts.roundDone}</p>
               {standings.me?.score != null && (
                 <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
-                  {texts.yourRoundScore(countedNoun(standings.me.score, POINTS))}
+                  {texts.yourRoundScore(counted(standings.me.score, POINT))}
                 </p>
               )}
               {standings.next && (

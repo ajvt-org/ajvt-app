@@ -334,7 +334,7 @@ describe("TeamCard", () => {
     show([], { min: 4, max: 4 });
 
     expect(screen.getByText("لا يوجد لاعبون بعد")).toBeDefined();
-    expect(screen.getByText("0 لاعب")).toBeDefined();
+    expect(screen.getByText("0 لاعبين")).toBeDefined();
   });
 
   it("shows open or closed as it is told, and asks to be toggled", () => {

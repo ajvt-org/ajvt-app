@@ -7,7 +7,8 @@ import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import AnswerReview, { type Review } from "@/components/AnswerReview";
 import type { AttemptSummary } from "./types";
-import { countedNoun, CORRECT_ANSWERS, QUESTIONS } from "@/lib/arabicPlural";
+import { counted } from "@/lib/arabicCount";
+import { CORRECT_ANSWER, QUESTION } from "@/lib/messages";
 
 export default function MyScores({ competitionId }: { competitionId: string }) {
   const [rounds, setRounds] = useState<AttemptSummary[] | null>(null);
@@ -100,7 +101,7 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
                     "لم تشارك"
                   ) : (
                     <NumericRanges>
-                      {`${countedNoun(round.correct, CORRECT_ANSWERS)} من ${countedNoun(round.total, QUESTIONS)}`}
+                      {`${counted(round.correct, CORRECT_ANSWER)} من ${counted(round.total, QUESTION)}`}
                     </NumericRanges>
                   )}
                 </span>

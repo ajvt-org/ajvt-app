@@ -7,7 +7,8 @@ import AttemptQuestion from "./AttemptQuestion";
 import { gradeTutorial } from "@/lib/quizTutorial";
 import type { TutorialView } from "@/lib/quizTutorialServer";
 import type { ScoreCurve } from "@/lib/competitionConfig";
-import { countedNoun, POINTS } from "@/lib/arabicPlural";
+import { counted } from "@/lib/arabicCount";
+import { POINT } from "@/lib/messages";
 
 export default function TutorialQuiz({
   questions,
@@ -133,7 +134,7 @@ export default function TutorialQuiz({
         >
           <Icon name="star" size={22} filled color="var(--copper-300)" />
           <span className="text-2xl font-black tabular-nums">
-            <NumericRanges>{`مجموعك ${countedNoun(score, POINTS)}`}</NumericRanges>
+            <NumericRanges>{`مجموعك ${counted(score, POINT)}`}</NumericRanges>
           </span>
         </div>
         <p className="relative text-xs mt-2" style={{ color: "rgba(255,255,255,0.55)" }}>

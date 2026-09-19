@@ -5,8 +5,9 @@ import Icon from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import QuestionTimer from "./QuestionTimer";
 import type { ScoreCurve } from "@/lib/competitionConfig";
-import { countedNoun, ANSWERS } from "@/lib/arabicPlural";
 import { QUESTION_THEME } from "./questionTheme";
+import { counted } from "@/lib/arabicCount";
+import { ANSWER } from "@/lib/messages";
 
 export interface AttemptOption {
   id: string;
@@ -101,7 +102,7 @@ export default function AttemptQuestion({
 
           {many && (
             <p className="text-xs text-center" style={theme.hint}>
-              <NumericRanges>{`اختر ${countedNoun(question.correctCount, ANSWERS)}`}</NumericRanges>
+              <NumericRanges>{`اختر ${counted(question.correctCount, ANSWER)}`}</NumericRanges>
             </p>
           )}
 
