@@ -14,7 +14,7 @@ interface SeriesActivity {
   levels: LevelRow[];
 }
 
-const TEAM_SIDE = { select: { id: true, name: true, logo: true } } as const;
+const TEAM_SIDE = { select: { id: true, name: true, logo: true, disabledAt: true } } as const;
 
 export const MATCH_INCLUDE = {
   homeTeam: TEAM_SIDE,
