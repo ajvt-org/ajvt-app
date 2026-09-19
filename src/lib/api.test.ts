@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { api, ApiError, errorMessage } from "./api";
+import { onDataChange, forgetDataListeners } from "./dataChanged";
 
 function mockFetch(status: number, body: unknown, ok = status >= 200 && status < 300) {
   const fn = vi.fn().mockResolvedValue({
@@ -13,6 +14,7 @@ function mockFetch(status: number, body: unknown, ok = status >= 200 && status <
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  forgetDataListeners();
 });
 
 describe("api", () => {
@@ -128,5 +130,48 @@ describe("errorMessage", () => {
 
     expect(logged).toHaveBeenCalledWith(raised);
     logged.mockRestore();
+  });
+});
+
+describe("telling the screens a change landed", () => {
+  it("announces after a write", async () => {
+    mockFetch(200, {});
+    const heard = vi.fn();
+    onDataChange(heard);
+
+    await api.patch("/api/admin/teams/t1", { disabled: true });
+
+    expect(heard).toHaveBeenCalledOnce();
+  });
+
+  it("announces after a delete and after a post", async () => {
+    mockFetch(200, {});
+    const heard = vi.fn();
+    onDataChange(heard);
+
+    await api.del("/api/admin/teams/t1");
+    await api.post("/api/admin/teams", { name: "فريق" });
+
+    expect(heard).toHaveBeenCalledTimes(2);
+  });
+
+  it("stays quiet on a read", async () => {
+    mockFetch(200, { teams: [] });
+    const heard = vi.fn();
+    onDataChange(heard);
+
+    await api.get("/api/admin/teams");
+
+    expect(heard).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet when the write was refused", async () => {
+    mockFetch(400, { error: "لا" });
+    const heard = vi.fn();
+    onDataChange(heard);
+
+    await expect(api.patch("/api/admin/teams/t1", {})).rejects.toBeInstanceOf(ApiError);
+
+    expect(heard).not.toHaveBeenCalled();
   });
 });

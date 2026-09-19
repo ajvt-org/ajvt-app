@@ -1,3 +1,5 @@
+import { announceChange } from "./dataChanged";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -23,6 +25,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     const message = body && typeof body.error === "string" ? body.error : FAILED;
     throw new ApiError(message, res.status);
   }
+  if (init?.method && init.method !== "GET") announceChange();
   return body as T;
 }
 
