@@ -15,6 +15,11 @@ export interface StandingsBookingInput {
   cardType: string;
 }
 
+export interface StandingsGoalInput {
+  teamId: string;
+  count: number;
+}
+
 export interface StandingsMatchInput {
   firstTeam: { id: string } | null;
   secondTeam: { id: string } | null;
@@ -24,6 +29,8 @@ export interface StandingsMatchInput {
   status: string;
   isKnockout: boolean;
   bookings?: StandingsBookingInput[];
+  forfeitWinnerTeamId?: string | null;
+  goals?: StandingsGoalInput[];
 }
 
 export const WIN_POINTS = 3;
@@ -42,6 +49,11 @@ function pointsFor(scored: { a: number; b: number }, series: boolean): { a: numb
   if (scored.a > scored.b) return { a: WIN_POINTS, b: 0 };
   if (scored.b > scored.a) return { a: 0, b: WIN_POINTS };
   return { a: DRAW_POINTS, b: DRAW_POINTS };
+}
+
+interface SideScore {
+  scored: number;
+  conceded: number;
 }
 
 export interface StandingsRow {
@@ -87,6 +99,28 @@ function sides(m: StandingsMatchInput): { homeId: string; awayId: string } | nul
   return { homeId: m.firstTeam.id, awayId: m.secondTeam.id };
 }
 
+function goalsBy(m: StandingsMatchInput, teamId: string): number {
+  return (m.goals ?? []).reduce((all, g) => (g.teamId === teamId ? all + g.count : all), 0);
+}
+
+function awardPadsTheScore(m: StandingsMatchInput): boolean {
+  return m.goals !== undefined && !m.series && !!m.forfeitWinnerTeamId;
+}
+
+function tallied(
+  m: StandingsMatchInput,
+  scored: { a: number; b: number },
+  pair: { homeId: string; awayId: string },
+): { home: SideScore; away: SideScore } {
+  const home = { scored: scored.a, conceded: scored.b };
+  const away = { scored: scored.b, conceded: scored.a };
+  if (awardPadsTheScore(m)) {
+    if (m.forfeitWinnerTeamId === pair.homeId) home.scored = goalsBy(m, pair.homeId);
+    else if (m.forfeitWinnerTeamId === pair.awayId) away.scored = goalsBy(m, pair.awayId);
+  }
+  return { home, away };
+}
+
 function counted(row: StandingsRow, opponent: StandingsRow): boolean {
   return row.disabled || !opponent.disabled;
 }
@@ -114,10 +148,11 @@ function tally(
     const takeHome = counted(home, away);
     const takeAway = counted(away, home);
     const gained = pointsFor(scored, series);
+    const goals = tallied(m, scored, pair);
     if (takeHome) {
       home.played++;
-      home.scoredFor += scored.a;
-      home.scoredAgainst += scored.b;
+      home.scoredFor += goals.home.scored;
+      home.scoredAgainst += goals.home.conceded;
       home.points += gained.a;
       if (scored.a > scored.b) home.won++;
       else if (scored.a < scored.b) home.lost++;
@@ -125,8 +160,8 @@ function tally(
     }
     if (takeAway) {
       away.played++;
-      away.scoredFor += scored.b;
-      away.scoredAgainst += scored.a;
+      away.scoredFor += goals.away.scored;
+      away.scoredAgainst += goals.away.conceded;
       away.points += gained.b;
       if (scored.b > scored.a) away.won++;
       else if (scored.b < scored.a) away.lost++;
@@ -163,10 +198,11 @@ function headToHead(
     if (!ids.has(pair.homeId) || !ids.has(pair.awayId)) return;
     const home = mini.get(pair.homeId)!;
     const away = mini.get(pair.awayId)!;
-    home.scoredFor += scored.a;
-    home.scoredAgainst += scored.b;
-    away.scoredFor += scored.b;
-    away.scoredAgainst += scored.a;
+    const goals = tallied(m, scored, pair);
+    home.scoredFor += goals.home.scored;
+    home.scoredAgainst += goals.home.conceded;
+    away.scoredFor += goals.away.scored;
+    away.scoredAgainst += goals.away.conceded;
     const gained = pointsFor(scored, series);
     home.points += gained.a;
     away.points += gained.b;

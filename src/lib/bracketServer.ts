@@ -323,6 +323,8 @@ async function groupTables(activityId: string) {
         moves: { orderBy: { createdAt: "asc" }, include: { rule: true } },
         homeScore: true,
         awayScore: true,
+        forfeitWinnerTeamId: true,
+        goals: { select: { teamId: true, count: true } },
         status: true,
         isKnockout: true,
         bookings: { select: { teamId: true, cardType: true } },
