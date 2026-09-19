@@ -22,6 +22,7 @@ function match(): DecidedMatch {
     awayPenalties: null,
     status: "PLAYED",
     forfeitWinnerTeamId: null,
+    forfeitExtraGoals: 0,
     manOfTheMatch: { id: "p1", fullName: "أحمد ولد محمد", photo: null },
     goals: [
       {

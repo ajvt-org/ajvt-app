@@ -110,6 +110,7 @@ export interface Match {
   awayPenalties: number | null;
   manOfTheMatch: { id: string; fullName: string; photo: string | null } | null;
   forfeitWinnerTeamId: string | null;
+  forfeitExtraGoals: number;
   status: "SCHEDULED" | "PLAYED";
   goals: MatchGoal[];
   bookings: MatchBooking[];

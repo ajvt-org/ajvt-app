@@ -53,6 +53,7 @@ export type PublicMatch = {
   awayPenalties: number | null;
   status: string;
   forfeitWinnerTeamId: string | null;
+  forfeitExtraGoals: number;
   manOfTheMatch: MatchPlayer | null;
   goals: MatchGoal[];
   penaltyKicks: MatchKick[];

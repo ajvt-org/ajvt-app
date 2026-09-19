@@ -34,6 +34,7 @@ const MATCH: DecidedMatch = {
   awayPenalties: null,
   manOfTheMatch: null,
   forfeitWinnerTeamId: null,
+  forfeitExtraGoals: 0,
   status: "SCHEDULED",
   goals: [],
   penaltyKicks: [],
