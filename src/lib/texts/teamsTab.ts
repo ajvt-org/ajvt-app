@@ -17,6 +17,8 @@ export const teamsTab = {
   save: "حفظ",
   cancel: "إلغاء",
   deleteTeam: "حذف الفريق",
+  disableTeam: "تعطيل الفريق",
+  enableTeam: "إرجاع الفريق",
   teamLogo: "شعار الفريق",
   changeTeamLogo: "تغيير شعار الفريق",
   renameTeam: "تعديل اسم الفريق",

@@ -10,14 +10,14 @@ import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
 import { rosterFault, squadIsBarred, type SquadSize } from "@/lib/squadSize";
 import { isInvitation, isMember, isRequest } from "@/lib/teamInvites";
-const COMPLETE = { background: "#d1fae5", color: "#065f46" };
-const SHORT = { background: "#fef3c7", color: "#92400e" };
-const OVER = { background: "#fee2e2", color: "#991b1b" };
+const MINT = { background: "#d1fae5", color: "#065f46" };
+const AMBER = { background: "#fef3c7", color: "#92400e" };
+const RED = { background: "#fee2e2", color: "#991b1b" };
 
 function rosterTone(count: number, squad: SquadSize) {
   const fault = rosterFault(count, squad);
-  if (fault === null) return COMPLETE;
-  return fault === "short" ? SHORT : OVER;
+  if (fault === null) return MINT;
+  return fault === "short" ? AMBER : RED;
 }
 
 export default function TeamSummary({
@@ -30,6 +30,7 @@ export default function TeamSummary({
   onRenameTeam,
   onSetLogo,
   onDeleteTeam,
+  onSetDisabled,
 }: {
   team: Team;
   shownName: string;
@@ -40,12 +41,14 @@ export default function TeamSummary({
   onRenameTeam: (name: string) => void;
   onSetLogo: (filename: string) => Promise<void>;
   onDeleteTeam: () => void;
+  onSetDisabled: (disabled: boolean) => void;
 }) {
   const count = team.members.filter(isMember).length;
   const requests = team.members.filter(isRequest).length;
   const invitations = team.members.filter(isInvitation).length;
   const tone = rosterTone(count, squad);
   const barred = squadIsBarred(squad);
+  const off = team.disabledAt !== null;
 
   return (
     <summary
@@ -63,19 +66,34 @@ export default function TeamSummary({
         onRenameTeam={onRenameTeam}
         onSetLogo={onSetLogo}
         controls={
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDeleteTeam();
-            }}
-            disabled={busy}
-            aria-label={teamsTab.deleteTeam}
-            className={SQUARE}
-            style={{ background: "#fee2e2", color: "#991b1b" }}
-          >
-            <Icon name="trash" size={ROW_ACTION_ICON} />
-          </button>
+          <>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onSetDisabled(!off);
+              }}
+              disabled={busy}
+              aria-label={off ? teamsTab.enableTeam : teamsTab.disableTeam}
+              className={SQUARE}
+              style={off ? MINT : AMBER}
+            >
+              <Icon name={off ? "refresh" : "ban"} size={ROW_ACTION_ICON} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDeleteTeam();
+              }}
+              disabled={busy}
+              aria-label={teamsTab.deleteTeam}
+              className={SQUARE}
+              style={RED}
+            >
+              <Icon name="trash" size={ROW_ACTION_ICON} />
+            </button>
+          </>
         }
         marker={<Icon name="chevronDown" size={14} className="disclosure-chevron" />}
       >

@@ -7,11 +7,17 @@ export interface StandingsTeamInput {
   groupId?: string | null;
   logo?: string | null;
   photo?: string | null;
+  disabledAt?: Date | string | null;
 }
 
 export interface StandingsBookingInput {
   teamId: string;
   cardType: string;
+}
+
+export interface StandingsGoalInput {
+  teamId: string;
+  count: number;
 }
 
 export interface StandingsMatchInput {
@@ -23,6 +29,8 @@ export interface StandingsMatchInput {
   status: string;
   isKnockout: boolean;
   bookings?: StandingsBookingInput[];
+  forfeitWinnerTeamId?: string | null;
+  goals?: StandingsGoalInput[];
 }
 
 export const WIN_POINTS = 3;
@@ -43,6 +51,11 @@ function pointsFor(scored: { a: number; b: number }, series: boolean): { a: numb
   return { a: DRAW_POINTS, b: DRAW_POINTS };
 }
 
+interface SideScore {
+  scored: number;
+  conceded: number;
+}
+
 export interface StandingsRow {
   teamId: string;
   name: string;
@@ -58,6 +71,7 @@ export interface StandingsRow {
   points: number;
   cardPoints: number;
   unresolved: boolean;
+  disabled: boolean;
 }
 
 function blank(team: StandingsTeamInput): StandingsRow {
@@ -76,12 +90,39 @@ function blank(team: StandingsTeamInput): StandingsRow {
     points: 0,
     cardPoints: 0,
     unresolved: false,
+    disabled: team.disabledAt != null,
   };
 }
 
 function sides(m: StandingsMatchInput): { homeId: string; awayId: string } | null {
   if (!m.firstTeam || !m.secondTeam) return null;
   return { homeId: m.firstTeam.id, awayId: m.secondTeam.id };
+}
+
+function goalsBy(m: StandingsMatchInput, teamId: string): number {
+  return (m.goals ?? []).reduce((all, g) => (g.teamId === teamId ? all + g.count : all), 0);
+}
+
+function awardPadsTheScore(m: StandingsMatchInput): boolean {
+  return m.goals !== undefined && !m.series && !!m.forfeitWinnerTeamId;
+}
+
+function tallied(
+  m: StandingsMatchInput,
+  scored: { a: number; b: number },
+  pair: { homeId: string; awayId: string },
+): { home: SideScore; away: SideScore } {
+  const home = { scored: scored.a, conceded: scored.b };
+  const away = { scored: scored.b, conceded: scored.a };
+  if (awardPadsTheScore(m)) {
+    if (m.forfeitWinnerTeamId === pair.homeId) home.scored = goalsBy(m, pair.homeId);
+    else if (m.forfeitWinnerTeamId === pair.awayId) away.scored = goalsBy(m, pair.awayId);
+  }
+  return { home, away };
+}
+
+function counted(row: StandingsRow, opponent: StandingsRow): boolean {
+  return row.disabled || !opponent.disabled;
 }
 
 function counts(matches: StandingsMatchInput[]): boolean[] {
@@ -104,28 +145,33 @@ function tally(
     const home = table.get(pair.homeId);
     const away = table.get(pair.awayId);
     if (!home || !away) return;
-    home.played++;
-    away.played++;
-    home.scoredFor += scored.a;
-    home.scoredAgainst += scored.b;
-    away.scoredFor += scored.b;
-    away.scoredAgainst += scored.a;
+    const takeHome = counted(home, away);
+    const takeAway = counted(away, home);
     const gained = pointsFor(scored, series);
-    home.points += gained.a;
-    away.points += gained.b;
-    if (scored.a > scored.b) {
-      home.won++;
-      away.lost++;
-    } else if (scored.a < scored.b) {
-      away.won++;
-      home.lost++;
-    } else {
-      home.drawn++;
-      away.drawn++;
+    const goals = tallied(m, scored, pair);
+    if (takeHome) {
+      home.played++;
+      home.scoredFor += goals.home.scored;
+      home.scoredAgainst += goals.home.conceded;
+      home.points += gained.a;
+      if (scored.a > scored.b) home.won++;
+      else if (scored.a < scored.b) home.lost++;
+      else home.drawn++;
+    }
+    if (takeAway) {
+      away.played++;
+      away.scoredFor += goals.away.scored;
+      away.scoredAgainst += goals.away.conceded;
+      away.points += gained.b;
+      if (scored.b > scored.a) away.won++;
+      else if (scored.b < scored.a) away.lost++;
+      else away.drawn++;
     }
     for (const booking of m.bookings ?? []) {
       const row = table.get(booking.teamId);
-      if (row) row.cardPoints += booking.cardType === "RED" ? RED_POINTS : YELLOW_POINTS;
+      if (!row) continue;
+      const take = row === home ? takeHome : row === away ? takeAway : false;
+      if (take) row.cardPoints += booking.cardType === "RED" ? RED_POINTS : YELLOW_POINTS;
     }
   });
 
@@ -135,7 +181,11 @@ function tally(
   }));
 }
 
-function headToHead(rows: StandingsRow[], matches: StandingsMatchInput[]): Map<string, number[]> {
+function headToHead(
+  rows: StandingsRow[],
+  matches: StandingsMatchInput[],
+  series: boolean,
+): Map<string, number[]> {
   const ids = new Set(rows.map((r) => r.teamId));
   const mini = new Map(rows.map((r) => [r.teamId, { points: 0, scoredFor: 0, scoredAgainst: 0 }]));
   const played = counts(matches);
@@ -143,20 +193,19 @@ function headToHead(rows: StandingsRow[], matches: StandingsMatchInput[]): Map<s
   matches.forEach((m, i) => {
     if (!played[i]) return;
     const pair = sides(m);
-    if (!pair) return;
+    const scored = scoredIn(m);
+    if (!pair || !scored) return;
     if (!ids.has(pair.homeId) || !ids.has(pair.awayId)) return;
     const home = mini.get(pair.homeId)!;
     const away = mini.get(pair.awayId)!;
-    home.scoredFor += m.homeScore!;
-    home.scoredAgainst += m.awayScore!;
-    away.scoredFor += m.awayScore!;
-    away.scoredAgainst += m.homeScore!;
-    if (m.homeScore! > m.awayScore!) home.points += 3;
-    else if (m.homeScore! < m.awayScore!) away.points += 3;
-    else {
-      home.points += 1;
-      away.points += 1;
-    }
+    const goals = tallied(m, scored, pair);
+    home.scoredFor += goals.home.scored;
+    home.scoredAgainst += goals.home.conceded;
+    away.scoredFor += goals.away.scored;
+    away.scoredAgainst += goals.away.conceded;
+    const gained = pointsFor(scored, series);
+    home.points += gained.a;
+    away.points += gained.b;
   });
 
   return new Map(
@@ -169,11 +218,11 @@ function headToHead(rows: StandingsRow[], matches: StandingsMatchInput[]): Map<s
 
 type Key = (row: StandingsRow) => number;
 
-function split(rows: StandingsRow[], key: Key): StandingsRow[][] {
+function split(rows: StandingsRow[], keys: Key[]): StandingsRow[][] {
   const blocks: StandingsRow[][] = [];
   for (const row of rows) {
     const last = blocks[blocks.length - 1];
-    if (last && key(last[0]) === key(row)) last.push(row);
+    if (last && keys.every((key) => key(last[0]) === key(row))) last.push(row);
     else blocks.push([row]);
   }
   return blocks;
@@ -189,39 +238,45 @@ function byKeys(rows: StandingsRow[], keys: Key[]): StandingsRow[] {
   });
 }
 
-function rank(rows: StandingsRow[], matches: StandingsMatchInput[]): StandingsRow[] {
+const OVERALL_KEYS: Key[] = [(r) => r.difference, (r) => r.scoredFor, (r) => -r.cardPoints];
+
+function rank(
+  rows: StandingsRow[],
+  matches: StandingsMatchInput[],
+  series: boolean,
+): StandingsRow[] {
   if (rows.length < 2) return rows;
 
-  const h2h = headToHead(rows, matches);
-  const at =
-    (i: number): Key =>
-    (row) =>
-      h2h.get(row.teamId)![i];
+  const h2h = headToHead(rows, matches, series);
+  const keys = [0, 1, 2].map(
+    (i): Key =>
+      (row) =>
+        h2h.get(row.teamId)![i],
+  );
+  const blocks = split(byKeys(rows, keys), keys);
+  if (blocks.length === 1) return byOverall(rows, matches, series);
+  return blocks.flatMap((block) => rank(block, matches, series));
+}
 
-  const ordered = byKeys(rows, [
-    at(0),
-    at(1),
-    at(2),
-    (r) => r.difference,
-    (r) => r.scoredFor,
-    (r) => -r.cardPoints,
-  ]);
+function byOverall(
+  rows: StandingsRow[],
+  matches: StandingsMatchInput[],
+  series: boolean,
+): StandingsRow[] {
+  const blocks = split(byKeys(rows, OVERALL_KEYS), OVERALL_KEYS);
+  if (blocks.length === 1) return rows.map((row) => ({ ...row, unresolved: true }));
+  return blocks.flatMap((block) => rank(block, matches, series));
+}
 
-  const same = (a: StandingsRow, b: StandingsRow) =>
-    [
-      at(0),
-      at(1),
-      at(2),
-      (r: StandingsRow) => r.difference,
-      (r: StandingsRow) => r.scoredFor,
-    ].every((key) => key(a) === key(b)) && a.cardPoints === b.cardPoints;
-
-  return ordered.map((row, i) => {
-    const before = ordered[i - 1];
-    const after = ordered[i + 1];
-    const tied = (before && same(before, row)) || (after && same(after, row));
-    return tied ? { ...row, unresolved: true } : row;
-  });
+function ordered(
+  rows: StandingsRow[],
+  matches: StandingsMatchInput[],
+  series: boolean,
+): StandingsRow[] {
+  const sorted = [...rows].sort(
+    (a, b) => b.points - a.points || a.name.localeCompare(b.name, "ar"),
+  );
+  return split(sorted, [(r) => r.points]).flatMap((block) => rank(block, matches, series));
 }
 
 export function computeStandings(
@@ -229,10 +284,19 @@ export function computeStandings(
   matches: StandingsMatchInput[],
   series = false,
 ): StandingsRow[] {
-  const rows = tally(teams, matches, series).sort(
-    (a, b) => b.points - a.points || a.name.localeCompare(b.name, "ar"),
-  );
-  return split(rows, (r) => r.points).flatMap((block) => rank(block, matches));
+  const rows = tally(teams, matches, series);
+  return [
+    ...ordered(
+      rows.filter((r) => !r.disabled),
+      matches,
+      series,
+    ),
+    ...ordered(
+      rows.filter((r) => r.disabled),
+      matches,
+      series,
+    ),
+  ];
 }
 
 export function groupStandings(

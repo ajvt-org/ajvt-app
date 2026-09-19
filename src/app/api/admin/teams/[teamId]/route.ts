@@ -8,12 +8,21 @@ import { entrantWording, tournament } from "@/lib/messages";
 import { entrantOfActivity } from "@/lib/entrantServer";
 import { captainIsOnTheRoster } from "@/lib/teamCaptainServer";
 
+function teamAction(
+  before: { disabledAt: Date | null },
+  after: { disabledAt: Date | null },
+): "DISABLE_TEAM" | "ENABLE_TEAM" | "UPDATE_TEAM" {
+  if (before.disabledAt === null && after.disabledAt !== null) return "DISABLE_TEAM";
+  if (before.disabledAt !== null && after.disabledAt === null) return "ENABLE_TEAM";
+  return "UPDATE_TEAM";
+}
+
 export const PATCH = withRoute(
   "PATCH /api/admin/teams/[teamId]",
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const { teamId } = await params;
     const session = await requireTeamAccess(teamId);
-    const { name, groupId, logo, captainUserId, fromHomeVillage } = await req.json();
+    const { name, groupId, logo, captainUserId, fromHomeVillage, disabled } = await req.json();
 
     const existing = await prisma.team.findUnique({ where: { id: teamId } });
     if (!existing) {
@@ -27,6 +36,7 @@ export const PATCH = withRoute(
       logo?: string | null;
       captainUserId?: string | null;
       fromHomeVillage?: boolean;
+      disabledAt?: Date | null;
     } = {};
 
     if (name !== undefined) {
@@ -54,13 +64,7 @@ export const PATCH = withRoute(
           select: { id: true },
         });
         if (hasMatches) {
-          return NextResponse.json(
-            {
-              error:
-                "لا يمكن تغيير مجموعة فريق لديه مباريات مسجَّلة بالفعل — احذف مباريات هذا الفريق أولاً ثم أعد التوليد",
-            },
-            { status: 409 },
-          );
+          return NextResponse.json({ error: tournament.groupLockedByMatches }, { status: 409 });
         }
       }
       data.groupId = newGroupId;
@@ -78,9 +82,12 @@ export const PATCH = withRoute(
     if (fromHomeVillage !== undefined) {
       data.fromHomeVillage = !!fromHomeVillage;
     }
+    if (disabled !== undefined) {
+      data.disabledAt = disabled ? (existing.disabledAt ?? new Date()) : null;
+    }
 
     const team = await prisma.team.update({ where: { id: teamId }, data });
-    await logAction(session.username, "UPDATE_TEAM", team.name, {
+    await logAction(session.username, teamAction(existing, team), team.name, {
       ...auditContext(session, req),
       targetType: "Team",
       targetId: team.id,
@@ -91,6 +98,7 @@ export const PATCH = withRoute(
         logo: team.logo,
         captainUserId: team.captainUserId,
         fromHomeVillage: team.fromHomeVillage,
+        disabledAt: team.disabledAt,
       },
     });
 

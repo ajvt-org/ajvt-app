@@ -35,6 +35,7 @@ export interface Team {
   name: string;
   autoNamed: boolean;
   fromHomeVillage: boolean;
+  disabledAt: string | null;
   logo: string | null;
   captainUserId: string | null;
   groupId: string | null;
@@ -85,10 +86,18 @@ export interface MvpVote {
   candidates: MvpCandidate[];
 }
 
+export interface MatchSide {
+  id: string;
+  name: string;
+  logo: string | null;
+  photo?: string | null;
+  disabledAt?: string | null;
+}
+
 export interface Match {
   id: string;
-  firstTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
-  secondTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
+  firstTeam: MatchSide | null;
+  secondTeam: MatchSide | null;
   matchDate: string | null;
   round: string | null;
   venue: string | null;

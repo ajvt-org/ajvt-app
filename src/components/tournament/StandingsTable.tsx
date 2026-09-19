@@ -17,6 +17,7 @@ type Row = {
   scoredFor: number;
   scoredAgainst: number;
   difference: number;
+  disabled?: boolean;
 };
 
 const columnTexts = texts.standingsColumns;
@@ -38,6 +39,7 @@ function columnsFor(series: boolean): { label: string; detail: boolean; start?: 
 
 const VIEWER_ROW = { background: "var(--mint-50)" };
 const VIEWER_EDGE = { borderInlineStart: "3px solid var(--mint-600)" };
+const DISABLED_ROW = { opacity: 0.5, color: "var(--text-muted)" };
 
 export default function StandingsTable({
   title,
@@ -87,12 +89,16 @@ export default function StandingsTable({
                 style={{
                   borderTop: "1px solid var(--mint-100)",
                   ...(mine ? VIEWER_ROW : {}),
+                  ...(row.disabled ? DISABLED_ROW : {}),
                 }}
               >
                 <td className="px-2 py-2 text-center" style={mine ? VIEWER_EDGE : undefined}>
                   {i + 1}
                 </td>
-                <td className="px-2 py-2 font-bold text-xs" style={{ color: "var(--text-main)" }}>
+                <td
+                  className="px-2 py-2 font-bold text-xs"
+                  style={{ color: row.disabled ? "var(--text-muted)" : "var(--text-main)" }}
+                >
                   <span className="flex items-center gap-1.5 justify-start">
                     <TeamLogo
                       logo={row.logo}
@@ -102,11 +108,12 @@ export default function StandingsTable({
                       entrant={entrant}
                     />
                     <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
+                    {row.disabled && <span className="badge">{texts.disabledTeam}</span>}
                   </span>
                 </td>
                 <td
                   className="px-2 py-2 text-center font-black"
-                  style={{ color: "var(--mint-700)" }}
+                  style={{ color: row.disabled ? "var(--text-muted)" : "var(--mint-700)" }}
                 >
                   {count(row.points)}
                 </td>

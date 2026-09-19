@@ -4,7 +4,13 @@ import type {
   SeriesStandingRow,
 } from "@/components/admin/tournament/seriesTypes";
 
-export type MatchTeam = { id: string; name: string; logo: string | null; photo?: string | null };
+export type MatchTeam = {
+  id: string;
+  name: string;
+  logo: string | null;
+  photo?: string | null;
+  disabledAt?: Date | string | null;
+};
 
 export type MatchPlayer = { id: string; fullName: string; photo: string | null };
 

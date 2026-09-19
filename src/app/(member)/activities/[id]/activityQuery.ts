@@ -18,7 +18,7 @@ function seriesOf(
   return { units: toNodes(resolved.units), series: resolved.standing };
 }
 
-const MATCH_SIDE = { select: { id: true, name: true, logo: true } } as const;
+const MATCH_SIDE = { select: { id: true, name: true, logo: true, disabledAt: true } } as const;
 
 export const ACTIVITY_SELECT = {
   photo: true,
@@ -61,6 +61,7 @@ async function loadActivity(id: string) {
           logo: true,
           groupId: true,
           captainUserId: true,
+          disabledAt: true,
           members: {
             select: {
               userId: true,

@@ -45,6 +45,7 @@ function team(members: TeamMemberEntry[], captainUserId: string | null = null): 
     name: "فريق النجم",
     autoNamed: false,
     fromHomeVillage: true,
+    disabledAt: null,
     logo: null,
     captainUserId,
     groupId: null,
@@ -57,6 +58,7 @@ const handlers = {
   onToggle: vi.fn(),
   onRenameTeam: vi.fn(),
   onDeleteTeam: vi.fn(),
+  onSetDisabled: vi.fn(),
   onSetLogo: vi.fn(),
   onSetCaptain: vi.fn(),
   onAddMember: vi.fn(),
@@ -370,6 +372,54 @@ describe("TeamCard", () => {
     fireEvent.click(screen.getByLabelText("حذف الفريق"));
 
     expect(handlers.onDeleteTeam).toHaveBeenCalled();
+    expect(handlers.onToggle).not.toHaveBeenCalled();
+    expect(card.open).toBe(false);
+  });
+
+  it("offers to disable a team that is still counting", () => {
+    handlers.onSetDisabled.mockClear();
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 }, null, false);
+
+    expect(screen.queryByLabelText(teamsTab.enableTeam)).toBeNull();
+    fireEvent.click(screen.getByLabelText(teamsTab.disableTeam));
+
+    expect(handlers.onSetDisabled).toHaveBeenCalledWith(true);
+  });
+
+  it("offers to bring a disabled team back", () => {
+    handlers.onSetDisabled.mockClear();
+    cleanup();
+    render(
+      <TeamCard
+        team={{ ...team([]), disabledAt: "2026-09-19T00:00:00.000Z" }}
+        shownName="فريق النجم"
+        settings={{
+          squad: { min: 1, max: 1 },
+          organisedByHomeVillage: false,
+          outsidePlayerLimit: null,
+        }}
+        breaches={[]}
+        members={[]}
+        open={false}
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    expect(screen.queryByLabelText(teamsTab.disableTeam)).toBeNull();
+    fireEvent.click(screen.getByLabelText(teamsTab.enableTeam));
+
+    expect(handlers.onSetDisabled).toHaveBeenCalledWith(false);
+  });
+
+  it("disables the team without opening the card", () => {
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 }, null, false);
+
+    const card = document.querySelector("details") as HTMLDetailsElement;
+    fireEvent.click(screen.getByLabelText(teamsTab.disableTeam));
+
     expect(handlers.onToggle).not.toHaveBeenCalled();
     expect(card.open).toBe(false);
   });

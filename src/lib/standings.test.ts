@@ -362,3 +362,190 @@ describe("a table ranked on parts", () => {
     expect(rows.find((r) => r.teamId === "a")!.points).toBe(3);
   });
 });
+
+describe("a disabled team", () => {
+  const withDisabled = [
+    { id: "a", name: "ألف" },
+    { id: "b", name: "باء" },
+    { id: "c", name: "جيم", disabledAt: new Date("2026-09-19T00:00:00.000Z") },
+  ];
+
+  it("takes its matches out of every other team's tally", () => {
+    const table = computeStandings(withDisabled, [
+      match("a", "b", 1, 0),
+      match("a", "c", 4, 0),
+      match("b", "c", 0, 2),
+    ]);
+    const by = Object.fromEntries(table.map((r) => [r.teamId, r]));
+
+    expect([by.a.played, by.a.won, by.a.points]).toEqual([1, 1, 3]);
+    expect([by.a.scoredFor, by.a.scoredAgainst]).toEqual([1, 0]);
+    expect([by.b.played, by.b.lost, by.b.points]).toEqual([1, 1, 0]);
+    expect([by.b.scoredFor, by.b.scoredAgainst]).toEqual([0, 1]);
+  });
+
+  it("keeps the record of its own matches", () => {
+    const table = computeStandings(withDisabled, [match("a", "c", 4, 0), match("b", "c", 0, 2)]);
+    const disabled = table.find((r) => r.teamId === "c")!;
+
+    expect([disabled.played, disabled.won, disabled.lost]).toEqual([2, 1, 1]);
+    expect([disabled.scoredFor, disabled.scoredAgainst]).toEqual([2, 4]);
+    expect(disabled.points).toBe(3);
+    expect(disabled.disabled).toBe(true);
+  });
+
+  it("sits below every active team whatever its points", () => {
+    const table = computeStandings(withDisabled, [
+      match("a", "c", 0, 5),
+      match("b", "c", 0, 5),
+      match("a", "b", 0, 0),
+    ]);
+
+    expect(table.map((r) => r.teamId)).toEqual(["a", "b", "c"]);
+    expect(table[2].points).toBeGreaterThan(table[0].points);
+  });
+
+  it("drops the cards from a match the active team no longer counts", () => {
+    const table = computeStandings(withDisabled, [
+      match("a", "c", 1, 0, { bookings: [{ teamId: "a", cardType: "RED" }] }),
+    ]);
+
+    expect(table.find((r) => r.teamId === "a")!.cardPoints).toBe(0);
+  });
+
+  it("keeps counting a meeting between two disabled teams", () => {
+    const bothOff = [
+      { id: "a", name: "ألف" },
+      { id: "b", name: "باء", disabledAt: new Date("2026-09-19T00:00:00.000Z") },
+      { id: "c", name: "جيم", disabledAt: new Date("2026-09-19T00:00:00.000Z") },
+    ];
+    const table = computeStandings(bothOff, [match("b", "c", 2, 1)]);
+    const by = Object.fromEntries(table.map((r) => [r.teamId, r]));
+
+    expect([by.b.played, by.b.points]).toEqual([1, 3]);
+    expect([by.c.played, by.c.points]).toEqual([1, 0]);
+  });
+
+  it("marks an active team as not disabled", () => {
+    const table = computeStandings(teams, [match("a", "b", 1, 0)]);
+
+    expect(table.every((r) => r.disabled === false)).toBe(true);
+  });
+});
+
+describe("a tie left over after the first mini table", () => {
+  const four = [
+    { id: "a", name: "ألف" },
+    { id: "b", name: "باء" },
+    { id: "c", name: "جيم" },
+    { id: "d", name: "دال" },
+  ];
+
+  const cycle = [
+    match("a", "b", 5, 0),
+    match("a", "c", 1, 0),
+    match("a", "d", 1, 0),
+    match("c", "b", 1, 0),
+    match("d", "c", 1, 0),
+    match("b", "d", 1, 0),
+  ];
+
+  it("settles the teams still level on the meeting between them", () => {
+    const table = computeStandings(four, cycle);
+
+    expect(table.map((r) => r.teamId)).toEqual(["a", "d", "c", "b"]);
+  });
+
+  it("stops calling that tie unsettled", () => {
+    const table = computeStandings(four, cycle);
+    const mark = (id: string) => table.find((r) => r.teamId === id)!.unresolved;
+
+    expect(mark("c")).toBe(false);
+    expect(mark("d")).toBe(false);
+  });
+
+  it("still marks teams that nothing at all separates", () => {
+    const table = computeStandings(four, [match("a", "b", 0, 0), match("c", "d", 0, 0)]);
+
+    expect(table.every((r) => r.unresolved)).toBe(true);
+  });
+
+  it("reads the meeting between two level sides of a series", () => {
+    const seriesMatch = (a: string, b: string, sideATotal: number, sideBTotal: number) => ({
+      firstTeam: { id: a },
+      secondTeam: { id: b },
+      homeScore: null,
+      awayScore: null,
+      series: { sideATotal, sideBTotal, over: true },
+      status: "PLAYED",
+      isKnockout: false,
+    });
+    const table = computeStandings(
+      four,
+      [seriesMatch("a", "b", 3, 2), seriesMatch("a", "c", 0, 3), seriesMatch("b", "d", 1, 2)],
+      true,
+    );
+
+    expect(table.map((r) => r.teamId)).toEqual(["c", "a", "b", "d"]);
+  });
+});
+
+describe("the goals a forfeit awards", () => {
+  const forfeit = (extra: Partial<StandingsMatchInput> = {}) =>
+    match("a", "b", 3, 0, { forfeitWinnerTeamId: "a", ...extra });
+
+  it("leaves the padding out of what the winner is credited with scoring", () => {
+    const table = computeStandings(teams, [forfeit({ goals: [{ teamId: "a", count: 1 }] })]);
+    const winner = table.find((r) => r.teamId === "a")!;
+
+    expect(winner.scoredFor).toBe(1);
+    expect(winner.scoredAgainst).toBe(0);
+    expect(winner.difference).toBe(1);
+    expect(winner.points).toBe(3);
+  });
+
+  it("still puts the whole awarded score against the team that forfeited", () => {
+    const table = computeStandings(teams, [forfeit({ goals: [{ teamId: "a", count: 1 }] })]);
+    const loser = table.find((r) => r.teamId === "b")!;
+
+    expect(loser.scoredFor).toBe(0);
+    expect(loser.scoredAgainst).toBe(3);
+    expect(loser.points).toBe(0);
+  });
+
+  it("keeps every goal when the winner scored more than the award", () => {
+    const table = computeStandings(teams, [
+      match("a", "b", 5, 0, { forfeitWinnerTeamId: "a", goals: [{ teamId: "a", count: 5 }] }),
+    ]);
+
+    expect(table.find((r) => r.teamId === "a")!.scoredFor).toBe(5);
+  });
+
+  it("drops what the team that forfeited had scored", () => {
+    const table = computeStandings(teams, [
+      forfeit({
+        goals: [
+          { teamId: "a", count: 1 },
+          { teamId: "b", count: 2 },
+        ],
+      }),
+    ]);
+
+    expect(table.find((r) => r.teamId === "b")!.scoredFor).toBe(0);
+  });
+
+  it("counts a match with no goals recorded as it stands", () => {
+    const table = computeStandings(teams, [forfeit()]);
+
+    expect(table.find((r) => r.teamId === "a")!.scoredFor).toBe(3);
+  });
+
+  it("no longer lifts a forfeit winner over a team that scored on the pitch", () => {
+    const table = computeStandings(teams, [
+      match("a", "c", 3, 0, { forfeitWinnerTeamId: "a", goals: [] }),
+      match("b", "c", 1, 0),
+    ]);
+
+    expect(table.map((r) => r.teamId)).toEqual(["b", "a", "c"]);
+  });
+});

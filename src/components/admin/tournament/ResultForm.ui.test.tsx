@@ -64,6 +64,7 @@ function team(id: string, name: string, members: [string, string][]): Team {
     name,
     autoNamed: false,
     fromHomeVillage: true,
+    disabledAt: null,
     logo: null,
     captainUserId: null,
     groupId: null,

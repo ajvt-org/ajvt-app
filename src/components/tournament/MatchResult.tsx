@@ -8,6 +8,7 @@ import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline, withoutScorersAndCards } from "@/lib/matchEvents";
 import { forfeitLoserTeamId } from "@/lib/forfeit";
+import { DISABLED_CARD, matchIsDisabled } from "@/lib/disabledTeam";
 import { isVoteClosed } from "@/lib/mvpVote";
 import { formatTime } from "@/lib/clubTime";
 import type { DecidedMatch, PublicMatch } from "./publicTypes";
@@ -69,7 +70,10 @@ export default function MatchResult({
     });
 
   return (
-    <div className="card p-4 space-y-1.5">
+    <div
+      className="card p-4 space-y-1.5"
+      style={matchIsDisabled(match) ? DISABLED_CARD : undefined}
+    >
       <MatchCardHead time={match.matchDate ? formatTime(match.matchDate) : null}>
         <MatchMeta
           round={round}

@@ -43,6 +43,7 @@ const team = (id: string, name: string): Team => ({
   name,
   autoNamed: false,
   fromHomeVillage: true,
+  disabledAt: null,
   logo: null,
   captainUserId: null,
   groupId: null,
