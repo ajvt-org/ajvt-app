@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
-import { isMoveDirection, moveInOrder } from "@/lib/quizQuestionOrder";
+import { isMoveDirection } from "@/lib/quizQuestionOrder";
 import { common, quiz } from "@/lib/messages";
+import { moveQuestion } from "@/lib/quizQuestionEditServer";
+
+const LABEL_MAX = 60;
 
 export const POST = withRoute(
   "POST /api/admin/quiz/questions/[id]/move",
@@ -21,34 +23,10 @@ export const POST = withRoute(
     }
     if (!isMoveDirection(body.direction)) throw new ValidationError(quiz.unknownDirection);
 
-    const question = await prisma.quizQuestion.findUnique({
-      where: { id },
-      select: { bankId: true, text: true },
-    });
-    if (!question) {
-      return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
-    }
+    const { question, ids } = await moveQuestion(id, body.direction);
 
-    const siblings = await prisma.quizQuestion.findMany({
-      where: { bankId: question.bankId },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true },
-    });
+    await logAction(session.username, "MOVE_QUIZ_QUESTION", question.text.slice(0, LABEL_MAX));
 
-    const wanted = moveInOrder(
-      siblings.map((sibling) => sibling.id),
-      id,
-      body.direction,
-    );
-
-    await prisma.$transaction(
-      wanted.map((questionId, position) =>
-        prisma.quizQuestion.update({ where: { id: questionId }, data: { order: position } }),
-      ),
-    );
-
-    await logAction(session.username, "MOVE_QUIZ_QUESTION", question.text.slice(0, 60));
-
-    return NextResponse.json({ ids: wanted });
+    return NextResponse.json({ ids });
   },
 );
