@@ -26,6 +26,7 @@ export default function TeamCard({
   onToggle,
   onRenameTeam,
   onDeleteTeam,
+  onSetDisabled,
   onSetLogo,
   onSetFromHomeVillage,
   onSetCaptain,
@@ -45,6 +46,7 @@ export default function TeamCard({
   onToggle: (summary: HTMLElement) => void;
   onRenameTeam: (name: string) => void;
   onDeleteTeam: () => void;
+  onSetDisabled: (disabled: boolean) => void;
   onSetLogo: (filename: string) => Promise<void>;
   onSetFromHomeVillage: (value: boolean) => void;
   onSetCaptain: (memberId: string | null) => void;
@@ -70,6 +72,7 @@ export default function TeamCard({
         onRenameTeam={onRenameTeam}
         onSetLogo={onSetLogo}
         onDeleteTeam={onDeleteTeam}
+        onSetDisabled={onSetDisabled}
       />
       <div className="space-y-3 pt-3">
         {settings.organisedByHomeVillage && (

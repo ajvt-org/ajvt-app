@@ -92,6 +92,10 @@ export default function TeamsTab({
     run(() => api.patch(`/api/admin/teams/${teamId}`, { fromHomeVillage }));
   }
 
+  function setDisabled(teamId: string, disabled: boolean) {
+    run(() => api.patch(`/api/admin/teams/${teamId}`, { disabled }));
+  }
+
   function renameTeam(teamId: string, name: string) {
     run(() => api.patch(`/api/admin/teams/${teamId}`, { name }));
   }
@@ -192,6 +196,7 @@ export default function TeamsTab({
           onToggle={(summary) => toggle(team.id, summary)}
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => setAsking(team.id)}
+          onSetDisabled={(value) => setDisabled(team.id, value)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
           onSetFromHomeVillage={(value) => setFromHomeVillage(team.id, value)}
           onSetCaptain={(memberId) => setCaptain(team.id, memberId)}

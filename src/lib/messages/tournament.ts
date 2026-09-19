@@ -3,6 +3,8 @@ import { resetTournament } from "../texts/activityDetail";
 export const tournament = {
   teamNotFound: "الفريق غير موجود",
   groupNotFound: "المجموعة غير موجودة",
+  groupLockedByMatches:
+    "لا يمكن تغيير مجموعة فريق لديه مباريات مسجَّلة بالفعل — احذف مباريات هذا الفريق أولاً ثم أعد التوليد",
   groupNameRequired: "اسم المجموعة مطلوب",
   groupNameTooLong: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)",
   groupHasMatches:
