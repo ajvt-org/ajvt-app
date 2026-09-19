@@ -4,6 +4,7 @@ import ResultForm from "./ResultForm";
 import type { DecidedMatch, Team } from "./types";
 import { matchAdmin as texts, seriesResult as seriesTexts } from "@/lib/texts";
 import { CHESS_CONFIG } from "@tests/ui/ladders";
+import { SQUARE } from "./MatchCardActions";
 
 const patchMock = vi.fn();
 
@@ -391,6 +392,12 @@ describe("the shootout", () => {
     show({ isKnockout: true, penaltyKicks: [kickRow("t1", 1), kickRow("t2", 2)] });
 
     expect(screen.getAllByRole("button", { name: texts.remove })).toHaveLength(1);
+  });
+
+  it("draws that removal at the size the rest of the admin uses", () => {
+    show({ isKnockout: true, penaltyKicks: [kickRow("t1", 1), kickRow("t2", 2)] });
+
+    expect(screen.getByRole("button", { name: texts.remove }).className).toBe(SQUARE);
   });
 
   it("keeps a recorded shootout when a forfeit is awarded afterwards", async () => {

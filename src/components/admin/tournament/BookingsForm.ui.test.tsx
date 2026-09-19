@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/re
 import BookingsForm from "./BookingsForm";
 import type { DecidedMatch, Match, Team } from "./types";
 import { matchAdmin as texts } from "@/lib/texts";
+import { EVENT_ROW, EVENT_ROW_ACTIONS, SQUARE } from "./MatchCardActions";
 
 const postMock = vi.fn();
 const patchMock = vi.fn();
@@ -160,6 +161,23 @@ describe("fixing a card that was entered wrong", () => {
     show([BOOKING]);
 
     expect(screen.getAllByLabelText(texts.edit)).toHaveLength(1);
+  });
+
+  it("gives both row actions the size the rest of the admin uses", () => {
+    show([BOOKING]);
+
+    expect(screen.getByLabelText(texts.edit).className).toBe(SQUARE);
+    expect(screen.getByLabelText(texts.remove).className).toBe(SQUARE);
+  });
+
+  it("keeps both actions in one group at the end of the row", () => {
+    show([BOOKING]);
+
+    const group = screen.getByLabelText(texts.edit).parentElement;
+    expect(group).toBe(screen.getByLabelText(texts.remove).parentElement);
+    expect(group?.className).toBe(EVENT_ROW_ACTIONS);
+    expect(group?.parentElement?.lastElementChild).toBe(group);
+    expect(group?.parentElement?.className).toContain(EVENT_ROW);
   });
 
   it("loads the card into the form when editing starts", () => {
