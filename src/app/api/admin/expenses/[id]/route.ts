@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readMoneyDate } from "@/lib/paymentDate";
-import { prisma } from "@/lib/prisma";
 import { requireArea } from "@/lib/auth";
 import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
@@ -10,121 +8,22 @@ import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { acceptedNames } from "@/lib/paymentMethods";
 import { expenseUpdateSchema } from "../schema";
 import { money } from "@/lib/money";
-import { expenses as expenseMessages } from "@/lib/messages";
-import { sharesForUpdate } from "@/lib/expenseSharesServer";
-import { cleanProofNames, leadProof, proofsToAdd, proofsToRemove } from "@/lib/expenseProofs";
-import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
-import { accountIdError } from "@/lib/paymentAccountsServer";
-import { releaseUploads } from "@/lib/uploadRelease";
+import { leadProof } from "@/lib/expenseProofs";
+import { expenseOrNotFound, removeExpense } from "@/lib/expensesServer";
+import { updateExpense } from "@/lib/expenseUpdateServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
-    const existing = await prisma.expense.findUnique({ where: { id } });
-    if (!existing) {
-      return NextResponse.json({ error: expenseMessages.notFound }, { status: 404 });
-    }
 
+    const existing = await expenseOrNotFound(id);
     const accepted = acceptedNames(await offeredMethodNames(), existing.method);
-    const {
-      label,
-      amount,
-      method,
-      accountId,
-      note,
-      date,
-      proof,
-      proofs,
-      tagIds,
-      activityId,
-      competitionId,
-      allocations,
-    } = parse(expenseUpdateSchema(accepted), await req.json());
+    const edit = parse(expenseUpdateSchema(accepted), await req.json());
 
-    const data: {
-      label?: string;
-      amount?: number;
-      method?: string | null;
-      accountId?: string | null;
-      note?: string | null;
-      date?: Date;
-      tags?: { set: { id: string }[] };
-    } = {};
+    const { expense, wanted } = await updateExpense(id, existing, edit);
 
-    if (label !== undefined) data.label = label;
-    if (amount !== undefined) data.amount = Number(amount);
-    if (method !== undefined) data.method = method?.trim() || null;
-
-    if (accountId !== undefined) {
-      const named = method !== undefined ? method : existing.method;
-      const wrong = await accountIdError(named, accountId, existing.accountId);
-      if (wrong) return NextResponse.json({ error: wrong }, { status: 400 });
-      data.accountId = accountId || null;
-    }
-
-    if (note !== undefined) {
-      data.note = note?.trim() || null;
-    }
-
-    const movedOn = readMoneyDate(date);
-    if (movedOn) data.date = movedOn;
-
-    const held = (
-      await prisma.expenseProof.findMany({
-        where: { expenseId: id },
-        orderBy: { createdAt: "asc" },
-        select: { filename: true },
-      })
-    ).map((row) => row.filename);
-    const given = proofs !== undefined ? proofs : proof !== undefined ? [proof] : undefined;
-    const wanted = given === undefined ? held : cleanProofNames(given);
-    if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
-
-    const shares = await sharesForUpdate({
-      id,
-      total: data.amount ?? existing.amount,
-      allocations,
-      destinationGiven: activityId !== undefined || competitionId !== undefined,
-      destination: { activityId, competitionId },
-      amountGiven: amount !== undefined,
-    });
-
-    const expense = await prisma.$transaction(async (tx) => {
-      const removed = proofsToRemove(held, wanted);
-      const added = proofsToAdd(held, wanted);
-      if (removed.length) {
-        await tx.expenseProof.deleteMany({ where: { expenseId: id, filename: { in: removed } } });
-      }
-      if (added.length) {
-        await tx.expenseProof.createMany({
-          data: added.map((filename) => ({ expenseId: id, filename })),
-        });
-      }
-      if (shares) {
-        await tx.expenseAllocation.deleteMany({ where: { expenseId: id } });
-        await tx.expenseAllocation.createMany({
-          data: shares.map((share) => ({
-            expenseId: id,
-            amount: share.amount,
-            activityId: share.activityId,
-            competitionId: share.competitionId,
-          })),
-        });
-      }
-
-      return tx.expense.update({
-        where: { id },
-        data,
-        include: {
-          tags: { select: { id: true, name: true } },
-          ...EXPENSE_PROOF_SELECT,
-          ...EXPENSE_ALLOCATION_SELECT,
-        },
-      });
-    });
-    await releaseUploads(...proofsToRemove(held, wanted));
     await logAction(
       session.username,
       "UPDATE_EXPENSE",
@@ -155,17 +54,8 @@ export const DELETE = withRoute(
     const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
 
-    const existing = await prisma.expense.findUnique({ where: { id } });
-    if (!existing) {
-      return NextResponse.json({ error: expenseMessages.notFound }, { status: 404 });
-    }
+    const existing = await removeExpense(id);
 
-    const held = (
-      await prisma.expenseProof.findMany({ where: { expenseId: id }, select: { filename: true } })
-    ).map((row) => row.filename);
-
-    await prisma.expense.delete({ where: { id } });
-    await releaseUploads(...held);
     await logAction(
       session.username,
       "DELETE_EXPENSE",
