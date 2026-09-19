@@ -1,4 +1,5 @@
-import { countedNoun, PLAYERS } from "../arabicPlural";
+import { counted } from "../arabicCount";
+import { PLAYER } from "../messages";
 
 const ACCEPT = "قبول";
 const DECLINE = "رفض";
@@ -13,7 +14,7 @@ export const teamBuilder = {
   pickTeam: "اطلب الانضمام إلى فريق",
   captain: "أنت قائد الفريق",
   captainMark: "قائد الفريق",
-  rosterCount: (count: number) => countedNoun(count, PLAYERS),
+  rosterCount: (count: number) => counted(count, PLAYER),
   squadNeeds: (label: string) => `حجم الفريق ${label}`,
   incomplete: "الفريق غير مكتمل",
   awaitingApproval: "بانتظار الموافقة",

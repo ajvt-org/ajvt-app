@@ -230,7 +230,7 @@ describe("CompetitionView", () => {
     setup({ me: { played: true, finished: true, score: 0 } });
 
     expect(screen.queryByText(/الجولة 0/)).toBeNull();
-    expect(screen.getByText(/مجموعك 0 نقطة/)).toBeDefined();
+    expect(screen.getByText(/مجموعك 0 نقاط/)).toBeDefined();
   });
 
   it("shows the member their place when they are off the board", () => {

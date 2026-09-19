@@ -11,7 +11,7 @@ describe("the box that carries a temporary password", () => {
 
     expect(link.href).toContain("wa.me/22241015838");
     expect(decodeURIComponent(link.href)).toContain("J2AF3JQL4D");
-    expect(decodeURIComponent(link.href)).toContain("ساعة واحدة");
+    expect(decodeURIComponent(link.href)).toContain("ساعة");
   });
 
   it("offers no chat for an account with no number", () => {

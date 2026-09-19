@@ -6,11 +6,9 @@ import PageLoading from "@/components/PageLoading";
 import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import Pagination from "@/components/admin/Pagination";
 import AuditLogEntryCard from "@/components/admin/AuditLogEntryCard";
-import { counted } from "@/lib/arabicCount";
-import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import { AUDIT_LOGIN_DAYS, AUDIT_LOG_DAYS } from "@/lib/auditRetention";
 import { auditLogPage } from "@/lib/texts";
-import { RESULT } from "@/lib/messages";
+import { DAY, RESULT } from "@/lib/messages";
 import {
   pageCount,
   readAuditFilters,
@@ -21,6 +19,7 @@ import {
 import IconLabel from "@/components/IconLabel";
 import AuditFilterRow from "./AuditFilterRow";
 import { useAuditLog } from "./useAuditLog";
+import { counted } from "@/lib/arabicCount";
 
 function AuditLogInner() {
   const router = useRouter();
@@ -54,7 +53,7 @@ function AuditLogInner() {
       </div>
 
       <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
-        {auditLogPage.kept(countedNoun(AUDIT_LOG_DAYS, DAYS), countedNoun(AUDIT_LOGIN_DAYS, DAYS))}
+        {auditLogPage.kept(counted(AUDIT_LOG_DAYS, DAY), counted(AUDIT_LOGIN_DAYS, DAY))}
       </p>
 
       <AuditFilterRow

@@ -1,4 +1,5 @@
-import { countedNoun, MATCHES } from "../arabicPlural";
+import { counted } from "../arabicCount";
+import { MATCH } from "../messages";
 export const activityForm = {
   natures: {
     normal: "نشاط عادي",
@@ -132,7 +133,7 @@ export const activityStandingTexts = {
   startsIn: (days: number) =>
     days === 2 ? "يبدأ بعد يومين" : days <= 10 ? `يبدأ بعد ${days} أيام` : `يبدأ بعد ${days} يوماً`,
   running: "جارٍ الآن",
-  awaiting: (count: number) => `بقيت ${countedNoun(count, MATCHES)}`,
+  awaiting: (count: number) => `بقيت ${counted(count, MATCH)}`,
   groupStage: "دور المجموعات",
   finished: "انتهى",
   notScheduled: "غير مبرمج بعد",

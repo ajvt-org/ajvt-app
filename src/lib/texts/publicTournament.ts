@@ -1,13 +1,13 @@
 import { lists } from "./lists";
 
-import { countedNoun, PLAYERS, type NounForms } from "../arabicPlural";
+import { counted, type CountedNoun } from "../arabicCount";
+import { PLAYER } from "../messages";
 
-const UNKNOWN_MINUTE_GOALS: NounForms = {
+const UNKNOWN_MINUTE_GOALS: CountedNoun = {
   one: "هدف دون دقيقة مسجلة",
   two: "هدفان دون دقيقة مسجلة",
   few: "أهداف دون دقيقة مسجلة",
   many: "هدفاً دون دقيقة مسجلة",
-  other: "هدف دون دقيقة مسجلة",
 };
 
 export const matchDisplay = {
@@ -15,7 +15,7 @@ export const matchDisplay = {
   tieMark: "قرعة",
   forfeitBadge: "انسحاب",
   unknownScorer: "مجهول",
-  unknownMinute: (count: number) => countedNoun(count, UNKNOWN_MINUTE_GOALS),
+  unknownMinute: (count: number) => counted(count, UNKNOWN_MINUTE_GOALS),
   unknownMinuteTally: (count: number) => `×${count}`,
   ownGoal: "ع",
   penaltyShort: "ج",
@@ -82,7 +82,7 @@ export const publicTournament = {
   noMatchesYet: "لم تُحدَّد المباريات بعد",
   drawNotMade: "لم تُجرَ القرعة بعد",
   noPlayers: "لا يوجد لاعبون بعد",
-  playerCount: (count: number) => countedNoun(count, PLAYERS),
+  playerCount: (count: number) => counted(count, PLAYER),
   captain: "القائد",
   teamDecidedLater: "يُحدد لاحقاً",
   followFailed: "تعذّر تحديث المتابعة، حاول مرة أخرى",

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
-import { countedNoun, QUESTIONS, ROUNDS } from "@/lib/arabicPlural";
 import { quizBankCoverage as texts } from "@/lib/texts";
+import { counted } from "@/lib/arabicCount";
+import { QUESTION, ROUND } from "@/lib/messages";
 
 interface CoverageBody {
   rounds: { index: number }[];
@@ -48,8 +49,8 @@ export default function BankCoverage({ competitionId }: { competitionId: string 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         {texts.coverage(
           body.plannable,
-          countedNoun(total, ROUNDS),
-          countedNoun(needed, QUESTIONS),
+          counted(total, ROUND),
+          counted(needed, QUESTION),
           body.bankSize,
         )}
       </p>

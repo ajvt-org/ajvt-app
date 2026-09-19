@@ -66,7 +66,7 @@ describe("ActivityStandingChip", () => {
   it("counts one remaining match in the singular", () => {
     render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} unplayedMatches={1} />);
 
-    expect(screen.getByText("بقيت مباراة واحدة")).toBeDefined();
+    expect(screen.getByText("بقيت مباراة")).toBeDefined();
   });
 
   it("counts several remaining matches as a number", () => {
@@ -86,7 +86,7 @@ describe("ActivityStandingChip", () => {
     );
 
     expect(screen.getByText("نصف النهائي")).toBeDefined();
-    expect(screen.queryByText("بقيت مباراة واحدة")).toBeNull();
+    expect(screen.queryByText("بقيت مباراة")).toBeNull();
   });
 
   it("names the final", () => {

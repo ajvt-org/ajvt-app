@@ -2,7 +2,8 @@
 
 import IconLabel from "@/components/IconLabel";
 import { MINT_SURFACE } from "@/components/admin/verbTones";
-import { hoursLabel } from "@/lib/arabicPlural";
+import { counted } from "@/lib/arabicCount";
+import { HOUR } from "@/lib/messages";
 import { internationalPhone } from "@/lib/utils";
 import { tempPassword as texts } from "@/lib/texts";
 
@@ -20,7 +21,7 @@ export default function TempPasswordBox({
   hours: number;
   phone: string | null;
 }) {
-  const message = texts.message(value, hoursLabel(hours));
+  const message = texts.message(value, counted(hours, HOUR));
   const chat = phone
     ? `https://wa.me/${internationalPhone(phone)}?text=${encodeURIComponent(message)}`
     : null;
