@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, act, cleanup } from "@testing-library/react";
-import { useFreshData } from "./useFreshData";
+import { render, act, cleanup, waitFor } from "@testing-library/react";
+import { useFreshData, useFreshDataFromElsewhere } from "./useFreshData";
 import { announceChange, forgetDataListeners } from "@/lib/dataChanged";
 
 function visibility(state: "visible" | "hidden") {
@@ -104,5 +104,45 @@ describe("a screen kept fresh", () => {
 
     expect(first).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalledOnce();
+  });
+});
+
+describe("a screen that only wants changes made elsewhere", () => {
+  function Elsewhere({ reload }: { reload: () => void }) {
+    useFreshDataFromElsewhere(reload);
+    return null;
+  }
+
+  function anotherTabWrites() {
+    const other = new BroadcastChannel("ajvt-data-changed");
+    other.postMessage(1);
+    other.close();
+  }
+
+  it("ignores a change this tab made itself, which it already handled", () => {
+    const reload = vi.fn();
+    render(<Elsewhere reload={reload} />);
+
+    act(() => announceChange());
+
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("reloads for a change another tab made", async () => {
+    const reload = vi.fn();
+    render(<Elsewhere reload={reload} />);
+
+    anotherTabWrites();
+
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce());
+  });
+
+  it("still reaches a screen that wants every change", async () => {
+    const reload = vi.fn();
+    render(<Screen reload={reload} />);
+
+    anotherTabWrites();
+
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce());
   });
 });

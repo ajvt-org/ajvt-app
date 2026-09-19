@@ -16,6 +16,7 @@ import type {
   TournamentFormat,
 } from "./types";
 import type { LevelRow } from "@/lib/matchLevels";
+import { useFreshDataFromElsewhere } from "@/hooks/useFreshData";
 
 export interface TournamentInfo {
   id: string;
@@ -97,27 +98,27 @@ export function useTournamentData(activityId: string, enabled = true) {
     [load],
   );
 
+  const reloadAll = useCallback(
+    () =>
+      Promise.all([
+        reloadInfo(),
+        reloadRoster(),
+        reloadGroups(),
+        reloadTeams(),
+        reloadMatches(),
+        reloadDiscipline(),
+      ]),
+    [reloadInfo, reloadRoster, reloadGroups, reloadTeams, reloadMatches, reloadDiscipline],
+  );
+
+  useFreshDataFromElsewhere(reloadAll, enabled);
+
   useEffect(() => {
     if (!enabled) return;
-    Promise.all([
-      reloadInfo(),
-      reloadRoster(),
-      reloadGroups(),
-      reloadTeams(),
-      reloadMatches(),
-      reloadDiscipline(),
-    ])
+    reloadAll()
       .catch((e) => setError(refusalMessage(e, texts.loadFailed)))
       .finally(() => setLoading(false));
-  }, [
-    enabled,
-    reloadInfo,
-    reloadRoster,
-    reloadGroups,
-    reloadTeams,
-    reloadMatches,
-    reloadDiscipline,
-  ]);
+  }, [enabled, reloadAll]);
 
   return {
     info,
@@ -136,5 +137,6 @@ export function useTournamentData(activityId: string, enabled = true) {
     reloadTeams,
     reloadMatches,
     reloadDiscipline,
+    reloadAll,
   };
 }

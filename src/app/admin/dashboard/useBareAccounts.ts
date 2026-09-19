@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { BareAccount } from "./types";
+import { useFreshDataFromElsewhere } from "@/hooks/useFreshData";
 
 export function useBareAccounts() {
   const [users, setUsers] = useState<BareAccount[]>([]);
@@ -21,6 +22,8 @@ export function useBareAccounts() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  useFreshDataFromElsewhere(refresh);
 
   return { users, loading, refresh };
 }

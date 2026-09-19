@@ -7,7 +7,7 @@ function hidden(): boolean {
   return typeof document !== "undefined" && document.visibilityState === "hidden";
 }
 
-export function useFreshData(reload: () => void, enabled = true) {
+function useReloadOnChange(reload: () => void, enabled: boolean, ownTabToo: boolean) {
   const latest = useRef(reload);
 
   useEffect(() => {
@@ -23,7 +23,8 @@ export function useFreshData(reload: () => void, enabled = true) {
       latest.current();
     };
 
-    const noteChange = () => {
+    const noteChange = (fromAnotherTab: boolean) => {
+      if (!fromAnotherTab && !ownTabToo) return;
       if (hidden()) behind = true;
       else catchUp();
     };
@@ -40,5 +41,13 @@ export function useFreshData(reload: () => void, enabled = true) {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
     };
-  }, [enabled]);
+  }, [enabled, ownTabToo]);
+}
+
+export function useFreshData(reload: () => void, enabled = true) {
+  useReloadOnChange(reload, enabled, true);
+}
+
+export function useFreshDataFromElsewhere(reload: () => void, enabled = true) {
+  useReloadOnChange(reload, enabled, false);
 }

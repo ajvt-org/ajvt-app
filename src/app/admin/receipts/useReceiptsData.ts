@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { OfficialReceiptView } from "@/lib/officialReceipt";
 import type { ScopedSettings } from "@/lib/adminSettings";
+import { useFreshDataFromElsewhere } from "@/hooks/useFreshData";
 
 type ListResponse = {
   receipts: OfficialReceiptView[];
@@ -35,6 +36,8 @@ export function useReceiptsData() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useFreshDataFromElsewhere(() => load(year));
 
   return {
     receipts,

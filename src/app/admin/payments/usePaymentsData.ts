@@ -7,6 +7,7 @@ import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import { readDestinations, readFinanceTags, readMembers, readProofs } from "./paymentsResponse";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { MemberOption, Proof } from "./paymentTypes";
+import { useFreshDataFromElsewhere } from "@/hooks/useFreshData";
 
 interface Loaded {
   proofs: Proof[];
@@ -56,6 +57,8 @@ export function usePaymentsData() {
     load().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useFreshDataFromElsewhere(load);
 
   return {
     ...data,

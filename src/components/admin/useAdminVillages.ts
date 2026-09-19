@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { villageChoices } from "@/lib/villages";
+import { useFreshDataFromElsewhere } from "@/hooks/useFreshData";
 
 export function useAdminVillages() {
   const [villages, setVillages] = useState<string[]>(villageChoices([]));
@@ -17,6 +18,8 @@ export function useAdminVillages() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  useFreshDataFromElsewhere(refresh);
 
   return { villages, refresh };
 }
