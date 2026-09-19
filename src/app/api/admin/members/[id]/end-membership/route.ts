@@ -1,28 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
-import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
+import { ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
-import { currentMembership } from "@/lib/currentMembershipServer";
-import { endingRefusal, isEndingReason, restoreRefusal } from "@/lib/membershipEnding";
-import { endingRefusalMessage, restoreRefusalMessage } from "@/lib/membershipEndingMessages";
-import { endMembership, restoreMembership } from "@/lib/membershipEndingServer";
+import { isEndingReason } from "@/lib/membershipEnding";
+import { endMembershipByAdmin, restoreMembershipByAdmin } from "@/lib/membershipEndingServer";
 import { endedDetails, restoredDetails } from "@/lib/membershipEndingAudit";
-import { nameOf, PERSON_SELECT } from "@/lib/person";
+import { nameOf } from "@/lib/person";
 import { endMembershipSchema } from "./schema";
-
-async function personAndMembership(id: string) {
-  const person = await prisma.user.findUnique({ where: { id }, select: PERSON_SELECT });
-  if (!person) throw new NotFoundError(messages.notFound);
-
-  const membership = await currentMembership(prisma, id);
-  if (!membership) throw new NotFoundError(messages.notFound);
-
-  return { person, membership };
-}
 
 export const POST = withRoute(
   "POST /api/admin/members/[id]/end-membership",
@@ -32,22 +19,18 @@ export const POST = withRoute(
     const { reason } = parse(endMembershipSchema, await req.json());
     if (!isEndingReason(reason)) throw new ValidationError(messages.endingReasonInvalid);
 
-    const { person, membership } = await personAndMembership(id);
-    const refusal = endingRefusal(membership);
-    if (refusal) throw new ConflictError(endingRefusalMessage(refusal));
+    const ending = { reason, by: session.username, at: new Date() };
+    const { person, year } = await endMembershipByAdmin(id, ending);
 
-    const at = new Date();
-    await endMembership(prisma, id, membership.year, { reason, by: session.username, at });
-
-    await logAction(session.username, "END_MEMBERSHIP", `${nameOf(person)} — ${membership.year}`, {
+    await logAction(session.username, "END_MEMBERSHIP", `${nameOf(person)} — ${year}`, {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      ...endedDetails(membership.year, { reason, by: session.username, at }),
+      ...endedDetails(year, ending),
     });
 
     return NextResponse.json({
-      membership: { year: membership.year, endedAt: at.toISOString(), endedReason: reason },
+      membership: { year, endedAt: ending.at.toISOString(), endedReason: reason },
     });
   },
 );
@@ -58,11 +41,7 @@ export const DELETE = withRoute(
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
-    const { person, membership } = await personAndMembership(id);
-    const refusal = restoreRefusal(membership);
-    if (refusal) throw new ConflictError(restoreRefusalMessage(refusal));
-
-    await restoreMembership(prisma, id, membership.year);
+    const { person, membership } = await restoreMembershipByAdmin(id);
 
     await logAction(
       session.username,

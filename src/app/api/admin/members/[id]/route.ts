@@ -1,146 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { forgetQuizFootprint } from "@/lib/quizAttemptServer";
-import { ValidationError } from "@/lib/errors";
-import { confirmationMatches } from "@/lib/deletedRecords";
-import { archive, purgeExpired } from "@/lib/deletedRecordsServer";
-import type { Prisma } from "@prisma/client";
 import { parse } from "@/lib/validation";
 import { adminMemberUpdateSchema } from "./schema";
-import { members, villages as villageMessages } from "@/lib/messages";
-import { ageForVillage, isKnownVillage, requiresAgeGroup } from "@/lib/villages";
-import { villageNames } from "@/lib/villagesServer";
-import { attachAccount } from "@/lib/attachAccount";
 import { nameOf } from "@/lib/person";
-import { requireOwnUpload } from "@/lib/uploadOwnerServer";
+import { updateMember } from "@/lib/memberUpdateServer";
+import { deleteMember } from "@/lib/memberDeleteServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/members/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, age, village, photo, photoLocked, accountPhone } = parse(
-      adminMemberUpdateSchema,
-      await req.json(),
-    );
+    const edit = parse(adminMemberUpdateSchema, await req.json());
 
-    const existing = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        fullName: true,
-        age: true,
-        village: true,
-        photo: true,
-        photoLocked: true,
-      },
-    });
-    if (!existing) {
-      return NextResponse.json({ error: members.notFound }, { status: 404 });
-    }
+    const { existing, person, attached } = await updateMember(id, edit, session);
 
-    const data: {
-      fullName?: string;
-      age?: string | null;
-      village?: string;
-      photo?: string | null;
-      photoLocked?: boolean;
-    } = {};
+    const onMember = { ...auditContext(session, req), targetType: "Member" as const, targetId: id };
 
-    if (village !== undefined && !isKnownVillage(village, await villageNames())) {
-      return NextResponse.json({ error: villageMessages.unknownVillage }, { status: 400 });
-    }
-
-    if (fullName !== undefined) data.fullName = fullName;
-
-    let tempPassword: string | undefined;
-    let tempPasswordHours: number | undefined;
-    let attachedUserId: string | undefined;
-    if (accountPhone !== undefined) {
-      const attached = await attachAccount(id, accountPhone, {
-        allowed: session.role !== "ACTIVITIES",
-      });
-      attachedUserId = attached.userId;
-      tempPassword = attached.tempPassword;
-      tempPasswordHours = attached.tempPasswordHours;
-    }
-
-    if (village !== undefined) data.village = village;
-    if (age !== undefined || village !== undefined) {
-      const nextVillage = village ?? existing.village;
-      const nextAge = ageForVillage(nextVillage, age === undefined ? existing.age : age);
-      if (requiresAgeGroup(nextVillage) && !nextAge) {
-        return NextResponse.json({ error: members.pickAgeGroup }, { status: 400 });
-      }
-      data.age = nextAge;
-    }
-    if (photo !== undefined) {
-      if (photo !== existing.photo) {
-        await requireOwnUpload(photo, { userId: null, adminId: session.adminId });
-      }
-      data.photo = photo;
-    }
-    if (photoLocked !== undefined) {
-      data.photoLocked = photoLocked;
-      if (photoLocked) data.photo = null;
-    }
-    const person = await prisma.user.update({
-      where: { id: attachedUserId ?? id },
-      data,
-      select: { fullName: true, age: true, village: true },
-    });
     await logAction(session.username, "UPDATE_MEMBER", `${nameOf(existing)} → ${nameOf(person)}`, {
-      ...auditContext(session, req),
-      targetType: "Member",
-      targetId: id,
+      ...onMember,
       before: { ...existing },
-      after: {
-        fullName: person.fullName,
-        age: person.age,
-        village: person.village,
-      },
+      after: { fullName: person.fullName, age: person.age, village: person.village },
     });
-    if (photo === null && existing.photo !== null) {
+
+    if (edit.photo === null && existing.photo !== null) {
       await logAction(session.username, "REMOVE_MEMBER_PHOTO", nameOf(person), {
-        ...auditContext(session, req),
-        targetType: "Member",
-        targetId: id,
+        ...onMember,
         before: { photo: existing.photo },
         after: { photo: null },
       });
     }
-    if (photoLocked !== undefined && photoLocked !== existing.photoLocked) {
+
+    if (edit.photoLocked !== undefined && edit.photoLocked !== existing.photoLocked) {
       await logAction(
         session.username,
-        photoLocked ? "LOCK_MEMBER_PHOTO" : "UNLOCK_MEMBER_PHOTO",
+        edit.photoLocked ? "LOCK_MEMBER_PHOTO" : "UNLOCK_MEMBER_PHOTO",
         nameOf(person),
         {
-          ...auditContext(session, req),
-          targetType: "Member",
-          targetId: id,
+          ...onMember,
           before: { photoLocked: existing.photoLocked },
-          after: { photoLocked },
-        },
-      );
-    }
-    if (attachedUserId) {
-      await logAction(
-        session.username,
-        "ATTACH_MEMBER_ACCOUNT",
-        `${nameOf(person)} — ${accountPhone!.trim()}`,
-        {
-          ...auditContext(session, req),
-          targetType: "Member",
-          targetId: id,
-          before: { userId: null },
-          after: { userId: attachedUserId, account: accountPhone!.trim() },
+          after: { photoLocked: edit.photoLocked },
         },
       );
     }
 
-    return NextResponse.json({ member: { id, ...person }, tempPassword, tempPasswordHours });
+    if (attached) {
+      const account = edit.accountPhone!.trim();
+      await logAction(session.username, "ATTACH_MEMBER_ACCOUNT", `${nameOf(person)} — ${account}`, {
+        ...onMember,
+        before: { userId: null },
+        after: { userId: attached.userId, account },
+      });
+    }
+
+    return NextResponse.json({
+      member: { id, ...person },
+      tempPassword: attached?.tempPassword,
+      tempPasswordHours: attached?.tempPasswordHours,
+    });
   },
 );
 
@@ -149,33 +68,14 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-
-    const account = await prisma.user.findUnique({
-      where: { id },
-      select: { fullName: true, age: true, memberships: { select: { id: true }, take: 1 } },
-    });
-    if (!account || account.memberships.length === 0) {
-      return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
-    }
-
     const { confirmName } = await req.json().catch(() => ({ confirmName: undefined }));
-    if (!confirmationMatches(String(confirmName ?? ""), nameOf(account))) {
-      throw new ValidationError("اكتب اسم العضو كما هو للتأكيد");
-    }
 
-    const { memberships: _held, ...person } = account;
-    void _held;
-    const years = await prisma.membership.findMany({ where: { userId: id } });
-    await archive(
-      "Member",
+    const { person, forgotten } = await deleteMember(
       id,
-      nameOf(person),
-      { userId: id, memberships: years } as unknown as Prisma.InputJsonValue,
+      String(confirmName ?? ""),
       session.username,
     );
-    await prisma.membership.deleteMany({ where: { userId: id } });
-    const forgotten = await forgetQuizFootprint(id);
-    await purgeExpired();
+
     await logAction(session.username, "DELETE_MEMBER", nameOf(person), {
       ...auditContext(session, req),
       targetType: "Member",
