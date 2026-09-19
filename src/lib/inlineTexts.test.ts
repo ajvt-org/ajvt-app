@@ -151,6 +151,8 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/MatchCardActions.tsx",
   "src/components/admin/tournament/MatchDetailsForm.tsx",
   "src/components/admin/tournament/ResultForm.tsx",
+  "src/components/admin/tournament/GoalSection.tsx",
+  "src/components/admin/tournament/BookingsForm.tsx",
   "src/components/admin/tournament/BracketPanel.tsx",
   "src/components/admin/tournament/BracketSuggestion.tsx",
   "src/components/admin/tournament/matchesState.ts",

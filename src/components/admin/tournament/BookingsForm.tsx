@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { DecidedMatch, Match, Team } from "./types";
 import CardChip from "@/components/tournament/CardChip";
 import { api, errorMessage } from "@/lib/api";
-import { matchAdmin as texts } from "@/lib/texts";
+import { matchAdmin as texts, matchEventLabel } from "@/lib/texts";
 import FieldRow from "@/components/admin/FieldRow";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -103,10 +103,7 @@ export default function BookingsForm({
             >
               <span className={EVENT_ROW_TEXT}>
                 <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} />
-                <span className="min-w-0">
-                  {b.member.fullName}
-                  {b.minute ? ` — ${texts.minute} ${b.minute}` : ""}
-                </span>
+                <span className="min-w-0">{matchEventLabel([b.member.fullName], b.minute)}</span>
               </span>
               <span className={EVENT_ROW_ACTIONS}>
                 <button

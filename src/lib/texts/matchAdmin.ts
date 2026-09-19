@@ -93,7 +93,6 @@ export const matchAdmin = {
   cardsHeading: "البطاقات",
   yellowCard: "صفراء",
   redCard: "حمراء",
-  minute: "الدقيقة",
   add: "إضافة",
   remove: "حذف",
   edit: "تعديل",
@@ -151,6 +150,14 @@ export const statsAdmin = {
   teams: "الفرق",
   noStats: "لا توجد إحصائيات مسجلة بعد",
 } as const;
+
+export function matchEventLabel(
+  named: (string | null | undefined)[],
+  minute: string | number | null,
+): string {
+  const label = named.filter(Boolean).join(" — ");
+  return minute ? `${label} ${minute}'` : label;
+}
 
 export function sidePlaceholders(football: boolean): { first: string; second: string } {
   return football
