@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/re
 import BookingsForm from "./BookingsForm";
 import type { DecidedMatch, Match, Team } from "./types";
 import { matchAdmin as texts } from "@/lib/texts";
+import { SQUARE } from "./MatchCardActions";
 
 const postMock = vi.fn();
 const patchMock = vi.fn();
@@ -160,6 +161,13 @@ describe("fixing a card that was entered wrong", () => {
     show([BOOKING]);
 
     expect(screen.getAllByLabelText(texts.edit)).toHaveLength(1);
+  });
+
+  it("gives both row actions the size the rest of the admin uses", () => {
+    show([BOOKING]);
+
+    expect(screen.getByLabelText(texts.edit).className).toBe(SQUARE);
+    expect(screen.getByLabelText(texts.remove).className).toBe(SQUARE);
   });
 
   it("loads the card into the form when editing starts", () => {

@@ -5,6 +5,7 @@ import { useState } from "react";
 import GoalSection from "./GoalSection";
 import type { GoalDraft } from "./goalDraft";
 import { matchAdmin as texts } from "@/lib/texts";
+import { SQUARE } from "./MatchCardActions";
 
 const SIDES = [
   { id: "t1", name: "الأول" },
@@ -62,6 +63,13 @@ describe("fixing a goal that was entered wrong", () => {
     setup();
 
     expect(screen.getByLabelText(texts.edit)).toBeDefined();
+  });
+
+  it("gives both row actions the size the rest of the admin uses", () => {
+    setup();
+
+    expect(screen.getByLabelText(texts.edit).className).toBe(SQUARE);
+    expect(screen.getByLabelText(texts.remove).className).toBe(SQUARE);
   });
 
   it("loads the goal into the form when editing starts", async () => {

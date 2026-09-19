@@ -22,6 +22,8 @@ import { discipline as disciplineTexts, lists, matchAdmin as texts } from "@/lib
 import { isFootball } from "@/lib/matchShape";
 import { seriesResult as seriesTexts } from "@/lib/texts";
 import SeriesResultForm from "./SeriesResultForm";
+import { SQUARE } from "./MatchCardActions";
+import { ROW_ACTION_ICON } from "./TeamIdentityEditor";
 import type { SeriesConfig } from "./seriesConfig";
 
 export default function ResultForm({
@@ -276,10 +278,10 @@ export default function ResultForm({
                   type="button"
                   onClick={() => setKicks((prev) => prev.slice(0, -1))}
                   aria-label={texts.remove}
-                  className="px-1.5 rounded-lg"
+                  className={SQUARE}
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  <Icon name="close" size={12} />
+                  <Icon name="close" size={ROW_ACTION_ICON} />
                 </button>
               )}
             </div>

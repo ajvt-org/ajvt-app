@@ -9,6 +9,8 @@ import FieldRow from "@/components/admin/FieldRow";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import NumberInput from "@/components/NumberInput";
+import { SQUARE } from "./MatchCardActions";
+import { ROW_ACTION_ICON } from "./TeamIdentityEditor";
 
 export default function BookingsForm({
   match,
@@ -103,24 +105,24 @@ export default function BookingsForm({
                 <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
                 {b.minute ? ` — ${texts.minute} ${b.minute}` : ""}
               </span>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => startEditing(b)}
                   aria-label={texts.edit}
-                  className="px-1.5 rounded-lg"
+                  className={SQUARE}
                   style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  <Icon name="pencil" size={12} />
+                  <Icon name="pencil" size={ROW_ACTION_ICON} />
                 </button>
                 <button
                   type="button"
                   onClick={() => removeBooking(b.id)}
                   aria-label={texts.remove}
-                  className="px-1.5 rounded-lg"
+                  className={SQUARE}
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  <Icon name="close" size={12} />
+                  <Icon name="close" size={ROW_ACTION_ICON} />
                 </button>
               </span>
             </div>
