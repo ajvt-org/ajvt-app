@@ -10,9 +10,9 @@ import { activities, common } from "@/lib/messages";
 import { MVP_VOTE_MINUTES_MAX, MVP_VOTE_MINUTES_MIN } from "@/lib/mvpVote";
 
 const INVALID = common.invalidBody;
-const TITLE_REQUIRED = "العنوان مطلوب";
+const TITLE_REQUIRED = activities.titleRequired;
 const TITLE_TOO_LONG = activities.titleTooLong;
-const DESCRIPTION_REQUIRED = "الوصف مطلوب";
+const DESCRIPTION_REQUIRED = activities.descriptionRequired;
 const DESCRIPTION_TOO_LONG = activities.descriptionTooLong;
 
 const TITLE_MAX = 60;
