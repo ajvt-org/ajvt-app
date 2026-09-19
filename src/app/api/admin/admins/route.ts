@@ -1,65 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
-import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
-import { admins as messages, auth, common } from "@/lib/messages";
-import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
-import { SUPER_ROLE, isAdminRole, isOwner, outranks } from "@/lib/adminRoles";
+import { parse } from "@/lib/validation";
+import { admins as messages } from "@/lib/messages";
+import { SUPER_ROLE, isAdminRole, isOwner } from "@/lib/adminRoles";
 import { ForbiddenError } from "@/lib/errors";
+import { adminCreateSchema } from "./schema";
+import { adminRows, createAdmin } from "@/lib/adminAccountsServer";
 
 export const GET = withRoute("GET /api/admin/admins", async () => {
   const session = await requireAdminRole("SUPER");
-  const admins = await prisma.admin.findMany({
-    select: {
-      id: true,
-      username: true,
-      role: true,
-      activities: { select: { activity: { select: { id: true, title: true } } } },
-      lastLoginAt: true,
-      lastLoginIp: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "asc" },
-  });
-  return NextResponse.json({
-    admins: admins.map(({ activities, ...admin }) =>
-      outranks(admin.role, session.role)
-        ? { id: admin.id, username: admin.username }
-        : { ...admin, activities: activities.map((link) => link.activity) },
-    ),
-  });
+
+  return NextResponse.json({ admins: await adminRows(session.role) });
 });
 
 export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
-  const { username, password, role } = await req.json();
+  const { username, password, role } = parse(adminCreateSchema, await req.json());
 
-  if (!username || !password) {
-    return NextResponse.json({ error: common.allFieldsRequired }, { status: 400 });
-  }
-  if (username.trim().length > 30) {
-    return NextResponse.json({ error: messages.usernameTooLong }, { status: 400 });
-  }
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
-  }
-  const roleValue = isAdminRole(role) ? role : SUPER_ROLE;
-  if (isOwner(roleValue) && !isOwner(session.role)) {
+  const wanted = isAdminRole(role) ? role : SUPER_ROLE;
+  if (isOwner(wanted) && !isOwner(session.role)) {
     throw new ForbiddenError(messages.ownerRoleReserved);
   }
 
-  const existing = await prisma.admin.findUnique({ where: { username: username.trim() } });
-  if (existing) {
-    return NextResponse.json({ error: messages.usernameTaken }, { status: 409 });
-  }
-
-  const hashed = await bcrypt.hash(password, 12);
-  const admin = await prisma.admin.create({
-    data: { username: username.trim(), password: hashed, role: roleValue },
-    select: { id: true, username: true, role: true, createdAt: true },
-  });
+  const admin = await createAdmin(username, password, wanted);
 
   await logAction(session.username, "CREATE_ADMIN", admin.username, {
     ...auditContext(session, req),
