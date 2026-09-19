@@ -432,3 +432,60 @@ describe("a disabled team", () => {
     expect(table.every((r) => r.disabled === false)).toBe(true);
   });
 });
+
+describe("a tie left over after the first mini table", () => {
+  const four = [
+    { id: "a", name: "ألف" },
+    { id: "b", name: "باء" },
+    { id: "c", name: "جيم" },
+    { id: "d", name: "دال" },
+  ];
+
+  const cycle = [
+    match("a", "b", 5, 0),
+    match("a", "c", 1, 0),
+    match("a", "d", 1, 0),
+    match("c", "b", 1, 0),
+    match("d", "c", 1, 0),
+    match("b", "d", 1, 0),
+  ];
+
+  it("settles the teams still level on the meeting between them", () => {
+    const table = computeStandings(four, cycle);
+
+    expect(table.map((r) => r.teamId)).toEqual(["a", "d", "c", "b"]);
+  });
+
+  it("stops calling that tie unsettled", () => {
+    const table = computeStandings(four, cycle);
+    const mark = (id: string) => table.find((r) => r.teamId === id)!.unresolved;
+
+    expect(mark("c")).toBe(false);
+    expect(mark("d")).toBe(false);
+  });
+
+  it("still marks teams that nothing at all separates", () => {
+    const table = computeStandings(four, [match("a", "b", 0, 0), match("c", "d", 0, 0)]);
+
+    expect(table.every((r) => r.unresolved)).toBe(true);
+  });
+
+  it("reads the meeting between two level sides of a series", () => {
+    const seriesMatch = (a: string, b: string, sideATotal: number, sideBTotal: number) => ({
+      firstTeam: { id: a },
+      secondTeam: { id: b },
+      homeScore: null,
+      awayScore: null,
+      series: { sideATotal, sideBTotal, over: true },
+      status: "PLAYED",
+      isKnockout: false,
+    });
+    const table = computeStandings(
+      four,
+      [seriesMatch("a", "b", 3, 2), seriesMatch("a", "c", 0, 3), seriesMatch("b", "d", 1, 2)],
+      true,
+    );
+
+    expect(table.map((r) => r.teamId)).toEqual(["c", "a", "b", "d"]);
+  });
+});
