@@ -35,6 +35,7 @@ export interface Team {
   name: string;
   autoNamed: boolean;
   fromHomeVillage: boolean;
+  disabledAt: string | null;
   logo: string | null;
   captainUserId: string | null;
   groupId: string | null;

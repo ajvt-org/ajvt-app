@@ -362,3 +362,73 @@ describe("a table ranked on parts", () => {
     expect(rows.find((r) => r.teamId === "a")!.points).toBe(3);
   });
 });
+
+describe("a disabled team", () => {
+  const withDisabled = [
+    { id: "a", name: "ألف" },
+    { id: "b", name: "باء" },
+    { id: "c", name: "جيم", disabledAt: new Date("2026-09-19T00:00:00.000Z") },
+  ];
+
+  it("takes its matches out of every other team's tally", () => {
+    const table = computeStandings(withDisabled, [
+      match("a", "b", 1, 0),
+      match("a", "c", 4, 0),
+      match("b", "c", 0, 2),
+    ]);
+    const by = Object.fromEntries(table.map((r) => [r.teamId, r]));
+
+    expect([by.a.played, by.a.won, by.a.points]).toEqual([1, 1, 3]);
+    expect([by.a.scoredFor, by.a.scoredAgainst]).toEqual([1, 0]);
+    expect([by.b.played, by.b.lost, by.b.points]).toEqual([1, 1, 0]);
+    expect([by.b.scoredFor, by.b.scoredAgainst]).toEqual([0, 1]);
+  });
+
+  it("keeps the record of its own matches", () => {
+    const table = computeStandings(withDisabled, [match("a", "c", 4, 0), match("b", "c", 0, 2)]);
+    const disabled = table.find((r) => r.teamId === "c")!;
+
+    expect([disabled.played, disabled.won, disabled.lost]).toEqual([2, 1, 1]);
+    expect([disabled.scoredFor, disabled.scoredAgainst]).toEqual([2, 4]);
+    expect(disabled.points).toBe(3);
+    expect(disabled.disabled).toBe(true);
+  });
+
+  it("sits below every active team whatever its points", () => {
+    const table = computeStandings(withDisabled, [
+      match("a", "c", 0, 5),
+      match("b", "c", 0, 5),
+      match("a", "b", 0, 0),
+    ]);
+
+    expect(table.map((r) => r.teamId)).toEqual(["a", "b", "c"]);
+    expect(table[2].points).toBeGreaterThan(table[0].points);
+  });
+
+  it("drops the cards from a match the active team no longer counts", () => {
+    const table = computeStandings(withDisabled, [
+      match("a", "c", 1, 0, { bookings: [{ teamId: "a", cardType: "RED" }] }),
+    ]);
+
+    expect(table.find((r) => r.teamId === "a")!.cardPoints).toBe(0);
+  });
+
+  it("keeps counting a meeting between two disabled teams", () => {
+    const bothOff = [
+      { id: "a", name: "ألف" },
+      { id: "b", name: "باء", disabledAt: new Date("2026-09-19T00:00:00.000Z") },
+      { id: "c", name: "جيم", disabledAt: new Date("2026-09-19T00:00:00.000Z") },
+    ];
+    const table = computeStandings(bothOff, [match("b", "c", 2, 1)]);
+    const by = Object.fromEntries(table.map((r) => [r.teamId, r]));
+
+    expect([by.b.played, by.b.points]).toEqual([1, 3]);
+    expect([by.c.played, by.c.points]).toEqual([1, 0]);
+  });
+
+  it("marks an active team as not disabled", () => {
+    const table = computeStandings(teams, [match("a", "b", 1, 0)]);
+
+    expect(table.every((r) => r.disabled === false)).toBe(true);
+  });
+});
