@@ -5,7 +5,7 @@ import { useState } from "react";
 import GoalSection from "./GoalSection";
 import type { GoalDraft } from "./goalDraft";
 import { matchAdmin as texts } from "@/lib/texts";
-import { SQUARE } from "./MatchCardActions";
+import { EVENT_ROW, EVENT_ROW_ACTIONS, SQUARE } from "./MatchCardActions";
 
 const SIDES = [
   { id: "t1", name: "الأول" },
@@ -70,6 +70,16 @@ describe("fixing a goal that was entered wrong", () => {
 
     expect(screen.getByLabelText(texts.edit).className).toBe(SQUARE);
     expect(screen.getByLabelText(texts.remove).className).toBe(SQUARE);
+  });
+
+  it("keeps both actions in one group at the end of the row", () => {
+    setup();
+
+    const group = screen.getByLabelText(texts.edit).parentElement;
+    expect(group).toBe(screen.getByLabelText(texts.remove).parentElement);
+    expect(group?.className).toBe(EVENT_ROW_ACTIONS);
+    expect(group?.parentElement?.lastElementChild).toBe(group);
+    expect(group?.parentElement?.className).toContain(EVENT_ROW);
   });
 
   it("loads the goal into the form when editing starts", async () => {
