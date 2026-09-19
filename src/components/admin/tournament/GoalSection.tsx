@@ -63,11 +63,6 @@ export default function GoalSection({
       <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
         <IconLabel name="ball">{title}</IconLabel>
       </p>
-      {period === "REGULAR" && mine.length === 0 && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.goalless}
-        </p>
-      )}
       {mine.map(({ g, index }) => (
         <div
           key={index}
