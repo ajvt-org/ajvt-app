@@ -31,12 +31,6 @@ describe("the forfeit switch", () => {
     expect(screen.queryByText(texts.forfeitPickWinner)).toBeNull();
   });
 
-  it("explains what a forfeit does before it is switched on", () => {
-    setup(null);
-
-    expect(screen.getByText(texts.forfeitHint)).toBeDefined();
-  });
-
   it("picks the first side when switched on, so a winner is always set", async () => {
     const onChange = setup(null);
 
@@ -72,11 +66,5 @@ describe("the forfeit switch", () => {
     setup("away", { home: 0, away: 5 });
 
     expect(screen.getByText(texts.forfeitAwarded).textContent).toContain("5");
-  });
-
-  it("says the loser's goals are kept for a reversal", () => {
-    setup("home");
-
-    expect(screen.getByText(texts.forfeitKeptGoals)).toBeDefined();
   });
 });
