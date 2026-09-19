@@ -1,14 +1,18 @@
 import { common } from "@/lib/messages";
 
+export type ErrorDetails = Record<string, unknown>;
+
 export class HttpError extends Error {
   readonly status: number;
   readonly clientMessage: string;
+  readonly details?: ErrorDetails;
 
-  constructor(code: string, status: number, clientMessage: string) {
+  constructor(code: string, status: number, clientMessage: string, details?: ErrorDetails) {
     super(code);
     this.name = code;
     this.status = status;
     this.clientMessage = clientMessage;
+    this.details = details;
   }
 }
 
@@ -37,13 +41,13 @@ export class NotFoundError extends HttpError {
 }
 
 export class ConflictError extends HttpError {
-  constructor(clientMessage: string = "العملية غير ممكنة في هذه الحالة") {
-    super("CONFLICT", 409, clientMessage);
+  constructor(clientMessage: string = "العملية غير ممكنة في هذه الحالة", details?: ErrorDetails) {
+    super("CONFLICT", 409, clientMessage, details);
   }
 }
 
 export class ValidationError extends HttpError {
-  constructor(clientMessage: string = common.invalidBody) {
-    super("VALIDATION", 400, clientMessage);
+  constructor(clientMessage: string = common.invalidBody, details?: ErrorDetails) {
+    super("VALIDATION", 400, clientMessage, details);
   }
 }
