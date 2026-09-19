@@ -1,77 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { issueMembership } from "@/lib/member";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { ConflictError, NotFoundError } from "@/lib/errors";
 import { parse } from "@/lib/validation";
-import { validatePaidAmount } from "@/lib/donations";
-import { getAppSettings } from "@/lib/settingsServer";
-import { addMembership } from "@/lib/membershipCreate";
-import { adminRecorder } from "@/lib/membershipRecorder";
-import { accounts, members } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
 import { adminMembershipCreateSchema } from "./schema";
-import { accountIdError } from "@/lib/paymentAccountsServer";
+import { addMembershipToPerson } from "@/lib/membershipAddServer";
 
 export const POST = withRoute(
   "POST /api/admin/people/[id]/membership",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { paymentMethod, accountId, paymentProof, paidAmount, surplusAnonymous, status } = parse(
-      adminMembershipCreateSchema,
-      await req.json(),
-    );
+    const input = parse(adminMembershipCreateSchema, await req.json());
 
-    const wrongAccount = await accountIdError(paymentMethod, accountId, null);
-    if (wrongAccount) return NextResponse.json({ error: wrongAccount }, { status: 400 });
-
-    const person = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        fullName: true,
-        memberNumber: true,
-        memberships: { select: { id: true }, take: 1 },
-      },
-    });
-    if (!person) throw new NotFoundError(accounts.notFound);
-    if (person.memberships.length) throw new ConflictError(members.accountAlreadyHasMember);
-
-    const { membershipFee, membershipYear } = await getAppSettings();
-
-    let paidAmountValue: number | null = null;
-    if (paidAmount !== undefined && paidAmount !== null && String(paidAmount).trim() !== "") {
-      const error = validatePaidAmount(paidAmount, membershipFee);
-      if (error) return NextResponse.json({ error }, { status: 400 });
-      paidAmountValue = Number(paidAmount);
-    }
-
-    const needsNumber = status === "ACTIVE" && !person.memberNumber;
-
-    await prisma.$transaction(async (tx) =>
-      addMembership(tx, {
-        userId: person.id,
-        paymentMethod: paymentMethod.trim(),
-        accountId: accountId || null,
-        paymentProof: paymentProof || null,
-        paidAmount: paidAmountValue,
-        surplusAnonymous: surplusAnonymous ?? false,
-        status,
-        membershipYear,
-        fee: membershipFee,
-        recorder: adminRecorder(session),
-        issued: needsNumber ? await issueMembership(tx) : undefined,
-      }),
-    );
+    const { person, paidAmount, membershipYear } = await addMembershipToPerson(id, input, session);
 
     await logAction(session.username, "ADD_MEMBERSHIP", nameOf(person), {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: person.id,
-      after: { paymentMethod, paidAmount: paidAmountValue, status, year: membershipYear },
+      after: {
+        paymentMethod: input.paymentMethod,
+        paidAmount,
+        status: input.status,
+        year: membershipYear,
+      },
     });
 
     return NextResponse.json({ member: { id: person.id } }, { status: 201 });

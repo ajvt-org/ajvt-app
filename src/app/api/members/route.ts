@@ -1,129 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { generateReferenceCode } from "@/lib/referenceCode";
 import { parse } from "@/lib/validation";
 import { memberSubmissionSchema } from "./schema";
 import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
-import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
-import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
-import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
-import { selfRecorder } from "@/lib/membershipRecorder";
-import { saveMembershipYear } from "@/lib/membershipRecord";
-import { currentMembershipPaid } from "@/lib/currentMembershipServer";
-import { asMembershipState } from "@/lib/currentMembership";
-import { membershipState } from "@/lib/membershipState";
 import { methodsWithAccounts } from "@/lib/paymentMethodsServer";
-import { accountIsOpenOn, methodNames, payableMethods } from "@/lib/paymentMethods";
-import { readBankReference } from "@/lib/bankReference";
-import { members, money } from "@/lib/messages";
-import { nameOf } from "@/lib/person";
-import { releaseUploads } from "@/lib/uploadRelease";
-
-const CODE_ATTEMPTS = 5;
+import { methodNames, payableMethods } from "@/lib/paymentMethods";
+import { submitMembership } from "@/lib/selfMembershipServer";
 
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
   const { membershipFee, membershipYear } = await getAppSettings();
   const payable = payableMethods(await methodsWithAccounts());
-  const {
-    id,
-    paymentMethod,
-    accountId: declared,
-    bankReference: typed,
-    paymentProof,
-    paidAmount,
-    referenceCode,
-    surplusAnonymous,
-  } = parse(memberSubmissionSchema(membershipFee, methodNames(payable)), await req.json());
+  const input = parse(
+    memberSubmissionSchema(membershipFee, methodNames(payable)),
+    await req.json(),
+  );
 
-  const chosen = payable.find((method) => method.name === paymentMethod);
-  const requireUsableAccount = (held: string | null) => {
-    if (declared && declared !== held && !accountIsOpenOn(chosen, declared)) {
-      throw new ValidationError(money.paymentAccountInvalid);
-    }
-  };
-  const accountId = declared || null;
-  const bankReference = readBankReference(typed) || null;
-
-  const person = await prisma.user.findUniqueOrThrow({
-    where: { id: session.userId },
-    select: { fullName: true, memberships: { select: { id: true }, take: 1 } },
+  const { resubmitted, referenceCode } = await submitMembership(session.userId, input, {
+    membershipFee,
+    membershipYear,
+    payable,
   });
-  if (!person.fullName?.trim()) {
-    throw new ValidationError(members.profileIncomplete);
-  }
 
-  if (id) {
-    if (id !== session.userId) {
-      throw new NotFoundError(members.notFound);
-    }
-    const current = await currentMembershipPaid(prisma, session.userId);
-    if (!current) {
-      throw new NotFoundError(members.notFound);
-    }
-    if (membershipState(asMembershipState(current), membershipYear) === "ENDED") {
-      throw new ConflictError(members.membershipEnded);
-    }
-    if (current.status === "ACTIVE") {
-      throw new ConflictError(members.alreadyAccepted);
-    }
-    requireUsableAccount(current.accountId);
-
-    await prisma.$transaction(async (tx) => {
-      await saveMembershipYear(tx, session.userId, current.year, {
-        status: "PENDING",
-        rejectionReason: null,
-      });
-      await recordMembershipPayment(tx, session.userId, Number(paidAmount), membershipFee, {
-        method: paymentMethod,
-        accountId,
-        bankReference,
-        proof: paymentProof,
-        ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
-        status: "PENDING",
-        recorder: selfRecorder(nameOf(person)),
-        anonymous: surplusAnonymous,
-      });
-    });
-    await releaseUploads(current.paymentProof);
-    return NextResponse.json({ id }, { status: 200 });
-  }
-
-  if (person.memberships.length) {
-    throw new ConflictError(members.alreadyHasRequest);
-  }
-
-  requireUsableAccount(null);
-
-  let code: string | null = referenceCode || null;
-
-  for (let attempt = 0; ; attempt++) {
-    try {
-      await prisma.$transaction(async (tx) => {
-        await saveMembershipYear(tx, session.userId, membershipYear, { status: "PENDING" });
-        await recordMembershipPayment(tx, session.userId, Number(paidAmount), membershipFee, {
-          method: paymentMethod,
-          accountId,
-          bankReference,
-          proof: paymentProof,
-          referenceCode: code,
-          status: "PENDING",
-          recorder: selfRecorder(nameOf(person)),
-          anonymous: surplusAnonymous,
-        });
-      });
-      return NextResponse.json({ id: session.userId, referenceCode: code }, { status: 201 });
-    } catch (err) {
-      if (!isUniqueViolation(err)) throw err;
-      if (uniqueViolationFields(err).includes("userId")) {
-        throw new ConflictError(members.alreadyHasRequest);
-      }
-      if (!code || attempt >= CODE_ATTEMPTS) {
-        throw new ConflictError(members.referenceCodeTaken);
-      }
-      code = generateReferenceCode();
-    }
-  }
+  if (resubmitted) return NextResponse.json({ id: input.id }, { status: 200 });
+  return NextResponse.json({ id: session.userId, referenceCode }, { status: 201 });
 });
