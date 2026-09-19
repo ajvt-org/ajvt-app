@@ -23,6 +23,7 @@ function team(id: string, name: string, members: { id: string; name: string }[])
     name,
     autoNamed: false,
     fromHomeVillage: true,
+    disabledAt: null,
     logo: null,
     captainUserId: null,
     groupId: null,

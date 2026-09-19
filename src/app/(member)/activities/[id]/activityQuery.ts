@@ -61,6 +61,7 @@ async function loadActivity(id: string) {
           logo: true,
           groupId: true,
           captainUserId: true,
+          disabledAt: true,
           members: {
             select: {
               userId: true,

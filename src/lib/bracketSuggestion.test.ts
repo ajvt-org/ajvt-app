@@ -22,6 +22,7 @@ function row(teamId: string, unresolved = false): StandingsRow {
     points: 0,
     cardPoints: 0,
     unresolved,
+    disabled: false,
   };
 }
 

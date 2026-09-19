@@ -45,6 +45,7 @@ function team(members: TeamMemberEntry[], captainUserId: string | null = null): 
     name: "فريق النجم",
     autoNamed: false,
     fromHomeVillage: true,
+    disabledAt: null,
     logo: null,
     captainUserId,
     groupId: null,

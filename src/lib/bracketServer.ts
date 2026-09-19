@@ -310,7 +310,7 @@ async function groupTables(activityId: string) {
     }),
     prisma.team.findMany({
       where: { activityId },
-      select: { id: true, name: true, groupId: true, logo: true },
+      select: { id: true, name: true, groupId: true, logo: true, disabledAt: true },
     }),
     prisma.match.findMany({
       where: { activityId },
