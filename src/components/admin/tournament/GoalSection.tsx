@@ -5,7 +5,7 @@ import type { GoalKind, GoalPeriod } from "./types";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import FieldRow from "@/components/admin/FieldRow";
-import { matchAdmin as texts } from "@/lib/texts";
+import { matchAdmin as texts, matchEventLabel } from "@/lib/texts";
 import { KIND_LABEL, goalSuffix, type GoalDraft } from "./goalDraft";
 import { EVENT_ROW, EVENT_ROW_ACTIONS, EVENT_ROW_TEXT, SQUARE } from "./MatchCardActions";
 import { ROW_ACTION_ICON } from "./TeamIdentityEditor";
@@ -78,8 +78,10 @@ export default function GoalSection({
           <span className={EVENT_ROW_TEXT}>
             <Icon name="ball" size={13} />
             <span className="min-w-0">
-              {sides.find((t) => t.id === g.teamId)?.name} — {nameOf(g.userId)}
-              {g.minute ? ` ${g.minute}'` : ""}
+              {matchEventLabel(
+                [sides.find((t) => t.id === g.teamId)?.name, nameOf(g.userId)],
+                g.minute,
+              )}
               {goalSuffix(g.kind)}
             </span>
           </span>
