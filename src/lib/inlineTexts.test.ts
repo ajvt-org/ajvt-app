@@ -32,6 +32,7 @@ const KEPT_CLEAN = [
   "src/app/admin/receipts/page.tsx",
   "src/app/admin/receipts/VoidReceiptDialog.tsx",
   "src/components/admin/tournament/askQuestion.ts",
+  "src/app/api/admin/teams/[teamId]/route.ts",
   "src/app/admin/members/[id]/AccountPhoneForm.tsx",
   "src/app/admin/members/[id]/MemberEditForm.tsx",
   "src/app/admin/members/[id]/SupportPrivacyCard.tsx",
