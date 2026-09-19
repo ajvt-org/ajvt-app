@@ -7,7 +7,7 @@ import IconLabel from "@/components/IconLabel";
 import FieldRow from "@/components/admin/FieldRow";
 import { matchAdmin as texts } from "@/lib/texts";
 import { KIND_LABEL, goalSuffix, type GoalDraft } from "./goalDraft";
-import { SQUARE } from "./MatchCardActions";
+import { EVENT_ROW, EVENT_ROW_ACTIONS, EVENT_ROW_TEXT, SQUARE } from "./MatchCardActions";
 import { ROW_ACTION_ICON } from "./TeamIdentityEditor";
 import NumberInput from "@/components/NumberInput";
 
@@ -68,40 +68,44 @@ export default function GoalSection({
       {mine.map(({ g, index }) => (
         <div
           key={index}
-          className="flex items-center gap-2 text-xs font-semibold flex-wrap rounded-lg"
+          className={`${EVENT_ROW} font-semibold`}
           style={
             editing === index
               ? { background: "var(--mint-100)", padding: "2px 6px" }
               : { padding: "2px 6px" }
           }
         >
-          <Icon name="ball" size={13} />
-          <span className="min-w-0">
-            {sides.find((t) => t.id === g.teamId)?.name} — {nameOf(g.userId)}
-            {g.minute ? ` ${g.minute}'` : ""}
-            {goalSuffix(g.kind)}
+          <span className={EVENT_ROW_TEXT}>
+            <Icon name="ball" size={13} />
+            <span className="min-w-0">
+              {sides.find((t) => t.id === g.teamId)?.name} — {nameOf(g.userId)}
+              {g.minute ? ` ${g.minute}'` : ""}
+              {goalSuffix(g.kind)}
+            </span>
           </span>
-          <button
-            type="button"
-            onClick={() => startEditing(index)}
-            aria-label={texts.edit}
-            className={SQUARE}
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            <Icon name="pencil" size={ROW_ACTION_ICON} />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setGoals((prev) => prev.filter((_, j) => j !== index));
-              reset();
-            }}
-            aria-label={texts.remove}
-            className={SQUARE}
-            style={{ background: "#fee2e2", color: "#991b1b" }}
-          >
-            <Icon name="close" size={ROW_ACTION_ICON} />
-          </button>
+          <span className={EVENT_ROW_ACTIONS}>
+            <button
+              type="button"
+              onClick={() => startEditing(index)}
+              aria-label={texts.edit}
+              className={SQUARE}
+              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+            >
+              <Icon name="pencil" size={ROW_ACTION_ICON} />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGoals((prev) => prev.filter((_, j) => j !== index));
+                reset();
+              }}
+              aria-label={texts.remove}
+              className={SQUARE}
+              style={{ background: "#fee2e2", color: "#991b1b" }}
+            >
+              <Icon name="close" size={ROW_ACTION_ICON} />
+            </button>
+          </span>
         </div>
       ))}
       <div className="rounded-xl p-3 space-y-2.5" style={{ background: "var(--mint-50)" }}>

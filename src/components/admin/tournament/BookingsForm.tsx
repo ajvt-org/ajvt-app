@@ -9,7 +9,7 @@ import FieldRow from "@/components/admin/FieldRow";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import NumberInput from "@/components/NumberInput";
-import { SQUARE } from "./MatchCardActions";
+import { EVENT_ROW, EVENT_ROW_ACTIONS, EVENT_ROW_TEXT, SQUARE } from "./MatchCardActions";
 import { ROW_ACTION_ICON } from "./TeamIdentityEditor";
 
 export default function BookingsForm({
@@ -94,18 +94,21 @@ export default function BookingsForm({
           {match.bookings.map((b) => (
             <div
               key={b.id}
-              className="flex items-center justify-between text-xs rounded-lg"
+              className={EVENT_ROW}
               style={
                 editingId === b.id
                   ? { background: "var(--mint-100)", padding: "2px 6px" }
                   : { padding: "2px 6px" }
               }
             >
-              <span className="flex items-center gap-1.5">
-                <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
-                {b.minute ? ` — ${texts.minute} ${b.minute}` : ""}
+              <span className={EVENT_ROW_TEXT}>
+                <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} />
+                <span className="min-w-0">
+                  {b.member.fullName}
+                  {b.minute ? ` — ${texts.minute} ${b.minute}` : ""}
+                </span>
               </span>
-              <span className="flex items-center gap-2">
+              <span className={EVENT_ROW_ACTIONS}>
                 <button
                   type="button"
                   onClick={() => startEditing(b)}

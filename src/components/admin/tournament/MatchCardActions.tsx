@@ -5,6 +5,9 @@ import { matchAdmin as texts } from "@/lib/texts";
 
 const CHIP = "text-xs px-2.5 py-1.5 rounded-lg font-bold";
 export const SQUARE = "w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30";
+export const EVENT_ROW = "flex items-center justify-between gap-2 text-xs rounded-lg";
+export const EVENT_ROW_TEXT = "flex items-center gap-1.5 min-w-0";
+export const EVENT_ROW_ACTIONS = "flex items-center gap-2 shrink-0";
 
 export default function MatchCardActions({
   played,
