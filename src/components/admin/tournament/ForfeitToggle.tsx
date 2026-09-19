@@ -64,10 +64,6 @@ export default function ForfeitToggle({
         </button>
       </div>
 
-      <p className="text-xs" style={{ color: on ? AMBER_INK : "var(--text-muted)" }}>
-        {texts.forfeitHint}
-      </p>
-
       {on && (
         <>
           <p className="text-xs font-bold" style={{ color: AMBER_INK }}>
@@ -100,10 +96,6 @@ export default function ForfeitToggle({
               {texts.forfeitAwarded} <Scoreline home={awarded.home} away={awarded.away} />
             </p>
           )}
-
-          <p className="text-xs" style={{ color: AMBER_INK }}>
-            {texts.forfeitKeptGoals}
-          </p>
         </>
       )}
     </div>
