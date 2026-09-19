@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
-import { setParticipants } from "@/lib/competitionServer";
+import { participantUserIds, setParticipants } from "@/lib/competitionServer";
 import { eligibleMembers } from "@/lib/quiz";
 import { common } from "@/lib/messages";
 
@@ -15,11 +14,10 @@ export const GET = withRoute(
   async (_req: NextRequest, { params }: Params) => {
     await requireAdminRole("QUIZ");
     const { id } = await params;
-    const [rows, candidates] = await Promise.all([
-      prisma.quizParticipant.findMany({ where: { competitionId: id }, select: { userId: true } }),
-      eligibleMembers(),
-    ]);
-    return NextResponse.json({ userIds: rows.map((r) => r.userId), candidates });
+
+    const [userIds, candidates] = await Promise.all([participantUserIds(id), eligibleMembers()]);
+
+    return NextResponse.json({ userIds, candidates });
   },
 );
 
@@ -28,6 +26,7 @@ export const PUT = withRoute(
   async (req: NextRequest, { params }: Params) => {
     const session = await requireAdminRole("QUIZ");
     const { id } = await params;
+
     let body: { userIds?: unknown };
     try {
       body = await req.json();
