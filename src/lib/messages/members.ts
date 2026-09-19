@@ -8,6 +8,7 @@ export const members = {
   statusTransition: (from: string, to: string) => ` (من ${from} إلى ${to})`,
   notFound: "العضو غير موجود",
   requestNotFound: "الطلب غير موجود",
+  confirmByName: "اكتب اسم العضو كما هو للتأكيد",
   fullNameRequired: "الاسم الكامل مطلوب",
   fullNameTooLong: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)",
   fullNameArabicOnly: "الاسم الكامل يجب أن يكون بالحروف العربية فقط",

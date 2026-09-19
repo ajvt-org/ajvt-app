@@ -7,8 +7,9 @@ import PageLoading from "@/components/PageLoading";
 import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import IconLabel from "@/components/IconLabel";
 import { auditTargetLabel } from "@/lib/auditFields";
-import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import { deletedRecords } from "@/lib/texts";
+import { counted } from "@/lib/arabicCount";
+import { DAY } from "@/lib/messages";
 
 interface DeletedRow {
   id: string;
@@ -48,7 +49,7 @@ function Row({ row, onRestored }: { row: DeletedRow; onRestored: () => Promise<v
           {deletedRecords.note(
             auditTargetLabel(row.kind),
             row.deletedBy,
-            countedNoun(row.daysLeft, DAYS),
+            counted(row.daysLeft, DAY),
           )}
         </p>
       </div>

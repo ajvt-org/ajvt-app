@@ -3,7 +3,8 @@
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import type { CompetitionRow } from "./competitionTypes";
-import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
+import { counted } from "@/lib/arabicCount";
+import { ROUND } from "@/lib/messages";
 
 export default function CompetitionList({
   rows,
@@ -49,7 +50,7 @@ export default function CompetitionList({
               </span>
               <span className="text-xs ms-auto" style={{ color: "var(--text-muted)" }}>
                 {row.startedAt ? "انطلقت" : "لم تنطلق"} · {row._count.rounds} من{" "}
-                {countedNoun(row.roundCount, ROUNDS)}
+                {counted(row.roundCount, ROUND)}
                 {row.visibility === "PRIVATE" ? ` · ${row._count.participants} مشاركاً` : ""}
               </span>
             </button>

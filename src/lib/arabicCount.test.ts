@@ -58,15 +58,29 @@ describe("the noun beside a number", () => {
 });
 
 describe("a number and its noun together", () => {
-  it("drops the digit where arabic carries the count in the word", () => {
+  it("gives none the plural, which is the form arabic asks for", () => {
+    expect(counted(0, AGE)).toBe("0 أعصار");
+  });
+
+  it("gives one the bare noun, with no word for one beside it", () => {
     expect(counted(1, AGE)).toBe("عصر");
+  });
+
+  it("gives two the dual and no digit, since the word already counts", () => {
     expect(counted(2, AGE)).toBe("عصران");
   });
 
-  it("keeps the digit everywhere else", () => {
-    expect(counted(0, AGE)).toBe("0 أعصار");
-    expect(counted(5, AGE)).toBe("5 أعصار");
+  it("puts the digit before the plural from three to ten", () => {
+    expect(counted(3, AGE)).toBe("3 أعصار");
+    expect(counted(10, AGE)).toBe("10 أعصار");
+  });
+
+  it("puts the digit before the accusative singular from eleven to ninety nine", () => {
+    expect(counted(11, AGE)).toBe("11 عصراً");
     expect(counted(24, AGE)).toBe("24 عصراً");
+  });
+
+  it("puts the digit before the bare singular at a round hundred", () => {
     expect(counted(100, AGE)).toBe("100 عصر");
   });
 });

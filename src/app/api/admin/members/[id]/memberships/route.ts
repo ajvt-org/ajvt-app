@@ -1,79 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
-import { getAppSettings } from "@/lib/settingsServer";
-import { renewalRefusal } from "@/lib/renewal";
-import { currentMembership } from "@/lib/currentMembershipServer";
 import { NotFoundError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
-import { feeOnly, paidForYear } from "@/lib/paidBreakdown";
-import { paymentOfYear } from "@/lib/membershipPaymentFields";
-import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
-import { endingHistory, ENDING_ACTIONS } from "@/lib/membershipEndingHistory";
+import { memberMembershipHistory } from "@/lib/memberHistoryServer";
 
 export const GET = withRoute(
   "GET /api/admin/members/[id]/memberships",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { membershipYear } = await getAppSettings();
 
-    const current = await currentMembership(prisma, id);
-    if (!current) throw new NotFoundError(messages.notFound);
-    const account = await prisma.user.findUniqueOrThrow({
-      where: { id },
-      select: { memberNumber: true, ...CONFIDENTIAL_SELECT },
-    });
-    const named = seesSupporterName(viewerOf(session), { userId: id, user: account });
+    const history = await memberMembershipHistory(id, viewerOf(session));
+    if (!history) throw new NotFoundError(messages.notFound);
 
-    const memberships = await prisma.membership.findMany({
-      where: { userId: id },
-      orderBy: { year: "desc" },
-      select: {
-        id: true,
-        year: true,
-        status: true,
-        rejectionReason: true,
-        createdAt: true,
-      },
-    });
-
-    const endings = await prisma.auditLog.findMany({
-      where: { targetType: "Member", targetId: id, action: { in: [...ENDING_ACTIONS] } },
-      orderBy: { createdAt: "asc" },
-      select: { action: true, adminUsername: true, createdAt: true, before: true, after: true },
-    });
-
-    const payments = await prisma.payment.findMany({
-      where: { userId: id, purpose: "MEMBERSHIP" },
-      select: { amount: true, feeApplied: true, year: true, method: true, recordedBy: true },
-    });
-
-    return NextResponse.json({
-      memberships: memberships.map((m) => {
-        const banked = paidForYear(payments, m.year);
-        const paid = named ? banked : feeOnly(banked);
-        const payment = paymentOfYear(payments, m.year);
-        return {
-          ...m,
-          paymentMethod: payment?.method ?? null,
-          recordedBy: payment?.recordedBy ?? null,
-          paidAmount: paid?.fee ?? null,
-          supportAmount: paid?.support ?? 0,
-        };
-      }),
-      endings: endingHistory(endings),
-      currentYear: membershipYear,
-      refusal: renewalRefusal(
-        {
-          status: current.status,
-          membershipYear: current.year,
-          memberNumber: account.memberNumber,
-        },
-        membershipYear,
-      ),
-    });
+    return NextResponse.json(history);
   },
 );

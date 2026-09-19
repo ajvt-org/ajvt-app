@@ -1,5 +1,12 @@
-import { countedLabel } from "../arabicPlural";
+import { countedNoun, type CountedNoun } from "../arabicCount";
 import { money } from "../money";
+
+const YOUR_PLACE: CountedNoun = {
+  one: "مركزك بين الداعمين",
+  two: "مركزاك بين الداعمين",
+  few: "مراكزك بين الداعمين",
+  many: "مراكزك بين الداعمين",
+};
 
 export const supporters = {
   title: "لوحة شرف المتبرعين",
@@ -7,8 +14,7 @@ export const supporters = {
   supporterColumn: "الداعم",
   totalColumn: "المجموع",
   place: (rank: number) => `المركز ${rank}`,
-  yourPlaces: (count: number) =>
-    countedLabel(count, "مركزك بين الداعمين", "مركزاك بين الداعمين", "مراكزك بين الداعمين"),
+  yourPlaces: (count: number) => countedNoun(count, YOUR_PLACE),
   namedGiving: "تبرعاتك باسمك",
   unnamedGiving: "تبرعاتك دون اسم",
   donate: "ادعم الرابطة الآن",

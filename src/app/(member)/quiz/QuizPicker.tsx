@@ -6,8 +6,9 @@ import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import NextRoundCountdown from "./NextRoundCountdown";
 import type { CompetitionState, RunningCompetition } from "./types";
-import { countedNoun, QUESTIONS, ROUNDS } from "@/lib/arabicPlural";
 import { landingActivities, quizBoard as texts, quizPicker } from "@/lib/texts";
+import { counted } from "@/lib/arabicCount";
+import { QUESTION, ROUND } from "@/lib/messages";
 
 const STATE_LABEL: Record<CompetitionState, string> = {
   before: quizPicker.before,
@@ -127,7 +128,7 @@ function CompetitionCard({
               <NumericRanges>
                 {quizPicker.roundsPassed(
                   competition.passedRounds,
-                  countedNoun(competition.roundCount, ROUNDS),
+                  counted(competition.roundCount, ROUND),
                 )}
               </NumericRanges>
             </span>
@@ -281,7 +282,7 @@ export default function QuizPicker({
                   </span>
                   <span className="block text-xs" style={{ color: "#8c6a52" }}>
                     <NumericRanges>
-                      {quizPicker.tutorialSize(countedNoun(tutorialCount, QUESTIONS))}
+                      {quizPicker.tutorialSize(counted(tutorialCount, QUESTION))}
                     </NumericRanges>
                   </span>
                 </span>

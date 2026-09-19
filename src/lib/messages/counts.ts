@@ -128,7 +128,7 @@ export const RESULT: CountedNoun = {
 
 export const ACTIVE_MEMBER: CountedNoun = {
   one: "عضو نشط",
-  two: "عضوين نشطين",
+  two: "عضوان نشطان",
   few: "أعضاء نشطين",
   many: "عضواً نشطاً",
 };
@@ -152,4 +152,53 @@ export const RECORD: CountedNoun = {
   two: "سجلان",
   few: "سجلات",
   many: "سجلاً",
+};
+
+export const QUESTION: CountedNoun = {
+  one: "سؤال",
+  two: "سؤالان",
+  few: "أسئلة",
+  many: "سؤالاً",
+};
+
+export const CORRECT_ANSWER: CountedNoun = {
+  one: "إجابة صحيحة",
+  two: "إجابتان صحيحتان",
+  few: "إجابات صحيحة",
+  many: "إجابةً صحيحةً",
+};
+
+export const ROUND: CountedNoun = {
+  one: "جولة",
+  two: "جولتان",
+  few: "جولات",
+  many: "جولةً",
+};
+
+export const SECOND: CountedNoun = {
+  one: "ثانية",
+  two: "ثانيتان",
+  few: "ثوانٍ",
+  many: "ثانيةً",
+};
+
+export const HOUR: CountedNoun = {
+  one: "ساعة",
+  two: "ساعتان",
+  few: "ساعات",
+  many: "ساعةً",
+};
+
+export const JOIN_REQUEST: CountedNoun = {
+  one: "طلب انضمام",
+  two: "طلبا انضمام",
+  few: "طلبات انضمام",
+  many: "طلب انضمام",
+};
+
+export const PENDING_INVITATION: CountedNoun = {
+  one: "دعوة لم يُرد عليها",
+  two: "دعوتان لم يُرد عليهما",
+  few: "دعوات لم يُرد عليها",
+  many: "دعوةً لم يُرد عليها",
 };

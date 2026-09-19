@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import NumericRanges from "@/components/NumericRanges";
-import { countedNoun, DAYS } from "@/lib/arabicPlural";
+import { counted } from "@/lib/arabicCount";
+import { DAY } from "@/lib/messages";
 
 export default function NextRoundCountdown({
   opensAt,
@@ -52,7 +53,7 @@ export default function NextRoundCountdown({
       }}
       aria-label={ariaLabel}
     >
-      <NumericRanges>{days > 0 ? `${countedNoun(days, DAYS)} و ${clock}` : clock}</NumericRanges>
+      <NumericRanges>{days > 0 ? `${counted(days, DAY)} و ${clock}` : clock}</NumericRanges>
     </span>
   );
 }

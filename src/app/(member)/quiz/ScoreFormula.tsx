@@ -2,7 +2,8 @@
 
 import NumericRanges from "@/components/NumericRanges";
 import type { ScoreCurve } from "@/lib/competitionConfig";
-import { countedNoun, POINTS, ROUNDS, SECONDS } from "@/lib/arabicPlural";
+import { counted } from "@/lib/arabicCount";
+import { POINT, ROUND, SECOND } from "@/lib/messages";
 
 export default function ScoreFormula({
   curve,
@@ -24,22 +25,22 @@ export default function ScoreFormula({
       </p>
       <ul className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
         <li>
-          <NumericRanges>{`حتى ${countedNoun(curve.fullSeconds, SECONDS)}، كل النقاط`}</NumericRanges>
+          <NumericRanges>{`حتى ${counted(curve.fullSeconds, SECOND)}، كل النقاط`}</NumericRanges>
         </li>
         <li>
           <NumericRanges>
-            {`من ${curve.fullSeconds} إلى ${countedNoun(curve.maxSeconds, SECONDS)}، تنزل من 100 بالمئة إلى ${curve.floorPercent} بالمئة`}
+            {`من ${curve.fullSeconds} إلى ${counted(curve.maxSeconds, SECOND)}، تنزل من 100 بالمئة إلى ${curve.floorPercent} بالمئة`}
           </NumericRanges>
         </li>
         <li>
           <NumericRanges>
-            {`بعد ${countedNoun(curve.maxSeconds, SECONDS)} يُغلق السؤال ويحتسب متروكاً بصفر`}
+            {`بعد ${counted(curve.maxSeconds, SECOND)} يُغلق السؤال ويحتسب متروكاً بصفر`}
           </NumericRanges>
         </li>
       </ul>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         <NumericRanges>
-          {`مثال، سؤال من 20 نقطة أُجيب صحيحاً في منتصف المدة يأخذ ${countedNoun(example, POINTS)}.`}
+          {`مثال، سؤال من 20 نقطة أُجيب صحيحاً في منتصف المدة يأخذ ${counted(example, POINT)}.`}
         </NumericRanges>
       </p>
       <ul className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
@@ -50,7 +51,7 @@ export default function ScoreFormula({
                 ? `${board.title}، مجموع كل جولات المسابقة`
                 : board.blockRounds === 1
                   ? `${board.title}، كل جولة وحدها`
-                  : `${board.title}، أفضل ${countedNoun(board.counting, ROUNDS)} من ${board.blockRounds}`}
+                  : `${board.title}، أفضل ${counted(board.counting, ROUND)} من ${board.blockRounds}`}
             </NumericRanges>
           </li>
         ))}

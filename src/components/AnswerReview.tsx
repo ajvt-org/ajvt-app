@@ -4,7 +4,8 @@ import type { CSSProperties } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import IconLabel from "@/components/IconLabel";
-import { countedNoun, CORRECT_ANSWERS, POINTS, QUESTIONS } from "@/lib/arabicPlural";
+import { counted } from "@/lib/arabicCount";
+import { CORRECT_ANSWER, POINT, QUESTION } from "@/lib/messages";
 
 export interface ReviewRow {
   position: number;
@@ -94,7 +95,7 @@ export default function AnswerReview({
 
       <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
         <NumericRanges>
-          {`${countedNoun(review.correct, CORRECT_ANSWERS)} من ${countedNoun(review.total, QUESTIONS)} · ${countedNoun(review.score, POINTS)} من ${review.possible} · ${seconds(review.elapsedMs)}`}
+          {`${counted(review.correct, CORRECT_ANSWER)} من ${counted(review.total, QUESTION)} · ${counted(review.score, POINT)} من ${review.possible} · ${seconds(review.elapsedMs)}`}
         </NumericRanges>
       </p>
 

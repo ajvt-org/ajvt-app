@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
-import { push } from "@/lib/messages";
-import { countedNoun, DAYS } from "@/lib/arabicPlural";
+import { DAY, push } from "@/lib/messages";
 import type { WaitingRow } from "@/lib/waitingRequests";
 import { waitingRequests as texts } from "@/lib/texts";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
+import { counted } from "@/lib/arabicCount";
 
 interface Waiting {
   days: number;
@@ -57,7 +57,7 @@ function Row({
           <span className="text-sm font-bold truncate block">{row.name}</span>
         )}
         <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.since(countedNoun(row.days, DAYS))}
+          {texts.since(counted(row.days, DAY))}
         </span>
       </div>
       {done ? (
@@ -105,7 +105,7 @@ export default function WaitingRequests() {
   return (
     <div className="card p-4">
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        <IconLabel name="hourglass">{texts.waitingOver(countedNoun(data.days, DAYS))}</IconLabel>
+        <IconLabel name="hourglass">{texts.waitingOver(counted(data.days, DAY))}</IconLabel>
       </p>
       <div className="mt-2 divide-y" style={{ borderColor: "var(--mint-100)" }}>
         {data.pending.map((row) => (

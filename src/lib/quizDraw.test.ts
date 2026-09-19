@@ -223,7 +223,7 @@ describe("drawShortfall", () => {
     const message = drawShortfall({ roundCount: 3, questionCount: 4, categoryRounds: true }, 2, 40);
 
     expect(message).toContain("التصنيفات لا تكفي");
-    expect(message).toContain("جولتين");
+    expect(message).toContain("جولتان");
   });
 
   it("gives every count the noun shape its size takes", () => {
