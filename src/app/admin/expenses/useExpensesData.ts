@@ -6,6 +6,7 @@ import { loginPathWithNext } from "@/lib/utils";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { Expense, FinanceSummary } from "./types";
+import { useFreshDataFromElsewhere } from "@/hooks/useFreshData";
 
 export function useExpensesData() {
   const router = useRouter();
@@ -46,6 +47,8 @@ export function useExpensesData() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useFreshDataFromElsewhere(load);
 
   return { role, summary, expenses, tags, destinations, loading, reload: load };
 }
