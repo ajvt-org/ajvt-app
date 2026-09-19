@@ -3,19 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
+import { usePendingCounts } from "./usePendingCounts";
 
-export interface PendingCounts {
-  members: number;
-  activityWork: number;
-  donations: number;
-}
-
-const NONE: PendingCounts = { members: 0, activityWork: 0, donations: 0 };
+export type { PendingCounts } from "./usePendingCounts";
 
 export function useAdminSession(enabled: boolean) {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingCounts>(NONE);
+  const pending = usePendingCounts(enabled);
 
   useEffect(() => {
     if (!enabled) return;
@@ -29,17 +24,6 @@ export function useAdminSession(enabled: boolean) {
       })
       .then((data) => {
         if (data?.role) setRole(data.role);
-      })
-      .catch(() => {});
-    fetch("/api/admin/notifications/summary")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data) return;
-        setPending({
-          members: data.pendingMembers || 0,
-          activityWork: data.pendingActivityWork || 0,
-          donations: data.pendingDonations || 0,
-        });
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
