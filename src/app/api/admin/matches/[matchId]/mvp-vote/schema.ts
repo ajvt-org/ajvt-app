@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { common } from "@/lib/messages";
+import { common, tournament } from "@/lib/messages";
 import { MVP_VOTE_MINUTES_MAX, MVP_VOTE_MINUTES_MIN } from "@/lib/mvpVote";
 
 const INVALID = common.invalidBody;
-const CANDIDATE_COUNT = "يجب اختيار بين 2 و6 لاعبين مرشحين";
-const DUPLICATE = "لا يمكن اختيار نفس اللاعب مرتين";
-const MINUTES = `مدة التصويت بالدقائق بين ${MVP_VOTE_MINUTES_MIN} و${MVP_VOTE_MINUTES_MAX}`;
+const CANDIDATE_COUNT = tournament.mvpCandidateCount;
+const DUPLICATE = tournament.mvpCandidateTwice;
+const MINUTES = tournament.mvpVoteMinutes;
 
 const minutes = z
   .number(MINUTES)
