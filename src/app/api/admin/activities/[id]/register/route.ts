@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
@@ -7,13 +6,13 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
-import { activities, members, notify } from "@/lib/messages";
+import { notify } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
-import { seatRegistrant, unseatRegistrant } from "@/lib/registrationTeamServer";
-import { getAppSettings } from "@/lib/settingsServer";
-import { membershipState } from "@/lib/membershipState";
-import { asMembershipState } from "@/lib/currentMembership";
-import { currentMembership } from "@/lib/currentMembershipServer";
+import {
+  registerToActivity,
+  removeRegistration,
+  reviewRegistration,
+} from "@/lib/activityRegisterServer";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -22,69 +21,11 @@ export const POST = withRoute(
     const session = await requireActivityAccess(id);
     const { userId } = parse(adminRegisterSchema, await req.json());
 
-    const [account, activity] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, fullName: true },
-      }),
-      prisma.activity.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          title: true,
-          capacity: true,
-          _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
-        },
-      }),
-    ]);
-    if (!account) return NextResponse.json({ error: members.notFound }, { status: 404 });
-    if (!activity) return NextResponse.json({ error: activities.notFound }, { status: 404 });
-
-    const [membership, { membershipYear }] = await Promise.all([
-      currentMembership(prisma, account.id),
-      getAppSettings(),
-    ]);
-    if (!membership) return NextResponse.json({ error: members.notFound }, { status: 404 });
-    if (membership.status !== "ACTIVE") {
-      return NextResponse.json({ error: activities.membershipNotApproved }, { status: 403 });
-    }
-    const standing = membershipState(asMembershipState(membership), membershipYear);
-    if (standing === "ENDED") {
-      return NextResponse.json({ error: activities.membershipEnded }, { status: 403 });
-    }
-    if (standing === "BEHIND") {
-      return NextResponse.json({ error: activities.membershipBehind }, { status: 403 });
-    }
-
-    if (activity.capacity !== null && activity._count.registrations >= activity.capacity) {
-      const already = await prisma.activityRegistration.findUnique({
-        where: { userId_activityId: { userId: account.id, activityId: id } },
-      });
-      if (!already) {
-        return NextResponse.json({ error: activities.capacityReached }, { status: 409 });
-      }
-    }
-
-    const registration = await prisma.$transaction(async (tx) => {
-      const row = await tx.activityRegistration.upsert({
-        where: { userId_activityId: { userId: account.id, activityId: id } },
-        update: {
-          status: "ACTIVE",
-          rejectionReason: null,
-          source: "ADMIN",
-          recordedBy: session.username,
-        },
-        create: {
-          userId: account.id,
-          activityId: id,
-          status: "ACTIVE",
-          source: "ADMIN",
-          recordedBy: session.username,
-        },
-      });
-      await seatRegistrant(tx, row.id);
-      return row;
-    });
+    const { registration, account, activity } = await registerToActivity(
+      id,
+      userId,
+      session.username,
+    );
 
     await logAction(
       session.username,
@@ -109,56 +50,31 @@ export const PATCH = withRoute(
     const session = await requireActivityAccess(id);
     const { registrationId, status, reason } = parse(registrationReviewSchema, await req.json());
 
-    const registration = await prisma.activityRegistration.findUnique({
-      where: { id: registrationId },
-      select: {
-        activityId: true,
-        status: true,
-        rejectionReason: true,
-        userId: true,
-        user: { select: { fullName: true } },
-        activity: { select: { title: true } },
-      },
-    });
-    if (!registration || registration.activityId !== id) {
-      return NextResponse.json({ error: activities.registrationNotFound }, { status: 404 });
-    }
-
-    const { updated, kept } = await prisma.$transaction(async (tx) => {
-      const row = await tx.activityRegistration.update({
-        where: { id: registrationId },
-        data: {
-          status,
-          rejectionReason: status === "REJECTED" ? reason?.trim() || null : null,
-        },
-      });
-      if (status === "ACTIVE") {
-        await seatRegistrant(tx, registrationId);
-        return { updated: row, kept: 0 };
-      }
-      const released = await unseatRegistrant(tx, registration.activityId, registration.userId);
-      return { updated: row, kept: released.kept };
+    const { updated, kept, before } = await reviewRegistration(id, {
+      registrationId,
+      status,
+      reason,
     });
 
     await logAction(
       session.username,
       status === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
-      `${nameOf(registration.user)} → ${registration.activity.title}`,
+      `${nameOf(before.user)} → ${before.activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",
         targetId: registrationId,
-        before: { status: registration.status, rejectionReason: registration.rejectionReason },
+        before: { status: before.status, rejectionReason: before.rejectionReason },
         after: { status: updated.status, rejectionReason: updated.rejectionReason },
       },
     );
 
-    if (registration.userId) {
+    if (before.userId) {
       sendPushToUser(
-        registration.userId,
+        before.userId,
         notify.registrationDecision(
           status === "ACTIVE",
-          registration.activity.title,
+          before.activity.title,
           reason ?? undefined,
         ),
         "ACTIVITY_DECISION",
@@ -176,21 +92,9 @@ export const DELETE = withRoute(
     const session = await requireActivityAccess(id);
     const { userId } = parse(adminRegisterSchema, await req.json());
 
-    const existing = await prisma.activityRegistration.findFirst({
-      where: { userId, activityId: id },
-      select: {
-        id: true,
-        status: true,
-        user: { select: { fullName: true } },
-        activity: { select: { title: true } },
-      },
-    });
-    if (!existing) return NextResponse.json({ ok: true, keptTeamPlace: false });
+    const { existing, released } = await removeRegistration(id, userId);
+    if (!existing || !released) return NextResponse.json({ ok: true, keptTeamPlace: false });
 
-    const released = await prisma.$transaction(async (tx) => {
-      await tx.activityRegistration.delete({ where: { id: existing.id } });
-      return unseatRegistrant(tx, id, userId);
-    });
     await logAction(
       session.username,
       "ADMIN_UNREGISTER_ACTIVITY",

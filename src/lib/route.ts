@@ -52,7 +52,10 @@ export function withRoute<Args extends unknown[]>(
       return await handler(...(args as unknown as Args));
     } catch (err) {
       if (err instanceof HttpError) {
-        return NextResponse.json({ error: err.clientMessage }, { status: err.status });
+        return NextResponse.json(
+          { error: err.clientMessage, ...err.details },
+          { status: err.status },
+        );
       }
       logger.error(name, err);
       return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

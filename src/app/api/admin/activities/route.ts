@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { nameOf } from "@/lib/person";
-import { STANDING_MATCH_SELECT, matchStanding } from "@/lib/activityMatches";
 import { requireAdmin, requireAdminRole } from "@/lib/auth";
 import { scopedActivityIds } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { normalizePlayerCount } from "@/lib/squadSize";
 import { parse } from "@/lib/validation";
 import { activityCreateSchema } from "./schema";
-import { activities } from "@/lib/messages";
 import { ForbiddenError } from "@/lib/errors";
 import { seesEveryActivity } from "@/lib/activityAccess";
+import { activityRows } from "@/lib/activitiesServer";
+import { createActivity } from "@/lib/activityCreateServer";
 
 export const GET = withRoute("GET /api/admin/activities", async () => {
   const session = await requireAdmin();
@@ -20,109 +17,12 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
     throw new ForbiddenError();
   }
 
-  const activities = await prisma.activity.findMany({
-    where: scoped ? { id: { in: scoped } } : {},
-    orderBy: { order: "asc" },
-    include: {
-      registrations: {
-        select: {
-          id: true,
-          status: true,
-          paymentProof: true,
-          rejectionReason: true,
-          createdAt: true,
-          userId: true,
-          user: {
-            select: { phone: true, fullName: true, age: true },
-          },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-      teams: {
-        select: {
-          _count: {
-            select: { members: { where: { status: "PENDING", invitedByCaptain: false } } },
-          },
-        },
-      },
-      matches: { select: STANDING_MATCH_SELECT },
-    },
-  });
-
-  return NextResponse.json({
-    activities: activities.map(({ teams, matches, registrations, ...activity }) => ({
-      ...activity,
-      ...matchStanding(matches, activity.isTournament),
-      registrations: registrations.map(({ user, userId, ...registration }) => ({
-        ...registration,
-        member: {
-          id: userId,
-          fullName: nameOf(user),
-          phone: user.phone,
-          age: user.age ?? "",
-        },
-      })),
-      pendingJoinRequests: teams.reduce((sum, team) => sum + team._count.members, 0),
-    })),
-  });
+  return NextResponse.json({ activities: await activityRows(scoped) });
 });
 
 export const POST = withRoute("POST /api/admin/activities", async (req: NextRequest) => {
   const session = await requireAdminRole("ACTIVITIES");
-  const {
-    title,
-    description,
-    period,
-    capacity,
-    photo,
-    isTournament,
-    format,
-    matchShape,
-    minTeamSize,
-    maxTeamSize,
-    organisedByHomeVillage,
-    playersBuildTeams,
-    outsidePlayerLimit,
-    isVolunteer,
-    whatsappLink,
-    startsAt,
-    endsAt,
-    withTime,
-  } = parse(activityCreateSchema, await req.json());
-
-  if (isTournament && isVolunteer) {
-    return NextResponse.json({ error: activities.tournamentAndVolunteer }, { status: 400 });
-  }
-  if (isVolunteer && !/^https?:\/\//.test(whatsappLink?.trim() || "")) {
-    return NextResponse.json({ error: activities.whatsappRequired }, { status: 400 });
-  }
-
-  const { _max } = await prisma.activity.aggregate({ _max: { order: true } });
-
-  const activity = await prisma.activity.create({
-    data: {
-      title,
-      description,
-      period: period?.trim() || null,
-      startsAt: startsAt ?? null,
-      endsAt: endsAt ?? null,
-      withTime: !!withTime,
-      photo: photo || null,
-      capacity: capacity ?? null,
-      isTournament: !!isTournament,
-      format: isTournament ? (format ?? "KNOCKOUT") : null,
-      matchShape: matchShape ?? "FOOTBALL",
-      minTeamSize: isTournament ? normalizePlayerCount(minTeamSize) : null,
-      maxTeamSize: isTournament ? normalizePlayerCount(maxTeamSize) : null,
-      organisedByHomeVillage: !!isTournament && !!organisedByHomeVillage,
-      playersBuildTeams: !!isTournament && !!playersBuildTeams,
-      outsidePlayerLimit: isTournament ? normalizePlayerCount(outsidePlayerLimit) : null,
-      isVolunteer: !!isVolunteer,
-      whatsappLink: isVolunteer ? whatsappLink!.trim() : null,
-      published: false,
-      order: (_max.order ?? -1) + 1,
-    },
-  });
+  const activity = await createActivity(parse(activityCreateSchema, await req.json()));
 
   await logAction(session.username, "CREATE_ACTIVITY", activity.title, {
     ...auditContext(session, req),

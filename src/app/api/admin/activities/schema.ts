@@ -2,10 +2,10 @@ import { z } from "zod";
 import { activities, common, tournament } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
-const BOTH_REQUIRED = "العنوان والوصف مطلوبان";
+const BOTH_REQUIRED = activities.titleAndDescriptionRequired;
 const TITLE_TOO_LONG = activities.titleTooLong;
 const DESCRIPTION_TOO_LONG = activities.descriptionTooLong;
-const CAPACITY_INVALID = "السعة يجب أن تكون رقماً صحيحاً موجباً";
+const CAPACITY_INVALID = activities.capacityInvalid;
 
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 1000;
@@ -20,7 +20,7 @@ export const capacity = z
   .transform((v) => (v === null || v === "" ? null : Number(v)));
 
 const DATE_INVALID = common.invalidDate;
-const ORDER_INVALID = "تاريخ النهاية قبل تاريخ البداية";
+const ORDER_INVALID = activities.endsBeforeStarts;
 
 export const activityDate = z
   .unknown()

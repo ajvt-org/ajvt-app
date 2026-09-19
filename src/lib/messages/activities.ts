@@ -1,5 +1,10 @@
 export const activities = {
   notFound: "النشاط غير موجود",
+  titleAndDescriptionRequired: "العنوان والوصف مطلوبان",
+  titleRequired: "العنوان مطلوب",
+  descriptionRequired: "الوصف مطلوب",
+  capacityInvalid: "السعة يجب أن تكون رقماً صحيحاً موجباً",
+  endsBeforeStarts: "تاريخ النهاية قبل تاريخ البداية",
   copyOf: (title: string) => `${title} (نسخة)`,
   titleTooLong: "العنوان طويل جداً (60 حرفاً كحد أقصى)",
   descriptionTooLong: "الوصف طويل جداً (1000 حرف كحد أقصى)",

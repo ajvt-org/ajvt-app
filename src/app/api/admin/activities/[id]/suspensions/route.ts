@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { logAction, auditContext } from "@/lib/audit";
-import { listSuspensions, proposeSuspension } from "@/lib/suspensionServer";
+import { proposeSuspension, suspensionBoard } from "@/lib/suspensionServer";
 import { suspensionCreateSchema } from "./schema";
 
 export const GET = withRoute(
@@ -12,14 +11,8 @@ export const GET = withRoute(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     await requireActivityAccess(id);
-    const [suspensions, rules] = await Promise.all([
-      listSuspensions(id),
-      prisma.activity.findUniqueOrThrow({
-        where: { id },
-        select: { yellowsForBan: true, redBanMatches: true },
-      }),
-    ]);
-    return NextResponse.json({ suspensions, rules });
+
+    return NextResponse.json(await suspensionBoard(id));
   },
 );
 
