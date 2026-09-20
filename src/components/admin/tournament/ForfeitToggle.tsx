@@ -1,9 +1,10 @@
 "use client";
 
+import { useId } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Scoreline from "@/components/tournament/Scoreline";
-import { forfeitScore } from "@/lib/forfeit";
+import { FORFEIT_EXTRA_MAX, forfeitScore } from "@/lib/forfeit";
 import { matchAdmin as texts } from "@/lib/texts";
 
 const AMBER_BG = "#fffbeb";
@@ -15,14 +16,19 @@ export default function ForfeitToggle({
   homeTeamId,
   scored,
   winnerTeamId,
+  extraGoals,
   onChange,
+  onExtraGoalsChange,
 }: {
   sides: { id: string; name: string }[];
   homeTeamId: string;
   scored: { home: number; away: number };
   winnerTeamId: string | null;
+  extraGoals: string;
   onChange: (winnerTeamId: string | null) => void;
+  onExtraGoalsChange: (extraGoals: string) => void;
 }) {
+  const extraId = useId();
   const on = winnerTeamId !== null;
   const awarded = winnerTeamId ? forfeitScore(scored, winnerTeamId, homeTeamId) : null;
 
@@ -96,6 +102,27 @@ export default function ForfeitToggle({
               {texts.forfeitAwarded} <Scoreline home={awarded.home} away={awarded.away} />
             </p>
           )}
+
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor={extraId} className="text-xs font-bold" style={{ color: AMBER_INK }}>
+              {texts.forfeitExtraLabel}
+            </label>
+            <input
+              id={extraId}
+              type="number"
+              inputMode="numeric"
+              dir="ltr"
+              min={0}
+              max={FORFEIT_EXTRA_MAX}
+              value={extraGoals}
+              onChange={(e) => onExtraGoalsChange(e.target.value)}
+              className="input input-sm shrink-0 text-center"
+              style={{ width: 72, borderColor: AMBER_LINE }}
+            />
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: AMBER_INK }}>
+            {texts.forfeitExtraHint}
+          </p>
         </>
       )}
     </div>
