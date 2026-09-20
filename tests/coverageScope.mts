@@ -97,6 +97,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/proofReuse.ts",
   "src/lib/publicDonationServer.ts",
   "src/lib/publicActivitiesServer.ts",
+  "src/lib/publicUploadServer.ts",
   "src/lib/push.ts",
   "src/lib/pushSubscriptionServer.ts",
   "src/lib/questionBankServer.ts",
