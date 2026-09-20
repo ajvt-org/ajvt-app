@@ -67,6 +67,7 @@ export interface MatchData {
   awayPenalties?: number | null;
   manOfTheMatchUserId?: string | null;
   forfeitWinnerTeamId?: string | null;
+  forfeitExtraGoals?: number;
   status?: MatchStatus;
   suspensionsServedAt?: Date;
   homeTeamId?: string;

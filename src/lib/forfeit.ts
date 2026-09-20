@@ -1,4 +1,5 @@
 export const FORFEIT_AWARD = 3;
+export const FORFEIT_EXTRA_MAX = 99;
 
 export function forfeitLoserTeamId(
   winnerTeamId: string,

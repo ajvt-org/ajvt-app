@@ -8,7 +8,7 @@ import {
   type GoalInput,
   type KickEvent,
 } from "./matchInput";
-import { forfeitScore } from "./forfeit";
+import { FORFEIT_EXTRA_MAX, forfeitScore } from "./forfeit";
 import { isFootball } from "./matchShape";
 import type { MatchData } from "./matchAdminWriteServer";
 import { suspendedUserIds } from "./suspensionServer";
@@ -55,6 +55,7 @@ export async function applyForfeit(
     throw new ValidationError(words.forfeitWinnerNotInMatch);
   }
   data.forfeitWinnerTeamId = winnerTeamId;
+  if (winnerTeamId === null) data.forfeitExtraGoals = 0;
 
   if (eventsMode || match.status !== "PLAYED") return;
 
@@ -66,6 +67,24 @@ export async function applyForfeit(
   const score = winnerTeamId ? forfeitScore(scored, winnerTeamId, sides.first) : scored;
   data.homeScore = score.home;
   data.awayScore = score.away;
+}
+
+export function applyForfeitAward(
+  data: MatchData,
+  match: EditableMatch,
+  extraGoals: unknown,
+): void {
+  const winner =
+    data.forfeitWinnerTeamId !== undefined ? data.forfeitWinnerTeamId : match.forfeitWinnerTeamId;
+  if (winner === null) {
+    data.forfeitExtraGoals = 0;
+    return;
+  }
+  const extra = Number(extraGoals === "" || extraGoals === null ? 0 : extraGoals);
+  if (!Number.isInteger(extra) || extra < 0 || extra > FORFEIT_EXTRA_MAX) {
+    throw new ValidationError(tournament.forfeitExtraGoalsInvalid);
+  }
+  data.forfeitExtraGoals = extra;
 }
 
 export async function applyManOfTheMatch(
