@@ -6,6 +6,7 @@ export const common = {
   allFieldsRequired: "يرجى ملء جميع الحقول",
   tooManyAttempts: "محاولات كثيرة جداً، حاول بعد قليل",
   invalidDate: "تاريخ غير صالح",
+  exportNotFound: "لا يوجد تصدير بهذا الاسم",
   crossOrigin: "طلب صادر من موقع غير موثوق",
   oneDestinationOnly: "لا يمكن توجيه المبلغ إلى نشاط ومسابقة في آن واحد",
 } as const;
