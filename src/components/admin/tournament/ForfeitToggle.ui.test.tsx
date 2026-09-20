@@ -9,18 +9,21 @@ const SIDES = [
   { id: "away", name: "الفريق الثاني" },
 ];
 
-function setup(winnerTeamId: string | null, scored = { home: 1, away: 2 }) {
+function setup(winnerTeamId: string | null, scored = { home: 1, away: 2 }, extraGoals = "0") {
   const onChange = vi.fn();
+  const onExtraGoalsChange = vi.fn();
   render(
     <ForfeitToggle
       sides={SIDES}
       homeTeamId="home"
       scored={scored}
       winnerTeamId={winnerTeamId}
+      extraGoals={extraGoals}
       onChange={onChange}
+      onExtraGoalsChange={onExtraGoalsChange}
     />,
   );
-  return onChange;
+  return { onChange, onExtraGoalsChange };
 }
 
 describe("the forfeit switch", () => {
@@ -32,7 +35,7 @@ describe("the forfeit switch", () => {
   });
 
   it("picks the first side when switched on, so a winner is always set", async () => {
-    const onChange = setup(null);
+    const { onChange } = setup(null);
 
     await userEvent.click(screen.getByRole("switch"));
 
@@ -40,7 +43,7 @@ describe("the forfeit switch", () => {
   });
 
   it("clears the forfeit when switched off", async () => {
-    const onChange = setup("home");
+    const { onChange } = setup("home");
 
     await userEvent.click(screen.getByRole("switch"));
 
@@ -48,7 +51,7 @@ describe("the forfeit switch", () => {
   });
 
   it("marks the winning side and lets the other be chosen", async () => {
-    const onChange = setup("home");
+    const { onChange } = setup("home");
 
     expect(screen.getByRole("button", { pressed: true }).textContent).toContain("الفريق الأول");
 
@@ -66,5 +69,40 @@ describe("the forfeit switch", () => {
     setup("away", { home: 0, away: 5 });
 
     expect(screen.getByText(texts.forfeitAwarded).textContent).toContain("5");
+  });
+});
+
+describe("the goals awarded for the table", () => {
+  it("offers nothing to award on a match that was played out", () => {
+    setup(null);
+
+    expect(screen.queryByLabelText(texts.forfeitExtraLabel)).toBeNull();
+    expect(screen.queryByText(texts.forfeitExtraHint)).toBeNull();
+  });
+
+  it("shows the award the match already carries", () => {
+    setup("home", { home: 1, away: 2 }, "2");
+
+    expect(screen.getByLabelText(texts.forfeitExtraLabel)).toHaveProperty("value", "2");
+  });
+
+  it("says that the award stays out of the score on the card", () => {
+    setup("home");
+
+    expect(screen.getByText(texts.forfeitExtraHint)).toBeTruthy();
+  });
+
+  it("hands the typed award back", async () => {
+    const { onExtraGoalsChange } = setup("home", { home: 1, away: 2 }, "");
+
+    await userEvent.type(screen.getByLabelText(texts.forfeitExtraLabel), "3");
+
+    expect(onExtraGoalsChange).toHaveBeenCalledWith("3");
+  });
+
+  it("leaves the awarded score alone whatever is awarded", () => {
+    setup("home", { home: 1, away: 2 }, "4");
+
+    expect(screen.getByText(texts.forfeitAwarded).textContent).toContain("3");
   });
 });

@@ -10,6 +10,7 @@ import { goalEventOutcome } from "./matchGoalEventsServer";
 import { scoreEntryOutcome } from "./matchScoreEntryServer";
 import {
   applyForfeit,
+  applyForfeitAward,
   applyManOfTheMatch,
   applyPenalties,
   refuseSuspendedPlayers,
@@ -47,6 +48,7 @@ export interface MatchEdit extends ScheduleEdit {
   goalEvents?: unknown;
   penaltyKicks?: unknown;
   forfeitWinnerTeamId?: string | null;
+  forfeitExtraGoals?: unknown;
 }
 
 const RESULT_FIELDS = [
@@ -60,6 +62,7 @@ const RESULT_FIELDS = [
   "goalEvents",
   "penaltyKicks",
   "forfeitWinnerTeamId",
+  "forfeitExtraGoals",
 ] as const;
 
 function touchesTheResult(edit: MatchEdit): boolean {
@@ -133,6 +136,9 @@ export async function updateMatch(matchId: string, edit: MatchEdit) {
   if (edit.forfeitWinnerTeamId !== undefined) {
     await applyForfeit(data, match, edit.forfeitWinnerTeamId, sides, words, eventsMode);
   }
+  if (edit.forfeitExtraGoals !== undefined) {
+    applyForfeitAward(data, match, edit.forfeitExtraGoals);
+  }
   if (edit.manOfTheMatchId !== undefined) {
     await applyManOfTheMatch(data, match, edit.manOfTheMatchId, sides);
   }
@@ -150,6 +156,7 @@ export async function updateMatch(matchId: string, edit: MatchEdit) {
 
   const before = {
     forfeitWinnerTeamId: match.forfeitWinnerTeamId,
+    forfeitExtraGoals: match.forfeitExtraGoals,
     homeScore: match.homeScore,
     awayScore: match.awayScore,
     status: match.status,
@@ -179,8 +186,14 @@ export async function updateMatch(matchId: string, edit: MatchEdit) {
       homeName: standing.first?.name ?? words.entrantNotSetYet,
       awayName: standing.second?.name ?? words.entrantNotSetYet,
       resultEntered: (enteringResult || eventsMode) && data.status === "PLAYED",
-      forfeitTouched: edit.forfeitWinnerTeamId !== undefined,
-      forfeitWinnerTeamId: edit.forfeitWinnerTeamId ?? null,
+      forfeitTouched:
+        edit.forfeitWinnerTeamId !== undefined || edit.forfeitExtraGoals !== undefined,
+      forfeitWinnerTeamId:
+        data.forfeitWinnerTeamId !== undefined
+          ? data.forfeitWinnerTeamId
+          : match.forfeitWinnerTeamId,
+      forfeitExtraGoals:
+        data.forfeitExtraGoals !== undefined ? data.forfeitExtraGoals : match.forfeitExtraGoals,
     },
   };
 }

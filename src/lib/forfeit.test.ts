@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { FORFEIT_AWARD, countsForScorers, forfeitLoserTeamId, forfeitScore } from "@/lib/forfeit";
+import {
+  FORFEIT_AWARD,
+  countsForScorers,
+  forfeitCreditedGoals,
+  forfeitLoserTeamId,
+  forfeitScore,
+} from "@/lib/forfeit";
 
 const HOME = "home-team";
 const AWAY = "away-team";
@@ -28,6 +34,27 @@ describe("the score a forfeit awards", () => {
 
   it("awards three, which is the number the association settled on", () => {
     expect(FORFEIT_AWARD).toBe(3);
+  });
+});
+
+describe("the goals a forfeit credits to the table", () => {
+  it("is what the winner scored when the committee awarded nothing", () => {
+    expect(forfeitCreditedGoals(0, 0)).toBe(0);
+    expect(forfeitCreditedGoals(2, 0)).toBe(2);
+  });
+
+  it("adds the award to the goals that were really scored", () => {
+    expect(forfeitCreditedGoals(0, 1)).toBe(1);
+    expect(forfeitCreditedGoals(5, 1)).toBe(6);
+  });
+
+  it("treats a missing award as no award", () => {
+    expect(forfeitCreditedGoals(2, null)).toBe(2);
+    expect(forfeitCreditedGoals(2, undefined)).toBe(2);
+  });
+
+  it("never takes goals away", () => {
+    expect(forfeitCreditedGoals(2, -3)).toBe(2);
   });
 });
 

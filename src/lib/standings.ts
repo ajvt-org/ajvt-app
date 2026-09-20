@@ -1,3 +1,5 @@
+import { forfeitCreditedGoals } from "./forfeit";
+
 export const YELLOW_POINTS = 1;
 export const RED_POINTS = 3;
 
@@ -30,6 +32,7 @@ export interface StandingsMatchInput {
   isKnockout: boolean;
   bookings?: StandingsBookingInput[];
   forfeitWinnerTeamId?: string | null;
+  forfeitExtraGoals?: number | null;
   goals?: StandingsGoalInput[];
 }
 
@@ -103,6 +106,10 @@ function goalsBy(m: StandingsMatchInput, teamId: string): number {
   return (m.goals ?? []).reduce((all, g) => (g.teamId === teamId ? all + g.count : all), 0);
 }
 
+function credited(m: StandingsMatchInput, teamId: string): number {
+  return forfeitCreditedGoals(goalsBy(m, teamId), m.forfeitExtraGoals);
+}
+
 function awardPadsTheScore(m: StandingsMatchInput): boolean {
   return m.goals !== undefined && !m.series && !!m.forfeitWinnerTeamId;
 }
@@ -115,8 +122,8 @@ function tallied(
   const home = { scored: scored.a, conceded: scored.b };
   const away = { scored: scored.b, conceded: scored.a };
   if (awardPadsTheScore(m)) {
-    if (m.forfeitWinnerTeamId === pair.homeId) home.scored = goalsBy(m, pair.homeId);
-    else if (m.forfeitWinnerTeamId === pair.awayId) away.scored = goalsBy(m, pair.awayId);
+    if (m.forfeitWinnerTeamId === pair.homeId) home.scored = credited(m, pair.homeId);
+    else if (m.forfeitWinnerTeamId === pair.awayId) away.scored = credited(m, pair.awayId);
   }
   return { home, away };
 }

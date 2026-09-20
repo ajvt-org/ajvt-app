@@ -37,11 +37,13 @@ export const PATCH = withRoute(
           ...target,
           before: {
             forfeitWinnerTeamId: before.forfeitWinnerTeamId,
+            forfeitExtraGoals: before.forfeitExtraGoals,
             homeScore: before.homeScore,
             awayScore: before.awayScore,
           },
           after: {
             forfeitWinnerTeamId: winner,
+            forfeitExtraGoals: report.forfeitExtraGoals,
             homeScore: applied.homeScore,
             awayScore: applied.awayScore,
           },

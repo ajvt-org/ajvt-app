@@ -49,6 +49,7 @@ const MATCH: DecidedMatch = {
   awayPenalties: null,
   manOfTheMatch: null,
   forfeitWinnerTeamId: null,
+  forfeitExtraGoals: 0,
   status: "SCHEDULED",
   goals: [],
   penaltyKicks: [],
@@ -186,6 +187,35 @@ describe("ResultForm as goal events", () => {
       { teamId: "t1", userId: null, kind: "GOAL", period: "REGULAR", minute: null },
     ]);
     expect(body.homeScore).toBeUndefined();
+  });
+
+  it("sends the goals awarded for the table as a number", async () => {
+    show({ forfeitWinnerTeamId: "t1", forfeitExtraGoals: 0 });
+
+    fireEvent.change(screen.getByLabelText(texts.forfeitExtraLabel), { target: { value: "2" } });
+    fireEvent.click(screen.getByText("حفظ النتيجة"));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][1]).toMatchObject({
+      forfeitWinnerTeamId: "t1",
+      forfeitExtraGoals: 2,
+    });
+  });
+
+  it("sends no award at all when the field is left empty", async () => {
+    show({ forfeitWinnerTeamId: "t1", forfeitExtraGoals: 3 });
+
+    fireEvent.change(screen.getByLabelText(texts.forfeitExtraLabel), { target: { value: "" } });
+    fireEvent.click(screen.getByText("حفظ النتيجة"));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][1]).toMatchObject({ forfeitExtraGoals: 0 });
+  });
+
+  it("keeps the award off the score the form shows", async () => {
+    show({ forfeitWinnerTeamId: "t1", forfeitExtraGoals: 5 });
+
+    expect(document.querySelector('[aria-live="polite"]')?.textContent).toContain("3-0");
   });
 
   it("asks a series match for none of the football apparatus", () => {

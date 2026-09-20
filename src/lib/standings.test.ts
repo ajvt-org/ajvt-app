@@ -549,3 +549,87 @@ describe("the goals a forfeit awards", () => {
     expect(table.map((r) => r.teamId)).toEqual(["b", "a", "c"]);
   });
 });
+
+describe("the goals the committee awards on top of a forfeit", () => {
+  const season = (award: number | null) => [
+    match("a", "b", 2, 1, {
+      goals: [
+        { teamId: "a", count: 2 },
+        { teamId: "b", count: 1 },
+      ],
+    }),
+    match("a", "c", 3, 0, {
+      forfeitWinnerTeamId: "a",
+      goals: [],
+      ...(award === null ? {} : { forfeitExtraGoals: award }),
+    }),
+    match("b", "c", 1, 0, { goals: [{ teamId: "b", count: 1 }] }),
+  ];
+
+  it("credits the winner with the award when nobody turned up", () => {
+    const table = computeStandings(teams, [
+      match("a", "b", 3, 0, { forfeitWinnerTeamId: "a", goals: [], forfeitExtraGoals: 1 }),
+    ]);
+    const winner = table.find((r) => r.teamId === "a")!;
+
+    expect(winner.scoredFor).toBe(1);
+    expect(winner.scoredAgainst).toBe(0);
+    expect(winner.difference).toBe(1);
+  });
+
+  it("adds the award to the goals the winner really scored", () => {
+    const table = computeStandings(teams, [
+      match("a", "b", 5, 0, {
+        forfeitWinnerTeamId: "a",
+        goals: [{ teamId: "a", count: 5 }],
+        forfeitExtraGoals: 1,
+      }),
+    ]);
+
+    expect(table.find((r) => r.teamId === "a")!.scoredFor).toBe(6);
+  });
+
+  it("still puts the whole awarded score against the team that forfeited", () => {
+    const table = computeStandings(teams, [
+      match("a", "b", 3, 0, { forfeitWinnerTeamId: "a", goals: [], forfeitExtraGoals: 4 }),
+    ]);
+    const loser = table.find((r) => r.teamId === "b")!;
+
+    expect(loser.scoredFor).toBe(0);
+    expect(loser.scoredAgainst).toBe(3);
+    expect(loser.points).toBe(0);
+  });
+
+  it("reads an award of zero exactly as a forfeit with no award at all", () => {
+    expect(computeStandings(teams, season(0))).toEqual(computeStandings(teams, season(null)));
+  });
+
+  it("leaves every row alone while no match carries an award", () => {
+    const zeroed = season(null).map((m) => ({ ...m, forfeitExtraGoals: 0 }));
+
+    expect(computeStandings(teams, zeroed)).toEqual(computeStandings(teams, season(null)));
+  });
+
+  it("lifts the winner over a side that the forfeit would otherwise have let through", () => {
+    const without = computeStandings(teams, [
+      match("a", "c", 3, 0, { forfeitWinnerTeamId: "a", goals: [] }),
+      match("b", "c", 1, 0),
+    ]);
+    const with2 = computeStandings(teams, [
+      match("a", "c", 3, 0, { forfeitWinnerTeamId: "a", goals: [], forfeitExtraGoals: 2 }),
+      match("b", "c", 1, 0),
+    ]);
+
+    expect(without.map((r) => r.teamId)).toEqual(["b", "a", "c"]);
+    expect(with2.map((r) => r.teamId)).toEqual(["a", "b", "c"]);
+  });
+
+  it("carries the award into the table read between teams level on points", () => {
+    const table = computeStandings(teams, [
+      match("a", "b", 3, 0, { forfeitWinnerTeamId: "a", goals: [], forfeitExtraGoals: 2 }),
+      match("b", "a", 3, 0, { forfeitWinnerTeamId: "b", goals: [], forfeitExtraGoals: 1 }),
+    ]);
+
+    expect(table.map((r) => r.teamId)).toEqual(["a", "b", "c"]);
+  });
+});

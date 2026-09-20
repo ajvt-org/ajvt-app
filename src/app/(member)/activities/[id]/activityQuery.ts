@@ -96,6 +96,7 @@ async function loadActivity(id: string) {
           awayPenalties: true,
           status: true,
           forfeitWinnerTeamId: true,
+          forfeitExtraGoals: true,
           manOfTheMatchUserId: true,
           manOfTheMatchUser: { select: { fullName: true, photo: true } },
           moves: { orderBy: { createdAt: "asc" }, include: { rule: true } },

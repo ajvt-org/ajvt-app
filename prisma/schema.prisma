@@ -249,6 +249,7 @@ model Match {
   manOfTheMatchUser   User?              @relation("ManOfTheMatchUser", fields: [manOfTheMatchUserId], references: [id], onDelete: SetNull)
   forfeitWinnerTeamId String?
   forfeitWinnerTeam   Team?              @relation("ForfeitWinner", fields: [forfeitWinnerTeamId], references: [id], onDelete: SetNull)
+  forfeitExtraGoals   Int                @default(0)
   status              MatchStatus        @default(SCHEDULED)
   suspensionsServedAt DateTime?
   reminderSentAt      DateTime?

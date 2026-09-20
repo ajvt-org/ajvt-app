@@ -89,6 +89,7 @@ export default function ResultForm({
   const [forfeitWinnerTeamId, setForfeitWinnerTeamId] = useState<string | null>(
     match.forfeitWinnerTeamId,
   );
+  const [forfeitExtraGoals, setForfeitExtraGoals] = useState(String(match.forfeitExtraGoals));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -133,6 +134,7 @@ export default function ResultForm({
         penaltyKicks: kicks,
         manOfTheMatchId: manOfTheMatchId || null,
         forfeitWinnerTeamId,
+        forfeitExtraGoals: forfeitExtraGoals === "" ? 0 : Number(forfeitExtraGoals),
       });
       onSaved();
     } catch (e) {
@@ -193,7 +195,9 @@ export default function ResultForm({
         homeTeamId={match.firstTeam.id}
         scored={played}
         winnerTeamId={forfeitWinnerTeamId}
+        extraGoals={forfeitExtraGoals}
         onChange={setForfeitWinnerTeamId}
+        onExtraGoalsChange={setForfeitExtraGoals}
       />
 
       <GoalSection

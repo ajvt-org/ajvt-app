@@ -1,4 +1,5 @@
 export const FORFEIT_AWARD = 3;
+export const FORFEIT_EXTRA_MAX = 99;
 
 export function forfeitLoserTeamId(
   winnerTeamId: string,
@@ -16,6 +17,13 @@ export function forfeitScore(
   const winnerIsHome = winnerTeamId === homeTeamId;
   const awarded = Math.max(winnerIsHome ? scored.home : scored.away, FORFEIT_AWARD);
   return winnerIsHome ? { home: awarded, away: 0 } : { home: 0, away: awarded };
+}
+
+export function forfeitCreditedGoals(
+  scored: number,
+  extraGoals: number | null | undefined,
+): number {
+  return scored + Math.max(extraGoals ?? 0, 0);
 }
 
 export function countsForScorers(

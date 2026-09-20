@@ -20,6 +20,7 @@ const MATCH: DecidedMatch = {
   awayPenalties: null,
   status: "PLAYED",
   forfeitWinnerTeamId: null,
+  forfeitExtraGoals: 0,
   manOfTheMatch: null,
   goals: [],
   penaltyKicks: [],
