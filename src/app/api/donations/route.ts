@@ -11,7 +11,7 @@ import {
   requirePayableMethod,
   requireSupporterStanding,
 } from "@/lib/publicDonationServer";
-import { storeProofImage } from "./proofImage";
+import { storeUploadImage } from "@/lib/uploadImageStore";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -72,7 +72,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   if (!Number.isInteger(amount) || amount <= 0) throw new ValidationError(money.amountInvalid);
 
   const paymentMethod = await requirePayableMethod(paymentMethodRaw);
-  const { id, filename } = await storeProofImage(file);
+  const { id, filename } = await storeUploadImage(file);
 
   await recordPublicDonation({
     id,

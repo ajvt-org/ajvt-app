@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { v4 as uuidv4 } from "uuid";
 import { getAdminSession, getUserSession } from "@/lib/auth";
-import { processImage } from "@/lib/imageProcessing";
 import { MAX_UPLOAD_SIZE, READABLE_UPLOAD_TYPES } from "@/lib/uploadLimits";
 import { logger } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
-import { proofHash } from "@/lib/proofHash";
-import { getUploadDir } from "@/lib/uploadDir";
-import { thumbnailOf } from "@/lib/uploadNames";
 import { uploadOwnerOf } from "@/lib/uploadOwner";
+import { recordProofImage } from "@/lib/uploadOwnerServer";
+import { storeUploadImage } from "@/lib/uploadImageStore";
 import { declaredBodyTooLarge } from "@/lib/uploadRequestSize";
 import { uploads } from "@/lib/messages";
 import { withRoute } from "@/lib/route";
@@ -21,53 +15,26 @@ export const POST = withRoute("POST /api/upload", async (req: NextRequest) => {
     const [admin, user] = await Promise.all([getAdminSession(), getUserSession()]);
     if (!admin && !user) throw new UnauthorizedError();
 
-    if (declaredBodyTooLarge(req.headers.get("content-length")))
+    if (declaredBodyTooLarge(req.headers.get("content-length"))) {
       throw new ValidationError(uploads.tooLarge);
+    }
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
     if (!file) throw new ValidationError(uploads.noFile);
-    if (!READABLE_UPLOAD_TYPES.includes(file.type))
+    if (!READABLE_UPLOAD_TYPES.includes(file.type)) {
       throw new ValidationError(uploads.unsupportedType);
+    }
     if (file.size > MAX_UPLOAD_SIZE) throw new ValidationError(uploads.tooLarge);
 
-    const id = uuidv4();
-    const filename = `${id}.webp`;
-    const thumbnailFilename = thumbnailOf(filename);
-    const uploadDir = getUploadDir();
-    let processed;
-    try {
-      processed = await processImage(Buffer.from(await file.arrayBuffer()));
-    } catch (err) {
-      logger.error("image.processing.error", err);
-      throw new ValidationError(uploads.processingFailed);
-    }
+    const stored = await storeUploadImage(file);
+    await recordProofImage(stored.filename, stored.full, uploadOwnerOf(admin, user));
 
-    await mkdir(uploadDir, { recursive: true });
-    await Promise.all([
-      writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
-      writeFile(
-        join(/* turbopackIgnore: true */ uploadDir, thumbnailFilename),
-        processed.thumbnail,
-      ),
-    ]);
-
-    const owner = uploadOwnerOf(admin, user);
-    try {
-      await prisma.proofImage.create({
-        data: {
-          filename,
-          sha256: proofHash(processed.full),
-          uploadedByUserId: owner.userId,
-          uploadedByAdminId: owner.adminId,
-        },
-      });
-    } catch (err) {
-      logger.error("upload.fingerprint.error", err);
-    }
-
-    return NextResponse.json({ filename, thumbnailFilename }, { status: 200 });
+    return NextResponse.json(
+      { filename: stored.filename, thumbnailFilename: stored.thumbnailFilename },
+      { status: 200 },
+    );
   } catch (err) {
     if (err instanceof HttpError) throw err;
     logger.error("upload.error", err);
