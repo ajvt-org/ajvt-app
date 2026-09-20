@@ -88,6 +88,9 @@ export const matchAdmin = {
   forfeitWinnerLabel: "الفريق الفائز",
   forfeitPickWinner: "اختر الفريق الفائز",
   forfeitAwarded: "النتيجة المحتسبة",
+  forfeitExtraLabel: "أهداف تُمنح للترتيب",
+  forfeitExtraHint:
+    "تدخل في جدول المجموعة وحده، فتُضاف إلى أهداف الفريق فيه. النتيجة المحتسبة أعلاه تبقى كما هي في بطاقة المباراة، ولا يُنسب أي هدف منها إلى لاعب.",
   saveResult: "حفظ النتيجة",
   seriesResultNotReady: "مباراة السلسلة تُحتسب بجولاتها، وإدخال الجولات لم يصل بعد",
   cardsHeading: "البطاقات",
