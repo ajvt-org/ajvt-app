@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { paymentAccounts as messages } from "@/lib/messages";
-import { openAccountRows, readName, swappedAccountPositions } from "@/lib/paymentMethodAdmin";
-import { accountsOf } from "@/lib/paymentAccountsServer";
-
-const MAX = 30;
+import {
+  accountOrNotFound,
+  changePaymentAccount,
+  reorderPaymentAccount,
+} from "@/lib/paymentAccountAdminServer";
 
 type Params = { params: Promise<{ id: string; accountId: string }> };
 
@@ -18,63 +17,29 @@ export const PATCH = withRoute(
     const { id, accountId } = await params;
     const body = await req.json();
 
-    const existing = await prisma.paymentAccount.findFirst({
-      where: { id: accountId, methodId: id },
-    });
-    if (!existing) return NextResponse.json({ error: messages.notFound }, { status: 404 });
-
-    if (body.move === "up" || body.move === "down") {
-      const pair = swappedAccountPositions(
-        openAccountRows(await accountsOf(id)),
-        accountId,
-        body.move,
-      );
-      if (!pair) return NextResponse.json({ account: existing });
-      const [mine, other] = pair;
-      await prisma.$transaction([
-        prisma.paymentAccount.update({
-          where: { id: mine.id },
-          data: { position: other.position },
-        }),
-        prisma.paymentAccount.update({
-          where: { id: other.id },
-          data: { position: mine.position },
-        }),
-      ]);
-      await logAction(session.username, "REORDER_PAYMENT_ACCOUNT", existing.code, {
-        ...auditContext(session, req),
-        targetType: "PaymentAccount",
-        targetId: accountId,
-        before: { position: mine.position },
-        after: { position: other.position },
-      });
-      return NextResponse.json({
-        account: await prisma.paymentAccount.findUnique({ where: { id: accountId } }),
-      });
-    }
-
-    if (body.code !== undefined) {
-      return NextResponse.json({ error: messages.codeIsFixed }, { status: 400 });
-    }
-
-    const data: { label?: string | null; active?: boolean } = {};
-
-    if (body.label !== undefined) {
-      const label = readName(body.label);
-      if (label.length > MAX) {
-        return NextResponse.json({ error: messages.labelTooLong }, { status: 400 });
-      }
-      data.label = label || null;
-    }
-
-    if (typeof body.active === "boolean") data.active = body.active;
-
-    const account = await prisma.paymentAccount.update({ where: { id: accountId }, data });
-
-    await logAction(session.username, "UPDATE_PAYMENT_ACCOUNT", account.code, {
+    const existing = await accountOrNotFound(id, accountId);
+    const target = {
       ...auditContext(session, req),
       targetType: "PaymentAccount",
       targetId: accountId,
+    };
+
+    if (body.move === "up" || body.move === "down") {
+      const moved = await reorderPaymentAccount(id, accountId, body.move);
+      if (!moved) return NextResponse.json({ account: existing });
+
+      await logAction(session.username, "REORDER_PAYMENT_ACCOUNT", existing.code, {
+        ...target,
+        before: { position: moved.from },
+        after: { position: moved.to },
+      });
+      return NextResponse.json({ account: moved.account });
+    }
+
+    const account = await changePaymentAccount(accountId, body);
+
+    await logAction(session.username, "UPDATE_PAYMENT_ACCOUNT", account.code, {
+      ...target,
       before: { code: existing.code, label: existing.label, active: existing.active },
       after: { code: account.code, label: account.label, active: account.active },
     });

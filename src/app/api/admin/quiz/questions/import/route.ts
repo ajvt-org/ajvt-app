@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { getQuizSettings } from "@/lib/quiz";
@@ -8,6 +7,9 @@ import { ValidationError } from "@/lib/errors";
 import { reviewImport } from "@/lib/quizImport";
 import { requireBank } from "@/lib/questionBankServer";
 import { common } from "@/lib/messages";
+import { importQuestions } from "@/lib/quizImportServer";
+
+const PREVIEW = 5;
 
 export const POST = withRoute("POST /api/admin/quiz/questions/import", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
@@ -30,7 +32,7 @@ export const POST = withRoute("POST /api/admin/quiz/questions/import", async (re
     return NextResponse.json({
       accepted: review.questions.length,
       problems: review.problems,
-      preview: review.questions.slice(0, 5),
+      preview: review.questions.slice(0, PREVIEW),
     });
   }
 
@@ -38,48 +40,13 @@ export const POST = withRoute("POST /api/admin/quiz/questions/import", async (re
     return NextResponse.json({ imported: 0, problems: review.problems });
   }
 
-  const existing = await prisma.quizQuestion.findMany({
-    where: { bankId: bank.id },
-    select: { text: true },
-  });
-  const seen = new Set(existing.map((q) => q.text.replace(/\s+/g, " ").trim().toLowerCase()));
+  const { imported, skipped } = await importQuestions(bank.id, review.questions, session.username);
 
-  const fresh = review.questions.filter(
-    (q) => !seen.has(q.text.replace(/\s+/g, " ").trim().toLowerCase()),
-  );
-  const skipped = review.questions.length - fresh.length;
-
-  await prisma.$transaction(
-    fresh.map((q) =>
-      prisma.quizQuestion.create({
-        data: {
-          text: q.text,
-          category: q.category,
-          points: q.points,
-          correctCount: q.correctCount,
-          bankId: bank.id,
-          createdBy: session.username,
-          answers: {
-            create: q.answers.map((a, i) => ({
-              text: a.text,
-              isCorrect: a.isCorrect,
-              order: i,
-            })),
-          },
-        },
-      }),
-    ),
-  );
-
-  await logAction(session.username, "IMPORT_QUIZ_QUESTIONS", `${fresh.length}`, {
+  await logAction(session.username, "IMPORT_QUIZ_QUESTIONS", `${imported}`, {
     ...auditContext(session, req),
     targetType: "QuizQuestion",
-    meta: { imported: fresh.length, skipped, rejected: review.problems.length },
+    meta: { imported, skipped, rejected: review.problems.length },
   });
 
-  return NextResponse.json({
-    imported: fresh.length,
-    skipped,
-    problems: review.problems,
-  });
+  return NextResponse.json({ imported, skipped, problems: review.problems });
 });

@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { paymentMethods as messages } from "@/lib/messages";
 import {
-  adminAccountRows,
-  numbersHoldPayments,
-  readName,
-  swappedPositions,
-} from "@/lib/paymentMethodAdmin";
-import { allPaymentMethods } from "@/lib/paymentMethodsServer";
-import { accountsOf, accountUsage } from "@/lib/paymentAccountsServer";
+  changePaymentMethod,
+  paymentMethodOrNotFound,
+  reorderPaymentMethod,
+} from "@/lib/paymentMethodAdminServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/payment-methods/[id]",
@@ -20,81 +15,29 @@ export const PATCH = withRoute(
     const { id } = await params;
     const body = await req.json();
 
-    const existing = await prisma.paymentMethod.findUnique({ where: { id } });
-    if (!existing) return NextResponse.json({ error: messages.notFound }, { status: 404 });
+    const existing = await paymentMethodOrNotFound(id);
+    const target = { ...auditContext(session, req), targetType: "PaymentMethod", targetId: id };
 
     if (body.move === "up" || body.move === "down") {
-      const pair = swappedPositions(await allPaymentMethods(), id, body.move);
-      if (!pair) return NextResponse.json({ method: existing });
-      const [mine, other] = pair;
-      await prisma.$transaction([
-        prisma.paymentMethod.update({ where: { id: mine.id }, data: { position: other.position } }),
-        prisma.paymentMethod.update({ where: { id: other.id }, data: { position: mine.position } }),
-      ]);
+      const moved = await reorderPaymentMethod(id, body.move);
+      if (!moved) return NextResponse.json({ method: existing });
+
       await logAction(session.username, "REORDER_PAYMENT_METHOD", existing.name, {
-        ...auditContext(session, req),
-        targetType: "PaymentMethod",
-        targetId: id,
-        before: { position: mine.position },
-        after: { position: other.position },
+        ...target,
+        before: { position: moved.from },
+        after: { position: moved.to },
       });
-      return NextResponse.json({
-        method: await prisma.paymentMethod.findUnique({ where: { id } }),
-      });
+      return NextResponse.json({ method: moved.method });
     }
 
-    const data: {
-      name?: string;
-      active?: boolean;
-      memberFacing?: boolean;
-      carriesNumbers?: boolean;
-    } = {};
-
-    if (body.name !== undefined) {
-      const name = readName(body.name);
-      if (!name) return NextResponse.json({ error: messages.nameRequired }, { status: 400 });
-      if (name.length > 30) {
-        return NextResponse.json({ error: messages.nameTooLong }, { status: 400 });
-      }
-      const clash = await prisma.paymentMethod.findUnique({ where: { name } });
-      if (clash && clash.id !== id) {
-        return NextResponse.json({ error: messages.exists }, { status: 409 });
-      }
-      data.name = name;
-    }
-
-    if (typeof body.active === "boolean") data.active = body.active;
-    if (typeof body.memberFacing === "boolean") data.memberFacing = body.memberFacing;
-
-    if (typeof body.carriesNumbers === "boolean") {
-      if (!body.carriesNumbers && existing.carriesNumbers) {
-        const rows = adminAccountRows(await accountsOf(id), await accountUsage());
-        if (numbersHoldPayments(rows)) {
-          return NextResponse.json({ error: messages.numbersHoldPayments }, { status: 409 });
-        }
-      }
-      data.carriesNumbers = body.carriesNumbers;
-    }
-
-    const method = await prisma.$transaction(async (tx) => {
-      const saved = await tx.paymentMethod.update({ where: { id }, data });
-      if (data.name && data.name !== existing.name) {
-        await Promise.all([
-          tx.expense.updateMany({ where: { method: existing.name }, data: { method: data.name } }),
-          tx.payment.updateMany({ where: { method: existing.name }, data: { method: data.name } }),
-        ]);
-      }
-      return saved;
-    });
+    const method = await changePaymentMethod(existing, body);
 
     await logAction(
       session.username,
       "UPDATE_PAYMENT_METHOD",
       `${existing.name} → ${method.name}`,
       {
-        ...auditContext(session, req),
-        targetType: "PaymentMethod",
-        targetId: id,
+        ...target,
         before: {
           name: existing.name,
           active: existing.active,

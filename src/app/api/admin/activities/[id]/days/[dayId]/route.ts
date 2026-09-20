@@ -3,9 +3,7 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { removeDay, setDayRest } from "@/lib/tournamentDaysServer";
-import { notifyActivityFollowers } from "@/lib/tournamentNotify";
-import { prisma } from "@/lib/prisma";
-import { notify as notifyMessages } from "@/lib/messages";
+import { announceScheduleShift } from "@/lib/scheduleShiftNotify";
 import { dayDeleteSchema, dayUpdateSchema } from "../schema";
 
 export const PATCH = withRoute(
@@ -26,14 +24,7 @@ export const DELETE = withRoute(
     await requireActivityAccess(id);
     const { notify } = parse(dayDeleteSchema, await req.json().catch(() => ({})));
     const { shifted } = await removeDay(id, dayId);
-    if (notify !== false && shifted > 0) {
-      const activity = await prisma.activity.findUnique({
-        where: { id },
-        select: { title: true },
-      });
-      if (activity)
-        await notifyActivityFollowers(id, notifyMessages.scheduleShifted(activity.title, id));
-    }
+    if (notify !== false) await announceScheduleShift(id, shifted);
     return NextResponse.json({ ok: true, shifted });
   },
 );

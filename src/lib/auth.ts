@@ -1,5 +1,6 @@
 ﻿import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import { prisma } from "./prisma";
 import { HttpError, UnauthorizedError, ForbiddenError } from "./errors";
 import { isTokenOf } from "./tokenType";
@@ -118,4 +119,27 @@ export async function requireUser(options: { allowTempPassword?: boolean } = {})
   }
 
   return { userId: loaded.userId, tokenVersion: loaded.tokenVersion, onTempPassword };
+}
+
+const ADMIN_SESSION_SECONDS = 60 * 60 * 8;
+const USER_SESSION_SECONDS = 60 * 60 * 24 * 30;
+
+function sessionCookie(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    maxAge,
+    path: "/",
+  };
+}
+
+export function setAdminToken(res: NextResponse, token: string): NextResponse {
+  res.cookies.set("admin_token", token, sessionCookie(ADMIN_SESSION_SECONDS));
+  return res;
+}
+
+export function setUserToken(res: NextResponse, token: string): NextResponse {
+  res.cookies.set("user_token", token, sessionCookie(USER_SESSION_SECONDS));
+  return res;
 }

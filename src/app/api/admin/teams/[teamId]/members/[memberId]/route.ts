@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { nameOf } from "@/lib/person";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { members } from "@/lib/messages";
-import { releaseCaptain } from "@/lib/teamCaptainServer";
+import { approveTeamMember, removeTeamMember } from "@/lib/teamRosterServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/teams/[teamId]/members/[memberId]",
@@ -16,23 +14,8 @@ export const PATCH = withRoute(
     const { teamId, memberId } = await params;
     const session = await requireTeamAccess(teamId);
 
-    const existing = await prisma.teamMember.findUnique({
-      where: { teamId_userId: { teamId, userId: memberId } },
-      select: {
-        id: true,
-        status: true,
-        team: { select: { name: true } },
-        user: { select: { fullName: true } },
-      },
-    });
-    if (!existing) {
-      return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
-    }
+    const { teamMember, existing } = await approveTeamMember(teamId, memberId);
 
-    const teamMember = await prisma.teamMember.update({
-      where: { id: existing.id },
-      data: { status: "ACTIVE" },
-    });
     await logAction(
       session.username,
       "APPROVE_TEAM_JOIN",
@@ -59,23 +42,8 @@ export const DELETE = withRoute(
     const { teamId, memberId } = await params;
     const session = await requireTeamAccess(teamId);
 
-    const existing = await prisma.teamMember.findUnique({
-      where: { teamId_userId: { teamId, userId: memberId } },
-      select: {
-        id: true,
-        status: true,
-        team: { select: { name: true } },
-        user: { select: { fullName: true } },
-      },
-    });
-    if (!existing) {
-      return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
-    }
+    const existing = await removeTeamMember(teamId, memberId);
 
-    await prisma.$transaction(async (tx) => {
-      await releaseCaptain(tx, teamId, memberId);
-      await tx.teamMember.delete({ where: { id: existing.id } });
-    });
     await logAction(
       session.username,
       "REMOVE_TEAM_MEMBER",

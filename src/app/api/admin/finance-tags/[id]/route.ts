@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireArea } from "@/lib/auth";
 import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { expenses as messages } from "@/lib/messages";
+import { removeFinanceTag, renameFinanceTag } from "@/lib/financeTagsServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/finance-tags/[id]",
@@ -12,22 +11,9 @@ export const PATCH = withRoute(
     const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
     const { name } = await req.json();
-    const trimmed = typeof name === "string" ? name.trim() : "";
 
-    if (!trimmed) return NextResponse.json({ error: messages.tagNameRequired }, { status: 400 });
-    if (trimmed.length > 30) {
-      return NextResponse.json({ error: messages.tagNameTooLong }, { status: 400 });
-    }
+    const { tag, existing } = await renameFinanceTag(id, name);
 
-    const existing = await prisma.financeTag.findUnique({ where: { id } });
-    if (!existing) return NextResponse.json({ error: messages.tagNotFound }, { status: 404 });
-
-    const clash = await prisma.financeTag.findUnique({ where: { name: trimmed } });
-    if (clash && clash.id !== id) {
-      return NextResponse.json({ error: messages.tagExists }, { status: 409 });
-    }
-
-    const tag = await prisma.financeTag.update({ where: { id }, data: { name: trimmed } });
     await logAction(session.username, "UPDATE_EXPENSE_TAG", `${existing.name} → ${tag.name}`, {
       ...auditContext(session, req),
       targetType: "FinanceTag",
@@ -46,10 +32,8 @@ export const DELETE = withRoute(
     const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
 
-    const existing = await prisma.financeTag.findUnique({ where: { id } });
-    if (!existing) return NextResponse.json({ error: messages.tagNotFound }, { status: 404 });
+    const existing = await removeFinanceTag(id);
 
-    await prisma.financeTag.delete({ where: { id } });
     await logAction(session.username, "DELETE_EXPENSE_TAG", existing.name, {
       ...auditContext(session, req),
       targetType: "FinanceTag",

@@ -3,9 +3,7 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { insertDay, listDays } from "@/lib/tournamentDaysServer";
-import { notifyActivityFollowers } from "@/lib/tournamentNotify";
-import { prisma } from "@/lib/prisma";
-import { notify as notifyMessages } from "@/lib/messages";
+import { announceScheduleShift } from "@/lib/scheduleShiftNotify";
 import { dayCreateSchema } from "./schema";
 
 export const GET = withRoute(
@@ -24,14 +22,7 @@ export const POST = withRoute(
     await requireActivityAccess(id);
     const { position, isRest, notify } = parse(dayCreateSchema, await req.json());
     const { day, shifted } = await insertDay(id, position ?? null, isRest ?? false);
-    if (notify !== false && shifted > 0) {
-      const activity = await prisma.activity.findUnique({
-        where: { id },
-        select: { title: true },
-      });
-      if (activity)
-        await notifyActivityFollowers(id, notifyMessages.scheduleShifted(activity.title, id));
-    }
+    if (notify !== false) await announceScheduleShift(id, shifted);
     return NextResponse.json({ day, shifted }, { status: 201 });
   },
 );

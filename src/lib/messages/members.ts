@@ -47,7 +47,14 @@ export const members = {
 } as const;
 
 export const ageGroups = {
+  notFound: "العصر غير موجود",
   nameRequired: "اسم العصر مطلوب",
   nameTooLong: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)",
   alreadyExists: "هذا العصر موجود بالفعل",
+  totalInvalid: "العدد الإجمالي غير صالح",
+  totalChanged: (name: string, total: number) => `${name} — العدد الإجمالي ${total}`,
+  bothGroupsRequired: "العصر القديم والجديد مطلوبان",
+  sameGroup: "العصران متطابقان",
+  targetNotFound: "العصر الجديد غير موجود",
+  noMembersInGroup: "لا يوجد أعضاء بهذا العصر",
 } as const;

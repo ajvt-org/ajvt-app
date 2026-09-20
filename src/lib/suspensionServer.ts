@@ -205,28 +205,38 @@ export async function liftSuspension(activityId: string, suspensionId: string, d
   });
 }
 
-export async function listSuspensions(activityId: string) {
-  const rows = await prisma.suspension.findMany({
-    where: { activityId },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    select: {
-      id: true,
-      reason: true,
-      scope: true,
-      matches: true,
-      until: true,
-      note: true,
-      status: true,
-      createdBy: true,
-      decidedBy: true,
-      createdAt: true,
-      user: { select: { fullName: true, photo: true } },
-    },
-  });
+export async function suspensionBoard(activityId: string) {
+  const [rows, rules] = await Promise.all([
+    prisma.suspension.findMany({
+      where: { activityId },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        reason: true,
+        scope: true,
+        matches: true,
+        until: true,
+        note: true,
+        status: true,
+        createdBy: true,
+        decidedBy: true,
+        createdAt: true,
+        user: { select: { fullName: true, photo: true } },
+      },
+    }),
+    prisma.activity.findUniqueOrThrow({
+      where: { id: activityId },
+      select: { yellowsForBan: true, redBanMatches: true },
+    }),
+  ]);
+
   const now = new Date();
-  return rows.map((s) => ({
-    ...s,
-    member: { fullName: nameOf(s.user), photo: s.user.photo },
-    running: suspensionIsRunning(s, now),
-  }));
+  return {
+    suspensions: rows.map((s) => ({
+      ...s,
+      member: { fullName: nameOf(s.user), photo: s.user.photo },
+      running: suspensionIsRunning(s, now),
+    })),
+    rules,
+  };
 }

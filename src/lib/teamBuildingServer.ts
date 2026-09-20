@@ -104,3 +104,15 @@ export async function requireCaptainOf(teamId: string) {
 
   return { userId, activity, team };
 }
+
+export async function createOwnTeam(activityId: string, userId: string, name: string) {
+  return prisma.$transaction(async (tx) => {
+    const created = await tx.team.create({
+      data: { activityId, name, autoNamed: false, captainUserId: userId },
+      select: { id: true },
+    });
+    await tx.teamMember.create({ data: { teamId: created.id, userId, status: "ACTIVE" } });
+    await clearOtherSeats(tx, activityId, userId, created.id);
+    return created;
+  });
+}

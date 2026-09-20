@@ -1,3 +1,5 @@
+import { MVP_VOTE_MINUTES_MAX, MVP_VOTE_MINUTES_MIN } from "@/lib/mvpVote";
+
 import { resetTournament } from "../texts/activityDetail";
 
 export const tournament = {
@@ -40,7 +42,12 @@ export const tournament = {
   noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
   voteNeedsResult: "سجّل نتيجة المباراة قبل فتح التصويت",
   voteOver: "انتهت مدة التصويت",
+  mvpCandidateUnknown: "لاعب غير موجود ضمن المرشحين",
+  mvpAlreadyVoted: "لقد صوّتَ بالفعل في هذه المباراة",
   voteNothingToChange: "لا شيء لتغييره في التصويت",
+  mvpCandidateCount: "يجب اختيار بين 2 و6 لاعبين مرشحين",
+  mvpCandidateTwice: "لا يمكن اختيار نفس اللاعب مرتين",
+  mvpVoteMinutes: `مدة التصويت بالدقائق بين ${MVP_VOTE_MINUTES_MIN} و${MVP_VOTE_MINUTES_MAX}`,
   formatLocked: "لا يمكن تغيير نظام البطولة بعد إنشاء المباريات",
   groupsNotInKnockout: "هذه بطولة خروج المغلوب — لا يمكن إنشاء مجموعات فيها",
   matchShapeLocked: "لا يمكن تغيير نوع البطولة بعد إنشاء المباريات",

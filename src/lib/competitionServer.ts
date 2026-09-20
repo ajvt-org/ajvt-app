@@ -93,6 +93,14 @@ export async function canPlay(competitionId: string, userId: string): Promise<bo
   return competition.visibility === "PUBLIC" || competition.participants.length > 0;
 }
 
+export async function participantUserIds(competitionId: string): Promise<string[]> {
+  const rows = await prisma.quizParticipant.findMany({
+    where: { competitionId },
+    select: { userId: true },
+  });
+  return rows.map((row) => row.userId);
+}
+
 export async function setParticipants(competitionId: string, userIds: string[]) {
   const competition = await requireCompetition(competitionId);
   if (competition.startedAt) throw new ConflictError(ALREADY_STARTED);

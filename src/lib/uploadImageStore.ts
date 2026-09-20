@@ -1,19 +1,21 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
-import { getUploadDir } from "@/lib/uploadDir";
-import { processImage } from "@/lib/imageProcessing";
-import { thumbnailOf } from "@/lib/uploadNames";
-import { ValidationError } from "@/lib/errors";
-import { logger } from "@/lib/logger";
-import { uploads } from "@/lib/messages";
+import { getUploadDir } from "./uploadDir";
+import { processImage } from "./imageProcessing";
+import { thumbnailOf } from "./uploadNames";
+import { ValidationError } from "./errors";
+import { logger } from "./logger";
+import { uploads } from "./messages";
 
-export interface StoredProof {
+export interface StoredUpload {
   id: string;
   filename: string;
+  thumbnailFilename: string;
+  full: Buffer;
 }
 
-export async function storeProofImage(file: File): Promise<StoredProof> {
+export async function storeUploadImage(file: File): Promise<StoredUpload> {
   let processed;
   try {
     processed = await processImage(Buffer.from(await file.arrayBuffer()));
@@ -24,15 +26,14 @@ export async function storeProofImage(file: File): Promise<StoredProof> {
 
   const id = uuidv4();
   const filename = `${id}.webp`;
+  const thumbnailFilename = thumbnailOf(filename);
   const uploadDir = getUploadDir();
+
   await mkdir(uploadDir, { recursive: true });
   await Promise.all([
     writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
-    writeFile(
-      join(/* turbopackIgnore: true */ uploadDir, thumbnailOf(filename)),
-      processed.thumbnail,
-    ),
+    writeFile(join(/* turbopackIgnore: true */ uploadDir, thumbnailFilename), processed.thumbnail),
   ]);
 
-  return { id, filename };
+  return { id, filename, thumbnailFilename, full: processed.full };
 }

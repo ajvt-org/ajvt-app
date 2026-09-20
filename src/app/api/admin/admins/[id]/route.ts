@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { OWNER_ROLE, isAdminRole, isOwner } from "@/lib/adminRoles";
+import { isAdminRole, isOwner } from "@/lib/adminRoles";
 import { isScopedRole } from "@/lib/activityAccess";
-import { leavesScope, strandsOwnerRole, touchesOwnerRole } from "@/lib/adminRoleChange";
-import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
+import { touchesOwnerRole } from "@/lib/adminRoleChange";
+import { ForbiddenError, ValidationError } from "@/lib/errors";
 import { admins as messages } from "@/lib/messages";
+import { adminOrNotFound, refuseLastAdmin, removeAdmin } from "@/lib/adminAccountsServer";
+import {
+  refuseStrandingTheLastOwner,
+  saveAdminRole,
+  scopedAdminOrNotFound,
+} from "@/lib/adminRoleServer";
 
 export const DELETE = withRoute(
   "DELETE /api/admin/admins/[id]",
@@ -15,27 +20,16 @@ export const DELETE = withRoute(
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
 
-    if (id === session.adminId) {
-      return NextResponse.json({ error: messages.cannotDeleteSelf }, { status: 400 });
-    }
+    if (id === session.adminId) throw new ValidationError(messages.cannotDeleteSelf);
+    await refuseLastAdmin();
 
-    const count = await prisma.admin.count();
-    if (count <= 1) {
-      return NextResponse.json({ error: messages.cannotDeleteLast }, { status: 400 });
-    }
-
-    const target = await prisma.admin.findUnique({
-      where: { id },
-      select: { username: true, role: true, lastLoginAt: true, createdAt: true },
-    });
-    if (!target) {
-      return NextResponse.json({ error: messages.notFound }, { status: 404 });
-    }
+    const target = await adminOrNotFound(id);
     if (isOwner(target.role) && !isOwner(session.role)) {
       throw new ForbiddenError(messages.ownerRoleReserved);
     }
 
-    await prisma.admin.delete({ where: { id } });
+    await removeAdmin(id);
+
     await logAction(session.username, "DELETE_ADMIN", target.username, {
       ...auditContext(session, req),
       targetType: "Admin",
@@ -57,29 +51,16 @@ export const PATCH = withRoute(
     if (!isAdminRole(role)) throw new ValidationError(messages.unknownRole);
     if (isScopedRole(role)) throw new ValidationError(messages.scopedRoleSetByActivities);
 
-    const target = await prisma.admin.findUnique({
-      where: { id },
-      select: { username: true, role: true, activities: { select: { activityId: true } } },
-    });
-    if (!target) throw new NotFoundError(messages.notFound);
-
+    const target = await scopedAdminOrNotFound(id);
     if (touchesOwnerRole(target.role, role) && !isOwner(session.role)) {
       throw new ForbiddenError(messages.ownerRoleReserved);
     }
 
-    const owners = await prisma.admin.count({ where: { role: OWNER_ROLE } });
-    if (strandsOwnerRole(target.role, role, owners)) {
-      throw new ValidationError(messages.cannotDemoteLastOwner);
-    }
+    await refuseStrandingTheLastOwner(target.role, role);
     if (id === session.adminId) throw new ValidationError(messages.cannotChangeOwnRole);
 
-    const clearing = leavesScope(target.role, role);
     const held = target.activities.map((link) => link.activityId);
-
-    await prisma.$transaction([
-      ...(clearing ? [prisma.adminActivity.deleteMany({ where: { adminId: id } })] : []),
-      prisma.admin.update({ where: { id }, data: { role } }),
-    ]);
+    const clearing = await saveAdminRole(id, target.role, role);
 
     await logAction(session.username, "UPDATE_ADMIN_ROLE", target.username, {
       ...auditContext(session, req),

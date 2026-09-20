@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { ValidationError } from "@/lib/errors";
-import { confirmationMatches } from "@/lib/deletedRecords";
-import { archive, purgeExpired } from "@/lib/deletedRecordsServer";
-import { forgetQuizFootprint } from "@/lib/quizAttemptServer";
-import { accounts } from "@/lib/messages";
-import { withdrawReceiptsBeforeDelete } from "@/lib/paymentReceiptServer";
-import type { Prisma } from "@prisma/client";
-
-function identifiers(user: { fullName: string | null; phone: string | null }): string[] {
-  return [user.fullName, user.phone].map((v) => v?.trim() ?? "").filter(Boolean);
-}
+import { deletePerson, personOrNotFound } from "@/lib/personDeleteServer";
 
 export const DELETE = withRoute(
   "DELETE /api/admin/users/[id]",
@@ -21,60 +10,23 @@ export const DELETE = withRoute(
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      return NextResponse.json({ error: accounts.notFound }, { status: 404 });
-    }
-
+    const user = await personOrNotFound(id);
     const body = await req.json().catch(() => ({}));
     const typed = String(body?.confirmName ?? body?.confirmPhone ?? "");
-    const expected = identifiers(user);
-    if (!expected.length || !expected.some((value) => confirmationMatches(typed, value))) {
-      throw new ValidationError(accounts.confirmPerson);
-    }
 
-    const years = await prisma.membership.findMany({ where: { userId: id } });
-    const payments = await prisma.payment.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: "asc" },
-    });
-    const label = user.fullName?.trim() || user.phone || user.id;
+    const removed = await deletePerson(user, typed, session.username);
 
-    if (years.length > 0) {
-      await archive(
-        "Member",
-        id,
-        label,
-        { userId: id, memberships: years } as unknown as Prisma.InputJsonValue,
-        session.username,
-      );
-    }
-    await archive(
-      "User",
-      id,
-      label,
-      { ...user, payments } as unknown as Prisma.InputJsonValue,
-      session.username,
-    );
-
-    const forgotten = await forgetQuizFootprint(id);
-    await prisma.$transaction(async (tx) => {
-      await withdrawReceiptsBeforeDelete(tx, { userId: id });
-      await tx.user.delete({ where: { id } });
-    });
-    await purgeExpired();
-
-    await logAction(session.username, "DELETE_USER", label, {
+    await logAction(session.username, "DELETE_USER", removed.label, {
       ...auditContext(session, req),
       targetType: "User",
       targetId: id,
       before: {
         fullName: user.fullName,
         phone: user.phone,
-        years: years.length,
-        payments: payments.length,
+        years: removed.years,
+        payments: removed.payments,
       },
-      meta: forgotten ?? undefined,
+      meta: removed.forgotten ?? undefined,
     });
 
     return NextResponse.json({ ok: true });

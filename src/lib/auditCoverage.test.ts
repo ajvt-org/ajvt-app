@@ -40,11 +40,14 @@ function writesWithoutAudit(): string[] {
 }
 
 describe("audit coverage", () => {
-  it("finds the admin routes that write", () => {
-    const writing = routeFiles("src/app/api/admin").filter((path) =>
-      WRITE.test(readFileSync(path, "utf8")),
-    );
-    expect(writing.length).toBeGreaterThan(20);
+  it("recognises a write wherever one is still written", () => {
+    expect(WRITE.test("await prisma.team.delete({ where: { id } });")).toBe(true);
+    expect(WRITE.test("await tx.matchGoal.createMany({ data: rows });")).toBe(true);
+    expect(WRITE.test("await prisma.team.findMany({ where: { activityId } });")).toBe(false);
+  });
+
+  it("still has admin routes to look at", () => {
+    expect(routeFiles("src/app/api/admin").length).toBeGreaterThan(20);
   });
 
   it("splits a file into its handlers", () => {

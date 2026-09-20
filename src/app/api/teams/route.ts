@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { ValidationError } from "@/lib/errors";
 import { newTeamSchema } from "./schema";
 import {
-  clearOtherSeats,
+  createOwnTeam,
   refuseSecondTeam,
   refuseWhenLocked,
   requireTeamBuilder,
@@ -14,11 +14,10 @@ import { common } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/teams", async (req: NextRequest) => {
   const activityId = req.nextUrl.searchParams.get("activityId");
-  if (!activityId) {
-    return NextResponse.json({ error: common.invalidBody }, { status: 400 });
-  }
+  if (!activityId) throw new ValidationError(common.invalidBody);
 
   const { userId, activity } = await requireTeamBuilder(activityId);
+
   return NextResponse.json(await myTeamView(activity, userId));
 });
 
@@ -28,15 +27,7 @@ export const POST = withRoute("POST /api/teams", async (req: NextRequest) => {
   refuseWhenLocked(activity);
   await refuseSecondTeam(activityId, userId);
 
-  await prisma.$transaction(async (tx) => {
-    const created = await tx.team.create({
-      data: { activityId, name, autoNamed: false, captainUserId: userId },
-      select: { id: true },
-    });
-    await tx.teamMember.create({ data: { teamId: created.id, userId, status: "ACTIVE" } });
-    await clearOtherSeats(tx, activityId, userId, created.id);
-    return created;
-  });
+  await createOwnTeam(activityId, userId, name);
 
   return NextResponse.json(await myTeamView(activity, userId), { status: 201 });
 });
