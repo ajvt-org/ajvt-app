@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { NotFoundError, ConflictError } from "@/lib/errors";
-import { accounts } from "@/lib/messages";
-import { archivedMembership } from "@/lib/archivedMembership";
+import { restoreDeletedRecord } from "@/lib/restoreRecordServer";
 
 export const POST = withRoute(
   "POST /api/admin/deleted/[id]/restore",
@@ -13,55 +10,22 @@ export const POST = withRoute(
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
-    const record = await prisma.deletedRecord.findUnique({ where: { id } });
-    if (!record) throw new NotFoundError("السجل المحذوف غير موجود");
+    const restored = await restoreDeletedRecord(id);
 
-    const data = record.data as Record<string, unknown>;
-    if (record.kind === "Member") {
-      const existing = await prisma.membership.findFirst({ where: { userId: record.recordId } });
-      if (existing) throw new ConflictError(accounts.memberExists);
-
-      const account = await prisma.user.findUnique({ where: { id: String(data.userId) } });
-      if (!account) throw new ConflictError(accounts.restoreAccountFirst);
-
-      const { memberships } = data as { memberships?: Record<string, unknown>[] };
-      if (!memberships) throw new ConflictError(accounts.archivePredatesTheRecord);
-      await prisma.$transaction([
-        prisma.membership.createMany({
-          data: memberships.map(archivedMembership),
-          skipDuplicates: true,
-        }),
-        prisma.deletedRecord.delete({ where: { id } }),
-      ]);
-
-      await logAction(session.username, "RESTORE_MEMBER", record.label, {
+    await logAction(
+      session.username,
+      restored.kind === "Member" ? "RESTORE_MEMBER" : "RESTORE_USER",
+      restored.label,
+      {
         ...auditContext(session, req),
-        targetType: "Member",
-        targetId: record.recordId,
-        after: { fullName: record.label },
-      });
-    } else if (record.kind === "User") {
-      const taken = await prisma.user.findFirst({
-        where: { OR: [{ id: record.recordId }, { phone: String(data.phone) }] },
-      });
-      if (taken) throw new ConflictError(accounts.phoneTaken);
-
-      const { payments: _payments, ...fields } = data;
-      void _payments;
-      await prisma.$transaction([
-        prisma.user.create({ data: fields as never }),
-        prisma.deletedRecord.delete({ where: { id } }),
-      ]);
-
-      await logAction(session.username, "RESTORE_USER", record.label, {
-        ...auditContext(session, req),
-        targetType: "User",
-        targetId: record.recordId,
-        after: { phone: data.phone ?? null },
-      });
-    } else {
-      throw new ConflictError("لا يمكن استرجاع هذا النوع بعد");
-    }
+        targetType: restored.kind,
+        targetId: restored.recordId,
+        after:
+          restored.kind === "Member"
+            ? { fullName: restored.label }
+            : { phone: restored.phone ?? null },
+      },
+    );
 
     return NextResponse.json({ ok: true });
   },

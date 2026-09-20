@@ -4,5 +4,7 @@ export const accounts = {
   phoneTaken: "هذا الرقم مستعمل لحساب آخر",
   restoreAccountFirst: "استرجع حساب هذا الشخص أولاً، ثم دفعه",
   memberExists: "العضو موجود بالفعل",
+  deletedRecordNotFound: "السجل المحذوف غير موجود",
+  restoreKindNotSupported: "لا يمكن استرجاع هذا النوع بعد",
   archivePredatesTheRecord: "هذا السجل محذوف قبل نقل العضوية إلى سجل السنة، ولا يمكن استرجاعه",
 } as const;
