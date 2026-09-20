@@ -1,91 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { NotFoundError } from "@/lib/errors";
 import { activityRegisterSchema } from "./schema";
-import { activities, members, tournament } from "@/lib/messages";
-import { getAppSettings } from "@/lib/settingsServer";
-import { membershipState } from "@/lib/membershipState";
-import { asMembershipState } from "@/lib/currentMembership";
-import { currentMembership } from "@/lib/currentMembershipServer";
-import { seatRegistrant, unseatRegistrant } from "@/lib/registrationTeamServer";
+import { members } from "@/lib/messages";
+import { registerSelf, unregisterSelf } from "@/lib/selfRegisterServer";
 
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
   const { activityId, userId, chosenTeamId } = parse(activityRegisterSchema, await req.json());
 
-  const [membership, activity] = await Promise.all([
-    userId === session.userId ? currentMembership(prisma, userId) : null,
-    prisma.activity.findUnique({
-      where: { id: activityId },
-      select: {
-        id: true,
-        isOpen: true,
-        isVolunteer: true,
-        autoApprove: true,
-        capacity: true,
-      },
-    }),
-  ]);
-  if (!activity) throw new NotFoundError(activities.notFound);
-  if (!activity.isOpen) throw new ConflictError(activities.registrationClosed);
-  if (!membership) throw new NotFoundError(members.notFound);
-  if (membership.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
-
-  const { membershipYear } = await getAppSettings();
-  const standing = membershipState(asMembershipState(membership), membershipYear);
-  if (standing === "ENDED") throw new ForbiddenError(activities.membershipEnded);
-  if (standing === "BEHIND") throw new ForbiddenError(activities.membershipBehind);
-
-  const status = activity.isVolunteer || activity.autoApprove ? "ACTIVE" : "PENDING";
-
-  const chosenTeam = chosenTeamId
-    ? await prisma.team.findFirst({
-        where: { id: chosenTeamId, activityId },
-        select: { id: true },
-      })
-    : null;
-  if (chosenTeamId && !chosenTeam) throw new NotFoundError(tournament.teamNotFound);
-
-  await prisma.$transaction(
-    async (tx) => {
-      const existing = await tx.activityRegistration.findUnique({
-        where: { userId_activityId: { userId: session.userId, activityId } },
-        select: { status: true },
-      });
-      if (existing && existing.status !== "REJECTED") {
-        throw new ConflictError(activities.alreadyRegistered);
-      }
-      if (activity.capacity !== null) {
-        const taken = await tx.activityRegistration.count({
-          where: { activityId, status: { not: "REJECTED" } },
-        });
-        if (taken >= activity.capacity) throw new ConflictError(activities.noSeatsLeft);
-      }
-      const registration = await tx.activityRegistration.upsert({
-        where: { userId_activityId: { userId: session.userId, activityId } },
-        update: {
-          status,
-          rejectionReason: null,
-          source: "SELF",
-          recordedBy: null,
-          chosenTeamId: chosenTeam?.id ?? null,
-          teamNudgeSentAt: null,
-        },
-        create: {
-          userId: session.userId,
-          activityId,
-          status,
-          source: "SELF",
-          chosenTeamId: chosenTeam?.id ?? null,
-        },
-      });
-      await seatRegistrant(tx, registration.id);
-    },
-    { isolationLevel: "Serializable" },
-  );
+  await registerSelf(session.userId, userId, activityId, chosenTeamId);
 
   return NextResponse.json({ ok: true });
 });
@@ -96,10 +22,7 @@ export const DELETE = withRoute("DELETE /api/activities/register", async (req: N
 
   if (userId !== session.userId) throw new NotFoundError(members.notFound);
 
-  const released = await prisma.$transaction(async (tx) => {
-    await tx.activityRegistration.deleteMany({ where: { userId: session.userId, activityId } });
-    return unseatRegistrant(tx, activityId, session.userId);
-  });
+  const released = await unregisterSelf(session.userId, activityId);
 
   return NextResponse.json({ ok: true, keptTeamPlace: released.kept > 0 });
 });

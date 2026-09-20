@@ -6,6 +6,9 @@ import { squadOf, teamIsFull } from "./squadSize";
 import { currentMembership } from "./currentMembershipServer";
 import { clearOtherSeats } from "./teamBuildingServer";
 import { releaseCaptain } from "./teamCaptainServer";
+import { refuseWhenCaptainElsewhere } from "./teamMoveServer";
+import { activeCount, isRequest } from "./teamInvites";
+import { rosterOf } from "./teamInvitesServer";
 
 export async function addTeamMember(teamId: string, userId: string) {
   const team = await prisma.team.findUnique({
@@ -84,4 +87,50 @@ export async function removeTeamMember(teamId: string, userId: string) {
     await tx.teamMember.delete({ where: { id: existing.id } });
   });
   return existing;
+}
+
+interface SquadActivity {
+  id: string;
+  minTeamSize: number | null;
+  maxTeamSize: number | null;
+}
+
+export async function answerJoinRequest(
+  teamId: string,
+  userId: string,
+  activity: SquadActivity,
+  accept: boolean,
+): Promise<void> {
+  const seat = await prisma.teamMember.findUnique({
+    where: { teamId_userId: { teamId, userId } },
+    select: { id: true, status: true, invitedByCaptain: true },
+  });
+  if (!seat || !isRequest(seat)) throw new NotFoundError(tournament.requestNotFound);
+
+  if (!accept) {
+    await prisma.teamMember.delete({ where: { id: seat.id } });
+    return;
+  }
+
+  await refuseWhenCaptainElsewhere(activity.id, userId, teamId);
+
+  const squad = squadOf(activity);
+  if (teamIsFull(activeCount(await rosterOf(teamId)), squad)) {
+    throw new ConflictError(entrantWording(entrantOf(activity)).entrantFull(squad.max));
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.teamMember.update({ where: { id: seat.id }, data: { status: "ACTIVE" } });
+    await clearOtherSeats(tx, activity.id, userId, teamId);
+  });
+}
+
+export async function dropFromTeam(teamId: string, userId: string): Promise<void> {
+  const seat = await prisma.teamMember.findUnique({
+    where: { teamId_userId: { teamId, userId } },
+    select: { id: true },
+  });
+  if (!seat) throw new NotFoundError(tournament.playerNotInTeam);
+
+  await prisma.teamMember.delete({ where: { id: seat.id } });
 }

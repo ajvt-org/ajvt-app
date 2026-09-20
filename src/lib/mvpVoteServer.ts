@@ -4,6 +4,7 @@ import { entrantWording, tournament } from "./messages";
 import { entrantOf } from "./entrantServer";
 import { isFootball } from "./matchShape";
 import { closesAtFrom, isVoteClosed, mvpWinner } from "./mvpVote";
+import { isUniqueViolation } from "./prismaError";
 
 export type SettleableMatch = {
   id: string;
@@ -141,4 +142,32 @@ export async function deleteMvpVote(matchId: string) {
   if (!existing) throw new NotFoundError(tournament.noVoteForMatch);
 
   await prisma.matchMvpVote.delete({ where: { matchId } });
+}
+
+export async function castMvpVote(matchId: string, candidateId: string, userId: string) {
+  const vote = await prisma.matchMvpVote.findUnique({
+    where: { matchId },
+    select: {
+      id: true,
+      status: true,
+      closesAt: true,
+      candidates: { select: { id: true } },
+      match: { select: { activity: { select: { matchShape: true } } } },
+    },
+  });
+  if (!vote) throw new NotFoundError(tournament.noVoteForMatch);
+  if (!isFootball(vote.match.activity.matchShape)) {
+    throw new ValidationError(tournament.motmFootballOnly);
+  }
+  if (isVoteClosed(vote)) throw new ConflictError(tournament.voteOver);
+  if (!vote.candidates.some((candidate) => candidate.id === candidateId)) {
+    throw new ValidationError(tournament.mvpCandidateUnknown);
+  }
+
+  try {
+    await prisma.mvpVote.create({ data: { voteId: vote.id, candidateId, userId } });
+  } catch (err) {
+    if (isUniqueViolation(err)) throw new ConflictError(tournament.mvpAlreadyVoted);
+    throw err;
+  }
 }
