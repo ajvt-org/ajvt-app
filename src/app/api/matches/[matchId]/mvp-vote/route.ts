@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { mvpVoteCastSchema } from "./schema";
-import { isUniqueViolation } from "@/lib/prismaError";
-import { tournament } from "@/lib/messages";
-import { isVoteClosed } from "@/lib/mvpVote";
-import { isFootball } from "@/lib/matchShape";
+import { castMvpVote } from "@/lib/mvpVoteServer";
 
 export const POST = withRoute(
   "POST /api/matches/[matchId]/mvp-vote",
@@ -16,39 +12,7 @@ export const POST = withRoute(
     const { matchId } = await params;
     const { candidateId } = parse(mvpVoteCastSchema, await req.json());
 
-    const vote = await prisma.matchMvpVote.findUnique({
-      where: { matchId },
-      select: {
-        id: true,
-        status: true,
-        closesAt: true,
-        candidates: { select: { id: true } },
-        match: { select: { activity: { select: { matchShape: true } } } },
-      },
-    });
-    if (!vote) {
-      return NextResponse.json({ error: tournament.noVoteForMatch }, { status: 404 });
-    }
-    if (!isFootball(vote.match.activity.matchShape)) {
-      return NextResponse.json({ error: tournament.motmFootballOnly }, { status: 400 });
-    }
-    if (isVoteClosed(vote)) {
-      return NextResponse.json({ error: tournament.voteOver }, { status: 409 });
-    }
-    if (!vote.candidates.some((c) => c.id === candidateId)) {
-      return NextResponse.json({ error: "لاعب غير موجود ضمن المرشحين" }, { status: 400 });
-    }
-
-    try {
-      await prisma.mvpVote.create({
-        data: { voteId: vote.id, candidateId, userId: session.userId },
-      });
-    } catch (err: unknown) {
-      if (isUniqueViolation(err)) {
-        return NextResponse.json({ error: "لقد صوّتَ بالفعل في هذه المباراة" }, { status: 409 });
-      }
-      throw err;
-    }
+    await castMvpVote(matchId, candidateId, session.userId);
 
     return NextResponse.json({ ok: true });
   },
