@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 interface DayVisits {
   date: string;
@@ -43,4 +44,22 @@ export async function getSiteStats(recentDays = 30) {
     last7Days: days.slice(-7).reduce((sum, d) => sum + d.visitors, 0),
     last30Days: days.reduce((sum, d) => sum + d.visitors, 0),
   };
+}
+
+export async function countVisit(date: string, visitorId: string): Promise<void> {
+  await prisma.siteVisit.upsert({
+    where: { date_visitorId: { date, visitorId } },
+    update: { pageViews: { increment: 1 } },
+    create: { date, visitorId },
+  });
+}
+
+export async function databaseIsUp(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch (err) {
+    logger.error("health.database", err);
+    return false;
+  }
 }

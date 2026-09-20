@@ -1,155 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
-import { toCsv } from "@/lib/csv";
-import { splitPayment } from "@/lib/membershipPayment";
-import { getAgeStandings } from "@/lib/ageStandingsServer";
-import { latestByAccount } from "@/lib/currentMembership";
-import { activityFinanceReport } from "@/lib/activityReportServer";
-import { dateSpanSchema, spanBounds } from "@/lib/dateSpan";
-import { parse } from "@/lib/validation";
-import { givenAmount, sourceOnRecord } from "@/lib/gifts";
-import {
-  isDataset,
-  memberRows,
-  donationRows,
-  ageRows,
-  activityRows,
-  auditRows,
-  MEMBER_HEADERS,
-  DONATION_HEADERS,
-  AGE_HEADERS,
-  ACTIVITY_HEADERS,
-  AUDIT_HEADERS,
-  FILENAMES,
-  type Dataset,
-} from "@/lib/exportRows";
-import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
-import {
-  MEMBERSHIP_PAYMENT_SELECT,
-  mirroredColumns,
-  paymentOfYear,
-} from "@/lib/membershipPaymentFields";
-import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
-import {
-  CONFIDENTIAL_SELECT,
-  seesEverySupporterName,
-  seesSupporterName,
-} from "@/lib/supportPrivacy";
-import { confidentialNames } from "@/lib/supportPrivacyServer";
-import { scrubNames } from "@/lib/auditLogRedaction";
-import { buildWhere } from "@/lib/auditFilters";
+import { common } from "@/lib/messages";
+import { FILENAMES, isDataset } from "@/lib/exportRows";
+import { datasetCsv } from "@/lib/exportServer";
 import { viewerOf } from "@/lib/supportViewer";
-import type { SupportViewer } from "@/lib/supportPrivacy";
-
-async function buildCsv(
-  dataset: Dataset,
-  req: NextRequest,
-  viewer: SupportViewer,
-): Promise<string> {
-  if (dataset === "members") {
-    const memberships = await prisma.membership.findMany({
-      select: {
-        userId: true,
-        year: true,
-        status: true,
-        createdAt: true,
-        user: {
-          select: {
-            ...PERSON_WITH_PHONE_SELECT,
-            ...CONFIDENTIAL_SELECT,
-            payments: {
-              where: { purpose: "MEMBERSHIP" },
-              select: MEMBERSHIP_PAYMENT_SELECT,
-            },
-          },
-        },
-      },
-    });
-    const current = [...latestByAccount(memberships).values()].sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-    );
-    return toCsv(
-      MEMBER_HEADERS,
-      memberRows(
-        current.map((membership) => {
-          const { year, user, userId, ...rest } = membership;
-          const { supportNameConfidential, ...account } = user;
-          const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
-          const paid = paymentOfYear(account.payments, year);
-          const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
-          return {
-            ...withPerson({
-              ...rest,
-              ...mirroredColumns(paid),
-              membershipYear: year,
-              user: account,
-            }),
-            paidAmount: split ? split.fee : null,
-            supportAmount: named && split ? split.surplus : 0,
-          };
-        }),
-      ),
-    );
-  }
-
-  if (dataset === "donations") {
-    const payments = await prisma.payment.findMany({
-      orderBy: { createdAt: "asc" },
-      include: {
-        user: { select: DONOR_ACCOUNT_SELECT },
-        tags: { select: { name: true } },
-      },
-    });
-    return toCsv(
-      DONATION_HEADERS,
-      donationRows(
-        payments
-          .map((p) => ({
-            ...p,
-            amount: givenAmount(p),
-            paymentMethod: p.method,
-            source: sourceOnRecord(p.purpose, p.source),
-          }))
-          .filter((p) => p.purpose !== "MEMBERSHIP" || p.amount > 0),
-        viewer,
-      ),
-    );
-  }
-
-  if (dataset === "activities") {
-    const { from, to } = parse(dateSpanSchema, {
-      from: req.nextUrl.searchParams.get("from"),
-      to: req.nextUrl.searchParams.get("to"),
-    });
-    const span = spanBounds(from, to);
-    const report = await activityFinanceReport(span.from, span.to);
-    return toCsv(ACTIVITY_HEADERS, activityRows(report.rows));
-  }
-
-  if (dataset === "audit") {
-    const withheld = seesEverySupporterName(viewer) ? [] : await confidentialNames();
-    const logs = await prisma.auditLog.findMany({
-      where: buildWhere(req.nextUrl.searchParams),
-      orderBy: { createdAt: "desc" },
-    });
-    return toCsv(AUDIT_HEADERS, auditRows(logs.map((log) => scrubNames(log, withheld))));
-  }
-
-  return toCsv(AGE_HEADERS, ageRows(await getAgeStandings({ everyGroup: true })));
-}
 
 export const GET = withRoute(
   "GET /api/admin/export/[dataset]",
   async (req: NextRequest, { params }: { params: Promise<{ dataset: string }> }) => {
     const session = await requireAdminRole("SUPER");
     const { dataset } = await params;
-    if (!isDataset(dataset)) throw new NotFoundError("لا يوجد تصدير بهذا الاسم");
+    if (!isDataset(dataset)) throw new NotFoundError(common.exportNotFound);
 
-    const csv = await buildCsv(dataset, req, viewerOf(session));
+    const csv = await datasetCsv(dataset, req.nextUrl.searchParams, viewerOf(session));
     const day = new Date().toISOString().slice(0, 10);
 
     await logAction(session.username, "EXPORT_DATA", dataset, {
