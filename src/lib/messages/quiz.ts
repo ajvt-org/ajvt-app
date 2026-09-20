@@ -14,6 +14,7 @@ export const quiz = {
   paidMembersOnly: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب",
   notInvited: "هذه المسابقة خاصة ولست من المشاركين فيها",
   alreadyAnswered: "تمت الإجابة على هذا السؤال من قبل",
+  pickAnswer: "اختر إجابة",
   optionsNotRevealed: "أظهر الخيارات أولاً",
   timeUp: "انتهى الوقت",
   importNotArray: "الملف يجب أن يحتوي على قائمة أسئلة",

@@ -242,7 +242,14 @@ export async function submitAnswer(
       },
     });
     await settleAttempt(row.attempt.id, now);
-    return { isCorrect: false, points: 0, correctIds: [], elapsedMs: spent, expired: true };
+    return {
+      attemptId: row.attempt.id,
+      isCorrect: false,
+      points: 0,
+      correctIds: [],
+      elapsedMs: spent,
+      expired: true,
+    };
   }
 
   const valid = new Set(row.question.answers.map((a) => a.id));
@@ -276,7 +283,7 @@ export async function submitAnswer(
     });
   });
 
-  return { isCorrect, points, correctIds, elapsedMs, expired: false };
+  return { attemptId: row.attempt.id, isCorrect, points, correctIds, elapsedMs, expired: false };
 }
 
 export const NOT_MISSED = "لا توجد أسئلة فائتة في هذه المحاولة";
