@@ -92,6 +92,19 @@ describe("computeStats", () => {
     expect(stats.totalGoals).toBe(0);
     expect(stats.bestAttack).toBeNull();
   });
+
+  it("keeps the goals awarded on a forfeit out of the tournament figures", () => {
+    const awarded = computeStats(teams, [
+      match("a", "b", 3, 0, { forfeitWinnerTeamId: "a", goals: [], forfeitExtraGoals: 4 }),
+    ]);
+    const plain = computeStats(teams, [
+      match("a", "b", 3, 0, { forfeitWinnerTeamId: "a", goals: [] }),
+    ]);
+
+    expect(awarded).toEqual(plain);
+    expect(awarded.totalGoals).toBe(3);
+    expect(awarded.bestAttack).toMatchObject({ teamId: "a", gf: 3 });
+  });
 });
 
 describe("a forfeit and the scorers table", () => {

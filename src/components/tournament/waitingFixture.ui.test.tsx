@@ -21,6 +21,7 @@ const WAITING: PublicMatch = {
   awayPenalties: null,
   status: "SCHEDULED",
   forfeitWinnerTeamId: null,
+  forfeitExtraGoals: 0,
   manOfTheMatch: null,
   goals: [],
   penaltyKicks: [],

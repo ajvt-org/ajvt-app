@@ -55,6 +55,7 @@ const WAITING: Match = {
   awayPenalties: null,
   manOfTheMatch: null,
   forfeitWinnerTeamId: null,
+  forfeitExtraGoals: 0,
   status: "SCHEDULED",
   goals: [],
   bookings: [],

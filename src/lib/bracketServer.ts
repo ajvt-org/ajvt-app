@@ -324,6 +324,7 @@ async function groupTables(activityId: string) {
         homeScore: true,
         awayScore: true,
         forfeitWinnerTeamId: true,
+        forfeitExtraGoals: true,
         goals: { select: { teamId: true, count: true } },
         status: true,
         isKnockout: true,

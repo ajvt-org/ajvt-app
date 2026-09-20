@@ -18,6 +18,13 @@ export function forfeitScore(
   return winnerIsHome ? { home: awarded, away: 0 } : { home: 0, away: awarded };
 }
 
+export function forfeitCreditedGoals(
+  scored: number,
+  extraGoals: number | null | undefined,
+): number {
+  return scored + Math.max(extraGoals ?? 0, 0);
+}
+
 export function countsForScorers(
   goal: { teamId: string },
   forfeitWinnerTeamId: string | null | undefined,
