@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { ConflictError } from "@/lib/errors";
 import { answerRequestSchema, removeMemberSchema } from "./schema";
-import { clearOtherSeats, requireCaptainOf } from "@/lib/teamBuildingServer";
-import { refuseWhenCaptainElsewhere } from "@/lib/teamMoveServer";
-import { entrantWording, tournament } from "@/lib/messages";
-import { entrantOf } from "@/lib/entrantServer";
-import { activeCount, isRequest } from "@/lib/teamInvites";
-import { squadOf, teamIsFull } from "@/lib/squadSize";
+import { requireCaptainOf } from "@/lib/teamBuildingServer";
+import { tournament } from "@/lib/messages";
+import { answerJoinRequest, dropFromTeam } from "@/lib/teamRosterServer";
 
 export const PATCH = withRoute(
   "PATCH /api/teams/[teamId]/members",
@@ -17,35 +14,7 @@ export const PATCH = withRoute(
     const { userId, accept } = parse(answerRequestSchema, await req.json());
     const { activity } = await requireCaptainOf(teamId);
 
-    const seat = await prisma.teamMember.findUnique({
-      where: { teamId_userId: { teamId, userId } },
-      select: { id: true, status: true, invitedByCaptain: true },
-    });
-    if (!seat || !isRequest(seat)) {
-      return NextResponse.json({ error: tournament.requestNotFound }, { status: 404 });
-    }
-
-    if (!accept) {
-      await prisma.teamMember.delete({ where: { id: seat.id } });
-      return NextResponse.json({ ok: true });
-    }
-
-    const words = entrantWording(entrantOf(activity));
-    await refuseWhenCaptainElsewhere(activity.id, userId, teamId);
-
-    const roster = await prisma.teamMember.findMany({
-      where: { teamId },
-      select: { status: true, invitedByCaptain: true },
-    });
-    const squad = squadOf(activity);
-    if (teamIsFull(activeCount(roster), squad)) {
-      return NextResponse.json({ error: words.entrantFull(squad.max) }, { status: 409 });
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.teamMember.update({ where: { id: seat.id }, data: { status: "ACTIVE" } });
-      await clearOtherSeats(tx, activity.id, userId, teamId);
-    });
+    await answerJoinRequest(teamId, userId, activity, accept);
 
     return NextResponse.json({ ok: true });
   },
@@ -58,19 +27,9 @@ export const DELETE = withRoute(
     const { userId } = parse(removeMemberSchema, await req.json());
     const { userId: captainId } = await requireCaptainOf(teamId);
 
-    if (userId === captainId) {
-      return NextResponse.json({ error: tournament.captainCannotLeave }, { status: 409 });
-    }
+    if (userId === captainId) throw new ConflictError(tournament.captainCannotLeave);
 
-    const seat = await prisma.teamMember.findUnique({
-      where: { teamId_userId: { teamId, userId } },
-      select: { id: true },
-    });
-    if (!seat) {
-      return NextResponse.json({ error: tournament.playerNotInTeam }, { status: 404 });
-    }
-
-    await prisma.teamMember.delete({ where: { id: seat.id } });
+    await dropFromTeam(teamId, userId);
 
     return NextResponse.json({ ok: true });
   },
