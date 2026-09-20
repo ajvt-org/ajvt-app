@@ -17,6 +17,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/adminMatchCreateServer.ts",
   "src/lib/adminMatchesServer.ts",
   "src/lib/ageGroups.ts",
+  "src/lib/ageGroupsServer.ts",
   "src/lib/ageStandingsServer.ts",
   "src/lib/attachAccount.ts",
   "src/lib/audit.ts",
@@ -127,6 +128,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/uploadRelease.ts",
   "src/lib/verifyEnrollmentsServer.ts",
   "src/lib/viewerAge.ts",
+  "src/lib/villageAdminServer.ts",
   "src/lib/villagesServer.ts",
   "src/lib/waitingRequestsServer.ts",
 ];
