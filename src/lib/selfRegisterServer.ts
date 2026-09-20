@@ -1,0 +1,84 @@
+import { prisma } from "./prisma";
+import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
+import { activities, members, tournament } from "./messages";
+import { getAppSettings } from "./settingsServer";
+import { membershipState } from "./membershipState";
+import { asMembershipState } from "./currentMembership";
+import { currentMembership } from "./currentMembershipServer";
+import { seatRegistrant, unseatRegistrant } from "./registrationTeamServer";
+
+export async function registerSelf(
+  userId: string,
+  claimed: string,
+  activityId: string,
+  chosenTeamId?: string | null,
+) {
+  const [membership, activity] = await Promise.all([
+    claimed === userId ? currentMembership(prisma, userId) : null,
+    prisma.activity.findUnique({
+      where: { id: activityId },
+      select: { id: true, isOpen: true, isVolunteer: true, autoApprove: true, capacity: true },
+    }),
+  ]);
+  if (!activity) throw new NotFoundError(activities.notFound);
+  if (!activity.isOpen) throw new ConflictError(activities.registrationClosed);
+  if (!membership) throw new NotFoundError(members.notFound);
+  if (membership.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
+
+  const { membershipYear } = await getAppSettings();
+  const standing = membershipState(asMembershipState(membership), membershipYear);
+  if (standing === "ENDED") throw new ForbiddenError(activities.membershipEnded);
+  if (standing === "BEHIND") throw new ForbiddenError(activities.membershipBehind);
+
+  const status = activity.isVolunteer || activity.autoApprove ? "ACTIVE" : "PENDING";
+
+  const chosenTeam = chosenTeamId
+    ? await prisma.team.findFirst({ where: { id: chosenTeamId, activityId }, select: { id: true } })
+    : null;
+  if (chosenTeamId && !chosenTeam) throw new NotFoundError(tournament.teamNotFound);
+
+  await prisma.$transaction(
+    async (tx) => {
+      const existing = await tx.activityRegistration.findUnique({
+        where: { userId_activityId: { userId, activityId } },
+        select: { status: true },
+      });
+      if (existing && existing.status !== "REJECTED") {
+        throw new ConflictError(activities.alreadyRegistered);
+      }
+      if (activity.capacity !== null) {
+        const taken = await tx.activityRegistration.count({
+          where: { activityId, status: { not: "REJECTED" } },
+        });
+        if (taken >= activity.capacity) throw new ConflictError(activities.noSeatsLeft);
+      }
+      const registration = await tx.activityRegistration.upsert({
+        where: { userId_activityId: { userId, activityId } },
+        update: {
+          status,
+          rejectionReason: null,
+          source: "SELF",
+          recordedBy: null,
+          chosenTeamId: chosenTeam?.id ?? null,
+          teamNudgeSentAt: null,
+        },
+        create: {
+          userId,
+          activityId,
+          status,
+          source: "SELF",
+          chosenTeamId: chosenTeam?.id ?? null,
+        },
+      });
+      await seatRegistrant(tx, registration.id);
+    },
+    { isolationLevel: "Serializable" },
+  );
+}
+
+export async function unregisterSelf(userId: string, activityId: string) {
+  return prisma.$transaction(async (tx) => {
+    await tx.activityRegistration.deleteMany({ where: { userId, activityId } });
+    return unseatRegistrant(tx, activityId, userId);
+  });
+}
