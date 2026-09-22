@@ -5,9 +5,8 @@ import type { BoardConfig, Visibility } from "@/lib/competitionConfig";
 import NumberField from "@/components/NumberField";
 import { formatDateTime } from "@/lib/clubTime";
 import { quizCompetition as texts } from "@/lib/texts";
+import { toLocalInput, fromLocalInput } from "@/lib/localDateInput";
 import {
-  toLocalInput,
-  fromLocalInput,
   isPresetPeriod,
   CUSTOM_PERIOD,
   PERIOD_CHOICES,

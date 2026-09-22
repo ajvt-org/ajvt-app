@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { MONEY_AREAS } from "@/lib/adminNav";
+import { ELECTIONS_AREA, MONEY_AREAS } from "@/lib/adminNav";
 import { adminTabs } from "@/lib/texts";
 import { NAV_TABS, subtabsFor, tabActiveFor, tabsFor } from "./navTabs";
 
@@ -21,8 +21,23 @@ function subtabHrefs(role: string | null, pathname: string): string[] {
 }
 
 describe("the admin navigation", () => {
-  it("carries seven destinations", () => {
-    expect(NAV_TABS).toHaveLength(7);
+  it("carries eight destinations", () => {
+    expect(NAV_TABS).toHaveLength(8);
+  });
+
+  it("puts the elections between the competitions and the data", () => {
+    const hrefs = NAV_TABS.map((tab) => tab.href);
+
+    expect(hrefs.indexOf(ELECTIONS_AREA)).toBe(hrefs.indexOf("/admin/quiz") + 1);
+    expect(hrefs.indexOf("/admin/stats")).toBe(hrefs.indexOf(ELECTIONS_AREA) + 1);
+  });
+
+  it("shows the elections to nobody but the roles that reach every screen", () => {
+    expect(labels("SUPER")).toContain(adminTabs.elections);
+    expect(labels("OWNER")).toContain(adminTabs.elections);
+    for (const role of ["MEMBERS", "ACTIVITIES", "QUIZ", "ACTIVITY"]) {
+      expect(labels(role), role).not.toContain(adminTabs.elections);
+    }
   });
 
   it("holds every money screen under the one tab", () => {
