@@ -5,6 +5,10 @@ import { join } from "node:path";
 const ARABIC = /[؀-ۿ]/;
 
 const KEPT_CLEAN = [
+  "src/app/api/admin/elections/route.ts",
+  "src/app/api/admin/elections/[id]/route.ts",
+  "src/app/api/admin/elections/schema.ts",
+  "src/lib/electionServer.ts",
   "src/app/admin/payments/MembershipEditForm.tsx",
   "src/app/(member)/donate/page.tsx",
   "src/components/DonorNameChoice.tsx",

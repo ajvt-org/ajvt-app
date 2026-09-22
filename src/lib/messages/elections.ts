@@ -1,0 +1,11 @@
+export const elections = {
+  notFound: "الانتخاب غير موجود",
+  titleRequired: "عنوان الانتخاب مطلوب",
+  startRequired: "وقت بداية التصويت مطلوب",
+  startInPast: "وقت بداية التصويت قد مضى",
+  durationInvalid: "مدة التصويت غير صالحة",
+  alreadyStarted: "التصويت انطلق، لا يمكن تعديل إعداداته",
+  cannotHideAfterStart: "التصويت انطلق، لا يمكن إخفاء الانتخاب",
+  cannotDeleteVisible: "الانتخاب منشور، لا يمكن حذفه",
+  cannotDeleteVoted: "هناك أصوات مسجلة، لا يمكن حذف الانتخاب",
+} as const;
