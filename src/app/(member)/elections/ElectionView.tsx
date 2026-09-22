@@ -7,7 +7,9 @@ import IconLabel from "@/components/IconLabel";
 import PageHeader from "@/components/PageHeader";
 import { electionState, endsAt } from "@/lib/election";
 import { electionMember as texts } from "@/lib/texts";
+import BallotPicker from "./BallotPicker";
 import CandidateList from "./CandidateList";
+import MyBallot from "./MyBallot";
 import ElectionClock from "./ElectionClock";
 import type { ElectionDetailPayload } from "./electionTypes";
 
@@ -22,8 +24,10 @@ export default function ElectionView({
   membershipHref: string;
   onReached: () => void;
 }) {
-  const { election, signedIn, canVote } = payload;
+  const { election, signedIn, canVote, voted, myCandidateId } = payload;
   const state = electionState(election);
+  const voting = state === "open" && canVote && !voted;
+  const mine = election.candidates.find((candidate) => candidate.id === myCandidateId) ?? null;
 
   return (
     <div className="app-shell">
@@ -62,12 +66,25 @@ export default function ElectionView({
           </div>
         )}
 
-        <div className="space-y-2">
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            {texts.candidates}
-          </p>
-          <CandidateList candidates={election.candidates} />
-        </div>
+        {voted ? (
+          <MyBallot candidate={mine} />
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+              {texts.candidates}
+            </p>
+            {voting ? (
+              <BallotPicker
+                electionId={election.id}
+                candidates={election.candidates}
+                allowBlank={election.allowBlank}
+                onCast={onReached}
+              />
+            ) : (
+              <CandidateList candidates={election.candidates} />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

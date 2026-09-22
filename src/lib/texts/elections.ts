@@ -64,6 +64,18 @@ export const electionMember = {
   signInToVote: "سجّل الدخول للتصويت",
   signIn: "تسجيل الدخول",
   notFound: "الانتخاب غير موجود",
+  pick: "اختر مترشحاً واحداً",
+  blankTitle: "ورقة بيضاء",
+  blankSub: "لا أؤيد أي مترشح",
+  confirmVote: "تأكيد التصويت",
+  confirmTitle: "تأكيد التصويت",
+  confirmFor: (name: string) => `ستصوّت لـ ${name}`,
+  confirmBlank: "ستصوّت بورقة بيضاء",
+  cannotChange: "لا يمكن تغيير صوتك بعد تأكيده",
+  recorded: "صوتك مسجّل",
+  recordedFor: (name: string) => `صوتك سُجّل لـ ${name}`,
+  recordedBlank: "صوتك سُجّل كورقة بيضاء",
+  selected: (name: string) => `اخترت ${name}`,
 } as const;
 
 export const CUSTOM_ELECTION_DURATION = -1;

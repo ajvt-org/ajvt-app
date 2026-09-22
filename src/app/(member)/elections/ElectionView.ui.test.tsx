@@ -102,6 +102,39 @@ describe("one election on the member screen", () => {
     expect(container.querySelectorAll(".line-clamp-2")).toHaveLength(0);
   });
 
+  it("offers the vote to a member once the window is open", () => {
+    show(payload({ signedIn: true, canVote: true }, -HOUR));
+
+    expect(screen.getByRole("button", { name: "تأكيد التصويت" })).toBeTruthy();
+  });
+
+  it("offers no vote before the window opens, however paid up the reader is", () => {
+    show(payload({ signedIn: true, canVote: true }));
+
+    expect(screen.queryByRole("button", { name: "تأكيد التصويت" })).toBeNull();
+    expect(screen.getByText(LONG)).toBeTruthy();
+  });
+
+  it("offers no vote once the window has closed", () => {
+    show(payload({ signedIn: true, canVote: true }, -20 * HOUR));
+
+    expect(screen.queryByRole("button", { name: "تأكيد التصويت" })).toBeNull();
+  });
+
+  it("replaces the list with the voter's own ballot once it is cast", () => {
+    show(payload({ signedIn: true, canVote: true, voted: true, myCandidateId: "c1" }, -HOUR));
+
+    expect(screen.getByText("صوتك مسجّل")).toBeTruthy();
+    expect(screen.getByText(`صوتك سُجّل لـ ${LONG}`)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "تأكيد التصويت" })).toBeNull();
+  });
+
+  it("reads a blank ballot back as a blank", () => {
+    show(payload({ signedIn: true, canVote: true, voted: true, myCandidateId: null }, -HOUR));
+
+    expect(screen.getByText("صوتك سُجّل كورقة بيضاء")).toBeTruthy();
+  });
+
   it("says so when no candidate has been named yet", () => {
     const state = payload();
     state.election.candidates = [];
