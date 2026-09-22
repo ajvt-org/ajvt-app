@@ -47,6 +47,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/memberPaymentEditServer.ts",
   "src/lib/memberProfileServer.ts",
   "src/lib/memberRenewServer.ts",
+  "src/lib/memberStanding.ts",
   "src/lib/membersServer.ts",
   "src/lib/memberRegisterServer.ts",
   "src/lib/memberUpdateServer.ts",
