@@ -12,4 +12,10 @@ export const elections = {
   candidateNameRequired: "اسم المترشح مطلوب",
   candidatesFrozen: "التصويت انطلق، لا يمكن تعديل قائمة المترشحين",
   candidateHasBallots: "هناك أصوات لهذا المترشح، لا يمكن حذفه",
+  membersOnly: "التصويت للمنتسبين الذين دفعوا رسوم الانتساب فقط",
+  notOpenYet: "لم يبدأ التصويت بعد",
+  alreadyClosed: "انتهى التصويت",
+  alreadyVoted: "لقد صوّتّ في هذا الانتخاب",
+  blankNotAllowed: "الورقة البيضاء غير مسموح بها في هذا الانتخاب",
+  unknownCandidate: "المترشح ليس من مترشحي هذا الانتخاب",
 } as const;

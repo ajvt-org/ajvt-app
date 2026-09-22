@@ -1,7 +1,8 @@
 import { prisma } from "./prisma";
-import { NotFoundError } from "./errors";
+import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { elections as messages } from "./messages";
-import { orderForReader, stillWorthShowing } from "./election";
+import { electionState, orderForReader, stillWorthShowing } from "./election";
+import { isUniqueViolation } from "./prismaError";
 
 const CANDIDATE_SELECT = {
   id: true,
@@ -66,4 +67,29 @@ export async function myBallot(userId: string, electionId: string) {
     where: { electionId_userId: { electionId, userId } },
     select: { candidateId: true },
   });
+}
+
+export async function castBallot(electionId: string, userId: string, candidateId: string | null) {
+  const election = await prisma.election.findFirst({
+    where: { id: electionId, hidden: false },
+    select: { ...ELECTION_SELECT, candidates: { select: { id: true } } },
+  });
+  if (!election) throw new NotFoundError(messages.notFound);
+
+  const state = electionState(election);
+  if (state === "upcoming") throw new ConflictError(messages.notOpenYet);
+  if (state === "ended") throw new ConflictError(messages.alreadyClosed);
+
+  if (candidateId === null) {
+    if (!election.allowBlank) throw new ValidationError(messages.blankNotAllowed);
+  } else if (!election.candidates.some((candidate) => candidate.id === candidateId)) {
+    throw new ValidationError(messages.unknownCandidate);
+  }
+
+  try {
+    return await prisma.electionBallot.create({ data: { electionId, userId, candidateId } });
+  } catch (err) {
+    if (isUniqueViolation(err)) throw new ConflictError(messages.alreadyVoted);
+    throw err;
+  }
 }

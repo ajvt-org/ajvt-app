@@ -3,6 +3,7 @@ import { getUserSession } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { isPaidUpMember } from "@/lib/memberStanding";
 import { myBallot, visibleElection } from "@/lib/electionViewServer";
+import { candidateOrderFor } from "@/lib/electionBallot";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -20,7 +21,10 @@ export const GET = withRoute(
     ]);
 
     return NextResponse.json({
-      election,
+      election: {
+        ...election,
+        candidates: candidateOrderFor(election, election.candidates, userId),
+      },
       signedIn: userId !== null,
       canVote,
       myCandidateId: ballot ? ballot.candidateId : null,
