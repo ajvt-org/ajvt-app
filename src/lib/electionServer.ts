@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { elections as messages } from "./messages";
 import { electionState, validElectionMinutes } from "./election";
+import { isForeignKeyViolation } from "./prismaError";
 
 export type ElectionInput = {
   title: string;
@@ -157,4 +158,75 @@ export async function deleteElection(id: string) {
 
   await prisma.election.delete({ where: { id } });
   return election;
+}
+
+function cleanName(value: unknown): string {
+  const fullName = typeof value === "string" ? value.trim() : "";
+  if (!fullName) throw new ValidationError(messages.candidateNameRequired);
+  return fullName;
+}
+
+async function editableElection(id: string, now: Date) {
+  const election = await requireElection(id);
+  if (hasStarted(election, now)) throw new ConflictError(messages.candidatesFrozen);
+  return election;
+}
+
+export async function addCandidate(
+  electionId: string,
+  input: { fullName: string; photo?: string | null },
+  now = new Date(),
+) {
+  const election = await editableElection(electionId, now);
+  const last = await prisma.electionCandidate.findFirst({
+    where: { electionId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+
+  return prisma.electionCandidate.create({
+    data: {
+      electionId: election.id,
+      fullName: cleanName(input.fullName),
+      photo: input.photo ?? null,
+      order: (last?.order ?? -1) + 1,
+    },
+  });
+}
+
+async function requireCandidate(electionId: string, candidateId: string) {
+  const candidate = await prisma.electionCandidate.findFirst({
+    where: { id: candidateId, electionId },
+  });
+  if (!candidate) throw new NotFoundError(messages.candidateNotFound);
+  return candidate;
+}
+
+export async function updateCandidate(
+  electionId: string,
+  candidateId: string,
+  input: { fullName?: string; photo?: string | null },
+  now = new Date(),
+) {
+  await editableElection(electionId, now);
+  await requireCandidate(electionId, candidateId);
+
+  const data: { fullName?: string; photo?: string | null } = {};
+  if (input.fullName !== undefined) data.fullName = cleanName(input.fullName);
+  if (input.photo !== undefined) data.photo = input.photo;
+
+  return prisma.electionCandidate.update({ where: { id: candidateId }, data });
+}
+
+export async function deleteCandidate(electionId: string, candidateId: string, now = new Date()) {
+  await editableElection(electionId, now);
+  const candidate = await requireCandidate(electionId, candidateId);
+
+  try {
+    await prisma.electionCandidate.delete({ where: { id: candidateId } });
+  } catch (err) {
+    if (isForeignKeyViolation(err)) throw new ConflictError(messages.candidateHasBallots);
+    throw err;
+  }
+  return candidate;
 }

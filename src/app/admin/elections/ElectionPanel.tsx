@@ -6,6 +6,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import IconLabel from "@/components/IconLabel";
 import { electionState } from "@/lib/election";
 import { electionAdmin as texts } from "@/lib/texts";
+import CandidatesPanel from "./CandidatesPanel";
 import ElectionFields from "./ElectionFields";
 import { EMPTY_ELECTION, draftOf, type ElectionDraft, type ElectionRow } from "./electionTypes";
 
@@ -116,6 +117,15 @@ export default function ElectionPanel({
           </button>
         )}
       </div>
+
+      {election && (
+        <CandidatesPanel
+          electionId={election.id}
+          candidates={election.candidates}
+          frozen={frozen}
+          onChanged={onChanged}
+        />
+      )}
 
       {confirming && election && (
         <ConfirmDialog

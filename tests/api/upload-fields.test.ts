@@ -13,6 +13,7 @@ import { GET as ACTIVITY_FILE } from "@/app/api/files/activity/[filename]/route"
 import { GET as DONATION_FILE } from "@/app/api/files/donation/[filename]/route";
 import { GET as MEMBER_FILE } from "@/app/api/files/member/[filename]/route";
 import { GET as TEAM_FILE } from "@/app/api/files/team/[filename]/route";
+import { GET as CANDIDATE_FILE } from "@/app/api/files/candidate/[filename]/route";
 
 async function memberWith(over: Record<string, unknown>) {
   const user = await createUser(`2${String(Date.now()).slice(-7)}`);
@@ -43,6 +44,7 @@ describe("the upload field registry", () => {
       "expenseProof.filename",
       "activity.photo",
       "team.logo",
+      "electionCandidate.photo",
       "payment.donorPhoto",
     ]);
   });
@@ -125,6 +127,7 @@ const ROUTE_HANDLERS: Record<PublicFileRoute, typeof DONATION_FILE> = {
   "/api/files/donation": DONATION_FILE,
   "/api/files/member": MEMBER_FILE,
   "/api/files/team": TEAM_FILE,
+  "/api/files/candidate": CANDIDATE_FILE,
 };
 
 const ROWS: Record<string, (filename: string) => Promise<unknown>> = {
@@ -133,6 +136,14 @@ const ROWS: Record<string, (filename: string) => Promise<unknown>> = {
   "team.logo": async (logo) => {
     const activity = await prisma.activity.create({ data: { title: "بطولة", description: "وصف" } });
     return prisma.team.create({ data: { activityId: activity.id, name: "فريق", logo } });
+  },
+  "electionCandidate.photo": async (photo) => {
+    const election = await prisma.election.create({
+      data: { title: "انتخاب", startsAt: new Date(), durationMinutes: 60 },
+    });
+    return prisma.electionCandidate.create({
+      data: { electionId: election.id, fullName: "مترشح", photo },
+    });
   },
   "payment.donorPhoto": (donorPhoto) =>
     prisma.payment.create({

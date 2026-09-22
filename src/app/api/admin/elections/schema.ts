@@ -25,3 +25,16 @@ export const electionUpdateSchema = z.object({
   shuffleCandidates: flag.optional(),
   showResults: flag.optional(),
 });
+
+const fullName = z.string(elections.candidateNameRequired);
+const photo = z.string(common.invalidBody).nullable();
+
+export const candidateCreateSchema = z.object({
+  fullName,
+  photo: photo.optional().default(null),
+});
+
+export const candidateUpdateSchema = z.object({
+  fullName: fullName.optional(),
+  photo: photo.optional(),
+});

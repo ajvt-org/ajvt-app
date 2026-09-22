@@ -46,6 +46,7 @@ export {
   CUSTOM_ELECTION_DURATION,
   durationLabel,
   electionAdmin,
+  electionCandidates,
   electionDurations,
   electionStateLabels,
   isPresetDuration,
