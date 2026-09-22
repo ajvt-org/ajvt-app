@@ -88,6 +88,14 @@ async function seed(): Promise<Fixture> {
 
   const method = await prisma.paymentMethod.findFirstOrThrow();
 
+  const election = await prisma.election.create({
+    data: {
+      title: "انتخاب اللجنة",
+      startsAt: new Date(Date.now() + 3600_000),
+      durationMinutes: 60,
+    },
+  });
+
   const tournament = await prisma.activity.create({
     data: {
       title: "بطولة الشطرنج",
@@ -116,6 +124,7 @@ async function seed(): Promise<Fixture> {
     competitionId: competition.id,
     attemptId: attempt.id,
     matchId: match.id,
+    electionId: election.id,
     datasets: [...DATASETS],
   };
 }

@@ -11,13 +11,13 @@ import PullToRefresh from "@/components/PullToRefresh";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://ajvt-app.onrender.com"),
-  title: "رابطة شباب التاكلالت",
-  description: "منصة إدارة عضوية جمعية AJVT - التسجيل وبطاقات الأعضاء الرقمية",
-  keywords: "AJVT, جمعية, عضوية, بطاقة عضو",
+  title: association.name,
+  description: association.description,
+  keywords: association.keywords,
   manifest: "/manifest.json",
   openGraph: {
-    title: "رابطة شباب التاكلالت",
-    description: "منصة إدارة عضوية جمعية AJVT - التسجيل وبطاقات الأعضاء الرقمية",
+    title: association.name,
+    description: association.description,
     images: [
       { url: OG_CARD.url, width: OG_CARD.width, height: OG_CARD.height, alt: association.logoAlt },
     ],

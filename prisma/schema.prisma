@@ -66,6 +66,7 @@ model User {
   mvpVotes                MvpVote[]
   quizAttempts            QuizAttempt[]
   quizParticipations      QuizParticipant[]
+  electionBallots         ElectionBallot[]
   currentStreak           Int                      @default(0) // consecutive days of app activity ("flame")
   longestStreak           Int                      @default(0)
   lastActiveDate          DateTime? // calendar day (UTC) of the last streak-qualifying visit
@@ -1113,4 +1114,45 @@ model ImportBatch {
   createdAt DateTime @default(now())
 
   @@index([fileHash])
+}
+
+model Election {
+  id                String              @id @default(cuid())
+  title             String
+  hidden            Boolean             @default(true)
+  startsAt          DateTime
+  durationMinutes   Int
+  allowBlank        Boolean             @default(false)
+  shuffleCandidates Boolean             @default(false)
+  showResults       Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  candidates        ElectionCandidate[]
+  ballots           ElectionBallot[]
+}
+
+model ElectionCandidate {
+  id         String           @id @default(cuid())
+  electionId String
+  election   Election         @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  fullName   String
+  photo      String?
+  order      Int              @default(0)
+  ballots    ElectionBallot[]
+
+  @@index([electionId])
+}
+
+model ElectionBallot {
+  id          String             @id @default(cuid())
+  electionId  String
+  election    Election           @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidateId String?
+  candidate   ElectionCandidate? @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  castAt      DateTime           @default(now())
+
+  @@unique([electionId, userId])
+  @@index([candidateId])
 }

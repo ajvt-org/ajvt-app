@@ -12,6 +12,8 @@ export const MONEY_AREAS = {
   activityReport: "/admin/finance-activities",
 } as const;
 
+export const ELECTIONS_AREA = "/admin/elections";
+
 const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
 
 const SHARED_MONEY = [

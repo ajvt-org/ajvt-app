@@ -16,6 +16,14 @@ export async function teamLogoIsInUse(logo: string): Promise<boolean> {
   return team !== null;
 }
 
+export async function candidatePhotoIsInUse(photo: string): Promise<boolean> {
+  const candidate = await prisma.electionCandidate.findFirst({
+    where: { photo },
+    select: { id: true },
+  });
+  return candidate !== null;
+}
+
 export async function donorPhotoIsPublic(donorPhoto: string): Promise<boolean> {
   const payment = await prisma.payment.findFirst({
     where: { donorPhoto },

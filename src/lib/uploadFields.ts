@@ -10,6 +10,7 @@ export const PUBLIC_FILE_ROUTES = [
   "/api/files/donation",
   "/api/files/member",
   "/api/files/team",
+  "/api/files/candidate",
 ] as const;
 
 export type PublicFileRoute = (typeof PUBLIC_FILE_ROUTES)[number];
@@ -135,6 +136,15 @@ export const UPLOAD_FIELDS: UploadField[] = [
     holds: (filename) => prisma.team.count({ where: { logo: filename } }),
     rename: (from, to) => prisma.team.updateMany({ where: { logo: from }, data: { logo: to } }),
     serve: { via: "public-route", route: "/api/files/team" },
+  },
+  {
+    id: "electionCandidate.photo",
+    names: async () =>
+      (await prisma.electionCandidate.findMany({ select: { photo: true } })).map((r) => r.photo),
+    holds: (filename) => prisma.electionCandidate.count({ where: { photo: filename } }),
+    rename: (from, to) =>
+      prisma.electionCandidate.updateMany({ where: { photo: from }, data: { photo: to } }),
+    serve: { via: "public-route", route: "/api/files/candidate" },
   },
   {
     id: "payment.donorPhoto",

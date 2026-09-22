@@ -182,6 +182,13 @@ export const SECOND: CountedNoun = {
   many: "ثانيةً",
 };
 
+export const MINUTE: CountedNoun = {
+  one: "دقيقة",
+  two: "دقيقتان",
+  few: "دقائق",
+  many: "دقيقةً",
+};
+
 export const HOUR: CountedNoun = {
   one: "ساعة",
   two: "ساعتان",

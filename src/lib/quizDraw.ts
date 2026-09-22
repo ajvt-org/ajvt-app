@@ -1,5 +1,5 @@
 import { DIFFICULTIES, difficultyOf, type Difficulty } from "./quizDifficulty";
-import { seededShuffle } from "./quizRound";
+import { seededShuffle } from "./seededShuffle";
 import { counted } from "./arabicCount";
 import { QUESTION, ROUND } from "./messages";
 

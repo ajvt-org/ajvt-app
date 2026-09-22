@@ -11,7 +11,8 @@ import {
   NOT_STARTED,
 } from "@/lib/quizAttemptServer";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
-import { drawQuestions, seededShuffle } from "@/lib/quizRound";
+import { drawQuestions } from "@/lib/quizRound";
+import { seededShuffle } from "@/lib/seededShuffle";
 import type { HttpError } from "@/lib/errors";
 
 async function refusal(run: () => Promise<unknown>): Promise<string> {

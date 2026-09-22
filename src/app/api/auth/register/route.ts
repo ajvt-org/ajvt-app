@@ -9,7 +9,7 @@ import { registerSchema } from "./schema";
 import { registerMember } from "@/lib/memberRegisterServer";
 
 const WINDOW_MS = 60 * 60 * 1000;
-const MAX_ATTEMPTS = 10;
+const MAX_ATTEMPTS = Number(process.env.REGISTER_MAX_PER_HOUR) || 10;
 
 export const POST = withRoute("POST /api/auth/register", async (req: NextRequest) => {
   const key = `register:${getClientIp(req)}`;
