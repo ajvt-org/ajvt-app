@@ -42,3 +42,25 @@ export function leader(tally: ElectionTally): string | null {
   const leaders = named.filter((row) => row.votes === best);
   return leaders.length === 1 ? leaders[0].candidateId : null;
 }
+
+export const RECENT_RESULT_DAYS = 30;
+
+const DAY = 86_400_000;
+
+export function stillWorthShowing(election: ElectionWindow, now = new Date()): boolean {
+  if (electionState(election, now) !== "ended") return true;
+  return now.getTime() - endsAt(election).getTime() < RECENT_RESULT_DAYS * DAY;
+}
+
+const READING_ORDER: Record<ElectionState, number> = { open: 0, upcoming: 1, ended: 2 };
+
+export function orderForReader<T extends ElectionWindow>(elections: T[], now = new Date()): T[] {
+  return [...elections].sort((a, b) => {
+    const left = electionState(a, now);
+    const right = electionState(b, now);
+    if (left !== right) return READING_ORDER[left] - READING_ORDER[right];
+    if (left === "open") return msUntilEnd(a, now) - msUntilEnd(b, now);
+    if (left === "upcoming") return msUntilStart(a, now) - msUntilStart(b, now);
+    return endsAt(b).getTime() - endsAt(a).getTime();
+  });
+}

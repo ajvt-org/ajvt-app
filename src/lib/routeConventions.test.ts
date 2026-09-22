@@ -31,6 +31,8 @@ const NO_GUARD: Record<string, string> = {
   "auth/login/route.ts POST": "signing in is what issues the member token",
   "auth/logout/route.ts POST": "clearing the cookie needs no session to be valid",
   "auth/register/route.ts POST": "signing up happens before there is an account",
+  "elections/route.ts GET": "the published elections, which anybody may read",
+  "elections/[id]/route.ts GET": "a published election and its candidates, which anybody may read",
   "donations/route.ts POST":
     "a visitor can give without an account, and it is rate limited by address",
   "files/[filename]/route.ts GET":
