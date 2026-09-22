@@ -353,6 +353,7 @@ const KEPT_CLEAN = [
   "src/app/admin/dashboard/FilterChips.tsx",
   "src/app/admin/dashboard/AgeGroupTotal.tsx",
   "src/app/admin/quiz/QuestionFormDialog.tsx",
+  "src/app/layout.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
