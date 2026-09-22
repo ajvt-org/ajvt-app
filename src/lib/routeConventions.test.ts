@@ -13,6 +13,7 @@ const NOT_YET_WRAPPED = [
   "files/donation/[filename]/route.ts GET",
   "files/member/[filename]/route.ts GET",
   "files/team/[filename]/route.ts GET",
+  "files/candidate/[filename]/route.ts GET",
 ];
 
 const GUARD_SOURCES = [
@@ -38,6 +39,8 @@ const NO_GUARD: Record<string, string> = {
   "files/donation/[filename]/route.ts GET": "a giver photo, linked from the public board",
   "files/member/[filename]/route.ts GET": "a member photo, linked from public screens",
   "files/team/[filename]/route.ts GET": "a team logo, linked from public screens",
+  "files/candidate/[filename]/route.ts GET":
+    "a candidate photograph, read by anybody looking at a published result",
   "health/route.ts GET": "the platform reads it before the app has finished booting",
   "leaderboard/route.ts GET": "the leaderboard every visitor sees",
   "payment-methods/route.ts GET": "the ways to pay, shown before anyone signs in",

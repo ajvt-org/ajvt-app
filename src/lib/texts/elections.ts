@@ -29,6 +29,21 @@ export const electionAdmin = {
   no: "لا",
 } as const;
 
+export const electionCandidates = {
+  heading: "المترشحون",
+  add: "إضافة مترشح",
+  empty: "لا يوجد مترشحون بعد",
+  fullName: "الاسم الكامل",
+  photo: "الصورة",
+  save: "حفظ",
+  cancel: "إلغاء",
+  editOne: (name: string) => `تعديل ${name}`,
+  removeOne: (name: string) => `حذف ${name}`,
+  confirmRemove: "حذف المترشح",
+  confirmRemoveBody: (name: string) => `سيحذف ${name} من قائمة المترشحين`,
+  frozen: "انطلق التصويت، قائمة المترشحين مغلقة",
+} as const;
+
 export const CUSTOM_ELECTION_DURATION = -1;
 
 export const electionDurations = [

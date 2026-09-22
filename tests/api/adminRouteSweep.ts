@@ -33,6 +33,7 @@ function paramsFor(path: string, fixture: Fixture): Record<string, string> | nul
   if (path.startsWith("quiz/competitions/")) return { id: fixture.competitionId };
   if (path.startsWith("quiz/attempts/")) return { id: fixture.attemptId };
   if (path.startsWith("matches/")) return { matchId: fixture.matchId };
+  if (path.startsWith("elections/") && path.includes("[candidateId]")) return null;
   if (path.startsWith("elections/")) return { id: fixture.electionId };
   return null;
 }

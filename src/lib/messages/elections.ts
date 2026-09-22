@@ -8,4 +8,8 @@ export const elections = {
   cannotHideAfterStart: "التصويت انطلق، لا يمكن إخفاء الانتخاب",
   cannotDeleteVisible: "الانتخاب منشور، لا يمكن حذفه",
   cannotDeleteVoted: "هناك أصوات مسجلة، لا يمكن حذف الانتخاب",
+  candidateNotFound: "المترشح غير موجود",
+  candidateNameRequired: "اسم المترشح مطلوب",
+  candidatesFrozen: "التصويت انطلق، لا يمكن تعديل قائمة المترشحين",
+  candidateHasBallots: "هناك أصوات لهذا المترشح، لا يمكن حذفه",
 } as const;
