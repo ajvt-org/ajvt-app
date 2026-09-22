@@ -3,6 +3,7 @@ export interface ElectionCandidateRow {
   fullName: string;
   photo: string | null;
   order: number;
+  _count: { ballots: number };
 }
 
 export interface ElectionRow {

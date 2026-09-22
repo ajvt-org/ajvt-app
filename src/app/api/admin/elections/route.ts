@@ -5,12 +5,15 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { createElection, listElections } from "@/lib/electionServer";
+import { paidUpMemberCount } from "@/lib/memberStanding";
 import { electionCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/elections", async () => {
   await requireArea(ELECTIONS_AREA);
 
-  return NextResponse.json({ elections: await listElections() });
+  const [elections, electorate] = await Promise.all([listElections(), paidUpMemberCount()]);
+
+  return NextResponse.json({ elections, electorate });
 });
 
 export const POST = withRoute("POST /api/admin/elections", async (req: NextRequest) => {

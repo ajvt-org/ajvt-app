@@ -27,6 +27,7 @@ const KEPT_CLEAN = [
   "src/app/api/elections/[id]/vote/route.ts",
   "src/app/(member)/elections/electionTypes.ts",
   "src/components/Countdown.tsx",
+  "src/components/ElectionResult.tsx",
   "src/components/ActivitiesSection.tsx",
   "src/app/api/elections/route.ts",
   "src/app/api/elections/[id]/route.ts",

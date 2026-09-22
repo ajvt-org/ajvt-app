@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { elections as messages } from "./messages";
 import { electionState, orderForReader, stillWorthShowing } from "./election";
+import { paidUpMemberCount } from "./memberStanding";
 import { isUniqueViolation } from "./prismaError";
 
 const CANDIDATE_SELECT = {
@@ -92,4 +93,37 @@ export async function castBallot(electionId: string, userId: string, candidateId
     if (isUniqueViolation(err)) throw new ConflictError(messages.alreadyVoted);
     throw err;
   }
+}
+
+export async function publishedResult(election: {
+  id: string;
+  startsAt: Date;
+  durationMinutes: number;
+  showResults: boolean;
+}) {
+  if (!election.showResults) return null;
+  if (electionState(election) !== "ended") return null;
+
+  const [rows, electorate, cast, blank] = await Promise.all([
+    prisma.electionCandidate.findMany({
+      where: { electionId: election.id },
+      orderBy: { order: "asc" },
+      select: { id: true, fullName: true, photo: true, _count: { select: { ballots: true } } },
+    }),
+    paidUpMemberCount(),
+    prisma.electionBallot.count({ where: { electionId: election.id } }),
+    prisma.electionBallot.count({ where: { electionId: election.id, candidateId: null } }),
+  ]);
+
+  return {
+    electorate,
+    cast,
+    blank,
+    rows: rows.map((row) => ({
+      candidateId: row.id,
+      fullName: row.fullName,
+      photo: row.photo,
+      votes: row._count.ballots,
+    })),
+  };
 }

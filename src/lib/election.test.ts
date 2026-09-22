@@ -10,6 +10,8 @@ import {
   ELECTION_MINUTES_MAX,
   stillWorthShowing,
   orderForReader,
+  percentOf,
+  rankedTally,
 } from "./election";
 
 const at = (iso: string) => new Date(iso);
@@ -208,5 +210,58 @@ describe("orderForReader", () => {
     orderForReader(rows, now);
 
     expect(named(rows)).toEqual(["ended", "open"]);
+  });
+});
+
+describe("percentOf", () => {
+  it("reads a share as a whole number", () => {
+    expect(percentOf(1, 4)).toBe(25);
+    expect(percentOf(2, 3)).toBe(67);
+  });
+
+  it("is nothing when nothing has been cast", () => {
+    expect(percentOf(0, 0)).toBe(0);
+    expect(percentOf(5, 0)).toBe(0);
+  });
+
+  it("is everything when every ballot went one way", () => {
+    expect(percentOf(7, 7)).toBe(100);
+  });
+});
+
+describe("rankedTally", () => {
+  it("reads the candidates by count, the biggest first", () => {
+    const rows = [
+      { candidateId: "a", votes: 2 },
+      { candidateId: "b", votes: 9 },
+      { candidateId: "c", votes: 5 },
+    ];
+
+    expect(rankedTally(rows).map((row) => row.candidateId)).toEqual(["b", "c", "a"]);
+  });
+
+  it("puts the blank last however many blanks were cast", () => {
+    const rows = [
+      { candidateId: null, votes: 40 },
+      { candidateId: "a", votes: 2 },
+      { candidateId: "b", votes: 1 },
+    ];
+
+    expect(rankedTally(rows).map((row) => row.candidateId)).toEqual(["a", "b", null]);
+  });
+
+  it("leaves the rows it was given alone", () => {
+    const rows = [
+      { candidateId: "a", votes: 1 },
+      { candidateId: "b", votes: 9 },
+    ];
+
+    rankedTally(rows);
+
+    expect(rows.map((row) => row.candidateId)).toEqual(["a", "b"]);
+  });
+
+  it("answers an empty tally with an empty one", () => {
+    expect(rankedTally([])).toEqual([]);
   });
 });

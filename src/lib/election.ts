@@ -64,3 +64,16 @@ export function orderForReader<T extends ElectionWindow>(elections: T[], now = n
     return endsAt(b).getTime() - endsAt(a).getTime();
   });
 }
+
+export function percentOf(part: number, whole: number): number {
+  if (whole <= 0) return 0;
+  return Math.round((part / whole) * 100);
+}
+
+export function rankedTally<T extends { candidateId: string | null; votes: number }>(
+  rows: T[],
+): T[] {
+  const named = rows.filter((row) => row.candidateId !== null);
+  const blank = rows.filter((row) => row.candidateId === null);
+  return [...named.sort((a, b) => b.votes - a.votes), ...blank];
+}

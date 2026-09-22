@@ -27,6 +27,7 @@ function payload(over: Partial<ElectionDetailPayload> = {}, when = DAY): Electio
     canVote: false,
     myCandidateId: null,
     voted: false,
+    result: null,
     ...over,
   };
 }
@@ -141,5 +142,52 @@ describe("one election on the member screen", () => {
     show(state);
 
     expect(screen.getByText("لم تعلن أسماء المترشحين بعد")).toBeTruthy();
+  });
+});
+
+describe("the result on the member screen", () => {
+  const tally = {
+    electorate: 20,
+    cast: 12,
+    blank: 2,
+    rows: [
+      { candidateId: "c1", fullName: LONG, photo: null, votes: 7 },
+      { candidateId: "c2", fullName: "فاطمة بنت سيدي", photo: null, votes: 3 },
+    ],
+  };
+
+  it("shows no count at all while the window is open", () => {
+    show(payload({ signedIn: true, canVote: true }, -HOUR));
+
+    expect(screen.queryByText("نسبة المشاركة")).toBeNull();
+  });
+
+  it("says the vote is over and stops when the committee holds the result back", () => {
+    show(payload({ result: null }, -20 * HOUR));
+
+    expect(screen.getByText("انتهى التصويت")).toBeTruthy();
+    expect(screen.getByText("لم تعلن النتيجة بعد")).toBeTruthy();
+    expect(screen.queryByText("نسبة المشاركة")).toBeNull();
+  });
+
+  it("draws the tally once the committee has published it", () => {
+    show(payload({ result: tally }, -20 * HOUR));
+
+    expect(screen.getByText("نسبة المشاركة")).toBeTruthy();
+    expect(screen.getByText("60%")).toBeTruthy();
+    expect(screen.getByText("7 (58%)")).toBeTruthy();
+  });
+
+  it("stops repeating the candidate list under a published result", () => {
+    show(payload({ result: tally }, -20 * HOUR));
+
+    expect(screen.queryByText("المترشحون")).toBeNull();
+  });
+
+  it("still names who stood when the result is held back", () => {
+    show(payload({ result: null }, -20 * HOUR));
+
+    expect(screen.getByText("المترشحون")).toBeTruthy();
+    expect(screen.getByText(LONG)).toBeTruthy();
   });
 });

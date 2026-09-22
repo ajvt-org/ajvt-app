@@ -49,6 +49,7 @@ export {
   electionCandidates,
   electionDurations,
   electionMember,
+  electionResult,
   electionStateLabels,
   isPresetDuration,
 } from "./elections";

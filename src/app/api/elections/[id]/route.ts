@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserSession } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { isPaidUpMember } from "@/lib/memberStanding";
-import { myBallot, visibleElection } from "@/lib/electionViewServer";
+import { myBallot, publishedResult, visibleElection } from "@/lib/electionViewServer";
 import { candidateOrderFor } from "@/lib/electionBallot";
 
 type Params = { params: Promise<{ id: string }> };
@@ -15,9 +15,10 @@ export const GET = withRoute(
     const election = await visibleElection(id);
     const userId = (session?.userId as string | undefined) ?? null;
 
-    const [ballot, canVote] = await Promise.all([
+    const [ballot, canVote, result] = await Promise.all([
       userId ? myBallot(userId, id) : Promise.resolve(null),
       userId ? isPaidUpMember(userId) : Promise.resolve(false),
+      publishedResult(election),
     ]);
 
     return NextResponse.json({
@@ -29,6 +30,7 @@ export const GET = withRoute(
       canVote,
       myCandidateId: ballot ? ballot.candidateId : null,
       voted: ballot !== null,
+      result,
     });
   },
 );
