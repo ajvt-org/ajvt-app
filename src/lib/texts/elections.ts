@@ -44,6 +44,28 @@ export const electionCandidates = {
   frozen: "انطلق التصويت، قائمة المترشحين مغلقة",
 } as const;
 
+export const electionMember = {
+  cardTitle: "الانتخابات",
+  cardSub: "اطلع على الانتخابات وصوّت",
+  cardAction: "افتح",
+  listTitle: "الانتخابات",
+  empty: "لا توجد انتخابات حالياً",
+  startsIn: "يبدأ التصويت بعد",
+  startsInLabel: "الوقت المتبقي لبداية التصويت",
+  endsIn: "ينتهي التصويت بعد",
+  endsInLabel: "الوقت المتبقي لانتهاء التصويت",
+  windowLabel: "ما تبقى من مدة التصويت",
+  startsOn: "يبدأ",
+  endedOn: "انتهى التصويت في",
+  voted: "صوّتّ",
+  candidates: "المترشحون",
+  noCandidates: "لم تعلن أسماء المترشحين بعد",
+  membersOnly: "التصويت للمنتسبين فقط",
+  signInToVote: "سجّل الدخول للتصويت",
+  signIn: "تسجيل الدخول",
+  notFound: "الانتخاب غير موجود",
+} as const;
+
 export const CUSTOM_ELECTION_DURATION = -1;
 
 export const electionDurations = [

@@ -4,19 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import NumericRanges from "@/components/NumericRanges";
 import { counted } from "@/lib/arabicCount";
 import { DAY } from "@/lib/messages";
+import { countdown as texts } from "@/lib/texts";
 
-export default function NextRoundCountdown({
+export default function Countdown({
   opensAt,
   onReached,
   color = "var(--mint-700)",
   compact = false,
-  ariaLabel = "الوقت المتبقي للجولة القادمة",
+  ariaLabel,
 }: {
   opensAt: string;
   onReached?: () => void;
   color?: string;
   compact?: boolean;
-  ariaLabel?: string;
+  ariaLabel: string;
 }) {
   const [leftMs, setLeftMs] = useState(() => new Date(opensAt).getTime() - Date.now());
   const fired = useRef(false);
@@ -53,7 +54,9 @@ export default function NextRoundCountdown({
       }}
       aria-label={ariaLabel}
     >
-      <NumericRanges>{days > 0 ? `${counted(days, DAY)} و ${clock}` : clock}</NumericRanges>
+      <NumericRanges>
+        {days > 0 ? texts.daysAndClock(counted(days, DAY), clock) : clock}
+      </NumericRanges>
     </span>
   );
 }

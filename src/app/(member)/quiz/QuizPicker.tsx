@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import HeaderIdentity from "@/components/HeaderIdentity";
 import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
-import NextRoundCountdown from "./NextRoundCountdown";
+import Countdown from "@/components/Countdown";
 import type { CompetitionState, RunningCompetition } from "./types";
 import { landingActivities, quizBoard as texts, quizPicker } from "@/lib/texts";
 import { counted } from "@/lib/arabicCount";
@@ -99,7 +99,7 @@ function CompetitionCard({
           >
             <Icon name="clock" size={13} className="shrink-0" />
             {quizPicker.startsIn}
-            <NextRoundCountdown
+            <Countdown
               opensAt={competition.startsAt}
               onReached={onStarted}
               color="var(--copper-600)"

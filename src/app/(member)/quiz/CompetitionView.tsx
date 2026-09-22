@@ -13,7 +13,7 @@ import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 import RoundRecap from "./RoundRecap";
 import ScoreFormula from "./ScoreFormula";
-import NextRoundCountdown from "./NextRoundCountdown";
+import Countdown from "@/components/Countdown";
 import { blockLabel } from "@/lib/quizRanking";
 import { useNow } from "@/hooks/useNow";
 import { landingActivities, quizBoard as texts } from "@/lib/texts";
@@ -90,7 +90,7 @@ function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () =
     >
       <Icon name="clock" size={13} />
       {texts.roundClosesIn}
-      <NextRoundCountdown
+      <Countdown
         opensAt={closesAt}
         onReached={onReached}
         color={urgent ? "var(--copper-300)" : "#ffffff"}
@@ -297,10 +297,11 @@ export default function CompetitionView({
                 <Icon name="clock" size={16} />
                 {texts.nextRoundOf(upcoming.index + 1, standings.roundCount)}
               </span>
-              <NextRoundCountdown
+              <Countdown
                 opensAt={upcoming.opensAt}
                 onReached={onReloadStandings}
                 color="#ffffff"
+                ariaLabel={texts.nextRoundInLabel}
               />
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
                 {texts.opensOn} <bdi dir="ltr">{formatDateTime(upcoming.opensAt)}</bdi>
@@ -335,7 +336,7 @@ export default function CompetitionView({
                 >
                   <Icon name="clock" size={13} />
                   {texts.nextRoundIn}
-                  <NextRoundCountdown
+                  <Countdown
                     opensAt={standings.next.opensAt}
                     onReached={onReloadStandings}
                     color="#ffffff"

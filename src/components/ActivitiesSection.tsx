@@ -7,7 +7,7 @@ import Icon from "@/components/Icon";
 import ActivityRowBody from "@/components/ActivityRowBody";
 import { activityAccent } from "@/lib/activityAccent";
 import ActivityStandingChip from "./ActivityStandingChip";
-import { memberActivities as texts } from "@/lib/texts";
+import { electionMember as elections, memberActivities as texts } from "@/lib/texts";
 import { withFrom } from "@/lib/backLink";
 import type { Activity, EligibleMember } from "./activityTypes";
 
@@ -16,6 +16,45 @@ const HOME = "/home";
 interface ActivitiesSectionProps {
   eligibleMember: EligibleMember | null;
   quizAccess: boolean;
+}
+
+function ElectionCard() {
+  return (
+    <div
+      className="card overflow-hidden"
+      style={{
+        background: "linear-gradient(160deg, var(--mint-100), #fff 65%)",
+        border: "1.5px solid var(--mint-500)",
+      }}
+    >
+      <div className="p-4 flex items-center gap-3">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
+          style={{
+            background: "linear-gradient(160deg, var(--mint-500), var(--mint-700))",
+            color: "#fff",
+          }}
+        >
+          <Icon name="ballot" size={28} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
+            {elections.cardTitle}
+          </h3>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {elections.cardSub}
+          </p>
+        </div>
+        <a
+          href={withFrom("/elections", HOME)}
+          className="text-xs px-3 py-2 rounded-lg font-bold shrink-0"
+          style={{ background: "var(--mint-600)", color: "white" }}
+        >
+          <ArrowLabel>{elections.cardAction}</ArrowLabel>
+        </a>
+      </div>
+    </div>
+  );
 }
 
 function QuizCard({ quizAccess }: { quizAccess: boolean }) {
@@ -67,6 +106,7 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
 
 export default function ActivitiesSection({ eligibleMember, quizAccess }: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [hasElections, setHasElections] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,10 +119,18 @@ export default function ActivitiesSection({ eligibleMember, quizAccess }: Activi
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetch("/api/elections")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setHasElections((data?.elections ?? []).length > 0))
+      .catch(() => {});
+  }, []);
+
   if (loading) {
     return (
       <div className="space-y-3" id="activities">
-        <div className="pb-4 mb-1" style={{ borderBottom: "1px solid var(--mint-200)" }}>
+        <div className="pb-4 mb-1 space-y-3" style={{ borderBottom: "1px solid var(--mint-200)" }}>
+          {hasElections && <ElectionCard />}
           <QuizCard quizAccess={quizAccess} />
         </div>
         <div className="card p-4 animate-pulse space-y-3">
@@ -96,7 +144,8 @@ export default function ActivitiesSection({ eligibleMember, quizAccess }: Activi
 
   return (
     <div className="space-y-3 fade-up" id="activities">
-      <div className="pb-4 mb-1" style={{ borderBottom: "1px solid var(--mint-200)" }}>
+      <div className="pb-4 mb-1 space-y-3" style={{ borderBottom: "1px solid var(--mint-200)" }}>
+        {hasElections && <ElectionCard />}
         <QuizCard quizAccess={quizAccess} />
       </div>
 

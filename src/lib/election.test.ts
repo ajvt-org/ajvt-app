@@ -8,6 +8,8 @@ import {
   validElectionMinutes,
   ELECTION_MINUTES_MIN,
   ELECTION_MINUTES_MAX,
+  stillWorthShowing,
+  orderForReader,
 } from "./election";
 
 const at = (iso: string) => new Date(iso);
@@ -133,5 +135,78 @@ describe("leader", () => {
 
   it("names nobody on an empty tally", () => {
     expect(leader([])).toBeNull();
+  });
+});
+
+describe("stillWorthShowing", () => {
+  const ended = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 60 };
+
+  it("keeps an election that has not started", () => {
+    expect(stillWorthShowing(election, at("2026-09-30T00:00:00Z"))).toBe(true);
+  });
+
+  it("keeps an election still open", () => {
+    expect(stillWorthShowing(election, at("2026-10-01T09:00:00Z"))).toBe(true);
+  });
+
+  it("keeps a result the association only just read", () => {
+    expect(stillWorthShowing(ended, at("2026-10-20T09:00:00Z"))).toBe(true);
+  });
+
+  it("drops a result nobody is still reading", () => {
+    expect(stillWorthShowing(ended, at("2026-12-01T09:00:00Z"))).toBe(false);
+  });
+});
+
+describe("orderForReader", () => {
+  const now = at("2026-10-05T12:00:00Z");
+  const named = <T extends { id: string }>(rows: T[]) => rows.map((row) => row.id);
+
+  it("puts what is open first, by the soonest close", () => {
+    const rows = [
+      { id: "closes-late", startsAt: at("2026-10-05T08:00:00Z"), durationMinutes: 600 },
+      { id: "closes-soon", startsAt: at("2026-10-05T08:00:00Z"), durationMinutes: 300 },
+    ];
+
+    expect(named(orderForReader(rows, now))).toEqual(["closes-soon", "closes-late"]);
+  });
+
+  it("puts what is coming next, by the soonest start", () => {
+    const rows = [
+      { id: "later", startsAt: at("2026-10-20T08:00:00Z"), durationMinutes: 60 },
+      { id: "sooner", startsAt: at("2026-10-06T08:00:00Z"), durationMinutes: 60 },
+    ];
+
+    expect(named(orderForReader(rows, now))).toEqual(["sooner", "later"]);
+  });
+
+  it("puts what has ended last, the most recent first", () => {
+    const rows = [
+      { id: "older", startsAt: at("2026-09-01T08:00:00Z"), durationMinutes: 60 },
+      { id: "newer", startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 60 },
+    ];
+
+    expect(named(orderForReader(rows, now))).toEqual(["newer", "older"]);
+  });
+
+  it("reads open, then upcoming, then ended, whatever order it was given", () => {
+    const rows = [
+      { id: "ended", startsAt: at("2026-09-01T08:00:00Z"), durationMinutes: 60 },
+      { id: "upcoming", startsAt: at("2026-10-20T08:00:00Z"), durationMinutes: 60 },
+      { id: "open", startsAt: at("2026-10-05T08:00:00Z"), durationMinutes: 600 },
+    ];
+
+    expect(named(orderForReader(rows, now))).toEqual(["open", "upcoming", "ended"]);
+  });
+
+  it("leaves what it was given alone", () => {
+    const rows = [
+      { id: "ended", startsAt: at("2026-09-01T08:00:00Z"), durationMinutes: 60 },
+      { id: "open", startsAt: at("2026-10-05T08:00:00Z"), durationMinutes: 600 },
+    ];
+
+    orderForReader(rows, now);
+
+    expect(named(rows)).toEqual(["ended", "open"]);
   });
 });
