@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import CompetitionFields, { type Draft } from "./CompetitionFields";
-import { toLocalInput } from "./competitionTypes";
+import { toLocalInput } from "@/lib/localDateInput";
 import { formatDateTime } from "@/lib/clubTime";
 
 const draft: Draft = {

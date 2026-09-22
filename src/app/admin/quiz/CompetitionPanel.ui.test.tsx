@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CompetitionPanel from "./CompetitionPanel";
-import { toLocalInput } from "./competitionTypes";
+import { toLocalInput } from "@/lib/localDateInput";
 
 const get = vi.fn();
 const put = vi.fn();

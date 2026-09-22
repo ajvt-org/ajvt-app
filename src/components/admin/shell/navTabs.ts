@@ -1,6 +1,6 @@
 import type { IconName } from "@/components/Icon";
 import { adminTabs } from "@/lib/texts";
-import { MONEY_AREAS, canOpen, tabActive } from "@/lib/adminNav";
+import { ELECTIONS_AREA, MONEY_AREAS, canOpen, tabActive } from "@/lib/adminNav";
 
 export interface NavTab {
   href: string;
@@ -23,6 +23,7 @@ export const NAV_TABS: NavTab[] = [
   { href: "/admin/activities", label: adminTabs.activities, icon: "trophy" },
   { href: MONEY_AREAS.payments, label: adminTabs.money, icon: "card", tabs: MONEY_TABS },
   { href: "/admin/quiz", label: adminTabs.quiz, icon: "quiz" },
+  { href: ELECTIONS_AREA, label: adminTabs.elections, icon: "ballot" },
   { href: "/admin/stats", label: adminTabs.stats, icon: "chart" },
   { href: "/admin/settings", label: adminTabs.settings, icon: "gear" },
   { href: "/admin/tools", label: adminTabs.tools, icon: "shield" },

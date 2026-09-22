@@ -42,7 +42,14 @@ export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { confirmDelete, confirmDialog, deleteMember } from "./deleteRecords";
 export { bulkReview, reviewQueue } from "./reviewQueue";
-export { electionAdmin, electionDurations, electionStateLabels } from "./elections";
+export {
+  CUSTOM_ELECTION_DURATION,
+  durationLabel,
+  electionAdmin,
+  electionDurations,
+  electionStateLabels,
+  isPresetDuration,
+} from "./elections";
 export { financeTags } from "./financeTags";
 export { giftSourceLabel, giftSourceLabels } from "./giftSource";
 export { memberDecision } from "./memberDecision";
