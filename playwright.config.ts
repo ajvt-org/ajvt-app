@@ -31,6 +31,7 @@ export default defineConfig({
     env: {
       DATABASE_URL,
       JWT_SECRET: process.env.JWT_SECRET ?? "e2e-secret-not-a-real-one",
+      REGISTER_MAX_PER_HOUR: "200",
       NODE_ENV: PRODUCTION ? "production" : "development",
     },
   },
