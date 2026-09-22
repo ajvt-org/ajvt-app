@@ -76,6 +76,18 @@ export const electionMember = {
   recordedFor: (name: string) => `صوتك سُجّل لـ ${name}`,
   recordedBlank: "صوتك سُجّل كورقة بيضاء",
   selected: (name: string) => `اخترت ${name}`,
+  ended: "انتهى التصويت",
+  resultHeld: "لم تعلن النتيجة بعد",
+} as const;
+
+export const electionResult = {
+  heading: "النتيجة",
+  turnout: "نسبة المشاركة",
+  cast: "الأصوات المسجلة",
+  electorate: "عدد الناخبين",
+  blank: "ورقة بيضاء",
+  leaderLabel: "المترشح الأول",
+  noBallots: "لم يسجل أي صوت",
 } as const;
 
 export const CUSTOM_ELECTION_DURATION = -1;
@@ -91,8 +103,8 @@ export const electionDurations = [
   { minutes: CUSTOM_ELECTION_DURATION, label: "مدة أخرى" },
 ] as const;
 
-export function durationLabel(minutes: number): string {
-  return electionDurations.find((one) => one.minutes === minutes)?.label ?? `${minutes}`;
+export function durationLabel(minutes: number, spelled: (minutes: number) => string): string {
+  return electionDurations.find((one) => one.minutes === minutes)?.label ?? spelled(minutes);
 }
 
 export function isPresetDuration(minutes: number): boolean {

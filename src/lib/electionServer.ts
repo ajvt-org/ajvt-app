@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { paidUpMemberCount } from "./memberStanding";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { elections as messages } from "./messages";
 import { electionState, validElectionMinutes } from "./election";
@@ -24,7 +25,10 @@ export type ElectionAction =
   | "DELETE_ELECTION";
 
 const LIST_INCLUDE = {
-  candidates: { orderBy: { order: "asc" as const } },
+  candidates: {
+    orderBy: { order: "asc" as const },
+    include: { _count: { select: { ballots: true } } },
+  },
   _count: { select: { ballots: true } },
 };
 
@@ -229,4 +233,24 @@ export async function deleteCandidate(electionId: string, candidateId: string, n
     throw err;
   }
   return candidate;
+}
+
+export async function electionTally(electionId: string) {
+  const election = await requireElection(electionId);
+  const [electorate, blank] = await Promise.all([
+    paidUpMemberCount(),
+    prisma.electionBallot.count({ where: { electionId, candidateId: null } }),
+  ]);
+
+  return {
+    electorate,
+    cast: election._count.ballots,
+    blank,
+    rows: election.candidates.map((candidate) => ({
+      candidateId: candidate.id,
+      fullName: candidate.fullName,
+      photo: candidate.photo,
+      votes: candidate._count.ballots,
+    })),
+  };
 }

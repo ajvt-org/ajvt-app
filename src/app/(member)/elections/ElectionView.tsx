@@ -9,6 +9,7 @@ import { electionState, endsAt } from "@/lib/election";
 import { electionMember as texts } from "@/lib/texts";
 import BallotPicker from "./BallotPicker";
 import CandidateList from "./CandidateList";
+import ElectionResult from "@/components/ElectionResult";
 import MyBallot from "./MyBallot";
 import ElectionClock from "./ElectionClock";
 import type { ElectionDetailPayload } from "./electionTypes";
@@ -24,7 +25,7 @@ export default function ElectionView({
   membershipHref: string;
   onReached: () => void;
 }) {
-  const { election, signedIn, canVote, voted, myCandidateId } = payload;
+  const { election, signedIn, canVote, voted, myCandidateId, result } = payload;
   const state = electionState(election);
   const voting = state === "open" && canVote && !voted;
   const mine = election.candidates.find((candidate) => candidate.id === myCandidateId) ?? null;
@@ -66,9 +67,23 @@ export default function ElectionView({
           </div>
         )}
 
-        {voted ? (
-          <MyBallot candidate={mine} />
-        ) : (
+        {state === "ended" &&
+          (result ? (
+            <ElectionResult result={result} allowBlank={election.allowBlank} />
+          ) : (
+            <div className="card p-4 text-center space-y-1">
+              <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                {texts.ended}
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {texts.resultHeld}
+              </p>
+            </div>
+          ))}
+
+        {voted && <MyBallot candidate={mine} />}
+
+        {!result && !voted && (
           <div className="space-y-2">
             <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
               {texts.candidates}

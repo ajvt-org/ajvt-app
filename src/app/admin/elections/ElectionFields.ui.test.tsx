@@ -77,6 +77,12 @@ describe("the election form once the vote has opened", () => {
     expect(screen.getByText("يوم")).toBeTruthy();
   });
 
+  it("spells a duration nobody named in minutes rather than a bare number", () => {
+    show(true, { durationMinutes: 95 });
+
+    expect(screen.getByText("95 دقيقةً")).toBeTruthy();
+  });
+
   it("reads the frozen toggles back as words", () => {
     show(true, { allowBlank: true, shuffleCandidates: false });
 

@@ -4,6 +4,8 @@ import NumberField from "@/components/NumberField";
 import Toggle from "@/components/Toggle";
 import { formatDateTime } from "@/lib/clubTime";
 import { toLocalInput, fromLocalInput } from "@/lib/localDateInput";
+import { counted } from "@/lib/arabicCount";
+import { MINUTE } from "@/lib/messages";
 import { endsAt, ELECTION_MINUTES_MIN, ELECTION_MINUTES_MAX } from "@/lib/election";
 import {
   CUSTOM_ELECTION_DURATION,
@@ -94,7 +96,10 @@ export default function ElectionFields({
       <>
         <Fact label={texts.title} value={draft.title} />
         <Moment label={texts.startsAt} at={draft.startsAt} />
-        <Fact label={texts.duration} value={durationLabel(draft.durationMinutes)} />
+        <Fact
+          label={texts.duration}
+          value={durationLabel(draft.durationMinutes, (minutes) => counted(minutes, MINUTE))}
+        />
         <Moment label={texts.closesAt} at={endsAt(draft)} />
         <Fact label={texts.allowBlank} value={said(draft.allowBlank)} />
         <Fact label={texts.shuffle} value={said(draft.shuffleCandidates)} />

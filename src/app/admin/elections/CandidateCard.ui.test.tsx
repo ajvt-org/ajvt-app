@@ -11,6 +11,7 @@ function show(over: Partial<ElectionCandidateRow> = {}, frozen = false) {
     fullName: LONG,
     photo: null,
     order: 0,
+    _count: { ballots: 0 },
     ...over,
   };
   return render(

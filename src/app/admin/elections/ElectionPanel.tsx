@@ -8,15 +8,18 @@ import { electionState } from "@/lib/election";
 import { electionAdmin as texts } from "@/lib/texts";
 import CandidatesPanel from "./CandidatesPanel";
 import ElectionFields from "./ElectionFields";
+import ElectionResult from "@/components/ElectionResult";
 import { EMPTY_ELECTION, draftOf, type ElectionDraft, type ElectionRow } from "./electionTypes";
 
 export default function ElectionPanel({
   election,
+  electorate,
   onSaved,
   onChanged,
   onDeleted,
 }: {
   election: ElectionRow | null;
+  electorate: number;
   onSaved: (id: string) => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -117,6 +120,25 @@ export default function ElectionPanel({
           </button>
         )}
       </div>
+
+      {election && election._count.ballots > 0 && (
+        <ElectionResult
+          allowBlank={election.allowBlank}
+          result={{
+            electorate,
+            cast: election._count.ballots,
+            blank:
+              election._count.ballots -
+              election.candidates.reduce((total, one) => total + one._count.ballots, 0),
+            rows: election.candidates.map((candidate) => ({
+              candidateId: candidate.id,
+              fullName: candidate.fullName,
+              photo: candidate.photo,
+              votes: candidate._count.ballots,
+            })),
+          }}
+        />
+      )}
 
       {election && (
         <CandidatesPanel
