@@ -1,3 +1,5 @@
+import { RETENTION_DAYS } from "../deletedRecords";
+
 export const electionStateLabels = {
   hidden: "مخفي",
   upcoming: "لم يبدأ بعد",
@@ -24,7 +26,9 @@ export const electionAdmin = {
   to: "إلى",
   remove: "حذف الانتخاب",
   confirmRemove: "حذف الانتخاب",
-  confirmRemoveBody: (title: string) => `سيحذف الانتخاب ${title} نهائياً`,
+  confirmRemoveBody: (title: string) =>
+    `يُحذف الانتخاب ${title} بمترشحيه وأصواته. يمكن استرجاعه خلال ${RETENTION_DAYS} يوماً.`,
+  titleField: "عنوان الانتخاب للتأكيد",
   yes: "نعم",
   no: "لا",
 } as const;

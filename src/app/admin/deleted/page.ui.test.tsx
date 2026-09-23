@@ -63,3 +63,11 @@ describe("DeletedRecordsPage", () => {
     });
   });
 });
+
+describe("a deleted election", () => {
+  it("names its kind in Arabic", async () => {
+    await visit([{ ...RECORD, kind: "Election", label: "انتخاب اللجنة" }]);
+
+    expect(await screen.findByText(/^انتخاب · حذفه admin/)).toBeTruthy();
+  });
+});

@@ -155,15 +155,6 @@ export async function updateElection(id: string, input: Partial<ElectionInput>, 
   return { election, actions };
 }
 
-export async function deleteElection(id: string) {
-  const election = await requireElection(id);
-  if (!election.hidden) throw new ConflictError(messages.cannotDeleteVisible);
-  if (election._count.ballots > 0) throw new ConflictError(messages.cannotDeleteVoted);
-
-  await prisma.election.delete({ where: { id } });
-  return election;
-}
-
 function cleanName(value: unknown): string {
   const fullName = typeof value === "string" ? value.trim() : "";
   if (!fullName) throw new ValidationError(messages.candidateNameRequired);

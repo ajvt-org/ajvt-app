@@ -1,10 +1,11 @@
 import { prisma } from "./prisma";
-import { ConflictError, NotFoundError } from "./errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import { accounts } from "./messages";
 import { archivedMembership } from "./archivedMembership";
+import { restoreElection } from "./electionArchiveServer";
 
 export interface Restored {
-  kind: "Member" | "User";
+  kind: "Member" | "User" | "Election";
   label: string;
   recordId: string;
   phone: unknown;
@@ -44,9 +45,13 @@ async function restoreAccount(id: string, recordId: string, data: Record<string,
   ]);
 }
 
-export async function restoreDeletedRecord(id: string): Promise<Restored> {
+export async function restoreDeletedRecord(
+  id: string,
+  allowed: (kind: string) => boolean = () => true,
+): Promise<Restored> {
   const record = await prisma.deletedRecord.findUnique({ where: { id } });
   if (!record) throw new NotFoundError(accounts.deletedRecordNotFound);
+  if (!allowed(record.kind)) throw new ForbiddenError();
 
   const data = record.data as Record<string, unknown>;
 
@@ -54,12 +59,14 @@ export async function restoreDeletedRecord(id: string): Promise<Restored> {
     await restoreMembership(id, record.recordId, data);
   } else if (record.kind === "User") {
     await restoreAccount(id, record.recordId, data);
+  } else if (record.kind === "Election") {
+    await restoreElection(id, record.recordId, data);
   } else {
     throw new ConflictError(accounts.restoreKindNotSupported);
   }
 
   return {
-    kind: record.kind as "Member" | "User",
+    kind: record.kind as Restored["kind"],
     label: record.label,
     recordId: record.recordId,
     phone: data.phone ?? null,

@@ -33,6 +33,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/destinationsServer.ts",
   "src/lib/donationsServer.ts",
   "src/lib/financeTagsServer.ts",
+  "src/lib/electionArchiveServer.ts",
   "src/lib/electionServer.ts",
   "src/lib/electionViewServer.ts",
   "src/lib/exportServer.ts",

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET, POST } from "@/app/api/admin/elections/route";
-import { GET as READ, PATCH, DELETE } from "@/app/api/admin/elections/[id]/route";
+import { GET as READ, PATCH } from "@/app/api/admin/elections/[id]/route";
 import { prisma } from "@/lib/prisma";
 import { OWNER_ROLE, SUPER_ROLE } from "@/lib/adminRoles";
-import { resetDb, post, patch, del, get, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, post, patch, get, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 const HOUR = 3600_000;
 
@@ -248,42 +248,6 @@ describe("PATCH /api/admin/elections/[id]", () => {
     );
 
     expect(res.status).toBe(404);
-  });
-});
-
-describe("DELETE /api/admin/elections/[id]", () => {
-  beforeEach(async () => {
-    await resetDb();
-    await signInAsAdmin(await createAdmin());
-  });
-
-  it("throws away a hidden election nobody has voted in", async () => {
-    const election = await anElection();
-
-    const res = await DELETE(del(`/api/admin/elections/${election.id}`), withId(election.id));
-
-    expect(res.status).toBe(200);
-    expect(await prisma.election.count()).toBe(0);
-  });
-
-  it("refuses an election the members can already see", async () => {
-    const election = await anElection({ hidden: false });
-
-    const res = await DELETE(del(`/api/admin/elections/${election.id}`), withId(election.id));
-
-    expect(res.status).toBe(409);
-    expect(await prisma.election.count()).toBe(1);
-  });
-
-  it("refuses an election somebody has voted in", async () => {
-    const election = await anElection();
-    const user = await prisma.user.create({ data: { fullName: "ناخب" } });
-    await prisma.electionBallot.create({ data: { electionId: election.id, userId: user.id } });
-
-    const res = await DELETE(del(`/api/admin/elections/${election.id}`), withId(election.id));
-
-    expect(res.status).toBe(409);
-    expect(await prisma.election.count()).toBe(1);
   });
 });
 
