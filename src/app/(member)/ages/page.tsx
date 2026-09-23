@@ -21,7 +21,7 @@ export default async function AgeStandingsPage() {
         {standings.length === 0 ? (
           <div className="card p-8 text-center">
             <div className="mb-3 flex justify-center">
-              <Icon name="users" size={40} color="var(--mint-400)" />
+              <Icon name="users" size={40} color="var(--mint-500)" />
             </div>
             <p className="font-semibold" style={{ color: "var(--text-main)" }}>
               {ageStandings.empty}
