@@ -36,6 +36,7 @@ async function loadActivity(id: string) {
       id: true,
       title: true,
       ...ACTIVITY_SELECT,
+      published: true,
       description: true,
       period: true,
       startsAt: true,

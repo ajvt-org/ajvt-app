@@ -9,4 +9,5 @@ export const activityPage = {
   joinWhatsapp: "انضم كمتطوع الآن — واتساب",
   signUpCta: "سجّل الآن — أنشئ حسابك للمشاركة",
   haveAccount: "لديك حساب؟ تسجيل الدخول",
+  supportCta: "ادعم هذا النشاط",
 } as const;
