@@ -82,12 +82,6 @@ export default function CandidatesPanel({
         </button>
       </div>
 
-      {frozen && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.frozen}
-        </p>
-      )}
-
       {candidates.length === 0 && !draft && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {texts.empty}

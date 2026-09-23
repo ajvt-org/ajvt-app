@@ -12,7 +12,6 @@ export const electionAdmin = {
   empty: "لا توجد انتخابات بعد",
   save: "حفظ",
   saved: "تم الحفظ",
-  frozen: "انطلق التصويت. التوقيت والمترشحون والخيارات مغلقة، ويبقى نشر النتيجة بيدك",
   title: "عنوان الانتخاب",
   hidden: "إخفاء الانتخاب",
   startsAt: "بداية التصويت",
@@ -43,7 +42,6 @@ export const electionCandidates = {
   removeOne: (name: string) => `حذف ${name}`,
   confirmRemove: "حذف المترشح",
   confirmRemoveBody: (name: string) => `سيحذف ${name} من قائمة المترشحين`,
-  frozen: "انطلق التصويت، قائمة المترشحين مغلقة",
 } as const;
 
 export const electionMember = {

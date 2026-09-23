@@ -83,15 +83,6 @@ export default function ElectionPanel({
         </p>
       )}
 
-      {frozen && (
-        <p
-          className="text-xs font-semibold rounded-lg p-2"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
-          {texts.frozen}
-        </p>
-      )}
-
       <ElectionFields draft={draft} frozen={frozen} onChange={set} />
 
       {error && (
