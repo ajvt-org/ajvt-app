@@ -8,6 +8,7 @@ import { common, money, uploads } from "@/lib/messages";
 import { validateDonorChoice, donorNameFor } from "@/lib/donorChoice";
 import {
   recordPublicDonation,
+  requireGiftableActivity,
   requirePayableMethod,
   requireSupporterStanding,
 } from "@/lib/publicDonationServer";
@@ -72,6 +73,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   if (!Number.isInteger(amount) || amount <= 0) throw new ValidationError(money.amountInvalid);
 
   const paymentMethod = await requirePayableMethod(paymentMethodRaw);
+  const activityId = await requireGiftableActivity(formData.get("activityId"));
   const { id, filename } = await storeUploadImage(file);
 
   await recordPublicDonation({
@@ -82,6 +84,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     anonymous,
     donorName,
     userId: selfUserId,
+    activityId,
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });
