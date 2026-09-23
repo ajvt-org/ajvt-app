@@ -33,6 +33,8 @@ const NO_GUARD: Record<string, string> = {
   "auth/register/route.ts POST": "signing up happens before there is an account",
   "activities/[id]/route.ts GET":
     "one published activity, carrying its title and whether it still takes gifts",
+  "activities/[id]/supporters/route.ts GET":
+    "one activity's supporters board, as public as the association's own",
   "elections/route.ts GET": "the published elections, which anybody may read",
   "elections/[id]/route.ts GET": "a published election and its candidates, which anybody may read",
   "donations/route.ts POST":
