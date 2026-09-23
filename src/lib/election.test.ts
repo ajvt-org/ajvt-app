@@ -290,3 +290,34 @@ describe("closingSoon", () => {
     expect(closingSoon(quarter, at("2026-10-01T08:20:00Z"))).toBe(false);
   });
 });
+
+describe("a close moment of its own", () => {
+  const ranADay = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 1440 };
+  const reopened = { ...ranADay, closesAt: at("2026-10-04T09:00:00Z") };
+
+  it("wins over the start plus the duration", () => {
+    expect(endsAt(reopened)).toEqual(at("2026-10-04T09:00:00Z"));
+    expect(endsAt({ ...reopened, closesAt: "2026-10-04T09:00:00Z" })).toEqual(
+      at("2026-10-04T09:00:00Z"),
+    );
+  });
+
+  it("falls back to the start plus the duration when it is not set", () => {
+    expect(endsAt({ ...ranADay, closesAt: null })).toEqual(at("2026-10-02T08:00:00Z"));
+    expect(endsAt(ranADay)).toEqual(at("2026-10-02T08:00:00Z"));
+  });
+
+  it("reopens a vote that had ended", () => {
+    const now = at("2026-10-04T08:00:00Z");
+
+    expect(electionState(ranADay, now)).toBe("ended");
+    expect(electionState(reopened, now)).toBe("open");
+    expect(msUntilEnd(reopened, now)).toBe(3600_000);
+  });
+
+  it("keeps a reopened vote on screen and counts its tenth from the new close", () => {
+    expect(stillWorthShowing(reopened, at("2026-10-20T08:00:00Z"))).toBe(true);
+    expect(closingSoon(reopened, at("2026-10-04T01:00:00Z"))).toBe(false);
+    expect(closingSoon(reopened, at("2026-10-04T08:00:00Z"))).toBe(true);
+  });
+});

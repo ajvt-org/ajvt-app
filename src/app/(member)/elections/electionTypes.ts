@@ -9,6 +9,7 @@ export interface MemberElection {
   title: string;
   startsAt: string;
   durationMinutes: number;
+  closesAt?: string | null;
   allowBlank: boolean;
   showResults: boolean;
   voted: boolean;
@@ -20,6 +21,7 @@ export interface MemberElectionDetail {
   title: string;
   startsAt: string;
   durationMinutes: number;
+  closesAt?: string | null;
   allowBlank: boolean;
   shuffleCandidates: boolean;
   showResults: boolean;

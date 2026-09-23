@@ -17,6 +17,7 @@ const ELECTION_SELECT = {
   title: true,
   startsAt: true,
   durationMinutes: true,
+  closesAt: true,
   allowBlank: true,
   shuffleCandidates: true,
   showResults: true,
@@ -27,6 +28,7 @@ export type VisibleElection = {
   title: string;
   startsAt: Date;
   durationMinutes: number;
+  closesAt: Date | null;
   allowBlank: boolean;
   shuffleCandidates: boolean;
   showResults: boolean;
@@ -99,6 +101,7 @@ export async function publishedResult(election: {
   id: string;
   startsAt: Date;
   durationMinutes: number;
+  closesAt: Date | null;
   showResults: boolean;
 }) {
   if (!election.showResults) return null;
