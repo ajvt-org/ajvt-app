@@ -38,11 +38,11 @@ const KEPT_CLEAN = [
   "src/lib/publicUploadServer.ts",
   "src/app/admin/elections/electionTypes.ts",
   "src/app/admin/payments/MembershipEditForm.tsx",
-  "src/app/(member)/donate/page.tsx",
+  "src/app/(member)/donate",
   "src/components/DonorNameChoice.tsx",
   "src/app/forgot-password/page.tsx",
   "src/app/not-found.tsx",
-  "src/app/(member)/activities/[id]/not-found.tsx",
+  "src/app/(member)/activities/[id]",
   "src/app/change-password/page.tsx",
   "src/app/change-password/ChangePasswordForm.tsx",
   "src/app/(member)/quiz/QuizPicker.tsx",
@@ -221,8 +221,6 @@ const KEPT_CLEAN = [
   "src/components/PaidAmountRows.tsx",
   "src/components/SurplusVisibility.tsx",
   "src/app/(member)/leaderboard/page.tsx",
-  "src/app/(member)/activities/[id]/MatchesPanel.tsx",
-  "src/app/(member)/activities/[id]/tournamentPanels.tsx",
   "src/lib/bracketState.ts",
   "src/components/tournament/MatchResult.tsx",
   "src/components/tournament/matchCard/MatchEvents.tsx",
@@ -354,6 +352,8 @@ const KEPT_CLEAN = [
   "src/app/admin/dashboard/AgeGroupTotal.tsx",
   "src/app/admin/quiz/QuestionFormDialog.tsx",
   "src/app/layout.tsx",
+  "src/components/FixturesEmpty.tsx",
+  "src/app/admin/supporters/page.tsx",
 ];
 
 function sourceFiles(path: string): string[] {

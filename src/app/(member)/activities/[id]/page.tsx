@@ -17,6 +17,8 @@ import { playersMayBuildTeams } from "@/lib/teamBuilding";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
 import { parentFrom } from "@/lib/backLink";
+import { takesGifts } from "@/lib/activityGifts";
+import SupportActivityLink from "./SupportActivityLink";
 
 export const dynamic = "force-dynamic";
 
@@ -127,6 +129,11 @@ export default async function ActivityPage({
                 playersBuildTeams: playersMayBuildTeams(activity),
               }}
             />
+            {takesGifts(activity) && (
+              <div className="pt-2.5">
+                <SupportActivityLink activityId={activity.id} />
+              </div>
+            )}
           </div>
         </div>
 

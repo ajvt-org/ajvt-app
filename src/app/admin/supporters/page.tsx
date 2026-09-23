@@ -54,7 +54,7 @@ export default function AdminSupportersPage() {
       {board.count === 0 ? (
         <div className="card p-8 text-center fade-up">
           <div className="mb-3 flex justify-center">
-            <Icon name="heart" size={40} color="var(--mint-400)" />
+            <Icon name="heart" size={40} color="var(--mint-500)" />
           </div>
           <p className="font-semibold" style={{ color: "var(--text-main)" }}>
             {adminSupporters.empty}
