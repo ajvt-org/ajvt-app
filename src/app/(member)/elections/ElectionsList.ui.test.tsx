@@ -52,9 +52,9 @@ describe("the elections a member reads", () => {
   it("gives each of three elections its own state and its own clock", () => {
     show([open(), upcoming(), ended()]);
 
-    expect(screen.getByText("التصويت جار")).toBeTruthy();
-    expect(screen.getByText("لم يبدأ بعد")).toBeTruthy();
-    expect(screen.getByText("انتهى")).toBeTruthy();
+    expect(screen.getByText("جارٍ")).toBeTruthy();
+    expect(screen.getByText("قادم")).toBeTruthy();
+    expect(screen.getByText("منتهٍ")).toBeTruthy();
     expect(screen.getByLabelText("الوقت المتبقي لانتهاء التصويت")).toBeTruthy();
     expect(screen.getByLabelText("الوقت المتبقي لبداية التصويت")).toBeTruthy();
   });

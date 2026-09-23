@@ -24,7 +24,7 @@ export default function ElectionStateChip({
   const key = chipKey(election);
 
   return (
-    <span className="badge text-xs font-bold" style={TONE[key]}>
+    <span className="badge text-xs font-bold shrink-0" style={TONE[key]}>
       {electionStateLabels[key]}
     </span>
   );

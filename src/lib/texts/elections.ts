@@ -2,9 +2,9 @@ import { RETENTION_DAYS } from "../deletedRecords";
 
 export const electionStateLabels = {
   hidden: "مخفي",
-  upcoming: "لم يبدأ بعد",
-  open: "التصويت جار",
-  ended: "انتهى",
+  upcoming: "قادم",
+  open: "جارٍ",
+  ended: "منتهٍ",
 } as const;
 
 export const electionAdmin = {
