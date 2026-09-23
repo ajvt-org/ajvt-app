@@ -26,6 +26,10 @@ export const electionUpdateSchema = z.object({
   showResults: flag.optional(),
 });
 
+export const electionCloseSchema = z.object({
+  closesAt: z.string(elections.closeRequired),
+});
+
 const fullName = z.string(elections.candidateNameRequired);
 const photo = z.string(common.invalidBody).nullable();
 

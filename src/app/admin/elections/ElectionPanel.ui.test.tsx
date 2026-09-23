@@ -4,6 +4,7 @@ import ElectionPanel from "./ElectionPanel";
 import type { ElectionRow } from "./electionTypes";
 
 const del = vi.fn();
+const put = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   api: {
@@ -11,6 +12,7 @@ vi.mock("@/lib/api", () => ({
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
+    put: (...args: unknown[]) => put(...args),
   },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
@@ -34,12 +36,13 @@ function row(over: Partial<ElectionRow>): ElectionRow {
   };
 }
 
-function show(election: ElectionRow) {
+function show(election: ElectionRow, owner = false) {
   const onDeleted = vi.fn();
   render(
     <ElectionPanel
       election={election}
       electorate={10}
+      owner={owner}
       onSaved={vi.fn()}
       onChanged={vi.fn()}
       onDeleted={onDeleted}
@@ -93,5 +96,61 @@ describe("an election whose vote has started", () => {
     expect(
       (screen.getByRole("button", { name: "إضافة مترشح" }) as HTMLButtonElement).disabled,
     ).toBe(true);
+  });
+});
+
+describe("moving the close of an election", () => {
+  beforeEach(() => {
+    cleanup();
+    put.mockReset().mockResolvedValue({});
+  });
+
+  const running = () => row({ startsAt: new Date(Date.now() - HOUR / 2).toISOString() });
+
+  it("is not offered to an admin who is not the owner", () => {
+    show(running());
+
+    expect(screen.queryByRole("button", { name: "تمديد التصويت" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "إعادة فتح التصويت" })).toBeNull();
+  });
+
+  it("is not offered before the vote opens, where the duration still moves", () => {
+    show(row({ startsAt: new Date(Date.now() + HOUR).toISOString() }), true);
+
+    expect(screen.queryByRole("button", { name: "تمديد التصويت" })).toBeNull();
+  });
+
+  it("lets the owner run an open vote longer", async () => {
+    show(running(), true);
+
+    fireEvent.click(screen.getByRole("button", { name: "تمديد التصويت" }));
+    const field = screen.getByLabelText("موعد الانتهاء الجديد") as HTMLInputElement;
+    expect(field.value).not.toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "تأكيد الموعد" }));
+
+    await waitFor(() => expect(put).toHaveBeenCalled());
+    expect(put.mock.calls[0][0]).toBe("/api/admin/elections/e1/close");
+    expect(await screen.findByRole("button", { name: "تمديد التصويت" })).toBeTruthy();
+  });
+
+  it("warns before reopening a vote whose result members can read", async () => {
+    show(row({ showResults: true }), true);
+
+    fireEvent.click(screen.getByRole("button", { name: "إعادة فتح التصويت" }));
+    fireEvent.click(screen.getByRole("button", { name: "تأكيد الموعد" }));
+    expect(put).not.toHaveBeenCalled();
+    expect(screen.getByText("تختفي النتيجة عن الأعضاء حتى ينتهي التصويت من جديد")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "تأكيد" }));
+    await waitFor(() => expect(put).toHaveBeenCalled());
+  });
+
+  it("reopens a vote with a held result without asking", async () => {
+    show(row({ showResults: false }), true);
+
+    fireEvent.click(screen.getByRole("button", { name: "إعادة فتح التصويت" }));
+    fireEvent.click(screen.getByRole("button", { name: "تأكيد الموعد" }));
+
+    await waitFor(() => expect(put).toHaveBeenCalled());
   });
 });

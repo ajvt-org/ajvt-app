@@ -7,9 +7,11 @@ const ARABIC = /[؀-ۿ]/;
 const KEPT_CLEAN = [
   "src/app/api/admin/elections/route.ts",
   "src/app/api/admin/elections/[id]/route.ts",
+  "src/app/api/admin/elections/[id]/close/route.ts",
   "src/app/api/admin/elections/schema.ts",
   "src/lib/electionServer.ts",
   "src/app/admin/elections/ElectionFieldParts.tsx",
+  "src/app/admin/elections/ExtendClose.tsx",
   "src/app/admin/elections/FrozenElectionFields.tsx",
   "src/app/admin/elections/SettingRow.tsx",
   "src/app/admin/elections/page.tsx",
