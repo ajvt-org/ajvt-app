@@ -11,6 +11,8 @@ import { Field } from "./ElectionFieldParts";
 
 const HOUR = 3_600_000;
 
+const QUIET = { background: "var(--mint-100)", color: "var(--mint-700)" };
+
 function firstOffer(election: ElectionWindow): string {
   return new Date(Math.max(endsAt(election).getTime(), Date.now()) + HOUR).toISOString();
 }
@@ -50,7 +52,7 @@ export default function ExtendClose({
 
   if (value === null) {
     return (
-      <button onClick={() => setValue(firstOffer(election))} className="btn btn-sm">
+      <button onClick={() => setValue(firstOffer(election))} className="btn btn-sm" style={QUIET}>
         <IconLabel name="clock">{reopening ? texts.reopen : texts.extend}</IconLabel>
       </button>
     );
@@ -81,7 +83,7 @@ export default function ExtendClose({
         >
           {texts.confirmClose}
         </button>
-        <button onClick={() => setValue(null)} disabled={busy} className="btn btn-sm">
+        <button onClick={() => setValue(null)} disabled={busy} className="btn btn-sm" style={QUIET}>
           {confirmDialog.cancel}
         </button>
       </div>
