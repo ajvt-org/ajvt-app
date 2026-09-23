@@ -10,4 +10,6 @@ export const activityPage = {
   signUpCta: "سجّل الآن — أنشئ حسابك للمشاركة",
   haveAccount: "لديك حساب؟ تسجيل الدخول",
   supportCta: "ادعم هذا النشاط",
+  supportersHeading: "داعمو هذا النشاط",
+  supportersEmpty: "لم يدعم أحد هذا النشاط بعد، كن أول داعم له.",
 } as const;
