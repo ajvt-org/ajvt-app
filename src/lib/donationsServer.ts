@@ -41,9 +41,10 @@ interface LeaderboardEntry {
 
 export async function getLeaderboardData(
   viewer: SupportViewer,
+  activityId?: string,
 ): Promise<{ leaderboard: LeaderboardEntry[] }> {
   const payments = await prisma.payment.findMany({
-    where: { status: "ACTIVE" },
+    where: { status: "ACTIVE", ...(activityId ? { activityId } : {}) },
     select: {
       id: true,
       purpose: true,
