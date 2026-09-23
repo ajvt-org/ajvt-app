@@ -3,8 +3,6 @@ import { execSync } from "node:child_process";
 import { releaseFrom } from "./src/lib/release";
 
 const YEAR = 31536000;
-const WEEK = 604800;
-const DAY = 86400;
 
 const RENAMED_ON_CHANGE = ["/fonts/:path*"];
 
@@ -68,7 +66,7 @@ const nextConfig: NextConfig = {
         ],
       },
       ...RENAMED_ON_CHANGE.map(cached(`public, max-age=${YEAR}, immutable`)),
-      ...EDITED_IN_PLACE.map(cached(`public, max-age=${WEEK}, stale-while-revalidate=${DAY}`)),
+      ...EDITED_IN_PLACE.map(cached("public, max-age=0, must-revalidate")),
       ...ALWAYS_FRESH.map(cached("no-cache")),
     ];
   },
