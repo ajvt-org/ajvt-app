@@ -15,5 +15,6 @@ export const money = {
   paymentMethodInvalid: "طريقة دفع غير صالحة",
   paymentAccountInvalid: "رقم المستلم غير صالح",
   donationNotFound: "التبرع غير موجود",
+  activityTakesNoGifts: "هذا النشاط لا يستقبل التبرعات حالياً",
   membershipDonationReadOnly: "هذه المساهمة جزء من انتساب العضو — عدّلها من صفحة العضو",
 } as const;

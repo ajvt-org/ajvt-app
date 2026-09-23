@@ -4,6 +4,7 @@ import { sortActivities } from "./activityOrder";
 import { STANDING_MATCH_SELECT, matchStanding } from "./activityMatches";
 import { joinableTeams } from "./registrationTeamServer";
 import { playersMayBuildTeams } from "./teamBuilding";
+import { takesGifts } from "./activityGifts";
 
 export async function publicActivityRows() {
   const activities = await prisma.activity.findMany({
@@ -57,4 +58,13 @@ export async function publicActivityRows() {
     joinableTeams: joinableTeams(activity, activity.teams),
     playersBuildTeams: playersMayBuildTeams(activity),
   }));
+}
+
+export async function publicActivityHeading(id: string) {
+  const activity = await prisma.activity.findUnique({
+    where: { id },
+    select: { id: true, title: true, published: true, isOpen: true },
+  });
+  if (!activity?.published) return null;
+  return { id: activity.id, title: activity.title, takesGifts: takesGifts(activity) };
 }
