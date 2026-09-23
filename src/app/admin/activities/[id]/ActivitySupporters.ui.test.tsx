@@ -6,7 +6,7 @@ import { moneyDigits } from "@/lib/money";
 
 const row = { rank: 1, position: 1, name: "محمد", photoUrl: null, total: 5000, anonymous: false };
 
-function serving(board: { rows: typeof row[]; total: number; given: number }) {
+function serving(board: { rows: (typeof row)[]; total: number; given: number }) {
   const fetchMock = vi.fn(async () => ({ ok: true, json: async () => board }));
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
