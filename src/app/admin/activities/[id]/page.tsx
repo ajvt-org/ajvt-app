@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import AdminBackLink from "@/components/admin/AdminBackLink";
 import ActivityFinance from "./ActivityFinance";
+import ActivitySupporters from "./ActivitySupporters";
 import ActivityHeaderPhoto from "./ActivityHeaderPhoto";
 import WorkspaceTabs from "@/components/admin/WorkspaceTabs";
 import { activityTabSections } from "./activityTabs";
@@ -143,7 +144,12 @@ function AdminActivityPageInner({ id }: { id: string }) {
       {isTournamentTab(tab) && (
         <TournamentPanel activityId={activity.id} tab={tab as TournamentTabKey} data={tournament} />
       )}
-      {tab === "finance" && <ActivityFinance activityId={activity.id} />}
+      {tab === "finance" && (
+        <>
+          <ActivityFinance activityId={activity.id} />
+          <ActivitySupporters activityId={activity.id} />
+        </>
+      )}
       {tab === "log" && <LogTab history={history} />}
     </div>
   );

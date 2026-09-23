@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Icon from "@/components/Icon";
 import Money from "@/components/Money";
 import SupportersTable from "@/components/SupportersTable";
@@ -10,13 +13,18 @@ export interface ActivityBoard {
   given: number;
 }
 
-export default function ActivitySupporters({
-  activityId,
-  board,
-}: {
-  activityId: string;
-  board: ActivityBoard;
-}) {
+export default function ActivitySupporters({ activityId }: { activityId: string }) {
+  const [board, setBoard] = useState<ActivityBoard | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/admin/activities/${activityId}/supporters`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setBoard)
+      .catch(() => setBoard(null));
+  }, [activityId]);
+
+  if (!board) return null;
+
   return (
     <section className="space-y-3 pt-1" aria-labelledby="activity-supporters">
       <div className="flex items-center justify-between gap-3">
@@ -44,7 +52,7 @@ export default function ActivitySupporters({
           initial={board.rows}
           total={board.total}
           minePositions={[]}
-          source={`/api/activities/${activityId}/supporters`}
+          source={`/api/admin/activities/${activityId}/supporters`}
         />
       )}
     </section>

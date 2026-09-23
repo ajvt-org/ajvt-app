@@ -19,8 +19,6 @@ import { tournamentPanels } from "./tournamentPanels";
 import { parentFrom } from "@/lib/backLink";
 import { takesGifts } from "@/lib/activityGifts";
 import SupportActivityLink from "./SupportActivityLink";
-import ActivitySupporters from "./ActivitySupporters";
-import { activityBoard } from "./activityBoard";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +48,6 @@ export default async function ActivityPage({
 
   const when = formatActivityDates(activity);
   const registrantCount = activity._count.registrations;
-  const board = await activityBoard(activity.id);
   const tournament = activity.isTournament
     ? await tournamentPanels(activity, userId, myVoteByVoteId)
     : null;
@@ -139,10 +136,6 @@ export default async function ActivityPage({
             )}
           </div>
         </div>
-
-        {(takesGifts(activity) || board.total > 0) && (
-          <ActivitySupporters activityId={activity.id} board={board} />
-        )}
 
         {tournament &&
           (activity.teams.length === 0 ? (
