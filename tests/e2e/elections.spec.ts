@@ -169,10 +169,10 @@ test("an admin opens two elections and a member votes in one of them", async ({
   expect(await widerThanTheScreen(page)).toBe(false);
   await page.getByRole("button", { name: "تأكيد التصويت" }).last().click();
 
-  await expect(page.getByText("صوتك مسجّل")).toBeVisible();
+  await expect(page.locator('[aria-current="true"]')).toContainText(LONG_CANDIDATE);
 
   await page.reload();
-  await expect(page.getByText("صوتك مسجّل")).toBeVisible();
+  await expect(page.locator('[aria-current="true"]')).toContainText(LONG_CANDIDATE);
   await expect(page.getByRole("button", { name: "تأكيد التصويت" })).toHaveCount(0);
 
   await page.goto("/elections");

@@ -148,3 +148,16 @@ describe("the blank ballot", () => {
     expect(api.post).toHaveBeenCalledWith("/api/elections/e1/vote", { candidateId: null });
   });
 });
+
+describe("the check on a picked row", () => {
+  it("sits ahead of the name, where the marked row carries it after voting", () => {
+    render(
+      <BallotPicker electionId="e1" candidates={candidates} allowBlank={false} onCast={vi.fn()} />,
+    );
+
+    const row = screen.getByRole("button", { name: candidates[0].fullName });
+    fireEvent.click(row);
+
+    expect(row.firstElementChild!.querySelector("svg")).not.toBeNull();
+  });
+});

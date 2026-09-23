@@ -10,7 +10,7 @@ import { electionMember as texts } from "@/lib/texts";
 import BallotPicker from "./BallotPicker";
 import CandidateList from "./CandidateList";
 import ElectionResult from "@/components/ElectionResult";
-import MyBallot from "./MyBallot";
+import MarkedBallot from "./MarkedBallot";
 import ElectionClock from "./ElectionClock";
 import type { ElectionDetailPayload } from "./electionTypes";
 
@@ -28,7 +28,6 @@ export default function ElectionView({
   const { election, signedIn, canVote, voted, myCandidateId, result } = payload;
   const state = electionState(election);
   const voting = state === "open" && canVote && !voted;
-  const mine = election.candidates.find((candidate) => candidate.id === myCandidateId) ?? null;
 
   return (
     <div className="app-shell">
@@ -81,9 +80,7 @@ export default function ElectionView({
             </div>
           ))}
 
-        {voted && <MyBallot candidate={mine} />}
-
-        {!result && !voted && (
+        {!result && (
           <div className="space-y-2">
             <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
               {texts.candidates}
@@ -94,6 +91,12 @@ export default function ElectionView({
                 candidates={election.candidates}
                 allowBlank={election.allowBlank}
                 onCast={onReached}
+              />
+            ) : voted ? (
+              <MarkedBallot
+                candidates={election.candidates}
+                allowBlank={election.allowBlank}
+                mine={myCandidateId}
               />
             ) : (
               <CandidateList candidates={election.candidates} />
