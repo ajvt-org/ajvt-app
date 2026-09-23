@@ -5,7 +5,8 @@ import BlockTimer from "@/components/BlockTimer";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageHeader from "@/components/PageHeader";
-import { electionState, endsAt } from "@/lib/election";
+import { useNow } from "@/hooks/useNow";
+import { ELECTION_URGENT_SHARE, electionState, endsAt } from "@/lib/election";
 import { electionMember as texts } from "@/lib/texts";
 import BallotPicker from "./BallotPicker";
 import CandidateList from "./CandidateList";
@@ -26,7 +27,8 @@ export default function ElectionView({
   onReached: () => void;
 }) {
   const { election, signedIn, canVote, voted, myCandidateId, result } = payload;
-  const state = electionState(election);
+  const now = useNow(1000);
+  const state = electionState(election, new Date(now));
   const voting = state === "open" && canVote && !voted;
   const mine = election.candidates.find((candidate) => candidate.id === myCandidateId) ?? null;
 
@@ -40,13 +42,15 @@ export default function ElectionView({
         </h2>
 
         <div className="card p-4 space-y-3">
-          <ElectionClock election={election} onReached={onReached} />
+          <ElectionClock election={election} onReached={onReached} now={now} />
           {state === "open" && (
             <BlockTimer
               opensAt={new Date(election.startsAt).toISOString()}
               closesAt={endsAt(election).toISOString()}
               label={texts.windowLabel}
               onReached={onReached}
+              urgentShare={ELECTION_URGENT_SHARE}
+              now={now}
             />
           )}
         </div>

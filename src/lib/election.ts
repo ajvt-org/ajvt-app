@@ -21,6 +21,15 @@ export function endsAt(election: ElectionWindow): Date {
   return new Date(new Date(election.startsAt).getTime() + election.durationMinutes * MINUTE);
 }
 
+export const ELECTION_URGENT_SHARE = 0.9;
+
+export function closingSoon(election: ElectionWindow, now = new Date()): boolean {
+  if (electionState(election, now) !== "open") return false;
+  const start = new Date(election.startsAt).getTime();
+  const span = Math.max(1, endsAt(election).getTime() - start);
+  return (now.getTime() - start) / span > ELECTION_URGENT_SHARE;
+}
+
 export function msUntilStart(election: ElectionWindow, now = new Date()): number {
   return Math.max(0, new Date(election.startsAt).getTime() - now.getTime());
 }

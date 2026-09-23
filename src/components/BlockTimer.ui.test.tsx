@@ -86,6 +86,43 @@ describe("BlockTimer", () => {
     expect(fillTone()).toContain("copper");
   });
 
+  it("keeps the quiz threshold of four fifths when no share is given", () => {
+    setup(at(0.85));
+
+    expect(fillTone()).toContain("copper");
+  });
+
+  it("turns copper at the share it is given", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(at(0.85));
+    render(
+      <BlockTimer
+        opensAt={OPEN.toISOString()}
+        closesAt={CLOSE.toISOString()}
+        label={LABEL}
+        urgentShare={0.9}
+      />,
+    );
+
+    expect(fillTone()).toContain("mint");
+  });
+
+  it("reads the clock it is handed instead of its own minute tick", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(at(0.5));
+    render(
+      <BlockTimer
+        opensAt={OPEN.toISOString()}
+        closesAt={CLOSE.toISOString()}
+        label={LABEL}
+        urgentShare={0.9}
+        now={at(0.95).getTime()}
+      />,
+    );
+
+    expect(fillTone()).toContain("copper");
+  });
+
   it("calls onReached once when the block closes and not again on later ticks", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(CLOSE.getTime() - 30_000));
