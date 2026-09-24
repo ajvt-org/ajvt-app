@@ -1,6 +1,14 @@
+import {
+  NO_AMOUNT,
+  amountIsSet,
+  matchesAmount,
+  readAmountFilter,
+  writeAmountFilter,
+  type AmountFilter,
+} from "@/lib/amountFilter";
 import type { Expense } from "./types";
 
-export const EXPENSES_FILTER_KEYS = ["q", "tags", "destination", "from", "to"];
+export const EXPENSES_FILTER_KEYS = ["q", "tags", "destination", "from", "to", "amount"];
 
 export interface ExpensesFilters {
   q: string;
@@ -8,6 +16,7 @@ export interface ExpensesFilters {
   destinationId: string;
   dateFrom: string;
   dateTo: string;
+  amount: AmountFilter;
 }
 
 export function readExpensesFilters(params: URLSearchParams): ExpensesFilters {
@@ -18,6 +27,7 @@ export function readExpensesFilters(params: URLSearchParams): ExpensesFilters {
     destinationId: params.get("destination") || "",
     dateFrom: params.get("from") || "",
     dateTo: params.get("to") || "",
+    amount: readAmountFilter(params.get("amount")),
   };
 }
 
@@ -28,6 +38,7 @@ export function writeExpensesFilters(filters: ExpensesFilters): URLSearchParams 
   if (filters.destinationId) params.set("destination", filters.destinationId);
   if (filters.dateFrom) params.set("from", filters.dateFrom);
   if (filters.dateTo) params.set("to", filters.dateTo);
+  if (amountIsSet(filters.amount)) params.set("amount", writeAmountFilter(filters.amount));
   return params;
 }
 
@@ -37,12 +48,18 @@ export const NO_EXPENSES_FILTERS: ExpensesFilters = {
   destinationId: "",
   dateFrom: "",
   dateTo: "",
+  amount: NO_AMOUNT,
 };
 
 export const TAG_CHIP = "tag:";
 
 export function activeExpensesFilterCount(filters: ExpensesFilters): number {
-  const single = [!!filters.destinationId, !!filters.dateFrom, !!filters.dateTo];
+  const single = [
+    !!filters.destinationId,
+    !!filters.dateFrom,
+    !!filters.dateTo,
+    amountIsSet(filters.amount),
+  ];
   return filters.tagIds.length + single.filter(Boolean).length;
 }
 
@@ -58,6 +75,7 @@ export function withoutExpensesChip(filters: ExpensesFilters, key: string): Expe
   if (key === "destination") return { ...filters, destinationId: "" };
   if (key === "dateFrom") return { ...filters, dateFrom: "" };
   if (key === "dateTo") return { ...filters, dateTo: "" };
+  if (key === "amount") return { ...filters, amount: NO_AMOUNT };
   return filters;
 }
 
@@ -90,6 +108,7 @@ export function matchesExpensesFilters(expense: Expense, filters: ExpensesFilter
     matchesTags(expense, filters.tagIds) &&
     matchesQuery(expense, filters.q.trim()) &&
     matchesDestination(expense, filters.destinationId) &&
-    matchesDates(expense, filters.dateFrom, filters.dateTo)
+    matchesDates(expense, filters.dateFrom, filters.dateTo) &&
+    matchesAmount(expense.amount, filters.amount)
   );
 }
