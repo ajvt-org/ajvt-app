@@ -1,7 +1,7 @@
 "use client";
 
+import LocalMoment from "@/components/LocalMoment";
 import IconLabel from "@/components/IconLabel";
-import { formatDateTime } from "@/lib/clubTime";
 import { endsAt } from "@/lib/election";
 import { electionAdmin as texts } from "@/lib/texts";
 import ElectionStateChip from "./ElectionStateChip";
@@ -10,7 +10,7 @@ import type { ElectionRow } from "./electionTypes";
 function Span({ label, at }: { label: string; at: string | Date }) {
   return (
     <span>
-      {label} <bdi dir="ltr">{formatDateTime(at)}</bdi>
+      {label} <LocalMoment at={at} />
     </span>
   );
 }

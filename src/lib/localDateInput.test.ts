@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { toLocalInput, fromLocalInput } from "./localDateInput";
+import { describe, it, expect, afterEach } from "vitest";
+import { toLocalInput, fromLocalInput, localMoment } from "./localDateInput";
 
 const local = (iso: string) => {
   const d = new Date(iso);
@@ -33,5 +33,45 @@ describe("a datetime-local field", () => {
     expect(toLocalInput("nonsense")).toBe("");
     expect(fromLocalInput("")).toBe("");
     expect(fromLocalInput("nonsense")).toBe("");
+  });
+});
+
+describe("a printed moment", () => {
+  it("reads the date and the time on the clock of the device", () => {
+    const at = "2026-09-23T14:15:00.000Z";
+    const [day, clock] = local(at).split("T");
+
+    expect(localMoment(at)).toEqual({ date: day.split("-").join("/"), time: clock });
+  });
+
+  it("takes a Date as well as a string", () => {
+    const at = new Date("2026-09-23T14:15:00.000Z");
+
+    expect(localMoment(at)).toEqual(localMoment(at.toISOString()));
+  });
+
+  it("prints nothing for a moment it cannot read", () => {
+    expect(localMoment("")).toEqual({ date: "", time: "" });
+    expect(localMoment("nonsense")).toEqual({ date: "", time: "" });
+  });
+});
+
+describe("a reader outside the club timezone", () => {
+  const zone = process.env.TZ;
+
+  afterEach(() => {
+    process.env.TZ = zone;
+  });
+
+  it("sees the moment on their own clock, not the club's", () => {
+    process.env.TZ = "America/Toronto";
+
+    expect(localMoment("2026-09-23T14:15:00.000Z")).toEqual({ date: "2026/09/23", time: "10:15" });
+  });
+
+  it("turns the day over with the reader's clock", () => {
+    process.env.TZ = "Asia/Dubai";
+
+    expect(localMoment("2026-09-23T22:30:00.000Z")).toEqual({ date: "2026/09/24", time: "02:30" });
   });
 });

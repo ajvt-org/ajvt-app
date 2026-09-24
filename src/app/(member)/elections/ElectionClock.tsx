@@ -1,9 +1,9 @@
 "use client";
 
+import LocalMoment from "@/components/LocalMoment";
 import Countdown from "@/components/Countdown";
 import Icon from "@/components/Icon";
 import { electionState, endsAt } from "@/lib/election";
-import { formatDateTime } from "@/lib/clubTime";
 import { electionMember as texts } from "@/lib/texts";
 
 export default function ElectionClock({
@@ -22,7 +22,7 @@ export default function ElectionClock({
     return (
       <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
         <Icon name="clock" size={13} />
-        {texts.endedOn} <bdi dir="ltr">{formatDateTime(close)}</bdi>
+        {texts.endedOn} <LocalMoment at={close} />
       </p>
     );
   }

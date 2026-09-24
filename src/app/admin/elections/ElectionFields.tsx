@@ -1,8 +1,8 @@
 "use client";
 
+import LocalMoment from "@/components/LocalMoment";
 import NumberField from "@/components/NumberField";
 import Toggle from "@/components/Toggle";
-import { formatDateTime } from "@/lib/clubTime";
 import { toLocalInput, fromLocalInput } from "@/lib/localDateInput";
 import { counted } from "@/lib/arabicCount";
 import { MINUTE } from "@/lib/messages";
@@ -54,7 +54,7 @@ function Moment({ label, at }: { label: string; at: string | Date }) {
         {label}
       </p>
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <bdi dir="ltr">{formatDateTime(at)}</bdi>
+        <LocalMoment at={at} />
       </p>
     </div>
   );

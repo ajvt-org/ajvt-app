@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ElectionFields from "./ElectionFields";
 import { toLocalInput } from "@/lib/localDateInput";
-import { formatDateTime } from "@/lib/clubTime";
+import { localMoment } from "@/lib/localDateInput";
 import type { ElectionDraft } from "./electionTypes";
 
 const draft: ElectionDraft = {
@@ -61,7 +61,9 @@ describe("the election form while it can still be changed", () => {
     show();
 
     expect(screen.getByText("ينتهي التصويت")).toBeTruthy();
-    expect(screen.getByText(formatDateTime("2026-10-02T08:00:00.000Z"))).toBeTruthy();
+    const close = localMoment("2026-10-02T08:00:00.000Z");
+    expect(screen.getByText(close.date)).toBeTruthy();
+    expect(screen.getByText(close.time)).toBeTruthy();
   });
 });
 
@@ -73,7 +75,7 @@ describe("the election form once the vote has opened", () => {
     expect(screen.queryByLabelText("بداية التصويت")).toBeNull();
     expect(screen.queryByLabelText("مدة التصويت")).toBeNull();
     expect(screen.getByText(draft.title)).toBeTruthy();
-    expect(screen.getByText(formatDateTime(draft.startsAt))).toBeTruthy();
+    expect(screen.getByText(localMoment(draft.startsAt).date)).toBeTruthy();
     expect(screen.getByText("يوم")).toBeTruthy();
   });
 
