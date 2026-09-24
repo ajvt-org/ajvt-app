@@ -8,6 +8,10 @@ import {
   readFilters,
   writeFilters,
   activeFilterCount,
+  withoutMemberChip,
+  withoutNarrowing,
+  AGE_CHIP,
+  VILLAGE_CHIP,
   matchesFilters,
   membershipYearsPresent,
   upToDate,
@@ -42,7 +46,7 @@ describe("carrying the filters in the address", () => {
   });
 
   it("writes only what was chosen", () => {
-    const params = writeFilters({ ...NO_FILTERS, status: "PENDING", age: "البدريين" });
+    const params = writeFilters({ ...NO_FILTERS, status: "PENDING", age: ["البدريين"] });
     expect(params.get("status")).toBe("PENDING");
     expect(params.get("age")).toBe("البدريين");
     expect(params.get("method")).toBeNull();
@@ -52,8 +56,8 @@ describe("carrying the filters in the address", () => {
     const chosen = {
       status: "REJECTED",
       q: "محمد",
-      age: "التائبين",
-      village: "أفجار",
+      age: ["التائبين", "البدريين"],
+      village: ["أفجار"],
       method: "نقداً",
       paid: "partial",
       year: "2026",
@@ -64,6 +68,7 @@ describe("carrying the filters in the address", () => {
       recorder: "a1",
       nophone: "yes",
       nocapture: "yes",
+      sort: "za" as const,
     };
     expect(readFilters(new URLSearchParams(writeFilters(chosen).toString()))).toEqual(chosen);
   });
@@ -93,16 +98,22 @@ describe("carrying the filters in the address", () => {
       "recorder",
       "nophone",
       "nocapture",
+      "sort",
     ]);
     expect(Object.keys(NO_FILTERS).sort()).toEqual([...MEMBER_FILTER_KEYS].sort());
   });
 
   it("writes every filter it was given and reads it back", () => {
-    const every = Object.fromEntries(
-      MEMBER_FILTER_KEYS.map((key) => [key, key === "origin" ? ADMIN_ORIGIN : `v-${key}`]),
-    ) as MemberFilters;
+    const every = {
+      ...(Object.fromEntries(
+        MEMBER_FILTER_KEYS.map((key) => [key, key === "origin" ? ADMIN_ORIGIN : `v-${key}`]),
+      ) as Record<string, string>),
+      age: ["v-age"],
+      village: ["v-village"],
+      sort: "az",
+    } as MemberFilters;
     const params = writeFilters(every);
-    for (const key of MEMBER_FILTER_KEYS) expect(params.get(key)).toBe(every[key]);
+    for (const key of MEMBER_FILTER_KEYS) expect(params.get(key)).toBe(String(every[key]));
     expect(readFilters(params)).toEqual(every);
   });
 
@@ -114,10 +125,48 @@ describe("carrying the filters in the address", () => {
     expect(read.nocapture).toBe("");
   });
 
-  it("counts what is narrowing the list, for the clear button", () => {
+  it("counts what is narrowing the list, for the badge and the clear button", () => {
     expect(activeFilterCount(NO_FILTERS)).toBe(0);
-    expect(activeFilterCount({ ...NO_FILTERS, status: "PENDING", paid: "none" })).toBe(2);
-    expect(activeFilterCount({ ...NO_FILTERS, q: "   " })).toBe(0);
+    expect(activeFilterCount({ ...NO_FILTERS, paid: "none" })).toBe(1);
+  });
+
+  it("leaves the tab and the search out of the count, since clearing keeps both", () => {
+    expect(activeFilterCount({ ...NO_FILTERS, status: "PENDING", q: "محمد" })).toBe(0);
+  });
+
+  it("leaves the order out of the count, since it narrows nothing", () => {
+    expect(activeFilterCount({ ...NO_FILTERS, sort: "az" })).toBe(0);
+  });
+
+  it("writes no order for the one the screen shows by default", () => {
+    expect(writeFilters(NO_FILTERS).get("sort")).toBeNull();
+    expect(writeFilters({ ...NO_FILTERS, sort: "za" }).get("sort")).toBe("za");
+  });
+
+  it("reads an order it does not know as the default one", () => {
+    expect(readFilters(new URLSearchParams("sort=bogus")).sort).toBe("review");
+  });
+
+  it("counts one per village and one per age group", () => {
+    const filters = { ...NO_FILTERS, village: ["أفجار", OTHER_VILLAGE], age: ["البدريين"] };
+    expect(activeFilterCount(filters)).toBe(3);
+  });
+
+  it("carries several villages in one parameter", () => {
+    const params = writeFilters({ ...NO_FILTERS, village: ["أفجار", OTHER_VILLAGE] });
+    expect(params.get("village")).toBe(`أفجار,${OTHER_VILLAGE}`);
+    expect(readFilters(params).village).toEqual(["أفجار", OTHER_VILLAGE]);
+  });
+
+  it("reads a link from before several were allowed as a list of one", () => {
+    expect(readFilters(new URLSearchParams("village=أفجار&age=البدريين"))).toMatchObject({
+      village: ["أفجار"],
+      age: ["البدريين"],
+    });
+  });
+
+  it("ignores empty entries in a hand edited list", () => {
+    expect(readFilters(new URLSearchParams("village=,أفجار,")).village).toEqual(["أفجار"]);
   });
 });
 
@@ -127,7 +176,7 @@ describe("narrowing a list of members", () => {
   });
 
   it("combines criteria rather than replacing them", () => {
-    const filters = { ...NO_FILTERS, status: "ACTIVE", age: "البدريين", method: "بنكيلي" };
+    const filters = { ...NO_FILTERS, status: "ACTIVE", age: ["البدريين"], method: "بنكيلي" };
     expect(matchesFilters(member(), filters, MEMBERSHIP)).toBe(true);
     expect(matchesFilters(member({ paymentMethod: "نقداً" }), filters, MEMBERSHIP)).toBe(false);
     expect(matchesFilters(member({ status: "PENDING" }), filters, MEMBERSHIP)).toBe(false);
@@ -135,13 +184,26 @@ describe("narrowing a list of members", () => {
   });
 
   it("narrows the list to one village", () => {
-    const filters = { ...NO_FILTERS, village: "أفجار" };
+    const filters = { ...NO_FILTERS, village: ["أفجار"] };
     expect(matchesFilters(member({ village: "أفجار", age: null }), filters, MEMBERSHIP)).toBe(true);
     expect(matchesFilters(member(), filters, MEMBERSHIP)).toBe(false);
   });
 
+  it("keeps a member from any of the villages chosen", () => {
+    const filters = { ...NO_FILTERS, village: ["أفجار", HOME_VILLAGE] };
+    expect(matchesFilters(member({ village: "أفجار", age: null }), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(member(), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(member({ village: "بوغرابة" }), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("keeps a member from any of the age groups chosen", () => {
+    const filters = { ...NO_FILTERS, age: ["البدريين", "التائبين"] };
+    expect(matchesFilters(member({ age: "التائبين" }), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(member({ age: "الأشبال" }), filters, MEMBERSHIP)).toBe(false);
+  });
+
   it("finds the members who picked the other option, so an admin can correct them", () => {
-    const filters = { ...NO_FILTERS, village: OTHER_VILLAGE };
+    const filters = { ...NO_FILTERS, village: [OTHER_VILLAGE] };
     expect(matchesFilters(member({ village: OTHER_VILLAGE, age: null }), filters, MEMBERSHIP)).toBe(
       true,
     );
@@ -151,7 +213,7 @@ describe("narrowing a list of members", () => {
   it("keeps a member with no age group when no age group is asked for", () => {
     expect(matchesFilters(member({ age: null }), NO_FILTERS, MEMBERSHIP)).toBe(true);
     expect(
-      matchesFilters(member({ age: null }), { ...NO_FILTERS, age: "البدريين" }, MEMBERSHIP),
+      matchesFilters(member({ age: null }), { ...NO_FILTERS, age: ["البدريين"] }, MEMBERSHIP),
     ).toBe(false);
   });
 
@@ -454,5 +516,59 @@ describe("narrowing to the memberships one named admin recorded", () => {
   it("counts the named admin as a filter of its own", () => {
     expect(activeFilterCount(on({ origin: ADMIN_ORIGIN }))).toBe(1);
     expect(activeFilterCount(on({ origin: ADMIN_ORIGIN, recorder: "a1" }))).toBe(2);
+  });
+});
+
+describe("removing one chip", () => {
+  const on = (over: Partial<MemberFilters> = {}) => ({ ...NO_FILTERS, ...over });
+
+  it("drops one village and keeps the others", () => {
+    const filters = on({ village: ["أفجار", OTHER_VILLAGE] });
+    expect(withoutMemberChip(filters, `${VILLAGE_CHIP}أفجار`).village).toEqual([OTHER_VILLAGE]);
+  });
+
+  it("drops one age group and keeps the others", () => {
+    const filters = on({ age: ["البدريين", "التائبين"] });
+    expect(withoutMemberChip(filters, `${AGE_CHIP}التائبين`).age).toEqual(["البدريين"]);
+  });
+
+  it("clears a single valued filter", () => {
+    expect(withoutMemberChip(on({ method: "بنكيلي", paid: "full" }), "method")).toEqual(
+      on({ paid: "full" }),
+    );
+  });
+
+  it("lets go of the admin narrowings along with the origin", () => {
+    const filters = on({ origin: ADMIN_ORIGIN, recorder: "a1", nophone: "yes", nocapture: "yes" });
+    expect(withoutMemberChip(filters, "origin")).toEqual(on());
+  });
+
+  it("leaves the order alone, it has no chip", () => {
+    const filters = on({ sort: "az" });
+    expect(withoutMemberChip(filters, "sort")).toBe(filters);
+  });
+
+  it("leaves the filters alone for a key it does not know", () => {
+    const filters = on({ method: "بنكيلي" });
+    expect(withoutMemberChip(filters, "page")).toBe(filters);
+  });
+});
+
+describe("clearing every narrowing at once", () => {
+  it("keeps the tab, the search and the order", () => {
+    const filters = {
+      ...NO_FILTERS,
+      status: "ACTIVE",
+      q: "محمد",
+      sort: "az" as const,
+      village: ["أفجار"],
+      method: "بنكيلي",
+    };
+    expect(withoutNarrowing(filters)).toEqual({
+      ...NO_FILTERS,
+      status: "ACTIVE",
+      q: "محمد",
+      sort: "az",
+    });
   });
 });

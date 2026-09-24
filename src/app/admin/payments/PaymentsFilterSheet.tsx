@@ -1,10 +1,12 @@
 "use client";
 
+import AmountFilterInput from "@/components/admin/filters/AmountFilterInput";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
 import {
   PAYMENT_KIND_LABEL,
   PROOF_STATUS_LABEL,
+  amountFilter,
   paymentAccountPicker,
   paymentsPage as texts,
 } from "@/lib/texts";
@@ -14,9 +16,8 @@ import {
   activePaymentsFilterCount,
   type PaymentsFilters,
 } from "./paymentsFilters";
-import type { KindFilter } from "./KindTabs";
+import { KIND_TABS, type KindFilter } from "./KindTabs";
 
-const KINDS: KindFilter[] = ["ALL", "MEMBERSHIP", "ACTIVITY", "DONATION"];
 const STATUSES = ["PENDING", "ACTIVE", "REJECTED"];
 
 export default function PaymentsFilterSheet({
@@ -67,6 +68,10 @@ export default function PaymentsFilterSheet({
         />
       </FilterField>
 
+      <FilterField label={amountFilter.title}>
+        <AmountFilterInput value={filters.amount} onChange={(amount) => set({ amount })} />
+      </FilterField>
+
       <FilterField label={texts.account}>
         <select
           value={filters.account}
@@ -91,9 +96,9 @@ export default function PaymentsFilterSheet({
           className="input input-sm w-full"
           aria-label={texts.kind}
         >
-          {KINDS.map((kind) => (
-            <option key={kind} value={kind}>
-              {PAYMENT_KIND_LABEL[kind]}
+          {KIND_TABS.map(({ key }) => (
+            <option key={key} value={key}>
+              {PAYMENT_KIND_LABEL[key]}
             </option>
           ))}
         </select>

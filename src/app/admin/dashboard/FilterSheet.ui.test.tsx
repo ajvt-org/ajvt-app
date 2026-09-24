@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import FilterSheet from "./FilterSheet";
 import { NO_FILTERS } from "@/lib/memberFilters";
+import { OTHER_VILLAGE } from "@/lib/villages";
 
 const AGE_GROUPS = [{ id: "g1", name: "البدريين" }];
 const VILLAGES = [{ id: "v1", name: "أفجار" }];
@@ -35,11 +36,31 @@ describe("FilterSheet", () => {
   it("applies a picked filter immediately", () => {
     const { onChange } = renderSheet();
 
-    fireEvent.change(screen.getByLabelText("تصفية حسب العصر"), {
-      target: { value: "البدريين" },
+    fireEvent.change(screen.getByLabelText("تصفية حسب طريقة الدفع"), {
+      target: { value: "بنكيلي" },
     });
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ age: "البدريين" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ method: "بنكيلي" }));
+  });
+
+  it("adds an age group to the ones already chosen", () => {
+    const { onChange } = renderSheet({ age: ["التائبين"] });
+
+    fireEvent.click(screen.getByRole("button", { name: "تصفية حسب العصر" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "البدريين" }));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ age: ["التائبين", "البدريين"] }),
+    );
+  });
+
+  it("offers every village and the other option", () => {
+    renderSheet();
+
+    fireEvent.click(screen.getByRole("button", { name: "تصفية حسب القرية" }));
+
+    expect(screen.getByRole("checkbox", { name: "أفجار" })).toBeDefined();
+    expect(screen.getByRole("checkbox", { name: OTHER_VILLAGE })).toBeDefined();
   });
 
   it("offers the year filter only when more than one year exists", () => {
@@ -57,7 +78,7 @@ describe("FilterSheet", () => {
   });
 
   it("clears the filters but keeps the tab and the search", () => {
-    const { onChange } = renderSheet({ status: "ACTIVE", q: "محمد", age: "البدريين" });
+    const { onChange } = renderSheet({ status: "ACTIVE", q: "محمد", age: ["البدريين"] });
 
     fireEvent.click(screen.getByText("إزالة التصفية"));
 

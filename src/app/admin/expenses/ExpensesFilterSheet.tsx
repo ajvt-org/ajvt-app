@@ -2,9 +2,10 @@
 
 import DestinationSelect from "@/components/admin/DestinationSelect";
 import FinanceTagChips, { type FinanceTag } from "@/components/admin/FinanceTagChips";
+import AmountFilterInput from "@/components/admin/filters/AmountFilterInput";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
-import { destinationPicker, expensesPage as texts } from "@/lib/texts";
+import { amountFilter, destinationPicker, expensesPage as texts } from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import {
   NO_EXPENSES_FILTERS,
@@ -50,6 +51,13 @@ export default function ExpensesFilterSheet({
           to={filters.dateTo}
           idPrefix="expenses"
           onChange={(range) => onChange({ ...filters, dateFrom: range.from, dateTo: range.to })}
+        />
+      </FilterField>
+
+      <FilterField label={amountFilter.title}>
+        <AmountFilterInput
+          value={filters.amount}
+          onChange={(amount) => onChange({ ...filters, amount })}
         />
       </FilterField>
 

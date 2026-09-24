@@ -25,7 +25,7 @@ function renderChips(over: Partial<typeof NO_FILTERS>, onChange = vi.fn()) {
 
 describe("FilterChips", () => {
   it("shows one chip per active filter, in words", () => {
-    renderChips({ age: "البدريين", paid: "partial", standing: "former" });
+    renderChips({ age: ["البدريين"], paid: "partial", standing: "former" });
 
     expect(screen.getByText("البدريين")).toBeDefined();
     expect(screen.getByText("دفع ناقص")).toBeDefined();
@@ -40,24 +40,60 @@ describe("FilterChips", () => {
   });
 
   it("removes just its own filter when a chip is clicked", () => {
-    const { onChange } = renderChips({ age: "البدريين", method: "بنكيلي" });
+    const { onChange } = renderChips({ age: ["البدريين"], method: "بنكيلي" });
 
     fireEvent.click(screen.getByText("البدريين"));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ age: "", method: "بنكيلي" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ age: [], method: "بنكيلي" }));
+  });
+
+  it("shows a chip for each village chosen", () => {
+    renderChips({ village: ["أفجار", "بوغرابة"] });
+
+    expect(screen.getByText("أفجار")).toBeDefined();
+    expect(screen.getByText("بوغرابة")).toBeDefined();
+  });
+
+  it("removes one village and keeps the other", () => {
+    const { onChange } = renderChips({ village: ["أفجار", "بوغرابة"] });
+
+    fireEvent.click(screen.getByText("أفجار"));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ village: ["بوغرابة"] }));
+  });
+
+  it("shows a chip for each age group chosen", () => {
+    renderChips({ age: ["البدريين", "التائبين"] });
+
+    expect(screen.getByText("البدريين")).toBeDefined();
+    expect(screen.getByText("التائبين")).toBeDefined();
   });
 
   it("clears everything except the tab and the search", () => {
     const { onChange } = renderChips({
       status: "ACTIVE",
       q: "محمد",
-      age: "البدريين",
+      age: ["البدريين"],
       method: "بنكيلي",
     });
 
     fireEvent.click(screen.getByText(/إزالة التصفية/));
 
     expect(onChange).toHaveBeenCalledWith({ ...NO_FILTERS, status: "ACTIVE", q: "محمد" });
+  });
+
+  it("keeps the order when everything is cleared", () => {
+    const { onChange } = renderChips({ sort: "za", age: ["البدريين"], method: "بنكيلي" });
+
+    fireEvent.click(screen.getByText(/إزالة التصفية/));
+
+    expect(onChange).toHaveBeenCalledWith({ ...NO_FILTERS, sort: "za" });
+  });
+
+  it("shows no chip for the order", () => {
+    renderChips({ sort: "az" });
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
   it("shows the unknown origin as its own chip", () => {

@@ -6,6 +6,7 @@ import {
 } from "./membershipState";
 import { containsSearch, normalizeSearch } from "./searchText";
 import { ADMIN_ORIGIN, MEMBERSHIP_ORIGINS, type MembershipOrigin } from "./membershipOrigin";
+import { DEFAULT_MEMBER_SORT, readMemberSort, type MemberSort } from "./memberSort";
 
 export const MEMBER_FILTER_KEYS = [
   "status",
@@ -22,17 +23,23 @@ export const MEMBER_FILTER_KEYS = [
   "recorder",
   "nophone",
   "nocapture",
+  "sort",
 ] as const;
 
 export type MemberFilterKey = (typeof MEMBER_FILTER_KEYS)[number];
 
-export type MemberFilters = Record<MemberFilterKey, string>;
+export const MULTI_FILTER_KEYS = ["age", "village"] as const;
+
+type MultiFilterKey = (typeof MULTI_FILTER_KEYS)[number];
+
+export type MemberFilters = Record<Exclude<MemberFilterKey, MultiFilterKey | "sort">, string> &
+  Record<MultiFilterKey, string[]> & { sort: MemberSort };
 
 export const NO_FILTERS: MemberFilters = {
   status: "ALL",
   q: "",
-  age: "",
-  village: "",
+  age: [],
+  village: [],
   method: "",
   paid: "",
   year: "",
@@ -43,6 +50,7 @@ export const NO_FILTERS: MemberFilters = {
   recorder: "",
   nophone: "",
   nocapture: "",
+  sort: DEFAULT_MEMBER_SORT,
 };
 
 export type FilterableMember = {
@@ -64,33 +72,70 @@ export type FilterableMember = {
 
 const LEGACY_STANDING: Record<string, string> = { paid: "current", behind: "former" };
 
+function isMulti(key: MemberFilterKey): key is MultiFilterKey {
+  return (MULTI_FILTER_KEYS as readonly string[]).includes(key);
+}
+
 export function readFilters(params: URLSearchParams): MemberFilters {
   const filters = { ...NO_FILTERS };
   for (const key of MEMBER_FILTER_KEYS) {
     const value = params.get(key);
-    if (value) filters[key] = value;
+    if (!value) continue;
+    if (isMulti(key)) filters[key] = value.split(",").filter(Boolean);
+    else if (key === "sort") filters.sort = readMemberSort(value);
+    else filters[key] = value;
   }
   filters.standing = LEGACY_STANDING[filters.standing] ?? filters.standing;
   if (!MEMBERSHIP_ORIGINS.includes(filters.origin)) filters.origin = "";
-  if (filters.origin !== ADMIN_ORIGIN) {
-    filters.recorder = "";
-    filters.nophone = "";
-    filters.nocapture = "";
-  }
+  if (filters.origin !== ADMIN_ORIGIN) Object.assign(filters, ADMIN_NARROWINGS);
   return filters;
+}
+
+function written(filters: MemberFilters, key: MemberFilterKey): string {
+  if (isMulti(key)) return filters[key].join(",");
+  if (key === "q") return filters.q.trim();
+  return filters[key] === NO_FILTERS[key] ? "" : filters[key];
 }
 
 export function writeFilters(filters: MemberFilters): URLSearchParams {
   const params = new URLSearchParams();
   for (const key of MEMBER_FILTER_KEYS) {
-    const value = key === "q" ? filters.q.trim() : filters[key];
-    if (value && value !== NO_FILTERS[key]) params.set(key, value);
+    const value = written(filters, key);
+    if (value) params.set(key, value);
   }
   return params;
 }
 
+const NOT_NARROWING: MemberFilterKey[] = ["status", "q", "sort"];
+
 export function activeFilterCount(filters: MemberFilters): number {
-  return [...writeFilters(filters)].length;
+  return MEMBER_FILTER_KEYS.filter((key) => !NOT_NARROWING.includes(key)).reduce(
+    (count, key) => count + (isMulti(key) ? filters[key].length : filters[key] ? 1 : 0),
+    0,
+  );
+}
+
+export function withoutNarrowing(filters: MemberFilters): MemberFilters {
+  return { ...NO_FILTERS, status: filters.status, q: filters.q, sort: filters.sort };
+}
+
+export const AGE_CHIP = "age:";
+export const VILLAGE_CHIP = "village:";
+
+const ADMIN_NARROWINGS = { recorder: "", nophone: "", nocapture: "" };
+
+export function withoutMemberChip(filters: MemberFilters, key: string): MemberFilters {
+  if (key.startsWith(AGE_CHIP)) {
+    const value = key.slice(AGE_CHIP.length);
+    return { ...filters, age: filters.age.filter((kept) => kept !== value) };
+  }
+  if (key.startsWith(VILLAGE_CHIP)) {
+    const value = key.slice(VILLAGE_CHIP.length);
+    return { ...filters, village: filters.village.filter((kept) => kept !== value) };
+  }
+  if (key === "origin") return { ...filters, origin: "", ...ADMIN_NARROWINGS };
+  if (!(MEMBER_FILTER_KEYS as readonly string[]).includes(key) || key === "sort") return filters;
+  return { ...filters, [key]: "" };
 }
 
 function matchesText(member: FilterableMember, q: string): boolean {
@@ -154,8 +199,8 @@ export function matchesFilters(
   membership: Membership,
 ): boolean {
   if (filters.status && filters.status !== "ALL" && member.status !== filters.status) return false;
-  if (filters.age && member.age !== filters.age) return false;
-  if (filters.village && member.village !== filters.village) return false;
+  if (filters.age.length > 0 && !filters.age.includes(member.age ?? "")) return false;
+  if (filters.village.length > 0 && !filters.village.includes(member.village)) return false;
   if (filters.method && member.paymentMethod !== filters.method) return false;
   if (filters.year && String(member.membershipYear) !== filters.year) return false;
   if (!matchesPaid(member, filters.paid, membership.fee)) return false;

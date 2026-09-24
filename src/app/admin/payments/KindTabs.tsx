@@ -7,10 +7,9 @@ import type { ProofKind } from "./paymentTypes";
 
 export type KindFilter = "ALL" | ProofKind;
 
-const TABS: { key: KindFilter; icon?: IconName }[] = [
+export const KIND_TABS: { key: KindFilter; icon?: IconName }[] = [
   { key: "ALL" },
   { key: "MEMBERSHIP", icon: "card" },
-  { key: "ACTIVITY", icon: "trophy" },
   { key: "DONATION", icon: "heart" },
 ];
 
@@ -23,7 +22,7 @@ export default function KindTabs({
 }) {
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-1">
-      {TABS.map((tab) => (
+      {KIND_TABS.map((tab) => (
         <button
           key={tab.key}
           onClick={() => onPick(tab.key)}

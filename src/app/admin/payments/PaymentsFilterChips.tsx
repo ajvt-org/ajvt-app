@@ -1,8 +1,10 @@
 "use client";
 
 import FilterChipRow, { type FilterChip } from "@/components/admin/filters/FilterChipRow";
+import { NO_AMOUNT, amountFigure } from "@/lib/amountFilter";
 import {
   PAYMENT_KIND_LABEL,
+  amountChipLabel,
   PROOF_STATUS_LABEL,
   filterSheet,
   paymentAccountPicker,
@@ -37,11 +39,19 @@ export function chipsFor(
     chips.push({ key: "account", label: accountLabel(filters.account, accountOptions) });
   if (filters.from) chips.push({ key: "from", label: `${filterSheet.from} ${filters.from}` });
   if (filters.to) chips.push({ key: "to", label: `${filterSheet.to} ${filters.to}` });
+  const figure = amountFigure(filters.amount);
+  if (figure !== null)
+    chips.push({ key: "amount", label: amountChipLabel(filters.amount.op, figure) });
   if (RECEIPT_LABEL[filters.receipt])
     chips.push({ key: "receipt", label: RECEIPT_LABEL[filters.receipt] });
   if (LINKED_LABEL[filters.linked])
     chips.push({ key: "linked", label: LINKED_LABEL[filters.linked] });
   return chips;
+}
+
+function withoutPaymentsChip(filters: PaymentsFilters, key: string): PaymentsFilters {
+  const cleared = key === "kind" ? "ALL" : key === "amount" ? NO_AMOUNT : "";
+  return { ...filters, focus: "", [key]: cleared };
 }
 
 export default function PaymentsFilterChips({
@@ -59,7 +69,7 @@ export default function PaymentsFilterChips({
     <FilterChipRow
       chips={chipsFor(filters, accountOptions)}
       resultCount={resultCount}
-      onRemove={(key) => onChange({ ...filters, focus: "", [key]: key === "kind" ? "ALL" : "" })}
+      onRemove={(key) => onChange(withoutPaymentsChip(filters, key))}
       onClear={() => onChange({ ...NO_PAYMENTS_FILTERS, q: filters.q, sort: filters.sort })}
     />
   );

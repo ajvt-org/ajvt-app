@@ -7,6 +7,7 @@ export const filterSheet = {
   method: "طريقة الدفع",
   byMethod: "تصفية حسب طريقة الدفع",
   allMethods: "كل طرق الدفع",
+  anyMethod: "كل الطرق",
   paid: "المبلغ المدفوع",
   byPaid: "تصفية حسب المبلغ المدفوع",
   allAmounts: "كل المبالغ",
@@ -36,4 +37,11 @@ export const filterSheet = {
   clear: "إزالة التصفية",
   clearCount: (count: number) => `إزالة التصفية (${count})`,
   done: "تم",
+  sortBy: "ترتيب القائمة",
+} as const;
+
+export const MEMBER_SORT_LABEL = {
+  review: "ترتيب المراجعة",
+  az: "الاسم من أ إلى ي",
+  za: "الاسم من ي إلى أ",
 } as const;

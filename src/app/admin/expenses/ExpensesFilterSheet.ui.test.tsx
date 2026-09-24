@@ -3,7 +3,14 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import ExpensesFilterSheet from "./ExpensesFilterSheet";
 import ExpensesFilterChips from "./ExpensesFilterChips";
 import { NO_EXPENSES_FILTERS, type ExpensesFilters } from "./expensesFilters";
-import { destinationPicker, expensesPage, filterSheet } from "@/lib/texts";
+import { NO_AMOUNT } from "@/lib/amountFilter";
+import {
+  amountChipLabel,
+  amountFilter,
+  destinationPicker,
+  expensesPage,
+  filterSheet,
+} from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
 
 afterEach(cleanup);
@@ -67,6 +74,16 @@ describe("the expenses filter sheet", () => {
     );
   });
 
+  it("holds the amount beside the rest", () => {
+    const { onChange } = sheet({ destinationId: "act-1" });
+
+    fireEvent.change(screen.getByLabelText(amountFilter.figure), { target: { value: "5000" } });
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ destinationId: "act-1", amount: { op: "gt", figure: "5000" } }),
+    );
+  });
+
   it("keeps the search when the sheet is cleared", () => {
     const { onChange } = sheet({ q: "essence", tagIds: ["t1"] });
 
@@ -119,5 +136,21 @@ describe("the expenses chips row", () => {
     fireEvent.click(screen.getByText("نقل"));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ tagIds: ["t2"] }));
+  });
+
+  it("names the amount filter in one chip", () => {
+    chips({ amount: { op: "lt", figure: "5000" } });
+
+    expect(screen.getByText(amountChipLabel("lt", 5000))).toBeDefined();
+  });
+
+  it("clears the amount when its chip is pressed", () => {
+    const { onChange } = chips({ amount: { op: "lt", figure: "5000" }, tagIds: ["t1"] });
+
+    fireEvent.click(screen.getByText(amountChipLabel("lt", 5000)));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: NO_AMOUNT, tagIds: ["t1"] }),
+    );
   });
 });
