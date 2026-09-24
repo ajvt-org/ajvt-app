@@ -2,6 +2,7 @@
 
 import DestinationSelect from "@/components/admin/DestinationSelect";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
+import AmountFilterInput from "@/components/admin/filters/AmountFilterInput";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterRow from "@/components/admin/filters/FilterRow";
 import MultiSelect from "@/components/admin/filters/MultiSelect";
@@ -48,6 +49,10 @@ export default function ExpensesFilterRow({
         to={filters.dateTo}
         idPrefix="expenses-row"
         onChange={(range) => onChange({ ...filters, dateFrom: range.from, dateTo: range.to })}
+      />
+      <AmountFilterInput
+        value={filters.amount}
+        onChange={(amount) => onChange({ ...filters, amount })}
       />
     </FilterRow>
   );

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { expensesPage, filterSheet } from "@/lib/texts";
+import { amountFilter, expensesPage, filterSheet } from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import { NO_EXPENSES_FILTERS, type ExpensesFilters } from "./expensesFilters";
 import ExpensesFilterRow from "./ExpensesFilterRow";
@@ -59,6 +59,16 @@ describe("the filters on the expenses page", () => {
 
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ dateFrom: "2026-08-01", dateTo: "2026-08-31" }),
+    );
+  });
+
+  it("carries the amount beside the dates", () => {
+    const onChange = renderRow({ dateFrom: "2026-08-01" });
+
+    fireEvent.change(screen.getByLabelText(amountFilter.operator), { target: { value: "lt" } });
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ dateFrom: "2026-08-01", amount: { op: "lt", figure: "" } }),
     );
   });
 });
