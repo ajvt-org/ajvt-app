@@ -363,6 +363,16 @@ const KEPT_CLEAN = [
   "src/app/admin/supporters/page.tsx",
   "src/app/admin/payments/KindTabs.tsx",
   "src/app/admin/payments/PaymentsFilterSheet.tsx",
+  "src/components/admin/filters/MultiSelect.tsx",
+  "src/app/admin/dashboard/OriginFilter.tsx",
+  "src/app/admin/dashboard/MemberReview.tsx",
+  "src/app/admin/dashboard/DashboardDialogs.tsx",
+  "src/app/admin/dashboard/MemberStats.tsx",
+  "src/app/admin/dashboard/filterOptions.ts",
+  "src/app/admin/dashboard/useMembersData.ts",
+  "src/app/admin/dashboard/useDashboardLists.ts",
+  "src/app/admin/dashboard/useMemberReview.ts",
+  "src/app/admin/dashboard/useSelection.ts",
 ];
 
 function sourceFiles(path: string): string[] {
