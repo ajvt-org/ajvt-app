@@ -2,7 +2,13 @@
 
 import FilterChipRow, { type FilterChip } from "@/components/admin/filters/FilterChipRow";
 import { filterSheet } from "@/lib/texts";
-import { NO_FILTERS, type MemberFilters } from "@/lib/memberFilters";
+import {
+  AGE_CHIP,
+  NO_FILTERS,
+  VILLAGE_CHIP,
+  withoutMemberChip,
+  type MemberFilters,
+} from "@/lib/memberFilters";
 import { ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN } from "@/lib/membershipOrigin";
 import type { RecordingAdmin } from "./types";
 
@@ -30,7 +36,10 @@ function chipsFor(
   recordingAdmins: RecordingAdmin[],
 ): FilterChip[] {
   const chips: FilterChip[] = [];
-  if (filters.age) chips.push({ key: "age", label: filters.age });
+  for (const village of filters.village) {
+    chips.push({ key: `${VILLAGE_CHIP}${village}`, label: village });
+  }
+  for (const age of filters.age) chips.push({ key: `${AGE_CHIP}${age}`, label: age });
   if (filters.method) chips.push({ key: "method", label: filters.method });
   if (filters.paid && PAID_LABEL[filters.paid])
     chips.push({ key: "paid", label: PAID_LABEL[filters.paid] });
@@ -66,13 +75,7 @@ export default function FilterChips({
     <FilterChipRow
       chips={chipsFor(filters, year, recordingAdmins)}
       resultCount={resultCount}
-      onRemove={(key) =>
-        onChange(
-          key === "origin"
-            ? { ...filters, origin: "", recorder: "", nophone: "", nocapture: "" }
-            : { ...filters, [key]: "" },
-        )
-      }
+      onRemove={(key) => onChange(withoutMemberChip(filters, key))}
       onClear={() => onChange({ ...NO_FILTERS, status: filters.status, q: filters.q })}
     />
   );
