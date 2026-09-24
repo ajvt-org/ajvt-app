@@ -382,6 +382,10 @@ const KEPT_CLEAN = [
   "src/app/admin/expenses/useExpenseEditor.ts",
   "src/app/admin/expenses/useExpenseActions.ts",
   "src/app/admin/expenses/expensesFilters.ts",
+  "src/components/admin/filters/AmountFilterInput.tsx",
+  "src/app/admin/payments/PaymentsFilterChips.tsx",
+  "src/app/admin/payments/paymentsFilters.ts",
+  "src/lib/amountFilter.ts",
 ];
 
 function sourceFiles(path: string): string[] {
