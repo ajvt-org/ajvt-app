@@ -7,6 +7,7 @@ import { PAYMENT_SORT_LABEL, paymentsPage as texts } from "@/lib/texts";
 import Icon from "@/components/Icon";
 import KindTabs from "./KindTabs";
 import PaymentsFilterChips from "./PaymentsFilterChips";
+import PaymentsFilterRow from "./PaymentsFilterRow";
 import PaymentsFilterSheet from "./PaymentsFilterSheet";
 import ManualDonationDialog from "./ManualDonationDialog";
 import PaymentsList from "./PaymentsList";
@@ -81,6 +82,8 @@ function AdminPaymentsPageInner() {
         active={filters.kind}
         onPick={(next) => go({ ...filters, focus: "", kind: next })}
       />
+
+      <PaymentsFilterRow filters={filters} onChange={go} />
 
       <input
         type="text"
