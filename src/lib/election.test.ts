@@ -13,6 +13,7 @@ import {
   percentOf,
   rankedTally,
   closingSoon,
+  closeMoveProblem,
 } from "./election";
 
 const at = (iso: string) => new Date(iso);
@@ -319,5 +320,48 @@ describe("a close moment of its own", () => {
     expect(stillWorthShowing(reopened, at("2026-10-20T08:00:00Z"))).toBe(true);
     expect(closingSoon(reopened, at("2026-10-04T01:00:00Z"))).toBe(false);
     expect(closingSoon(reopened, at("2026-10-04T08:00:00Z"))).toBe(true);
+  });
+});
+
+describe("closeMoveProblem", () => {
+  const ranAnHour = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 60 };
+
+  it("lets an open vote run longer", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-01T10:00:00Z"), at("2026-10-01T08:30:00Z")),
+    ).toBe(null);
+  });
+
+  it("lets a finished vote reopen", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-03T10:00:00Z"), at("2026-10-03T09:00:00Z")),
+    ).toBe(null);
+  });
+
+  it("leaves a vote that has not started to its own settings", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-01T12:00:00Z"), at("2026-10-01T07:00:00Z")),
+    ).toBe("notStarted");
+  });
+
+  it("never moves the close inward", () => {
+    const now = at("2026-10-01T08:30:00Z");
+
+    expect(closeMoveProblem(ranAnHour, at("2026-10-01T08:45:00Z"), now)).toBe("notLater");
+    expect(closeMoveProblem(ranAnHour, at("2026-10-01T09:00:00Z"), now)).toBe("notLater");
+  });
+
+  it("measures inward against a close that already moved", () => {
+    const moved = { ...ranAnHour, closesAt: at("2026-10-01T12:00:00Z") };
+
+    expect(closeMoveProblem(moved, at("2026-10-01T11:00:00Z"), at("2026-10-01T08:30:00Z"))).toBe(
+      "notLater",
+    );
+  });
+
+  it("refuses a new close that is already behind the clock", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-02T08:00:00Z"), at("2026-10-03T08:00:00Z")),
+    ).toBe("notFuture");
   });
 });

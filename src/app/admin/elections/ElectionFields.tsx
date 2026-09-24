@@ -17,15 +17,19 @@ import type { ElectionDraft } from "./electionTypes";
 export default function ElectionFields({
   draft,
   frozen,
+  closeControl,
   onChange,
 }: {
   draft: ElectionDraft;
   frozen: boolean;
+  closeControl?: React.ReactNode;
   onChange: <K extends keyof ElectionDraft>(key: K, value: ElectionDraft[K]) => void;
 }) {
   const custom = !isPresetDuration(draft.durationMinutes);
 
-  if (frozen) return <FrozenElectionFields draft={draft} onChange={onChange} />;
+  if (frozen) {
+    return <FrozenElectionFields draft={draft} closeControl={closeControl} onChange={onChange} />;
+  }
 
   return (
     <>

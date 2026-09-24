@@ -2,7 +2,13 @@ import { prisma } from "./prisma";
 import { paidUpMemberCount } from "./memberStanding";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { elections as messages } from "./messages";
-import { electionState, validElectionMinutes } from "./election";
+import {
+  closeMoveProblem,
+  electionState,
+  endsAt,
+  validElectionMinutes,
+  type CloseMoveProblem,
+} from "./election";
 import { isForeignKeyViolation } from "./prismaError";
 
 export type ElectionInput = {
@@ -22,7 +28,8 @@ export type ElectionAction =
   | "HIDE_ELECTION"
   | "SHOW_ELECTION_RESULTS"
   | "HIDE_ELECTION_RESULTS"
-  | "DELETE_ELECTION";
+  | "DELETE_ELECTION"
+  | "EXTEND_ELECTION";
 
 const LIST_INCLUDE = {
   candidates: {
@@ -153,6 +160,28 @@ export async function updateElection(id: string, input: Partial<ElectionInput>, 
   const actions = actionsFor(existing, input);
   const election = await prisma.election.update({ where: { id }, data, include: LIST_INCLUDE });
   return { election, actions };
+}
+
+const CLOSE_PROBLEMS: Record<CloseMoveProblem, string> = {
+  notStarted: messages.closeNotStarted,
+  notLater: messages.closeNotLater,
+  notFuture: messages.closeNotFuture,
+};
+
+export async function moveElectionClose(id: string, value: unknown, now = new Date()) {
+  const next = typeof value === "string" ? new Date(value) : new Date(NaN);
+  if (Number.isNaN(next.getTime())) throw new ValidationError(messages.closeRequired);
+
+  const existing = await requireElection(id);
+  const problem = closeMoveProblem(existing, next, now);
+  if (problem) throw new ConflictError(CLOSE_PROBLEMS[problem]);
+
+  const election = await prisma.election.update({
+    where: { id },
+    data: { closesAt: next },
+    include: LIST_INCLUDE,
+  });
+  return { election, before: endsAt(existing), after: next };
 }
 
 function cleanName(value: unknown): string {

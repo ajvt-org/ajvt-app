@@ -9,18 +9,21 @@ import { electionState } from "@/lib/election";
 import { electionAdmin as texts } from "@/lib/texts";
 import CandidatesPanel from "./CandidatesPanel";
 import ElectionFields from "./ElectionFields";
+import ExtendClose from "./ExtendClose";
 import ElectionResult from "@/components/ElectionResult";
 import { EMPTY_ELECTION, draftOf, type ElectionDraft, type ElectionRow } from "./electionTypes";
 
 export default function ElectionPanel({
   election,
   electorate,
+  owner = false,
   onSaved,
   onChanged,
   onDeleted,
 }: {
   election: ElectionRow | null;
   electorate: number;
+  owner?: boolean;
   onSaved: (id: string) => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -83,7 +86,26 @@ export default function ElectionPanel({
         </p>
       )}
 
-      <ElectionFields draft={draft} frozen={frozen} onChange={set} />
+      <ElectionFields
+        draft={draft}
+        frozen={frozen}
+        onChange={set}
+        closeControl={
+          owner &&
+          election &&
+          frozen && (
+            <ExtendClose
+              electionId={election.id}
+              election={draft}
+              resultShown={election.showResults}
+              onMoved={(closesAt) => {
+                set("closesAt", closesAt);
+                onChanged();
+              }}
+            />
+          )
+        }
+      />
 
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>

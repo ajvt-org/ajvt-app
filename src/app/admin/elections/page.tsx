@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { isOwner } from "@/lib/adminRoles";
 import ElectionList from "./ElectionList";
 import ElectionPanel from "./ElectionPanel";
 import type { ElectionRow } from "./electionTypes";
@@ -12,6 +13,14 @@ export default function AdminElectionsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [reload, setReload] = useState(0);
+  const [owner, setOwner] = useState(false);
+
+  useEffect(() => {
+    api
+      .get<{ role: string }>("/api/admin/me")
+      .then((viewer) => setOwner(isOwner(viewer.role)))
+      .catch(() => setOwner(false));
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -53,6 +62,7 @@ export default function AdminElectionsPage() {
           key={selected?.id ?? "new"}
           election={selected}
           electorate={electorate}
+          owner={owner}
           onSaved={(id) => {
             setCreating(false);
             setSelectedId(id);

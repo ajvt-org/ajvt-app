@@ -35,6 +35,19 @@ export function closingSoon(election: ElectionWindow, now = new Date()): boolean
   return (now.getTime() - start) / span > ELECTION_URGENT_SHARE;
 }
 
+export type CloseMoveProblem = "notStarted" | "notLater" | "notFuture";
+
+export function closeMoveProblem(
+  election: ElectionWindow,
+  next: Date,
+  now = new Date(),
+): CloseMoveProblem | null {
+  if (electionState(election, now) === "upcoming") return "notStarted";
+  if (next.getTime() <= endsAt(election).getTime()) return "notLater";
+  if (next.getTime() <= now.getTime()) return "notFuture";
+  return null;
+}
+
 export function msUntilStart(election: ElectionWindow, now = new Date()): number {
   return Math.max(0, new Date(election.startsAt).getTime() - now.getTime());
 }
