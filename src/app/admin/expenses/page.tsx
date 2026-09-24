@@ -1,37 +1,37 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
-import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PageLoading from "@/components/PageLoading";
 import FinanceTagManager from "@/components/admin/FinanceTagManager";
+import ByAccount from "@/components/admin/ByAccount";
 import FinanceTotals from "./FinanceTotals";
 import ByPaymentMethod from "./ByPaymentMethod";
-import ByAccount from "@/components/admin/ByAccount";
 import UnassignedDonations from "./UnassignedDonations";
 import DailyRevenue from "./DailyRevenue";
 import ExpenseList from "./ExpenseList";
+import ExpensesHeader from "./ExpensesHeader";
+import ExpensesFilterRow from "./ExpensesFilterRow";
 import ExpensesFilterChips from "./ExpensesFilterChips";
 import ExpensesFilterSheet from "./ExpensesFilterSheet";
 import ExpenseFormDialog from "./ExpenseFormDialog";
 import { exportFinance } from "./exportFinance";
-import { expenseBodyOf } from "./expenseBody";
 import { useExpensesData } from "./useExpensesData";
+import { useExpenseEditor } from "./useExpenseEditor";
+import { useExpenseActions } from "./useExpenseActions";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import { paginate, pageCount } from "@/lib/listUrlState";
 import {
   EXPENSES_FILTER_KEYS,
   activeExpensesFilterCount,
   expensesAreFiltered,
+  matchesExpensesFilters,
   readExpensesFilters,
   writeExpensesFilters,
 } from "./expensesFilters";
-import { emptyExpenseForm, nowInputValue, PAGE_SIZE } from "./types";
-import { matchDateToLocalInput } from "@/lib/clubTime";
-import type { Expense, ExpenseForm } from "./types";
+import { PAGE_SIZE } from "./types";
 import { hasFullAccess } from "@/lib/adminRoles";
 import { expensesPage } from "@/lib/texts";
 
@@ -42,10 +42,6 @@ function toggleIn(set: Set<string>, key: string): Set<string> {
   return next;
 }
 
-function matchesExpense(expense: Expense, query: string) {
-  return expense.label.includes(query) || String(expense.amount).includes(query);
-}
-
 function AdminExpensesPageInner() {
   const { role, summary, expenses, tags, destinations, loading, reload } = useExpensesData();
   const { filters, page, go, goToPage } = useAdminListUrlState("/admin/expenses", {
@@ -53,175 +49,33 @@ function AdminExpensesPageInner() {
     readFilters: readExpensesFilters,
     writeFilters: writeExpensesFilters,
   });
+  const editor = useExpenseEditor({ destinations, reload });
+  const actions = useExpenseActions(reload);
 
-  const [reassignValue, setReassignValue] = useState<Record<string, string>>({});
-  const [reassigningId, setReassigningId] = useState<string | null>(null);
-
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [heldAccount, setHeldAccount] = useState<Expense["account"]>(null);
   const [showTagManager, setShowTagManager] = useState(false);
   const [filtering, setFiltering] = useState(false);
-  const [form, setForm] = useState<ExpenseForm>(emptyExpenseForm);
-  const [formError, setFormError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [asking, setAsking] = useState<string | null>(null);
-  const [pageError, setPageError] = useState("");
   const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
-
-  async function reassignPaymentMethod(id: string) {
-    const method = reassignValue[id];
-    if (!method) return;
-    setReassigningId(id);
-    setPageError("");
-    try {
-      await api.patch(`/api/admin/donations/${id}`, { paymentMethod: method });
-      await reload();
-    } catch (e) {
-      setPageError(errorMessage(e));
-    } finally {
-      setReassigningId(null);
-    }
-  }
-
-  function openCreate() {
-    setEditingId(null);
-    setHeldAccount(null);
-    setForm({ ...emptyExpenseForm, date: nowInputValue() });
-    setFormError("");
-    setShowForm(true);
-  }
-
-  function openEdit(expense: Expense) {
-    setEditingId(expense.id);
-    setHeldAccount(expense.account);
-    setForm({
-      label: expense.label,
-      amount: String(expense.amount),
-      method: expense.method || "",
-      accountId: expense.accountId || "",
-      note: expense.note || "",
-      date: matchDateToLocalInput(expense.date),
-      proofs: expense.proofs.map((row) => row.filename),
-      tagIds: expense.tags.map((t) => t.id),
-      allocations: expense.allocations.length
-        ? expense.allocations.map((share) => ({
-            destinationId: share.activity?.id || share.competition?.id || "",
-            amount: expense.allocations.length > 1 ? String(share.amount) : "",
-          }))
-        : [{ destinationId: "", amount: "" }],
-    });
-    setFormError("");
-    setShowForm(true);
-  }
-
-  async function submitForm(ev: React.SubmitEvent<HTMLFormElement>) {
-    ev.preventDefault();
-    setFormError("");
-    if (!form.label.trim()) {
-      setFormError(expensesPage.labelRequired);
-      return;
-    }
-    const amount = Number(form.amount);
-    if (!Number.isInteger(amount) || amount <= 0) {
-      setFormError(expensesPage.amountInvalid);
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const body = expenseBodyOf(form, destinations);
-      if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
-      else await api.post("/api/admin/expenses", body);
-      setShowForm(false);
-      await reload();
-    } catch (e) {
-      setFormError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function deleteExpense(id: string) {
-    setAsking(null);
-    setBusyId(id);
-    setPageError("");
-    try {
-      await api.del(`/api/admin/expenses/${id}`);
-      await reload();
-    } catch (e) {
-      setPageError(errorMessage(e));
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   if (loading) return <PageLoading />;
 
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
-  const query = filters.q.trim();
-  const shownExpenses = expenses.filter((e) => {
-    if (filters.tagIds.length > 0 && !e.tags.some((t) => filters.tagIds.includes(t.id)))
-      return false;
-    if (query && !matchesExpense(e, query)) return false;
-    if (
-      filters.destinationId &&
-      !e.allocations.some(
-        (share) =>
-          share.activity?.id === filters.destinationId ||
-          share.competition?.id === filters.destinationId,
-      )
-    )
-      return false;
-    const day = e.date.slice(0, 10);
-    if (filters.dateFrom && day < filters.dateFrom) return false;
-    if (filters.dateTo && day > filters.dateTo) return false;
-    return true;
-  });
-  const isFiltered = expensesAreFiltered(filters);
+  const shownExpenses = expenses.filter((e) => matchesExpensesFilters(e, filters));
   const totalPages = pageCount(shownExpenses.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
-  const paginated = paginate(shownExpenses, page, PAGE_SIZE);
+  const paginated = paginate(shownExpenses, currentPage, PAGE_SIZE);
   const activeCount = activeExpensesFilterCount(filters);
 
   return (
     <div className="admin-page space-y-5">
-      {pageError && <Notice tone="error">{pageError}</Notice>}
+      {actions.error && <Notice tone="error">{actions.error}</Notice>}
 
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="banknote">{expensesPage.ledger(shownExpenses.length)}</IconLabel>
-        </p>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => exportFinance(summary, expenses)}
-            className="text-xs font-bold px-3 py-1.5 rounded-lg"
-            style={{
-              background: "white",
-              color: "var(--mint-700)",
-              border: "1px solid var(--mint-100)",
-            }}
-          >
-            <IconLabel name="download">{expensesPage.exportAction}</IconLabel>
-          </button>
-          <button
-            onClick={() => setShowTagManager((v) => !v)}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            <IconLabel name="tag">{expensesPage.tags}</IconLabel>
-          </button>
-          <button
-            onClick={openCreate}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold"
-            style={{ background: "var(--mint-600)", color: "white" }}
-          >
-            <IconLabel name="plus">{expensesPage.addExpense}</IconLabel>
-          </button>
-        </div>
-      </div>
+      <ExpensesHeader
+        count={shownExpenses.length}
+        onExport={() => exportFinance(summary, expenses)}
+        onToggleTags={() => setShowTagManager((v) => !v)}
+        onAdd={editor.create}
+      />
 
       <FinanceTotals
         revenue={summary?.totalRevenue ?? 0}
@@ -232,10 +86,10 @@ function AdminExpensesPageInner() {
       {hasFullAccess(role) && summary && summary.unassigned.length > 0 && (
         <UnassignedDonations
           rows={summary.unassigned}
-          chosen={reassignValue}
-          busyId={reassigningId}
-          onChoose={(id, method) => setReassignValue((p) => ({ ...p, [id]: method }))}
-          onSave={reassignPaymentMethod}
+          chosen={actions.reassignValue}
+          busyId={actions.reassigningId}
+          onChoose={actions.choose}
+          onSave={actions.reassign}
         />
       )}
 
@@ -254,6 +108,8 @@ function AdminExpensesPageInner() {
         onChange={(e) => go({ ...filters, q: e.target.value })}
         className="input text-sm"
       />
+
+      <ExpensesFilterRow filters={filters} destinations={destinations} tags={tags} onChange={go} />
 
       <div className="flex items-center gap-2">
         <button
@@ -277,10 +133,10 @@ function AdminExpensesPageInner() {
 
       <ExpenseList
         expenses={paginated}
-        filtered={isFiltered}
-        busyId={busyId}
-        onEdit={openEdit}
-        onDelete={setAsking}
+        filtered={expensesAreFiltered(filters)}
+        busyId={actions.busyId}
+        onEdit={editor.edit}
+        onDelete={actions.ask}
         pagination={{ page: currentPage, totalPages, onGo: goToPage }}
       />
 
@@ -310,31 +166,31 @@ function AdminExpensesPageInner() {
         />
       )}
 
-      {showForm && (
+      {editor.open && (
         <ExpenseFormDialog
-          form={form}
+          form={editor.form}
           tags={tags}
           destinations={destinations}
-          editing={!!editingId}
-          expenseId={editingId}
-          held={heldAccount}
-          error={formError}
-          saving={saving}
-          onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}
-          onSubmit={submitForm}
-          onClose={() => setShowForm(false)}
+          editing={!!editor.editingId}
+          expenseId={editor.editingId}
+          held={editor.held}
+          error={editor.error}
+          saving={editor.saving}
+          onChange={editor.patch}
+          onSubmit={editor.submit}
+          onClose={editor.close}
         />
       )}
 
-      {asking && (
+      {actions.asking && (
         <ConfirmDialog
           title={expensesPage.confirmDeleteTitle}
           message={expensesPage.confirmDelete}
           confirmLabel={expensesPage.delete}
           danger
-          loading={busyId === asking}
-          onConfirm={() => deleteExpense(asking)}
-          onClose={() => setAsking(null)}
+          loading={actions.busyId === actions.asking}
+          onConfirm={() => actions.destroy(actions.asking!)}
+          onClose={() => actions.ask(null)}
         />
       )}
     </div>
