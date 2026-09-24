@@ -4,7 +4,8 @@ import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterRow from "@/components/admin/filters/FilterRow";
 import MultiSelect from "@/components/admin/filters/MultiSelect";
 import type { MemberFilters } from "@/lib/memberFilters";
-import { filterSheet as texts, villagesDialog } from "@/lib/texts";
+import { MEMBER_SORTS, readMemberSort } from "@/lib/memberSort";
+import { MEMBER_SORT_LABEL, filterSheet as texts, villagesDialog } from "@/lib/texts";
 import { ageOptions, villageOptions } from "./filterOptions";
 import type { AgeGroup, Village } from "./types";
 
@@ -62,6 +63,18 @@ export default function MembersFilterRow({
         idPrefix="members-row"
         onChange={(range) => onChange({ ...filters, ...range })}
       />
+      <select
+        value={filters.sort}
+        onChange={(e) => onChange({ ...filters, sort: readMemberSort(e.target.value) })}
+        className="input input-sm w-full"
+        aria-label={texts.sortBy}
+      >
+        {MEMBER_SORTS.map((sort) => (
+          <option key={sort} value={sort}>
+            {MEMBER_SORT_LABEL[sort]}
+          </option>
+        ))}
+      </select>
     </FilterRow>
   );
 }

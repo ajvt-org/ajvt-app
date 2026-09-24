@@ -9,6 +9,7 @@ import {
   writeFilters,
   activeFilterCount,
   withoutMemberChip,
+  withoutNarrowing,
   AGE_CHIP,
   VILLAGE_CHIP,
   matchesFilters,
@@ -67,6 +68,7 @@ describe("carrying the filters in the address", () => {
       recorder: "a1",
       nophone: "yes",
       nocapture: "yes",
+      sort: "za" as const,
     };
     expect(readFilters(new URLSearchParams(writeFilters(chosen).toString()))).toEqual(chosen);
   });
@@ -96,6 +98,7 @@ describe("carrying the filters in the address", () => {
       "recorder",
       "nophone",
       "nocapture",
+      "sort",
     ]);
     expect(Object.keys(NO_FILTERS).sort()).toEqual([...MEMBER_FILTER_KEYS].sort());
   });
@@ -107,6 +110,7 @@ describe("carrying the filters in the address", () => {
       ) as Record<string, string>),
       age: ["v-age"],
       village: ["v-village"],
+      sort: "az",
     } as MemberFilters;
     const params = writeFilters(every);
     for (const key of MEMBER_FILTER_KEYS) expect(params.get(key)).toBe(String(every[key]));
@@ -128,6 +132,19 @@ describe("carrying the filters in the address", () => {
 
   it("leaves the tab and the search out of the count, since clearing keeps both", () => {
     expect(activeFilterCount({ ...NO_FILTERS, status: "PENDING", q: "محمد" })).toBe(0);
+  });
+
+  it("leaves the order out of the count, since it narrows nothing", () => {
+    expect(activeFilterCount({ ...NO_FILTERS, sort: "az" })).toBe(0);
+  });
+
+  it("writes no order for the one the screen shows by default", () => {
+    expect(writeFilters(NO_FILTERS).get("sort")).toBeNull();
+    expect(writeFilters({ ...NO_FILTERS, sort: "za" }).get("sort")).toBe("za");
+  });
+
+  it("reads an order it does not know as the default one", () => {
+    expect(readFilters(new URLSearchParams("sort=bogus")).sort).toBe("review");
   });
 
   it("counts one per village and one per age group", () => {
@@ -526,8 +543,32 @@ describe("removing one chip", () => {
     expect(withoutMemberChip(filters, "origin")).toEqual(on());
   });
 
+  it("leaves the order alone, it has no chip", () => {
+    const filters = on({ sort: "az" });
+    expect(withoutMemberChip(filters, "sort")).toBe(filters);
+  });
+
   it("leaves the filters alone for a key it does not know", () => {
     const filters = on({ method: "بنكيلي" });
     expect(withoutMemberChip(filters, "page")).toBe(filters);
+  });
+});
+
+describe("clearing every narrowing at once", () => {
+  it("keeps the tab, the search and the order", () => {
+    const filters = {
+      ...NO_FILTERS,
+      status: "ACTIVE",
+      q: "محمد",
+      sort: "az" as const,
+      village: ["أفجار"],
+      method: "بنكيلي",
+    };
+    expect(withoutNarrowing(filters)).toEqual({
+      ...NO_FILTERS,
+      status: "ACTIVE",
+      q: "محمد",
+      sort: "az",
+    });
   });
 });

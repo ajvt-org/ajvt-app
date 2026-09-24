@@ -388,6 +388,7 @@ const KEPT_CLEAN = [
   "src/lib/amountFilter.ts",
   "src/app/admin/expenses/ExpensesFilterChips.tsx",
   "src/app/admin/expenses/ExpensesFilterSheet.tsx",
+  "src/lib/memberSort.ts",
 ];
 
 function sourceFiles(path: string): string[] {

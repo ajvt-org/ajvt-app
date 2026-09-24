@@ -4,9 +4,9 @@ import FilterChipRow, { type FilterChip } from "@/components/admin/filters/Filte
 import { filterSheet } from "@/lib/texts";
 import {
   AGE_CHIP,
-  NO_FILTERS,
   VILLAGE_CHIP,
   withoutMemberChip,
+  withoutNarrowing,
   type MemberFilters,
 } from "@/lib/memberFilters";
 import { ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN } from "@/lib/membershipOrigin";
@@ -76,7 +76,7 @@ export default function FilterChips({
       chips={chipsFor(filters, year, recordingAdmins)}
       resultCount={resultCount}
       onRemove={(key) => onChange(withoutMemberChip(filters, key))}
-      onClear={() => onChange({ ...NO_FILTERS, status: filters.status, q: filters.q })}
+      onClear={() => onChange(withoutNarrowing(filters))}
     />
   );
 }

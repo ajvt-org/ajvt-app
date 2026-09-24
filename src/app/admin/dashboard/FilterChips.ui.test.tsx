@@ -82,6 +82,20 @@ describe("FilterChips", () => {
     expect(onChange).toHaveBeenCalledWith({ ...NO_FILTERS, status: "ACTIVE", q: "محمد" });
   });
 
+  it("keeps the order when everything is cleared", () => {
+    const { onChange } = renderChips({ sort: "za", age: ["البدريين"], method: "بنكيلي" });
+
+    fireEvent.click(screen.getByText(/إزالة التصفية/));
+
+    expect(onChange).toHaveBeenCalledWith({ ...NO_FILTERS, sort: "za" });
+  });
+
+  it("shows no chip for the order", () => {
+    renderChips({ sort: "az" });
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
   it("shows the unknown origin as its own chip", () => {
     renderChips({ origin: "unknown" });
 
