@@ -32,6 +32,7 @@ import StatTabs from "./StatTabs";
 import MemberSearch from "./MemberSearch";
 import FilterSheet from "./FilterSheet";
 import FilterChips from "./FilterChips";
+import MembersFilterRow from "./MembersFilterRow";
 import UpToDateSummary from "./UpToDateSummary";
 import MemberStats from "./MemberStats";
 import BulkActionsBar from "./BulkActionsBar";
@@ -140,6 +141,14 @@ function AdminDashboardInner() {
             onManageVillages={() => dialogs.show("villages")}
             onManualAdd={() => dialogs.show("manualAdd")}
             onImport={() => dialogs.show("import")}
+          />
+
+          <MembersFilterRow
+            filters={filters}
+            villages={lists.villages}
+            ageGroups={lists.ageGroups}
+            paymentMethods={paymentMethods}
+            onChange={go}
           />
 
           {showStats && <MemberStats members={members} />}

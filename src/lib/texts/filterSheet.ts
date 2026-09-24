@@ -7,6 +7,7 @@ export const filterSheet = {
   method: "طريقة الدفع",
   byMethod: "تصفية حسب طريقة الدفع",
   allMethods: "كل طرق الدفع",
+  anyMethod: "كل الطرق",
   paid: "المبلغ المدفوع",
   byPaid: "تصفية حسب المبلغ المدفوع",
   allAmounts: "كل المبالغ",
