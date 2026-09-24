@@ -1,21 +1,16 @@
 "use client";
 
 import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
-import { ADMIN_ORIGIN, SELF_ORIGIN, UNKNOWN_ORIGIN } from "@/lib/membershipOrigin";
-import { OTHER_VILLAGE } from "@/lib/villages";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
+import MultiSelect from "@/components/admin/filters/MultiSelect";
+import { filterSheet as texts, villageField, villagesDialog } from "@/lib/texts";
 import { standingLabel } from "./FilterChips";
-import { villageField, villagesDialog } from "@/lib/texts";
+import OriginFilter from "./OriginFilter";
+import { ageOptions, villageOptions } from "./filterOptions";
 import type { AgeGroup, RecordingAdmin, Village } from "./types";
-import { filterSheet as texts } from "@/lib/texts";
 
 const STANDINGS = ["current", "former"];
-
-const NARROWINGS = [
-  { key: "nophone", label: texts.noPhone },
-  { key: "nocapture", label: texts.noCapture },
-] as const;
 
 export default function FilterSheet({
   filters,
@@ -48,36 +43,23 @@ export default function FilterSheet({
       onClose={onClose}
     >
       <FilterField label={villageField.label}>
-        <select
-          value={filters.village}
-          onChange={(e) => onChange({ ...filters, village: e.target.value })}
-          className="input input-sm w-full"
-          aria-label={texts.byVillage}
-        >
-          <option value="">{villagesDialog.filterAll}</option>
-          {villages.map((v) => (
-            <option key={v.id} value={v.name}>
-              {v.name}
-            </option>
-          ))}
-          <option value={OTHER_VILLAGE}>{OTHER_VILLAGE}</option>
-        </select>
+        <MultiSelect
+          label={texts.byVillage}
+          allLabel={villagesDialog.filterAll}
+          options={villageOptions(villages)}
+          chosen={filters.village}
+          onChange={(village) => onChange({ ...filters, village })}
+        />
       </FilterField>
 
       <FilterField label={texts.age}>
-        <select
-          value={filters.age}
-          onChange={(e) => onChange({ ...filters, age: e.target.value })}
-          className="input input-sm w-full"
-          aria-label={texts.byAge}
-        >
-          <option value="">{texts.allAges}</option>
-          {ageGroups.map((g) => (
-            <option key={g.id} value={g.name}>
-              {g.name}
-            </option>
-          ))}
-        </select>
+        <MultiSelect
+          label={texts.byAge}
+          allLabel={texts.allAges}
+          options={ageOptions(ageGroups)}
+          chosen={filters.age}
+          onChange={(age) => onChange({ ...filters, age })}
+        />
       </FilterField>
 
       <FilterField label={texts.method}>
@@ -138,61 +120,7 @@ export default function FilterSheet({
       </FilterField>
 
       <FilterField label={texts.origin}>
-        <select
-          value={filters.origin}
-          onChange={(e) =>
-            onChange(
-              e.target.value === ADMIN_ORIGIN
-                ? { ...filters, origin: ADMIN_ORIGIN }
-                : { ...filters, origin: e.target.value, recorder: "", nophone: "", nocapture: "" },
-            )
-          }
-          className="input input-sm w-full"
-          aria-label={texts.byOrigin}
-        >
-          <option value="">{texts.allOrigins}</option>
-          <option value={ADMIN_ORIGIN}>{texts.originAdmin}</option>
-          <option value={SELF_ORIGIN}>{texts.originSelf}</option>
-          <option value={UNKNOWN_ORIGIN}>{texts.originUnknown}</option>
-        </select>
-
-        {filters.origin === ADMIN_ORIGIN && recordingAdmins.length > 0 && (
-          <select
-            value={filters.recorder}
-            onChange={(e) => onChange({ ...filters, recorder: e.target.value })}
-            className="input input-sm w-full mt-2"
-            aria-label={texts.byRecorder}
-          >
-            <option value="">{texts.allRecorders}</option>
-            {recordingAdmins.map((admin) => (
-              <option key={admin.id} value={admin.id}>
-                {admin.username}
-              </option>
-            ))}
-          </select>
-        )}
-
-        {filters.origin === ADMIN_ORIGIN && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {NARROWINGS.map(({ key, label }) => {
-              const on = !!filters[key];
-              return (
-                <button
-                  key={key}
-                  onClick={() => onChange({ ...filters, [key]: on ? "" : "yes" })}
-                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                  style={{
-                    background: on ? "var(--mint-600)" : "white",
-                    color: on ? "white" : "var(--mint-700)",
-                    border: on ? "none" : "1px solid var(--mint-100)",
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <OriginFilter filters={filters} recordingAdmins={recordingAdmins} onChange={onChange} />
       </FilterField>
 
       <FilterField label={texts.membershipOf(year)}>
