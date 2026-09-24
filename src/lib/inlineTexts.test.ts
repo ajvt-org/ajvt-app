@@ -377,6 +377,11 @@ const KEPT_CLEAN = [
   "src/components/admin/filters/DateRangeFilter.tsx",
   "src/app/admin/dashboard/MembersFilterRow.tsx",
   "src/app/admin/payments/PaymentsFilterRow.tsx",
+  "src/app/admin/expenses/ExpensesFilterRow.tsx",
+  "src/app/admin/expenses/ExpensesHeader.tsx",
+  "src/app/admin/expenses/useExpenseEditor.ts",
+  "src/app/admin/expenses/useExpenseActions.ts",
+  "src/app/admin/expenses/expensesFilters.ts",
 ];
 
 function sourceFiles(path: string): string[] {

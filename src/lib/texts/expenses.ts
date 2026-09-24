@@ -32,6 +32,9 @@ export const expensesPage = {
   filter: "تصفية",
   destination: "الوجهة",
   expenseDate: "تاريخ المصروف",
+  byDestination: "تصفية حسب الوجهة",
+  byTags: "تصفية حسب التصنيف",
+  allTags: "كل التصنيفات",
 } as const;
 
 export const expenseList = {

@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
+import type { Expense } from "./types";
 import {
   EXPENSES_FILTER_KEYS,
   NO_EXPENSES_FILTERS,
   TAG_CHIP,
   activeExpensesFilterCount,
   expensesAreFiltered,
+  matchesExpensesFilters,
   readExpensesFilters,
   withoutExpensesChip,
   writeExpensesFilters,
@@ -102,5 +104,62 @@ describe("removing one chip", () => {
 
   it("changes nothing for a key it does not own", () => {
     expect(withoutExpensesChip(on, "sort")).toEqual(on);
+  });
+});
+
+describe("narrowing the list of expenses", () => {
+  const expense = (over: Partial<Expense> = {}): Expense => ({
+    id: "e1",
+    label: "essence",
+    amount: 1500,
+    method: null,
+    accountId: null,
+    account: null,
+    note: null,
+    proofs: [],
+    date: "2026-08-15T10:00:00.000Z",
+    createdBy: "admin",
+    tags: [{ id: "a", name: "transport" }],
+    allocations: [
+      { id: "s1", amount: 1500, activity: { id: "act-1", title: "t" }, competition: null },
+    ],
+    ...over,
+  });
+  const on = (over: Partial<typeof NO_EXPENSES_FILTERS> = {}) => ({
+    ...NO_EXPENSES_FILTERS,
+    ...over,
+  });
+
+  it("keeps every expense when nothing is chosen", () => {
+    expect(matchesExpensesFilters(expense(), NO_EXPENSES_FILTERS)).toBe(true);
+  });
+
+  it("keeps an expense carrying any of the tags chosen", () => {
+    expect(matchesExpensesFilters(expense(), on({ tagIds: ["b", "a"] }))).toBe(true);
+    expect(matchesExpensesFilters(expense(), on({ tagIds: ["b"] }))).toBe(false);
+  });
+
+  it("searches the label and the amount", () => {
+    expect(matchesExpensesFilters(expense(), on({ q: "ess" }))).toBe(true);
+    expect(matchesExpensesFilters(expense(), on({ q: "150" }))).toBe(true);
+    expect(matchesExpensesFilters(expense(), on({ q: "loyer" }))).toBe(false);
+  });
+
+  it("matches the destination through an activity or a competition share", () => {
+    const toCompetition = expense({
+      allocations: [
+        { id: "s1", amount: 1500, activity: null, competition: { id: "c-1", name: "c" } },
+      ],
+    });
+    expect(matchesExpensesFilters(expense(), on({ destinationId: "act-1" }))).toBe(true);
+    expect(matchesExpensesFilters(toCompetition, on({ destinationId: "c-1" }))).toBe(true);
+    expect(matchesExpensesFilters(expense(), on({ destinationId: "c-1" }))).toBe(false);
+  });
+
+  it("keeps the first and the last day of the range", () => {
+    expect(matchesExpensesFilters(expense(), on({ dateFrom: "2026-08-15" }))).toBe(true);
+    expect(matchesExpensesFilters(expense(), on({ dateTo: "2026-08-15" }))).toBe(true);
+    expect(matchesExpensesFilters(expense(), on({ dateFrom: "2026-08-16" }))).toBe(false);
+    expect(matchesExpensesFilters(expense(), on({ dateTo: "2026-08-14" }))).toBe(false);
   });
 });
