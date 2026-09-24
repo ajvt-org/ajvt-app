@@ -83,6 +83,7 @@ export {
 } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
+export { multiSelect } from "./multiSelect";
 export { landingActivities, landingHero } from "./landing";
 export {
   matchAdmin,
