@@ -1,6 +1,6 @@
 "use client";
 
-import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
+import { activeFilterCount, withoutNarrowing, type MemberFilters } from "@/lib/memberFilters";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
 import MultiSelect from "@/components/admin/filters/MultiSelect";
@@ -39,7 +39,7 @@ export default function FilterSheet({
     <FilterSheetShell
       activeCount={activeFilterCount(filters)}
       resultCount={resultCount}
-      onClear={() => onChange({ ...NO_FILTERS, status: filters.status, q: filters.q })}
+      onClear={() => onChange(withoutNarrowing(filters))}
       onClose={onClose}
     >
       <FilterField label={villageField.label}>

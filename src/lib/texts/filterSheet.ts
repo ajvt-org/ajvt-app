@@ -37,4 +37,11 @@ export const filterSheet = {
   clear: "إزالة التصفية",
   clearCount: (count: number) => `إزالة التصفية (${count})`,
   done: "تم",
+  sortBy: "ترتيب القائمة",
+} as const;
+
+export const MEMBER_SORT_LABEL = {
+  review: "ترتيب المراجعة",
+  az: "الاسم من أ إلى ي",
+  za: "الاسم من ي إلى أ",
 } as const;

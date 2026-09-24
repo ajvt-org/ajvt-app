@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NO_FILTERS, type MemberFilters } from "@/lib/memberFilters";
-import { filterSheet } from "@/lib/texts";
+import { MEMBER_SORT_LABEL, filterSheet } from "@/lib/texts";
 import MembersFilterRow from "./MembersFilterRow";
 
 function renderRow(over: Partial<MemberFilters> = {}) {
@@ -79,5 +79,25 @@ describe("the filters on the members page", () => {
     expect(screen.getByRole("button", { name: filterSheet.byVillage }).textContent).toContain(
       "أفجار",
     );
+  });
+
+  it("offers the review order and both name orders, review first", () => {
+    renderRow();
+
+    const sort = screen.getByLabelText(filterSheet.sortBy) as HTMLSelectElement;
+    expect([...sort.options].map((o) => o.textContent)).toEqual([
+      MEMBER_SORT_LABEL.review,
+      MEMBER_SORT_LABEL.az,
+      MEMBER_SORT_LABEL.za,
+    ]);
+    expect(sort.value).toBe("review");
+  });
+
+  it("orders by name and keeps the filters", () => {
+    const onChange = renderRow({ village: ["أفجار"] });
+
+    fireEvent.change(screen.getByLabelText(filterSheet.sortBy), { target: { value: "az" } });
+
+    expect(onChange).toHaveBeenCalledWith({ ...NO_FILTERS, village: ["أفجار"], sort: "az" });
   });
 });

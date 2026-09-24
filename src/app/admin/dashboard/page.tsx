@@ -13,6 +13,7 @@ import {
   activeFilterCount,
   NO_FILTERS,
 } from "@/lib/memberFilters";
+import { sortMembers } from "@/lib/memberSort";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { awaitsReview } from "@/lib/reviewQueue";
 import { pageCount, paginate } from "@/lib/listUrlState";
@@ -96,7 +97,10 @@ function AdminDashboardInner() {
     standing: filters.standing === want ? "" : want,
   });
 
-  const filtered = members.filter((m) => matchesFilters(m, filters, membership));
+  const filtered = sortMembers(
+    members.filter((m) => matchesFilters(m, filters, membership)),
+    filters.sort,
+  );
   const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
   const paginated = paginate(filtered, currentPage, PAGE_SIZE);
