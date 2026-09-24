@@ -29,8 +29,6 @@ export const electionAdmin = {
   confirmRemoveBody: (title: string) =>
     `يُحذف الانتخاب ${title} بمترشحيه وأصواته. يمكن استرجاعه خلال ${RETENTION_DAYS} يوماً.`,
   titleField: "عنوان الانتخاب للتأكيد",
-  yes: "نعم",
-  no: "لا",
 } as const;
 
 export const electionCandidates = {

@@ -85,13 +85,37 @@ describe("the election form once the vote has opened", () => {
     expect(screen.getByText("95 دقيقةً")).toBeTruthy();
   });
 
-  it("reads the frozen toggles back as words", () => {
+  it("draws a locked setting as a check or an X where the toggle was", () => {
     show(true, { allowBlank: true, shuffleCandidates: false });
 
-    expect(screen.queryByRole("switch", { name: "السماح بالورقة البيضاء" })).toBeNull();
-    expect(screen.queryByRole("switch", { name: "ترتيب عشوائي للمترشحين" })).toBeNull();
-    expect(screen.getByText("نعم")).toBeTruthy();
-    expect(screen.getByText("لا")).toBeTruthy();
+    const blank = screen.getByRole("switch", { name: "السماح بالورقة البيضاء" });
+    const shuffle = screen.getByRole("switch", { name: "ترتيب عشوائي للمترشحين" });
+    expect(blank.tagName).toBe("SPAN");
+    expect(blank.getAttribute("aria-checked")).toBe("true");
+    expect(blank.getAttribute("aria-disabled")).toBe("true");
+    expect(shuffle.getAttribute("aria-checked")).toBe("false");
+    expect(screen.queryByText("نعم")).toBeNull();
+    expect(screen.queryByText("لا")).toBeNull();
+  });
+
+  it("keeps the hidden setting on screen as a locked row", () => {
+    show(true, { hidden: false });
+
+    const hidden = screen.getByRole("switch", { name: "إخفاء الانتخاب" });
+    expect(hidden.tagName).toBe("SPAN");
+    expect(hidden.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("draws every setting in the same row, locked or not", () => {
+    show(true);
+
+    const rows = [
+      "إخفاء الانتخاب",
+      "السماح بالورقة البيضاء",
+      "ترتيب عشوائي للمترشحين",
+      "إظهار النتيجة بعد انتهاء التصويت",
+    ].map((label) => screen.getByRole("switch", { name: label }).parentElement!.className);
+    expect(new Set(rows).size).toBe(1);
   });
 
   it("leaves the result toggle live, since the committee still decides that", () => {
