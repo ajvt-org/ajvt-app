@@ -1,3 +1,5 @@
+import type { Expense } from "./types";
+
 export const EXPENSES_FILTER_KEYS = ["q", "tags", "destination", "from", "to"];
 
 export interface ExpensesFilters {
@@ -57,4 +59,37 @@ export function withoutExpensesChip(filters: ExpensesFilters, key: string): Expe
   if (key === "dateFrom") return { ...filters, dateFrom: "" };
   if (key === "dateTo") return { ...filters, dateTo: "" };
   return filters;
+}
+
+function matchesQuery(expense: Expense, query: string): boolean {
+  if (!query) return true;
+  return expense.label.includes(query) || String(expense.amount).includes(query);
+}
+
+function matchesDestination(expense: Expense, destinationId: string): boolean {
+  if (!destinationId) return true;
+  return expense.allocations.some(
+    (share) => share.activity?.id === destinationId || share.competition?.id === destinationId,
+  );
+}
+
+function matchesTags(expense: Expense, tagIds: string[]): boolean {
+  if (tagIds.length === 0) return true;
+  return expense.tags.some((tag) => tagIds.includes(tag.id));
+}
+
+function matchesDates(expense: Expense, from: string, to: string): boolean {
+  const day = expense.date.slice(0, 10);
+  if (from && day < from) return false;
+  if (to && day > to) return false;
+  return true;
+}
+
+export function matchesExpensesFilters(expense: Expense, filters: ExpensesFilters): boolean {
+  return (
+    matchesTags(expense, filters.tagIds) &&
+    matchesQuery(expense, filters.q.trim()) &&
+    matchesDestination(expense, filters.destinationId) &&
+    matchesDates(expense, filters.dateFrom, filters.dateTo)
+  );
 }
