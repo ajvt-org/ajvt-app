@@ -50,7 +50,9 @@ export default function MultiSelect({
             +{chosen.length - 1}
           </span>
         )}
-        <Icon name="chevronDown" size={14} />
+        <span className="shrink-0 flex" style={{ color: "var(--mint-500)" }}>
+          <Icon name="chevronDown" size={16} />
+        </span>
       </button>
       {open && (
         <>
