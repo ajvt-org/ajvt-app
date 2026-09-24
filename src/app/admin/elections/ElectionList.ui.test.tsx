@@ -40,25 +40,25 @@ describe("the election list", () => {
 
   it("reads the state off the clock once the election is published", () => {
     show([
-      row({ id: "a", title: "قادم", hidden: false }),
+      row({ id: "a", title: "الأول", hidden: false }),
       row({
         id: "b",
-        title: "جار",
+        title: "الثاني",
         hidden: false,
         startsAt: new Date(Date.now() - HOUR).toISOString(),
       }),
       row({
         id: "c",
-        title: "منته",
+        title: "الثالث",
         hidden: false,
         startsAt: new Date(Date.now() - 10 * HOUR).toISOString(),
         durationMinutes: 60,
       }),
     ]);
 
-    expect(screen.getByText("لم يبدأ بعد")).toBeTruthy();
-    expect(screen.getByText("التصويت جار")).toBeTruthy();
-    expect(screen.getByText("انتهى")).toBeTruthy();
+    expect(screen.getByText("قادم")).toBeTruthy();
+    expect(screen.getByText("جارٍ")).toBeTruthy();
+    expect(screen.getByText("منتهٍ")).toBeTruthy();
   });
 
   it("carries both ends of the window on every row", () => {
@@ -73,5 +73,17 @@ describe("the election list", () => {
     show([row({ title })]);
 
     expect(screen.getByText(title).className).not.toContain("truncate");
+  });
+
+  it("holds the chip on the title's line whatever the title's length", () => {
+    const title = "انتخاب رئيس لجنة الشباب والرياضة بالتاكلالت وما جاورها من القرى";
+    show([row({ title })]);
+
+    const name = screen.getByText(title);
+    const chip = screen.getByText("مخفي");
+    expect(chip.parentElement).toBe(name.parentElement);
+    expect(name.parentElement!.className).not.toContain("flex-wrap");
+    expect(name.className).toContain("flex-1");
+    expect(chip.className).toContain("shrink-0");
   });
 });

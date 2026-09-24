@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { retentionExpiry, type DeletableKind } from "./deletedRecords";
+import { archiveEntry, type DeletableKind } from "./deletedRecords";
 import type { Prisma } from "@prisma/client";
 
 export async function purgeExpired(now = new Date()): Promise<number> {
@@ -18,7 +18,7 @@ export async function archive(
   now = new Date(),
 ) {
   return prisma.deletedRecord.create({
-    data: { kind, recordId, label, data, deletedBy, expiresAt: retentionExpiry(now) },
+    data: archiveEntry(kind, recordId, label, data, deletedBy, now),
   });
 }
 

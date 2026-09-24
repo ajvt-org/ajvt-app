@@ -1,115 +1,34 @@
 "use client";
 
 import NumberField from "@/components/NumberField";
-import Toggle from "@/components/Toggle";
-import { formatDateTime } from "@/lib/clubTime";
 import { toLocalInput, fromLocalInput } from "@/lib/localDateInput";
-import { counted } from "@/lib/arabicCount";
-import { MINUTE } from "@/lib/messages";
 import { endsAt, ELECTION_MINUTES_MIN, ELECTION_MINUTES_MAX } from "@/lib/election";
 import {
   CUSTOM_ELECTION_DURATION,
-  durationLabel,
   electionAdmin as texts,
   electionDurations,
   isPresetDuration,
 } from "@/lib/texts";
+import { Field, Moment } from "./ElectionFieldParts";
+import FrozenElectionFields from "./FrozenElectionFields";
+import SettingRow from "./SettingRow";
 import type { ElectionDraft } from "./electionTypes";
-
-function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <label
-        htmlFor={id}
-        className="block text-xs font-bold mb-1"
-        style={{ color: "var(--text-main)" }}
-      >
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
-        {label}
-      </p>
-      <p
-        className="text-sm font-bold"
-        style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function Moment({ label, at }: { label: string; at: string | Date }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
-        {label}
-      </p>
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <bdi dir="ltr">{formatDateTime(at)}</bdi>
-      </p>
-    </div>
-  );
-}
-
-function Switch({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-        {label}
-      </span>
-      <Toggle label={label} checked={checked} onChange={onChange} />
-    </div>
-  );
-}
 
 export default function ElectionFields({
   draft,
   frozen,
+  closeControl,
   onChange,
 }: {
   draft: ElectionDraft;
   frozen: boolean;
+  closeControl?: React.ReactNode;
   onChange: <K extends keyof ElectionDraft>(key: K, value: ElectionDraft[K]) => void;
 }) {
-  const said = (value: boolean) => (value ? texts.yes : texts.no);
   const custom = !isPresetDuration(draft.durationMinutes);
 
   if (frozen) {
-    return (
-      <>
-        <Fact label={texts.title} value={draft.title} />
-        <Moment label={texts.startsAt} at={draft.startsAt} />
-        <Fact
-          label={texts.duration}
-          value={durationLabel(draft.durationMinutes, (minutes) => counted(minutes, MINUTE))}
-        />
-        <Moment label={texts.closesAt} at={endsAt(draft)} />
-        <Fact label={texts.allowBlank} value={said(draft.allowBlank)} />
-        <Fact label={texts.shuffle} value={said(draft.shuffleCandidates)} />
-        <Switch
-          label={texts.showResults}
-          checked={draft.showResults}
-          onChange={(next) => onChange("showResults", next)}
-        />
-      </>
-    );
+    return <FrozenElectionFields draft={draft} closeControl={closeControl} onChange={onChange} />;
   }
 
   return (
@@ -124,7 +43,7 @@ export default function ElectionFields({
         />
       </Field>
 
-      <Switch
+      <SettingRow
         label={texts.hidden}
         checked={draft.hidden}
         onChange={(next) => onChange("hidden", next)}
@@ -170,19 +89,19 @@ export default function ElectionFields({
         </Field>
       )}
 
-      <Switch
+      <SettingRow
         label={texts.allowBlank}
         checked={draft.allowBlank}
         onChange={(next) => onChange("allowBlank", next)}
       />
 
-      <Switch
+      <SettingRow
         label={texts.shuffle}
         checked={draft.shuffleCandidates}
         onChange={(next) => onChange("shuffleCandidates", next)}
       />
 
-      <Switch
+      <SettingRow
         label={texts.showResults}
         checked={draft.showResults}
         onChange={(next) => onChange("showResults", next)}

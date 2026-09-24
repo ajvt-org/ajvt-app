@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ElectionFields from "./ElectionFields";
 import { toLocalInput } from "@/lib/localDateInput";
-import { formatDateTime } from "@/lib/clubTime";
+import { localMoment } from "@/lib/localDateInput";
 import type { ElectionDraft } from "./electionTypes";
 
 const draft: ElectionDraft = {
@@ -61,7 +61,9 @@ describe("the election form while it can still be changed", () => {
     show();
 
     expect(screen.getByText("ينتهي التصويت")).toBeTruthy();
-    expect(screen.getByText(formatDateTime("2026-10-02T08:00:00.000Z"))).toBeTruthy();
+    const close = localMoment("2026-10-02T08:00:00.000Z");
+    expect(screen.getByText(close.date)).toBeTruthy();
+    expect(screen.getByText(close.time)).toBeTruthy();
   });
 });
 
@@ -73,7 +75,7 @@ describe("the election form once the vote has opened", () => {
     expect(screen.queryByLabelText("بداية التصويت")).toBeNull();
     expect(screen.queryByLabelText("مدة التصويت")).toBeNull();
     expect(screen.getByText(draft.title)).toBeTruthy();
-    expect(screen.getByText(formatDateTime(draft.startsAt))).toBeTruthy();
+    expect(screen.getByText(localMoment(draft.startsAt).date)).toBeTruthy();
     expect(screen.getByText("يوم")).toBeTruthy();
   });
 
@@ -83,13 +85,37 @@ describe("the election form once the vote has opened", () => {
     expect(screen.getByText("95 دقيقةً")).toBeTruthy();
   });
 
-  it("reads the frozen toggles back as words", () => {
+  it("draws a locked setting as a check or an X where the toggle was", () => {
     show(true, { allowBlank: true, shuffleCandidates: false });
 
-    expect(screen.queryByRole("switch", { name: "السماح بالورقة البيضاء" })).toBeNull();
-    expect(screen.queryByRole("switch", { name: "ترتيب عشوائي للمترشحين" })).toBeNull();
-    expect(screen.getByText("نعم")).toBeTruthy();
-    expect(screen.getByText("لا")).toBeTruthy();
+    const blank = screen.getByRole("switch", { name: "السماح بالورقة البيضاء" });
+    const shuffle = screen.getByRole("switch", { name: "ترتيب عشوائي للمترشحين" });
+    expect(blank.tagName).toBe("SPAN");
+    expect(blank.getAttribute("aria-checked")).toBe("true");
+    expect(blank.getAttribute("aria-disabled")).toBe("true");
+    expect(shuffle.getAttribute("aria-checked")).toBe("false");
+    expect(screen.queryByText("نعم")).toBeNull();
+    expect(screen.queryByText("لا")).toBeNull();
+  });
+
+  it("keeps the hidden setting on screen as a locked row", () => {
+    show(true, { hidden: false });
+
+    const hidden = screen.getByRole("switch", { name: "إخفاء الانتخاب" });
+    expect(hidden.tagName).toBe("SPAN");
+    expect(hidden.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("draws every setting in the same row, locked or not", () => {
+    show(true);
+
+    const rows = [
+      "إخفاء الانتخاب",
+      "السماح بالورقة البيضاء",
+      "ترتيب عشوائي للمترشحين",
+      "إظهار النتيجة بعد انتهاء التصويت",
+    ].map((label) => screen.getByRole("switch", { name: label }).parentElement!.className);
+    expect(new Set(rows).size).toBe(1);
   });
 
   it("leaves the result toggle live, since the committee still decides that", () => {

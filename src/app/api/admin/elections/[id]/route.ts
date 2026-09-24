@@ -4,7 +4,8 @@ import { ELECTIONS_AREA } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
-import { deleteElection, requireElection, updateElection } from "@/lib/electionServer";
+import { requireElection, updateElection } from "@/lib/electionServer";
+import { deleteElection } from "@/lib/electionArchiveServer";
 import { electionUpdateSchema } from "../schema";
 
 type Params = { params: Promise<{ id: string }> };
@@ -53,7 +54,10 @@ export const DELETE = withRoute(
     const session = await requireArea(ELECTIONS_AREA);
     const { id } = await params;
 
-    const election = await deleteElection(id);
+    const body = await req.json().catch(() => ({}));
+    const typed = String(body?.confirmTitle ?? "");
+
+    const election = await deleteElection(id, typed, session.username);
 
     await logAction(session.username, "DELETE_ELECTION", election.title, {
       ...auditContext(session, req),
@@ -63,6 +67,7 @@ export const DELETE = withRoute(
         title: election.title,
         startsAt: election.startsAt,
         durationMinutes: election.durationMinutes,
+        ballots: election.ballots.length,
       },
     });
 

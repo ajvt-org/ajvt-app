@@ -3,23 +3,27 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import IconLabel from "@/components/IconLabel";
 import { electionState } from "@/lib/election";
 import { electionAdmin as texts } from "@/lib/texts";
 import CandidatesPanel from "./CandidatesPanel";
 import ElectionFields from "./ElectionFields";
+import ExtendClose from "./ExtendClose";
 import ElectionResult from "@/components/ElectionResult";
 import { EMPTY_ELECTION, draftOf, type ElectionDraft, type ElectionRow } from "./electionTypes";
 
 export default function ElectionPanel({
   election,
   electorate,
+  owner = false,
   onSaved,
   onChanged,
   onDeleted,
 }: {
   election: ElectionRow | null;
   electorate: number;
+  owner?: boolean;
   onSaved: (id: string) => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -30,8 +34,8 @@ export default function ElectionPanel({
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  const frozen = election !== null && electionState(election) !== "upcoming";
-  const removable = election !== null && election.hidden && election._count.ballots === 0;
+  const state = election ? electionState(election) : null;
+  const frozen = state !== null && state !== "upcoming";
 
   function set<K extends keyof ElectionDraft>(key: K, value: ElectionDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -58,12 +62,12 @@ export default function ElectionPanel({
     }
   }
 
-  async function remove() {
+  async function remove(confirmTitle = "") {
     if (!election) return;
     setBusy(true);
     setError("");
     try {
-      await api.del(`/api/admin/elections/${election.id}`);
+      await api.del(`/api/admin/elections/${election.id}`, { confirmTitle });
       onDeleted();
       onChanged();
     } catch (e) {
@@ -82,16 +86,26 @@ export default function ElectionPanel({
         </p>
       )}
 
-      {frozen && (
-        <p
-          className="text-xs font-semibold rounded-lg p-2"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
-          {texts.frozen}
-        </p>
-      )}
-
-      <ElectionFields draft={draft} frozen={frozen} onChange={set} />
+      <ElectionFields
+        draft={draft}
+        frozen={frozen}
+        onChange={set}
+        closeControl={
+          owner &&
+          election &&
+          frozen && (
+            <ExtendClose
+              electionId={election.id}
+              election={draft}
+              resultShown={election.showResults}
+              onMoved={(closesAt) => {
+                set("closesAt", closesAt);
+                onChanged();
+              }}
+            />
+          )
+        }
+      />
 
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
@@ -109,7 +123,7 @@ export default function ElectionPanel({
           <IconLabel name="save">{texts.save}</IconLabel>
         </button>
 
-        {removable && (
+        {election && (
           <button
             onClick={() => setConfirming(true)}
             disabled={busy}
@@ -149,13 +163,26 @@ export default function ElectionPanel({
         />
       )}
 
-      {confirming && election && (
+      {confirming && election && state === "open" && (
+        <ConfirmDeleteDialog
+          name={election.title}
+          consequence={texts.confirmRemoveBody(election.title)}
+          title={texts.confirmRemove}
+          nameField={texts.titleField}
+          confirmLabel={texts.remove}
+          loading={busy}
+          onConfirm={remove}
+          onClose={() => setConfirming(false)}
+        />
+      )}
+
+      {confirming && election && state !== "open" && (
         <ConfirmDialog
           title={texts.confirmRemove}
           message={texts.confirmRemoveBody(election.title)}
           danger
           loading={busy}
-          onConfirm={remove}
+          onConfirm={() => remove()}
           onClose={() => setConfirming(false)}
         />
       )}

@@ -51,6 +51,7 @@ const TARGET_LABELS: Record<string, string> = {
   Donation: "تبرع",
   Question: "سؤال",
   Suspension: "إيقاف",
+  Election: "انتخاب",
 };
 
 export function auditFieldLabel(key: string): string {

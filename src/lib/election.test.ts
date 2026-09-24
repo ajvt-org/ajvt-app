@@ -12,6 +12,8 @@ import {
   orderForReader,
   percentOf,
   rankedTally,
+  closingSoon,
+  closeMoveProblem,
 } from "./election";
 
 const at = (iso: string) => new Date(iso);
@@ -263,5 +265,103 @@ describe("rankedTally", () => {
 
   it("answers an empty tally with an empty one", () => {
     expect(rankedTally([])).toEqual([]);
+  });
+});
+
+describe("closingSoon", () => {
+  const quarter = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 15 };
+
+  it("stays calm while more than a tenth of the window is left", () => {
+    expect(closingSoon(quarter, at("2026-10-01T08:13:29Z"))).toBe(false);
+  });
+
+  it("warns once less than a tenth of the window is left", () => {
+    expect(closingSoon(quarter, at("2026-10-01T08:13:31Z"))).toBe(true);
+  });
+
+  it("measures the tenth against the election's own window", () => {
+    const week = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 10080 };
+
+    expect(closingSoon(week, at("2026-10-07T14:00:00Z"))).toBe(false);
+    expect(closingSoon(week, at("2026-10-07T16:00:00Z"))).toBe(true);
+  });
+
+  it("never warns before the vote opens or after it closes", () => {
+    expect(closingSoon(quarter, at("2026-10-01T07:59:00Z"))).toBe(false);
+    expect(closingSoon(quarter, at("2026-10-01T08:20:00Z"))).toBe(false);
+  });
+});
+
+describe("a close moment of its own", () => {
+  const ranADay = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 1440 };
+  const reopened = { ...ranADay, closesAt: at("2026-10-04T09:00:00Z") };
+
+  it("wins over the start plus the duration", () => {
+    expect(endsAt(reopened)).toEqual(at("2026-10-04T09:00:00Z"));
+    expect(endsAt({ ...reopened, closesAt: "2026-10-04T09:00:00Z" })).toEqual(
+      at("2026-10-04T09:00:00Z"),
+    );
+  });
+
+  it("falls back to the start plus the duration when it is not set", () => {
+    expect(endsAt({ ...ranADay, closesAt: null })).toEqual(at("2026-10-02T08:00:00Z"));
+    expect(endsAt(ranADay)).toEqual(at("2026-10-02T08:00:00Z"));
+  });
+
+  it("reopens a vote that had ended", () => {
+    const now = at("2026-10-04T08:00:00Z");
+
+    expect(electionState(ranADay, now)).toBe("ended");
+    expect(electionState(reopened, now)).toBe("open");
+    expect(msUntilEnd(reopened, now)).toBe(3600_000);
+  });
+
+  it("keeps a reopened vote on screen and counts its tenth from the new close", () => {
+    expect(stillWorthShowing(reopened, at("2026-10-20T08:00:00Z"))).toBe(true);
+    expect(closingSoon(reopened, at("2026-10-04T01:00:00Z"))).toBe(false);
+    expect(closingSoon(reopened, at("2026-10-04T08:00:00Z"))).toBe(true);
+  });
+});
+
+describe("closeMoveProblem", () => {
+  const ranAnHour = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 60 };
+
+  it("lets an open vote run longer", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-01T10:00:00Z"), at("2026-10-01T08:30:00Z")),
+    ).toBe(null);
+  });
+
+  it("lets a finished vote reopen", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-03T10:00:00Z"), at("2026-10-03T09:00:00Z")),
+    ).toBe(null);
+  });
+
+  it("leaves a vote that has not started to its own settings", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-01T12:00:00Z"), at("2026-10-01T07:00:00Z")),
+    ).toBe("notStarted");
+  });
+
+  it("never moves the close inward", () => {
+    const now = at("2026-10-01T08:30:00Z");
+
+    expect(closeMoveProblem(ranAnHour, at("2026-10-01T08:45:00Z"), now)).toBe("notLater");
+    expect(closeMoveProblem(ranAnHour, at("2026-10-01T09:00:00Z"), now)).toBe("notLater");
+  });
+
+  it("measures inward against a close that already moved", () => {
+    const moved = { ...ranAnHour, closesAt: at("2026-10-01T12:00:00Z") };
+
+    expect(closeMoveProblem(moved, at("2026-10-01T11:00:00Z"), at("2026-10-01T08:30:00Z"))).toBe(
+      "notLater",
+    );
+  });
+
+  it("refuses a new close that is already behind the clock", () => {
+    expect(
+      closeMoveProblem(ranAnHour, at("2026-10-02T08:00:00Z"), at("2026-10-03T08:00:00Z")),
+    ).toBe("notFuture");
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
+import LocalMoment from "@/components/LocalMoment";
 import IconLabel from "@/components/IconLabel";
-import { formatDateTime } from "@/lib/clubTime";
 import { endsAt } from "@/lib/election";
 import { electionAdmin as texts } from "@/lib/texts";
 import ElectionStateChip from "./ElectionStateChip";
@@ -10,7 +10,7 @@ import type { ElectionRow } from "./electionTypes";
 function Span({ label, at }: { label: string; at: string | Date }) {
   return (
     <span>
-      {label} <bdi dir="ltr">{formatDateTime(at)}</bdi>
+      {label} <LocalMoment at={at} />
     </span>
   );
 }
@@ -53,9 +53,9 @@ export default function ElectionList({
                 border: `1px solid ${active ? "var(--mint-500)" : "transparent"}`,
               }}
             >
-              <div className="flex items-start gap-2 flex-wrap">
+              <div className="flex items-start gap-2">
                 <span
-                  className="text-sm font-bold"
+                  className="text-sm font-bold min-w-0 flex-1"
                   style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
                 >
                   {row.title}

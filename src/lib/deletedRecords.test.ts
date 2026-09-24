@@ -3,8 +3,13 @@ import {
   retentionExpiry,
   daysLeft,
   confirmationMatches,
+  archiveEntry,
+  canHandleKind,
   RETENTION_DAYS,
 } from "@/lib/deletedRecords";
+import { OWNER_ROLE, SUPER_ROLE } from "@/lib/adminRoles";
+
+const AT = new Date("2026-03-01T10:00:00.000Z");
 
 describe("retentionExpiry", () => {
   it("puts the expiry a retention window ahead", () => {
@@ -42,5 +47,28 @@ describe("confirmationMatches", () => {
   it("refuses anything else", () => {
     expect(confirmationMatches("محمد", "محمد ولد أحمد")).toBe(false);
     expect(confirmationMatches("", "محمد ولد أحمد")).toBe(false);
+  });
+});
+
+describe("archiveEntry", () => {
+  it("carries the record and an expiry a retention window ahead", () => {
+    const entry = archiveEntry("Election", "e1", "انتخاب", { id: "e1" }, "admin", AT);
+
+    expect(entry).toMatchObject({ kind: "Election", recordId: "e1", label: "انتخاب" });
+    expect(entry.deletedBy).toBe("admin");
+    expect(entry.expiresAt.toISOString().slice(0, 10)).toBe("2026-03-31");
+  });
+});
+
+describe("canHandleKind", () => {
+  it("leaves a member or an account to every role that reaches the screen", () => {
+    expect(canHandleKind("MEMBERS", "Member")).toBe(true);
+    expect(canHandleKind("MEMBERS", "User")).toBe(true);
+  });
+
+  it("keeps an election to the roles that reach the elections screen", () => {
+    expect(canHandleKind("MEMBERS", "Election")).toBe(false);
+    expect(canHandleKind(SUPER_ROLE, "Election")).toBe(true);
+    expect(canHandleKind(OWNER_ROLE, "Election")).toBe(true);
   });
 });

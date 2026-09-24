@@ -5,12 +5,13 @@ import BlockTimer from "@/components/BlockTimer";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageHeader from "@/components/PageHeader";
-import { electionState, endsAt } from "@/lib/election";
+import { useNow } from "@/hooks/useNow";
+import { ELECTION_URGENT_SHARE, electionState, endsAt } from "@/lib/election";
 import { electionMember as texts } from "@/lib/texts";
 import BallotPicker from "./BallotPicker";
 import CandidateList from "./CandidateList";
 import ElectionResult from "@/components/ElectionResult";
-import MyBallot from "./MyBallot";
+import MarkedBallot from "./MarkedBallot";
 import ElectionClock from "./ElectionClock";
 import type { ElectionDetailPayload } from "./electionTypes";
 
@@ -26,9 +27,9 @@ export default function ElectionView({
   onReached: () => void;
 }) {
   const { election, signedIn, canVote, voted, myCandidateId, result } = payload;
-  const state = electionState(election);
+  const now = useNow(1000);
+  const state = electionState(election, new Date(now));
   const voting = state === "open" && canVote && !voted;
-  const mine = election.candidates.find((candidate) => candidate.id === myCandidateId) ?? null;
 
   return (
     <div className="app-shell">
@@ -40,13 +41,15 @@ export default function ElectionView({
         </h2>
 
         <div className="card p-4 space-y-3">
-          <ElectionClock election={election} onReached={onReached} />
+          <ElectionClock election={election} onReached={onReached} now={now} />
           {state === "open" && (
             <BlockTimer
               opensAt={new Date(election.startsAt).toISOString()}
               closesAt={endsAt(election).toISOString()}
               label={texts.windowLabel}
               onReached={onReached}
+              urgentShare={ELECTION_URGENT_SHARE}
+              now={now}
             />
           )}
         </div>
@@ -81,9 +84,7 @@ export default function ElectionView({
             </div>
           ))}
 
-        {voted && <MyBallot candidate={mine} />}
-
-        {!result && !voted && (
+        {!result && (
           <div className="space-y-2">
             <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
               {texts.candidates}
@@ -94,6 +95,12 @@ export default function ElectionView({
                 candidates={election.candidates}
                 allowBlank={election.allowBlank}
                 onCast={onReached}
+              />
+            ) : voted ? (
+              <MarkedBallot
+                candidates={election.candidates}
+                allowBlank={election.allowBlank}
+                mine={myCandidateId}
               />
             ) : (
               <CandidateList candidates={election.candidates} />

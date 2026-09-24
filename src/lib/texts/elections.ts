@@ -1,8 +1,10 @@
+import { RETENTION_DAYS } from "../deletedRecords";
+
 export const electionStateLabels = {
   hidden: "مخفي",
-  upcoming: "لم يبدأ بعد",
-  open: "التصويت جار",
-  ended: "انتهى",
+  upcoming: "قادم",
+  open: "جارٍ",
+  ended: "منتهٍ",
 } as const;
 
 export const electionAdmin = {
@@ -10,7 +12,6 @@ export const electionAdmin = {
   empty: "لا توجد انتخابات بعد",
   save: "حفظ",
   saved: "تم الحفظ",
-  frozen: "انطلق التصويت. التوقيت والمترشحون والخيارات مغلقة، ويبقى نشر النتيجة بيدك",
   title: "عنوان الانتخاب",
   hidden: "إخفاء الانتخاب",
   startsAt: "بداية التصويت",
@@ -24,9 +25,14 @@ export const electionAdmin = {
   to: "إلى",
   remove: "حذف الانتخاب",
   confirmRemove: "حذف الانتخاب",
-  confirmRemoveBody: (title: string) => `سيحذف الانتخاب ${title} نهائياً`,
-  yes: "نعم",
-  no: "لا",
+  confirmRemoveBody: (title: string) =>
+    `يُحذف الانتخاب ${title} بمترشحيه وأصواته. يمكن استرجاعه خلال ${RETENTION_DAYS} يوماً.`,
+  titleField: "عنوان الانتخاب للتأكيد",
+  extend: "تمديد التصويت",
+  reopen: "إعادة فتح التصويت",
+  newClose: "موعد الانتهاء الجديد",
+  confirmClose: "تأكيد الموعد",
+  reopenBody: "تختفي النتيجة عن الأعضاء حتى ينتهي التصويت من جديد",
 } as const;
 
 export const electionCandidates = {
@@ -41,7 +47,6 @@ export const electionCandidates = {
   removeOne: (name: string) => `حذف ${name}`,
   confirmRemove: "حذف المترشح",
   confirmRemoveBody: (name: string) => `سيحذف ${name} من قائمة المترشحين`,
-  frozen: "انطلق التصويت، قائمة المترشحين مغلقة",
 } as const;
 
 export const electionMember = {
@@ -72,9 +77,6 @@ export const electionMember = {
   confirmFor: (name: string) => `ستصوّت لـ ${name}`,
   confirmBlank: "ستصوّت بورقة بيضاء",
   cannotChange: "لا يمكن تغيير صوتك بعد تأكيده",
-  recorded: "صوتك مسجّل",
-  recordedFor: (name: string) => `صوتك سُجّل لـ ${name}`,
-  recordedBlank: "صوتك سُجّل كورقة بيضاء",
   selected: (name: string) => `اخترت ${name}`,
   ended: "انتهى التصويت",
   resultHeld: "لم تعلن النتيجة بعد",

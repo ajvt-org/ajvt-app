@@ -6,7 +6,11 @@ const MINUTE = 60_000;
 
 export type ElectionState = "upcoming" | "open" | "ended";
 
-export type ElectionWindow = { startsAt: Date | string; durationMinutes: number };
+export type ElectionWindow = {
+  startsAt: Date | string;
+  durationMinutes: number;
+  closesAt?: Date | string | null;
+};
 
 export type ElectionTally = { candidateId: string | null; votes: number }[];
 
@@ -18,7 +22,30 @@ export function validElectionMinutes(value: unknown): boolean {
 }
 
 export function endsAt(election: ElectionWindow): Date {
+  if (election.closesAt) return new Date(election.closesAt);
   return new Date(new Date(election.startsAt).getTime() + election.durationMinutes * MINUTE);
+}
+
+export const ELECTION_URGENT_SHARE = 0.9;
+
+export function closingSoon(election: ElectionWindow, now = new Date()): boolean {
+  if (electionState(election, now) !== "open") return false;
+  const start = new Date(election.startsAt).getTime();
+  const span = Math.max(1, endsAt(election).getTime() - start);
+  return (now.getTime() - start) / span > ELECTION_URGENT_SHARE;
+}
+
+export type CloseMoveProblem = "notStarted" | "notLater" | "notFuture";
+
+export function closeMoveProblem(
+  election: ElectionWindow,
+  next: Date,
+  now = new Date(),
+): CloseMoveProblem | null {
+  if (electionState(election, now) === "upcoming") return "notStarted";
+  if (next.getTime() <= endsAt(election).getTime()) return "notLater";
+  if (next.getTime() <= now.getTime()) return "notFuture";
+  return null;
 }
 
 export function msUntilStart(election: ElectionWindow, now = new Date()): number {

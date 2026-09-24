@@ -94,6 +94,8 @@ export const ACTION_LABELS = {
   SHOW_ELECTION_RESULTS: "إظهار نتيجة انتخاب",
   HIDE_ELECTION_RESULTS: "إخفاء نتيجة انتخاب",
   DELETE_ELECTION: "حذف انتخاب",
+  RESTORE_ELECTION: "استرجاع انتخاب",
+  EXTEND_ELECTION: "تمديد انتخاب",
   ADD_ELECTION_CANDIDATE: "إضافة مترشح",
   UPDATE_ELECTION_CANDIDATE: "تعديل مترشح",
   DELETE_ELECTION_CANDIDATE: "حذف مترشح",
