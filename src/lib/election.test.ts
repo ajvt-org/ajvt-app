@@ -12,6 +12,7 @@ import {
   orderForReader,
   percentOf,
   rankedTally,
+  closingSoon,
 } from "./election";
 
 const at = (iso: string) => new Date(iso);
@@ -263,5 +264,29 @@ describe("rankedTally", () => {
 
   it("answers an empty tally with an empty one", () => {
     expect(rankedTally([])).toEqual([]);
+  });
+});
+
+describe("closingSoon", () => {
+  const quarter = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 15 };
+
+  it("stays calm while more than a tenth of the window is left", () => {
+    expect(closingSoon(quarter, at("2026-10-01T08:13:29Z"))).toBe(false);
+  });
+
+  it("warns once less than a tenth of the window is left", () => {
+    expect(closingSoon(quarter, at("2026-10-01T08:13:31Z"))).toBe(true);
+  });
+
+  it("measures the tenth against the election's own window", () => {
+    const week = { startsAt: at("2026-10-01T08:00:00Z"), durationMinutes: 10080 };
+
+    expect(closingSoon(week, at("2026-10-07T14:00:00Z"))).toBe(false);
+    expect(closingSoon(week, at("2026-10-07T16:00:00Z"))).toBe(true);
+  });
+
+  it("never warns before the vote opens or after it closes", () => {
+    expect(closingSoon(quarter, at("2026-10-01T07:59:00Z"))).toBe(false);
+    expect(closingSoon(quarter, at("2026-10-01T08:20:00Z"))).toBe(false);
   });
 });

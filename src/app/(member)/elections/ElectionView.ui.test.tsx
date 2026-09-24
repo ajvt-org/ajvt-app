@@ -191,3 +191,25 @@ describe("the result on the member screen", () => {
     expect(screen.getByText(LONG)).toBeTruthy();
   });
 });
+
+describe("the last tenth of an open election", () => {
+  it("turns the digits and the bar copper together", () => {
+    show(payload({}, -9.5 * HOUR));
+
+    const bar = screen.getByRole("progressbar").firstElementChild as HTMLElement;
+    expect(screen.getByLabelText("الوقت المتبقي لانتهاء التصويت").style.color).toBe(
+      "var(--copper-600)",
+    );
+    expect(bar.style.background).toContain("copper");
+  });
+
+  it("keeps both mint before it", () => {
+    show(payload({}, -8.5 * HOUR));
+
+    const bar = screen.getByRole("progressbar").firstElementChild as HTMLElement;
+    expect(screen.getByLabelText("الوقت المتبقي لانتهاء التصويت").style.color).toBe(
+      "var(--mint-700)",
+    );
+    expect(bar.style.background).toContain("mint");
+  });
+});

@@ -3,25 +3,28 @@
 import { useEffect, useRef } from "react";
 import { useNow } from "@/hooks/useNow";
 
-const URGENT_SHARE = 0.8;
-
 export default function BlockTimer({
   opensAt,
   closesAt,
   label,
   onReached,
+  urgentShare = 0.8,
+  now,
 }: {
   opensAt: string;
   closesAt: string;
   label: string;
   onReached?: () => void;
+  urgentShare?: number;
+  now?: number;
 }) {
-  const now = useNow(60_000);
+  const ticked = useNow(60_000);
+  const current = now ?? ticked;
   const start = new Date(opensAt).getTime();
   const end = new Date(closesAt).getTime();
-  const elapsed = Math.min(1, Math.max(0, (now - start) / Math.max(1, end - start)));
+  const elapsed = Math.min(1, Math.max(0, (current - start) / Math.max(1, end - start)));
   const remainingPct = 100 - Math.round(elapsed * 100);
-  const urgent = elapsed > URGENT_SHARE;
+  const urgent = elapsed > urgentShare;
 
   const fired = useRef(false);
 
