@@ -6,6 +6,7 @@ import {
 } from "./membershipState";
 import { containsSearch, normalizeSearch } from "./searchText";
 import { ADMIN_ORIGIN, MEMBERSHIP_ORIGINS, type MembershipOrigin } from "./membershipOrigin";
+import { DEFAULT_MEMBER_SORT, readMemberSort, type MemberSort } from "./memberSort";
 
 export const MEMBER_FILTER_KEYS = [
   "status",
@@ -22,6 +23,7 @@ export const MEMBER_FILTER_KEYS = [
   "recorder",
   "nophone",
   "nocapture",
+  "sort",
 ] as const;
 
 export type MemberFilterKey = (typeof MEMBER_FILTER_KEYS)[number];
@@ -30,8 +32,8 @@ export const MULTI_FILTER_KEYS = ["age", "village"] as const;
 
 type MultiFilterKey = (typeof MULTI_FILTER_KEYS)[number];
 
-export type MemberFilters = Record<Exclude<MemberFilterKey, MultiFilterKey>, string> &
-  Record<MultiFilterKey, string[]>;
+export type MemberFilters = Record<Exclude<MemberFilterKey, MultiFilterKey | "sort">, string> &
+  Record<MultiFilterKey, string[]> & { sort: MemberSort };
 
 export const NO_FILTERS: MemberFilters = {
   status: "ALL",
@@ -48,6 +50,7 @@ export const NO_FILTERS: MemberFilters = {
   recorder: "",
   nophone: "",
   nocapture: "",
+  sort: DEFAULT_MEMBER_SORT,
 };
 
 export type FilterableMember = {
@@ -79,6 +82,7 @@ export function readFilters(params: URLSearchParams): MemberFilters {
     const value = params.get(key);
     if (!value) continue;
     if (isMulti(key)) filters[key] = value.split(",").filter(Boolean);
+    else if (key === "sort") filters.sort = readMemberSort(value);
     else filters[key] = value;
   }
   filters.standing = LEGACY_STANDING[filters.standing] ?? filters.standing;
@@ -102,13 +106,17 @@ export function writeFilters(filters: MemberFilters): URLSearchParams {
   return params;
 }
 
-const NOT_NARROWING: MemberFilterKey[] = ["status", "q"];
+const NOT_NARROWING: MemberFilterKey[] = ["status", "q", "sort"];
 
 export function activeFilterCount(filters: MemberFilters): number {
   return MEMBER_FILTER_KEYS.filter((key) => !NOT_NARROWING.includes(key)).reduce(
     (count, key) => count + (isMulti(key) ? filters[key].length : filters[key] ? 1 : 0),
     0,
   );
+}
+
+export function withoutNarrowing(filters: MemberFilters): MemberFilters {
+  return { ...NO_FILTERS, status: filters.status, q: filters.q, sort: filters.sort };
 }
 
 export const AGE_CHIP = "age:";
@@ -126,7 +134,7 @@ export function withoutMemberChip(filters: MemberFilters, key: string): MemberFi
     return { ...filters, village: filters.village.filter((kept) => kept !== value) };
   }
   if (key === "origin") return { ...filters, origin: "", ...ADMIN_NARROWINGS };
-  if (!(MEMBER_FILTER_KEYS as readonly string[]).includes(key)) return filters;
+  if (!(MEMBER_FILTER_KEYS as readonly string[]).includes(key) || key === "sort") return filters;
   return { ...filters, [key]: "" };
 }
 
