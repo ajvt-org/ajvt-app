@@ -84,6 +84,7 @@ export {
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
 export { multiSelect } from "./multiSelect";
+export { amountFilter, AMOUNT_OP_LABEL, amountChipLabel } from "./amountFilter";
 export { landingActivities, landingHero } from "./landing";
 export {
   matchAdmin,
