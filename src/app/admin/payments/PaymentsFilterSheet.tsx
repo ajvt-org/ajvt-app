@@ -1,10 +1,12 @@
 "use client";
 
+import AmountFilterInput from "@/components/admin/filters/AmountFilterInput";
 import DateRangeFilter from "@/components/admin/filters/DateRangeFilter";
 import FilterSheetShell, { FilterField } from "@/components/admin/filters/FilterSheetShell";
 import {
   PAYMENT_KIND_LABEL,
   PROOF_STATUS_LABEL,
+  amountFilter,
   paymentAccountPicker,
   paymentsPage as texts,
 } from "@/lib/texts";
@@ -64,6 +66,10 @@ export default function PaymentsFilterSheet({
           idPrefix="payments"
           onChange={(range) => set(range)}
         />
+      </FilterField>
+
+      <FilterField label={amountFilter.title}>
+        <AmountFilterInput value={filters.amount} onChange={(amount) => set({ amount })} />
       </FilterField>
 
       <FilterField label={texts.account}>

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { filterSheet } from "@/lib/texts";
+import { amountFilter, filterSheet } from "@/lib/texts";
 import { NO_PAYMENTS_FILTERS, type PaymentsFilters } from "./paymentsFilters";
 import PaymentsFilterRow from "./PaymentsFilterRow";
 
@@ -47,5 +47,15 @@ describe("the filters on the payments page", () => {
 
     expect((screen.getByLabelText(filterSheet.from) as HTMLInputElement).value).toBe("2026-03-01");
     expect((screen.getByLabelText(filterSheet.to) as HTMLInputElement).value).toBe("2026-03-31");
+  });
+
+  it("carries the amount beside the dates", () => {
+    const onChange = renderRow({ from: "2026-03-01" });
+
+    fireEvent.change(screen.getByLabelText(amountFilter.figure), { target: { value: "500" } });
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ from: "2026-03-01", amount: { op: "gt", figure: "500" } }),
+    );
   });
 });
