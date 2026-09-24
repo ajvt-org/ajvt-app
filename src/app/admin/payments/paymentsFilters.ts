@@ -1,3 +1,11 @@
+import {
+  NO_AMOUNT,
+  amountIsSet,
+  matchesAmount,
+  readAmountFilter,
+  writeAmountFilter,
+  type AmountFilter,
+} from "@/lib/amountFilter";
 import { hasSurplus } from "@/lib/membershipPayment";
 import { paymentDate } from "@/lib/paymentDate";
 import type { KindFilter } from "./KindTabs";
@@ -12,6 +20,7 @@ export const PAYMENTS_FILTER_KEYS = [
   "account",
   "from",
   "to",
+  "amount",
   "receipt",
   "linked",
   "sort",
@@ -27,6 +36,7 @@ export interface PaymentsFilters {
   account: string;
   from: string;
   to: string;
+  amount: AmountFilter;
   receipt: string;
   linked: string;
   sort: PaymentSort;
@@ -40,6 +50,7 @@ export const NO_PAYMENTS_FILTERS: PaymentsFilters = {
   account: "",
   from: "",
   to: "",
+  amount: NO_AMOUNT,
   receipt: "",
   linked: "",
   sort: DEFAULT_SORT,
@@ -60,6 +71,7 @@ export function readPaymentsFilters(params: URLSearchParams): PaymentsFilters {
     account: params.get("account") || "",
     from: params.get("from") || "",
     to: params.get("to") || "",
+    amount: readAmountFilter(params.get("amount")),
     receipt: params.get("receipt") || "",
     linked: params.get("linked") || "",
     sort: readPaymentSort(params.get("sort")),
@@ -75,6 +87,7 @@ export function writePaymentsFilters(filters: PaymentsFilters): URLSearchParams 
   if (filters.account) params.set("account", filters.account);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
+  if (amountIsSet(filters.amount)) params.set("amount", writeAmountFilter(filters.amount));
   if (filters.receipt) params.set("receipt", filters.receipt);
   if (filters.linked) params.set("linked", filters.linked);
   if (filters.sort !== DEFAULT_SORT) params.set("sort", filters.sort);
@@ -89,6 +102,7 @@ export function activePaymentsFilterCount(filters: PaymentsFilters): number {
     !!filters.account,
     !!filters.from,
     !!filters.to,
+    amountIsSet(filters.amount),
     !!filters.receipt,
     !!filters.linked,
   ].filter(Boolean).length;
@@ -153,6 +167,7 @@ export function matchesPaymentsFilters(proof: Proof, filters: PaymentsFilters): 
   if (filters.status && proof.status !== filters.status) return false;
   if (!matchesAccount(proof, filters.account)) return false;
   if (!matchesDateRange(proof, filters.from, filters.to)) return false;
+  if (!matchesAmount(proof.amount, filters.amount)) return false;
   if (!matchesReceipt(proof, filters.receipt)) return false;
   if (!matchesLinked(proof, filters.linked)) return false;
   return matchesSearch(proof, filters.q);

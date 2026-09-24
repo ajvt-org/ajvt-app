@@ -32,6 +32,7 @@ describe("carrying the payments filters in the address", () => {
       account: "a1",
       from: "2026-06-01",
       to: "2026-06-30",
+      amount: { op: "lt" as const, figure: "1000" },
       receipt: "with",
       linked: "no",
       sort: "largest" as const,
@@ -68,6 +69,7 @@ describe("carrying the payments filters in the address", () => {
       "account",
       "from",
       "to",
+      "amount",
       "receipt",
       "linked",
       "sort",
@@ -189,6 +191,30 @@ describe("narrowing the payments list by more than a word", () => {
     expect(matchesPaymentsFilters(proofOf(), on({ linked: "no" }))).toBe(true);
   });
 
+  it("keeps an amount over, under or equal to the figure typed", () => {
+    expect(matchesPaymentsFilters(proofOf(), on({ amount: { op: "gt", figure: "499" } }))).toBe(
+      true,
+    );
+    expect(matchesPaymentsFilters(proofOf(), on({ amount: { op: "lt", figure: "500" } }))).toBe(
+      false,
+    );
+    expect(matchesPaymentsFilters(proofOf(), on({ amount: { op: "eq", figure: "500" } }))).toBe(
+      true,
+    );
+  });
+
+  it("drops a payment with no amount recorded once an amount is asked for", () => {
+    const unknown = proofOf({ amount: null });
+    for (const op of ["eq", "lt", "gt"] as const) {
+      expect(matchesPaymentsFilters(unknown, on({ amount: { op, figure: "0" } })), op).toBe(false);
+    }
+    expect(matchesPaymentsFilters(unknown, NO_PAYMENTS_FILTERS)).toBe(true);
+  });
+
+  it("ignores an operator picked before any figure is typed", () => {
+    expect(matchesPaymentsFilters(proofOf(), on({ amount: { op: "eq", figure: "" } }))).toBe(true);
+  });
+
   it("takes every chosen field together, not one at a time", () => {
     const row = proofOf({ userId: "u1", status: "PENDING" });
     expect(matchesPaymentsFilters(row, on({ status: "PENDING", linked: "yes" }))).toBe(true);
@@ -210,6 +236,21 @@ describe("counting what is narrowing the list", () => {
         from: "2026-06-01",
       }),
     ).toBe(3);
+  });
+
+  it("counts the amount as one filter, operator and figure together", () => {
+    const amount = { op: "gt" as const, figure: "500" };
+    expect(activePaymentsFilterCount({ ...NO_PAYMENTS_FILTERS, amount })).toBe(1);
+  });
+
+  it("does not count an operator with no figure", () => {
+    const amount = { op: "eq" as const, figure: "" };
+    expect(activePaymentsFilterCount({ ...NO_PAYMENTS_FILTERS, amount })).toBe(0);
+  });
+
+  it("carries the amount as one parameter", () => {
+    const amount = { op: "gt" as const, figure: "500" };
+    expect(writePaymentsFilters({ ...NO_PAYMENTS_FILTERS, amount }).get("amount")).toBe("gt:500");
   });
 
   it("counts neither the search box nor the chosen order, which are not filters", () => {
