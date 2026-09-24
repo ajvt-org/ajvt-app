@@ -122,18 +122,44 @@ describe("one election on the member screen", () => {
     expect(screen.queryByRole("button", { name: "تأكيد التصويت" })).toBeNull();
   });
 
-  it("replaces the list with the voter's own ballot once it is cast", () => {
+  it("keeps the whole list after voting, the voter's choice marked", () => {
     show(payload({ signedIn: true, canVote: true, voted: true, myCandidateId: "c1" }, -HOUR));
 
-    expect(screen.getByText("صوتك مسجّل")).toBeTruthy();
-    expect(screen.getByText(`صوتك سُجّل لـ ${LONG}`)).toBeTruthy();
+    const mine = screen.getByText(LONG).closest(".card") as HTMLElement;
+    const other = screen.getByText("فاطمة بنت سيدي").closest(".card") as HTMLElement;
+    expect(mine.getAttribute("aria-current")).toBe("true");
+    expect(mine.style.border).toContain("var(--mint-500)");
+    expect(mine.querySelector("svg")).not.toBeNull();
+    expect(other.getAttribute("aria-current")).toBeNull();
+    expect(other.querySelector("svg")).toBeNull();
     expect(screen.queryByRole("button", { name: "تأكيد التصويت" })).toBeNull();
+    expect(screen.queryByRole("button", { name: LONG })).toBeNull();
   });
 
-  it("reads a blank ballot back as a blank", () => {
-    show(payload({ signedIn: true, canVote: true, voted: true, myCandidateId: null }, -HOUR));
+  it("puts the check ahead of the name on the marked row", () => {
+    show(payload({ signedIn: true, canVote: true, voted: true, myCandidateId: "c1" }, -HOUR));
 
-    expect(screen.getByText("صوتك سُجّل كورقة بيضاء")).toBeTruthy();
+    const mine = screen.getByText(LONG).closest(".card") as HTMLElement;
+    expect(mine.firstElementChild!.querySelector("svg")).not.toBeNull();
+  });
+
+  it("marks the blank row for a voter who cast a blank ballot", () => {
+    const state = payload(
+      { signedIn: true, canVote: true, voted: true, myCandidateId: null },
+      -HOUR,
+    );
+    state.election.allowBlank = true;
+    show(state);
+
+    const blank = screen.getByText("ورقة بيضاء").closest(".card") as HTMLElement;
+    expect(blank.getAttribute("aria-current")).toBe("true");
+    expect(screen.getByText(LONG).closest(".card")!.getAttribute("aria-current")).toBeNull();
+  });
+
+  it("writes no sentence about the ballot", () => {
+    show(payload({ signedIn: true, canVote: true, voted: true, myCandidateId: "c1" }, -HOUR));
+
+    expect(screen.queryByText(/صوتك/)).toBeNull();
   });
 
   it("says so when no candidate has been named yet", () => {

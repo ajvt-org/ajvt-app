@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import Icon from "@/components/Icon";
-import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { api, errorMessage } from "@/lib/api";
 import { electionMember as texts } from "@/lib/texts";
+import { BlankFace, CandidateFace, CheckSlot, rowLook } from "./BallotRow";
 import type { MemberCandidate } from "./electionTypes";
 
 const BLANK = "blank";
@@ -28,17 +27,10 @@ function Choice({
       aria-pressed={selected}
       aria-label={label}
       className="card p-3 w-full text-start flex items-center gap-3"
-      style={{
-        border: selected ? "2px solid var(--mint-500)" : "2px solid transparent",
-        background: selected ? "var(--mint-50)" : undefined,
-      }}
+      style={rowLook(selected)}
     >
+      <CheckSlot marked={selected} />
       {children}
-      {selected && (
-        <span className="shrink-0" style={{ color: "var(--mint-600)" }}>
-          <Icon name="check" size={20} />
-        </span>
-      )}
     </button>
   );
 }
@@ -88,14 +80,7 @@ export default function BallotPicker({
             onPick={() => setPicked(candidate.id)}
             label={candidate.fullName}
           >
-            <PlayerAvatar
-              photoUrl={candidate.photo ? `/api/files/candidate/${candidate.photo}` : null}
-              fullName={candidate.fullName}
-              size={52}
-            />
-            <span className="activity-title min-w-0 flex-1" style={{ color: "var(--text-main)" }}>
-              {candidate.fullName}
-            </span>
+            <CandidateFace candidate={candidate} />
           </Choice>
         ))}
 
@@ -105,14 +90,7 @@ export default function BallotPicker({
             onPick={() => setPicked(BLANK)}
             label={texts.blankTitle}
           >
-            <span className="min-w-0 flex-1">
-              <span className="block font-bold" style={{ color: "var(--text-main)" }}>
-                {texts.blankTitle}
-              </span>
-              <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                {texts.blankSub}
-              </span>
-            </span>
+            <BlankFace />
           </Choice>
         )}
       </div>
