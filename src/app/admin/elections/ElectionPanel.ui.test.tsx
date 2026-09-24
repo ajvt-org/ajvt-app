@@ -81,3 +81,17 @@ describe("deleting an election", () => {
     expect(del).toHaveBeenCalledWith("/api/admin/elections/e1", { confirmTitle: TITLE });
   });
 });
+
+describe("an election whose vote has started", () => {
+  beforeEach(() => cleanup());
+
+  it("lets the locked controls say it, with no banner over them", () => {
+    show(row({ startsAt: new Date(Date.now() - HOUR / 2).toISOString() }));
+
+    expect(screen.queryByText(/انطلق التصويت/)).toBeNull();
+    expect(screen.getByRole("switch", { name: "السماح بالورقة البيضاء" }).tagName).toBe("SPAN");
+    expect(
+      (screen.getByRole("button", { name: "إضافة مترشح" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+});
