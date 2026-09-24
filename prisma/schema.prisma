@@ -1122,6 +1122,7 @@ model Election {
   hidden            Boolean             @default(true)
   startsAt          DateTime
   durationMinutes   Int
+  closesAt          DateTime?
   allowBlank        Boolean             @default(false)
   shuffleCandidates Boolean             @default(false)
   showResults       Boolean             @default(true)

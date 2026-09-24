@@ -325,3 +325,38 @@ describe("the order the candidates arrive in", () => {
     expect(await namesFrom(election.id)).toEqual(["الأول", "الثاني", "الثالث"]);
   });
 });
+
+describe("an election whose close moment was moved", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("takes a ballot after the announced window while the close is still ahead", async () => {
+    const { election, candidates } = await withCandidates({
+      startsAt: new Date(Date.now() - 2 * DAY),
+      durationMinutes: 60,
+      closesAt: new Date(Date.now() + HOUR),
+    });
+    await signInAs(await paidMember());
+
+    const res = await vote(election.id, { candidateId: candidates[0].id });
+
+    expect(res.status).toBe(201);
+    expect(await prisma.electionBallot.count()).toBe(1);
+  });
+
+  it("carries the close moment to the member screen", async () => {
+    const closesAt = new Date(Date.now() + HOUR);
+    const { election } = await withCandidates({
+      startsAt: new Date(Date.now() - 2 * DAY),
+      durationMinutes: 60,
+      closesAt,
+    });
+
+    const body = await (
+      await ONE(get(`/api/elections/${election.id}`), withId(election.id))
+    ).json();
+
+    expect(body.election.closesAt).toBe(closesAt.toISOString());
+  });
+});

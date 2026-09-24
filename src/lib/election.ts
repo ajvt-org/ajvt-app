@@ -6,7 +6,11 @@ const MINUTE = 60_000;
 
 export type ElectionState = "upcoming" | "open" | "ended";
 
-export type ElectionWindow = { startsAt: Date | string; durationMinutes: number };
+export type ElectionWindow = {
+  startsAt: Date | string;
+  durationMinutes: number;
+  closesAt?: Date | string | null;
+};
 
 export type ElectionTally = { candidateId: string | null; votes: number }[];
 
@@ -18,6 +22,7 @@ export function validElectionMinutes(value: unknown): boolean {
 }
 
 export function endsAt(election: ElectionWindow): Date {
+  if (election.closesAt) return new Date(election.closesAt);
   return new Date(new Date(election.startsAt).getTime() + election.durationMinutes * MINUTE);
 }
 

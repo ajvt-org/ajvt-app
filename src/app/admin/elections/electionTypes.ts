@@ -12,6 +12,7 @@ export interface ElectionRow {
   hidden: boolean;
   startsAt: string;
   durationMinutes: number;
+  closesAt?: string | null;
   allowBlank: boolean;
   shuffleCandidates: boolean;
   showResults: boolean;
@@ -24,6 +25,7 @@ export interface ElectionDraft {
   hidden: boolean;
   startsAt: string;
   durationMinutes: number;
+  closesAt?: string | null;
   allowBlank: boolean;
   shuffleCandidates: boolean;
   showResults: boolean;
@@ -45,6 +47,7 @@ export function draftOf(row: ElectionRow): ElectionDraft {
     hidden: row.hidden,
     startsAt: row.startsAt,
     durationMinutes: row.durationMinutes,
+    closesAt: row.closesAt ?? null,
     allowBlank: row.allowBlank,
     shuffleCandidates: row.shuffleCandidates,
     showResults: row.showResults,
