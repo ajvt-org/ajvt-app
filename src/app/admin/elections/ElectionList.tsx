@@ -53,9 +53,9 @@ export default function ElectionList({
                 border: `1px solid ${active ? "var(--mint-500)" : "transparent"}`,
               }}
             >
-              <div className="flex items-start gap-2 flex-wrap">
+              <div className="flex items-start gap-2">
                 <span
-                  className="text-sm font-bold"
+                  className="text-sm font-bold min-w-0 flex-1"
                   style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
                 >
                   {row.title}
